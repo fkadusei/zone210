@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Word Guess · Game Room</title>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Word Guess</h1>
+          <p>Find the hidden 5-letter word in six tries. Green is right, yellow is in the word, grey is not.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="stats">Stats</button>
+        </div>
+      </div>
+
+      <div class="g-bar mode">
+        <div class="g-chips" id="mode" role="group" aria-label="Mode">
+          <button class="g-chip" data-value="daily" aria-pressed="true">Daily word</button>
+          <button class="g-chip" data-value="random" aria-pressed="false">Practice</button>
+        </div>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <div class="board" id="board" aria-label="Guess board"></div>
+      <div class="kbd" id="kbd"></div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <div class="g-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+      <div class="card">
+        <div class="big" id="mEmoji" aria-hidden="true">📊</div>
+        <h2 id="mTitle">Statistics</h2>
+        <p id="mText"></p>
+        <div class="stats" id="statGrid"></div>
+        <div class="dist" id="dist"></div>
+        <div class="g-bar" style="justify-content:center;margin-top:14px">
+          <button class="g-btn ghost" id="share" hidden>Copy result</button>
+          <button class="g-btn" id="next" hidden>New word</button>
+          <button class="g-btn" id="mClose">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

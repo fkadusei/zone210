@@ -1,0 +1,62 @@
+.narrow { max-width: 520px; }
+.level { margin-bottom: 12px; }
+
+.grid {
+  --size: min(94vw, 470px);
+  display: grid;
+  grid-template: repeat(9, 1fr) / repeat(9, 1fr);
+  width: var(--size);
+  height: var(--size);
+  margin: 0 auto;
+  border: 3px solid #f6efe2;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f6efe2;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+.cell {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-right: 1px solid #c9bda5;
+  border-bottom: 1px solid #c9bda5;
+  background: #fffaf0;
+  color: #2b6cb0;
+  font: 700 clamp(1.1rem, 5.6vw, 1.9rem) "Avenir Next", "Trebuchet MS", system-ui, sans-serif;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.cell:nth-child(3n) { border-right: 2px solid #3b2a1f; }
+.cell:nth-child(9n) { border-right: 0; }
+.cell:nth-child(n + 19):nth-child(-n + 27), .cell:nth-child(n + 46):nth-child(-n + 54) { border-bottom: 2px solid #3b2a1f; }
+.cell:nth-child(n + 73) { border-bottom: 0; }
+.cell.given { color: #2a1b13; background: #f0e6d2; }
+.cell.peer { background: #f3e7c8; }
+.cell.same { background: #f7d98a; }
+.cell.selected { background: #ffd85a; outline: 3px solid #d59f12; outline-offset: -3px; z-index: 1; }
+.cell.bad { color: #d12c33; }
+.cell.wrong { background: #ffc4c4; animation: shake 0.4s; }
+.cell.hinted { color: #1f7a3d; }
+.cell:focus-visible { outline: 3px solid #4a7de8; outline-offset: -3px; z-index: 2; }
+@keyframes shake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+
+.notes { position: absolute; inset: 2px; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); font-size: clamp(0.5rem, 2.3vw, 0.75rem); font-weight: 700; color: #6b5f4a; line-height: 1; pointer-events: none; }
+.notes span { display: grid; place-items: center; }
+
+.tools { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 14px 0 10px; }
+.tools .g-btn[aria-pressed="true"] { border-color: var(--gold); background: rgba(242, 194, 48, 0.22); }
+.pad { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; max-width: 470px; margin: 0 auto; }
+.pad button {
+  position: relative;
+  padding: 10px 0 12px;
+  font: 800 clamp(1.05rem, 5vw, 1.6rem) "Avenir Next", "Trebuchet MS", system-ui, sans-serif;
+  color: var(--ink);
+  background: linear-gradient(180deg, rgba(60, 44, 34, 0.9), rgba(28, 20, 15, 0.9));
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.pad button small { position: absolute; left: 0; right: 0; bottom: 1px; font-size: 0.6rem; font-weight: 600; color: var(--muted); }
+.pad button:disabled { opacity: 0.3; cursor: default; }
+.big { font-size: 3.4rem; }

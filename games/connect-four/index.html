@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Connect Four · Game Room</title>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Connect Four</h1>
+          <p>Drop discs and line up four in a row before your opponent does.</p>
+        </div>
+        <div class="g-bar"><button class="g-btn" id="restart">New Game</button></div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Game options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="cpu" aria-pressed="true">vs Computer</button>
+            <button class="g-chip" data-value="two" aria-pressed="false">2 players</button>
+          </div></div>
+        <div class="opt" id="levelRow"><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+            <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
+            <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+          </div></div>
+        <div class="opt" id="startRow"><span class="lbl">Starts</span>
+          <div class="g-chips" id="first" role="group" aria-label="Who starts">
+            <button class="g-chip" data-value="me" aria-pressed="true">Me</button>
+            <button class="g-chip" data-value="cpu" aria-pressed="false">Computer</button>
+          </div></div>
+      </section>
+
+      <div class="g-stats" id="stats"></div>
+
+      <div class="frame">
+        <div class="board" id="board" role="group" aria-label="Game board">
+          <div class="discs" id="discs"></div>
+          <div class="holes" id="holes" aria-hidden="true"></div>
+          <div class="cols" id="cols"></div>
+        </div>
+      </div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

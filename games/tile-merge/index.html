@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Tile Merge · Game Room</title>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Tile Merge</h1>
+          <p>Slide the tiles. When two equal numbers touch, they merge. Can you reach 2048?</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="undo">Undo</button>
+          <button class="g-btn" id="restart">New Game</button>
+        </div>
+      </div>
+
+      <div class="g-stats">
+        <div class="g-stat"><b id="score">0</b><span>Score</span></div>
+        <div class="g-stat"><b id="best">0</b><span>Best</span></div>
+        <div class="g-stat"><b id="top">2</b><span>Top tile</span></div>
+      </div>
+
+      <div class="board" id="board" tabindex="0" aria-label="Game board. Use arrow keys or swipe to move tiles.">
+        <div class="cells" aria-hidden="true"></div>
+        <div class="tiles" id="tiles"></div>
+      </div>
+      <p class="hint">Arrow keys or WASD on a keyboard · swipe on a phone</p>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="big" id="endEmoji" aria-hidden="true">🎉</div>
+        <h2 id="endTitle">You reached 2048!</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="keepGoing">Keep going</button>
+          <button class="g-btn" id="again">New game</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

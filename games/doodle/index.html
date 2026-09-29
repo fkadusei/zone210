@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Doodle &amp; Color · Game Room</title>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Doodle &amp; Color</h1>
+          <p>Draw anything, or pick a colouring page and fill it with colour.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="undo" aria-label="Undo">↶ Undo</button>
+          <button class="g-btn ghost" id="redo" aria-label="Redo">↷ Redo</button>
+          <button class="g-btn" id="save">Save picture</button>
+        </div>
+      </div>
+
+      <div class="pages" role="group" aria-label="Page">
+        <div class="g-chips" id="pages"></div>
+      </div>
+
+      <div class="stage" id="stage">
+        <canvas id="paint" width="800" height="600" aria-label="Drawing canvas"></canvas>
+        <canvas id="lines" width="800" height="600" aria-hidden="true"></canvas>
+      </div>
+
+      <section class="g-panel tools" aria-label="Tools">
+        <div class="row" id="tools" role="group" aria-label="Tool"></div>
+        <div class="row palette" id="palette" role="group" aria-label="Colours"></div>
+        <div class="row">
+          <span class="lbl">Size</span>
+          <div class="g-chips" id="sizes" role="group" aria-label="Brush size">
+            <button class="g-chip" data-value="6" aria-pressed="false">Small</button>
+            <button class="g-chip" data-value="16" aria-pressed="true">Medium</button>
+            <button class="g-chip" data-value="34" aria-pressed="false">Big</button>
+          </div>
+          <label class="custom">Custom colour <input type="color" id="custom" value="#e5484d" aria-label="Pick a custom colour" /></label>
+          <button class="g-btn ghost" id="clear">🗑 Clear</button>
+        </div>
+        <div class="row stamps" id="stamps" role="group" aria-label="Stamps" hidden></div>
+      </section>
+    </main>
+
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

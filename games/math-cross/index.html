@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Math Cross Puzzle</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="header">
+        <div>
+          <p class="eyebrow">Prototype</p>
+          <h1>Math Cross Puzzle</h1>
+          <p class="subhead">
+            Fill the empty tiles using the number bank. Click a bank tile, then
+            click an empty square to place it. Click a placed number to return
+            it to the bank.
+          </p>
+        </div>
+        <div class="clock" aria-live="polite">
+          <p class="clock-date" id="clock-date">--</p>
+          <p class="clock-time" id="clock-time">--</p>
+        </div>
+      </header>
+
+      <section class="controls">
+        <div class="controls-text">
+          <h2>Puzzle Tools</h2>
+          <p>
+            Generate a fresh puzzle layout. The bank always matches the empty
+            cells, and all tiles stay connected.
+          </p>
+        </div>
+        <div class="controls-panel">
+          <div class="controls-grid">
+            <label class="control">
+              <span>Min number</span>
+              <input id="range-min" type="number" value="1" min="1" />
+            </label>
+            <label class="control">
+              <span>Max number</span>
+              <input id="range-max" type="number" value="20" min="2" />
+            </label>
+            <label class="control">
+              <span>Difficulty</span>
+              <input id="difficulty" type="range" min="1" max="5" value="3" />
+              <small id="difficulty-label">Medium</small>
+            </label>
+          </div>
+          <div class="controls-actions">
+            <button id="generate-btn" class="primary">Generate Puzzle</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="board-wrap">
+        <div id="board" class="board" aria-label="Math puzzle board"></div>
+        <div class="busy-label">Generating...</div>
+        <div class="board-actions">
+          <button id="check-btn" class="primary">Check</button>
+          <button id="solve-btn" class="ghost">Solve for me</button>
+          <button id="reset-btn" class="ghost">Reset</button>
+        </div>
+      </section>
+
+      <section class="bank-wrap">
+        <h2>Number Bank</h2>
+        <div id="bank" class="bank" aria-label="Available numbers"></div>
+      </section>
+
+      <section class="status">
+        <p id="status-text">Place numbers to complete the equations.</p>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+      <script src="../../assets/back-link.js"></script>
+  </body>
+</html>

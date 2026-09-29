@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Memory Match · Game Room</title>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Memory Match</h1>
+          <p>Flip two cards at a time and find all the pairs.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn" id="restart">New Game</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Game options">
+        <div class="opt"><span class="lbl">Theme</span>
+          <div class="g-chips" id="theme" role="group" aria-label="Theme"></div></div>
+        <div class="opt"><span class="lbl">Size</span>
+          <div class="g-chips" id="size" role="group" aria-label="Board size">
+            <button class="g-chip" data-value="easy" aria-pressed="false">Easy · 12 cards</button>
+            <button class="g-chip" data-value="medium" aria-pressed="true">Medium · 16</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard · 24</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Players</span>
+          <div class="g-chips" id="players" role="group" aria-label="Players">
+            <button class="g-chip" data-value="1" aria-pressed="true">1 player</button>
+            <button class="g-chip" data-value="2" aria-pressed="false">2 players</button>
+          </div></div>
+      </section>
+
+      <div class="g-stats" id="stats"></div>
+      <div class="board" id="board" role="grid" aria-label="Memory cards"></div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <div class="g-overlay" id="win" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+      <div class="card">
+        <div class="big" id="winEmoji" aria-hidden="true">🎉</div>
+        <h2 id="winTitle">You did it!</h2>
+        <p id="winText"></p>
+        <button class="g-btn" id="again">Play again</button>
+      </div>
+    </div>
+
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

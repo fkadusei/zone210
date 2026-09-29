@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Minesweeper · Game Room</title>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Minesweeper</h1>
+          <p>Uncover every safe square without hitting a mine. Numbers show how many mines are next door.</p>
+        </div>
+        <div class="g-bar"><button class="g-btn" id="restart">New Game</button></div>
+      </div>
+
+      <div class="g-bar level">
+        <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+          <button class="g-chip" data-value="easy" aria-pressed="true">Easy 9×9</button>
+          <button class="g-chip" data-value="medium" aria-pressed="false">Medium 12×12</button>
+          <button class="g-chip" data-value="hard" aria-pressed="false">Hard 16×16</button>
+        </div>
+      </div>
+
+      <div class="g-stats">
+        <div class="g-stat"><b id="mines">10</b><span>Mines left</span></div>
+        <div class="g-stat"><b id="time">0</b><span>Seconds</span></div>
+        <div class="g-stat"><b id="best">–</b><span>Best</span></div>
+        <button class="g-btn ghost mode" id="mode" aria-pressed="false">⛏ Dig mode</button>
+      </div>
+
+      <div class="wrap"><div class="field" id="field" role="grid" aria-label="Minefield"></div></div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+      <p class="hint">Click to dig · right-click or press-and-hold to flag · click a satisfied number to open its neighbours</p>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="big" id="endEmoji" aria-hidden="true">🎉</div>
+        <h2 id="endTitle">Cleared!</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="look">Look at the board</button>
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

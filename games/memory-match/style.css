@@ -1,0 +1,57 @@
+.setup { display: grid; gap: 10px; margin-bottom: 14px; }
+.opt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.lbl { width: 74px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+.board {
+  --cols: 4;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  gap: clamp(6px, 1.6vw, 12px);
+  max-width: 640px;
+  margin: 0 auto;
+}
+.tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  perspective: 700px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.tile:focus-visible { outline: 3px solid #fff; outline-offset: 2px; border-radius: 16px; }
+.face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  backface-visibility: hidden;
+  transition: transform 0.4s cubic-bezier(0.3, 0.7, 0.2, 1);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+}
+.back {
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.08) 0 6px, transparent 6px 12px),
+    linear-gradient(135deg, #c8281e, #f2c230);
+  border: 3px solid rgba(255, 255, 255, 0.55);
+  font-size: clamp(1.4rem, 5vw, 2.4rem);
+  color: rgba(255, 255, 255, 0.85);
+}
+.front {
+  transform: rotateY(180deg);
+  background: linear-gradient(160deg, #fffdf7, #eadfc8);
+  border: 3px solid #fff;
+  font-size: clamp(2rem, 9vw, 4rem);
+}
+.tile.open .back, .tile.done .back { transform: rotateY(180deg); }
+.tile.open .front, .tile.done .front { transform: rotateY(0deg); }
+.tile.done .front { background: linear-gradient(160deg, #d9f7c8, #9fdc86); animation: pop 0.45s ease; }
+.tile.miss .front { animation: shake 0.4s ease; }
+@keyframes pop { 40% { transform: rotateY(0) scale(1.12); } }
+@keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+.turn { padding: 7px 14px; border-radius: 999px; font-weight: 800; border: 2px solid var(--line); background: rgba(255, 255, 255, 0.07); }
+.turn.on { border-color: var(--gold); background: rgba(242, 194, 48, 0.2); }
+.big { font-size: 3.4rem; }

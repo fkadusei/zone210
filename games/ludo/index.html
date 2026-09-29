@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1d130e" />
+    <title>Ghana Ludo 3D · Game Room</title>
+    <link rel="stylesheet" href="src/styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <!-- Full-bleed 3D canvas -->
+    <div id="stage" class="stage"></div>
+
+    <!-- HUD -->
+    <header class="topbar">
+      <div class="brand">
+        <a class="home-link" href="../../" aria-label="Back to all games">&larr; Games</a>
+        <span class="kente" aria-hidden="true"></span>
+        <h1>Ghana Ludo <span class="badge">3D</span></h1>
+        <span class="room-badge" id="roomBadge" hidden></span>
+      </div>
+      <div class="controls">
+        <button id="start">Choose Players</button>
+        <button class="ghost" id="solo">Play vs Computer</button>
+        <button class="ghost" id="online">Play Online</button>
+        <button class="ghost" id="react" hidden aria-label="Send a reaction" aria-expanded="false">&#128512; React</button>
+        <button class="roll-btn" id="roll" disabled>Roll Dice</button>
+        <button class="ghost" id="view" title="Reset camera">Reset View</button>
+        <button class="ghost" id="mute" title="Toggle sound" aria-pressed="false">Sound On</button>
+        <button class="ghost" id="rules">Rules</button>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <section class="turn-panel">
+        <div class="turn-card current" id="currentTurn">
+          <span class="label">Your Turn</span>
+          <span class="name" id="currentName">Not set</span>
+        </div>
+        <div class="turn-card next" id="nextTurn">
+          <span class="label">Next</span>
+          <span class="name" id="nextName">—</span>
+        </div>
+        <div class="turn-card last" id="lastTurn">
+          <span class="label">You Rolled</span>
+          <span class="name" id="lastName">—</span>
+        </div>
+      </section>
+      <section class="standings-card" aria-label="Standings">
+        <h2>Standings</h2>
+        <table class="standings"><tbody id="standingsBody"></tbody></table>
+      </section>
+      <button class="ghost reset-btn" id="reset" disabled>Reset Game</button>
+    </aside>
+
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+
+    <!-- Online reactions: floating bubbles + picker -->
+    <div class="bubbles" id="bubbles" aria-hidden="true"></div>
+    <div class="react-tray" id="reactTray" hidden role="group" aria-label="Reactions">
+      <div class="react-emojis" id="reactEmojis"></div>
+      <div class="react-phrases" id="reactPhrases"></div>
+    </div>
+
+    <!-- Direction chooser (forward vs. backward capture) -->
+    <section class="direction" id="direction" aria-hidden="true">
+      <div class="direction-card">
+        <span class="label">Choose Direction</span>
+        <span class="name" id="directionText">Pick how to move this token.</span>
+        <div class="direction-actions">
+          <button id="directionForward">Move Forward</button>
+          <button class="ghost" id="directionBackward">Move Backward</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Play vs Computer setup -->
+    <section class="modal" id="soloModal" aria-hidden="true">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="soloTitle">
+        <header class="modal-header">
+          <h2 id="soloTitle">Play vs Computer</h2>
+          <button class="ghost" id="soloClose" aria-label="Close">Close</button>
+        </header>
+        <div class="modal-body">
+          <p class="label-inline">Your color</p>
+          <div class="chip-group" id="soloColor" role="group" aria-label="Your color">
+            <button class="chip blue" data-value="blue" aria-pressed="true">Blue</button>
+            <button class="chip red" data-value="red" aria-pressed="false">Red</button>
+            <button class="chip yellow" data-value="yellow" aria-pressed="false">Yellow</button>
+            <button class="chip green" data-value="green" aria-pressed="false">Green</button>
+          </div>
+          <p class="label-inline">Computer opponents</p>
+          <div class="chip-group" id="soloCount" role="group" aria-label="Number of opponents">
+            <button class="chip" data-value="1" aria-pressed="true">1</button>
+            <button class="chip" data-value="2" aria-pressed="false">2</button>
+            <button class="chip" data-value="3" aria-pressed="false">3</button>
+          </div>
+          <p class="label-inline">Difficulty</p>
+          <div class="chip-group" id="soloLevel" role="group" aria-label="Difficulty">
+            <button class="chip" data-value="easy" aria-pressed="false">Easy</button>
+            <button class="chip" data-value="normal" aria-pressed="true">Normal</button>
+            <button class="chip" data-value="hard" aria-pressed="false">Hard</button>
+          </div>
+          <div class="players-actions"><button id="soloStart">Start Game</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Online multiplayer: menu + lobby -->
+    <section class="modal" id="onlineModal" aria-hidden="true">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="onlineTitle">
+        <header class="modal-header">
+          <h2 id="onlineTitle">Play Online</h2>
+          <button class="ghost" id="onlineClose" aria-label="Close online menu">Close</button>
+        </header>
+        <div class="modal-body">
+          <!-- step 1: name + create / join -->
+          <div id="onlineMenu">
+            <label class="field">
+              <span>Your name</span>
+              <input id="onlineName" maxlength="14" placeholder="e.g. Kofi" autocomplete="nickname" />
+            </label>
+            <div class="online-actions">
+              <button id="onlineCreate">Create Room</button>
+            </div>
+            <div class="or"><span>or join a friend</span></div>
+            <div class="join-row">
+              <input id="onlineCode" maxlength="5" placeholder="ROOM CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" />
+              <button id="onlineJoin">Join</button>
+            </div>
+          </div>
+          <!-- step 2: lobby -->
+          <div id="onlineLobby" hidden>
+            <div class="room-code-box">
+              <span class="label">Room code</span>
+              <span class="room-code" id="roomCode">-----</span>
+              <button class="ghost" id="copyLink">Copy invite link</button>
+            </div>
+            <ul class="seats" id="seatList"></ul>
+            <p class="hint" id="lobbyHint"></p>
+            <div class="players-actions">
+              <button class="ghost" id="leaveRoom">Leave</button>
+              <button id="startOnline">Start Game</button>
+            </div>
+          </div>
+          <p class="online-error" id="onlineError" role="alert"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Game-over screen -->
+    <section class="modal winner" id="winnerModal" aria-hidden="true">
+      <div class="modal-card winner-card" role="dialog" aria-modal="true" aria-labelledby="winnerTitle">
+        <div class="trophy" aria-hidden="true">&#127942;</div>
+        <h2 id="winnerTitle">Blue wins!</h2>
+        <ol class="podium" id="podium"></ol>
+        <div class="players-actions">
+          <button class="ghost" id="winnerClose">View Board</button>
+          <button id="winnerNew">New Game</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="loading" id="loading">Loading 3D board…</div>
+
+    <!-- Player color setup modal -->
+    <section class="modal" id="playersModal" aria-hidden="true">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="playersTitle">
+        <header class="modal-header">
+          <h2 id="playersTitle">Choose Players</h2>
+          <button class="ghost" id="playersClose" aria-label="Close player selection">Close</button>
+        </header>
+        <div class="modal-body">
+          <p>Select 2-4 colors to play. Only selected colors will have pawns on the board.</p>
+          <div class="players-grid" role="group" aria-label="Player colors">
+            <label class="player-toggle blue"><input type="checkbox" id="playBlue" checked /> Blue</label>
+            <label class="player-toggle red"><input type="checkbox" id="playRed" checked /> Red</label>
+            <label class="player-toggle yellow"><input type="checkbox" id="playYellow" checked /> Yellow</label>
+            <label class="player-toggle green"><input type="checkbox" id="playGreen" checked /> Green</label>
+          </div>
+          <div class="players-actions"><button id="playersSave">Save Selection</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Rules modal -->
+    <section class="modal" id="rulesModal" aria-hidden="true">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+        <header class="modal-header">
+          <h2 id="rulesTitle">Ludo Rules Guide</h2>
+          <button class="ghost" id="rulesClose" aria-label="Close rules">Close</button>
+        </header>
+        <div class="modal-body">
+          <section><h3>Goal</h3><p>Move all four of your pawns from base to the center home by rolling the dice and moving clockwise.</p></section>
+          <section><h3>Starting</h3><ul>
+            <li>Click “Decide Starter” to pick the first player.</li>
+            <li>You must roll a 6 to bring a pawn out of base.</li>
+            <li>Rolling a 6 grants an extra turn.</li>
+          </ul></section>
+          <section><h3>Movement</h3><ul>
+            <li>Move clockwise along the outer track by the rolled number.</li>
+            <li>After completing a full loop, enter your colored home lane.</li>
+            <li>Pawns must count exact steps to reach home.</li>
+          </ul></section>
+          <section><h3>Captures &amp; Safe Squares</h3><ul>
+            <li>Landing on a lone opponent captures it and sends it back to base.</li>
+            <li>Safe squares are the colored starts and the star squares eight steps after them.</li>
+            <li>Two pawns of one color on the same square form a blockade that others cannot pass.</li>
+          </ul></section>
+          <section><h3>Backward Capture</h3><ul>
+            <li>Backward moves are allowed only when they capture a single opponent.</li>
+            <li>If both forward and backward moves are legal, you choose the direction.</li>
+          </ul></section>
+          <section><h3>Controls</h3><ul>
+            <li>Drag to orbit; scroll or pinch to zoom. On touch: one finger orbits, two fingers pinch/twist, double-tap empty space to reset the view.</li>
+            <li>Click the dice, the Roll button or press Space to roll.</li>
+            <li>Click or tap a glowing pawn to move it (taps snap to the nearest movable pawn).</li>
+          </ul></section>
+          <section><h3>Play vs Computer</h3><ul>
+            <li>Tap <b>Play vs Computer</b>, pick your color, 1–3 opponents and Easy / Normal / Hard.</li>
+            <li>Solo games are saved automatically; reload the page to resume.</li>
+          </ul></section>
+          <section><h3>Online play</h3><ul>
+            <li>Tap <b>Play Online</b>, then <b>Create Room</b> and share the 5-letter code or the invite link.</li>
+            <li>The host picks who plays: friends take open seats, and any seat can be set to a Computer player.</li>
+            <li>If someone disconnects, the computer covers for them until they rejoin with the same code.</li>
+            <li>Tap <b>React</b> to send an emoji or a quick phrase that pops up over your yard.</li>
+            <li>Connections are peer-to-peer; if a strict network blocks them, try another network.</li>
+          </ul></section>
+          <section><h3>Winning</h3><p>The first player to move all four pawns into the center wins.</p></section>
+        </div>
+      </div>
+    </section>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

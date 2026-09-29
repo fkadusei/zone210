@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Sudoku · Game Room</title>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Sudoku</h1>
+          <p>Fill every row, column and 3×3 box with the digits 1 to 9.</p>
+        </div>
+        <div class="g-bar"><button class="g-btn" id="new">New Puzzle</button></div>
+      </div>
+
+      <div class="g-bar level">
+        <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+          <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
+          <button class="g-chip" data-value="medium" aria-pressed="true">Medium</button>
+          <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+        </div>
+      </div>
+
+      <div class="g-stats">
+        <div class="g-stat"><b id="time">0:00</b><span>Time</span></div>
+        <div class="g-stat"><b id="left">0</b><span>Left</span></div>
+        <div class="g-stat"><b id="hints">0</b><span>Hints</span></div>
+      </div>
+
+      <div class="grid" id="grid" role="grid" aria-label="Sudoku board"></div>
+
+      <div class="tools">
+        <button class="g-btn ghost" id="undo">Undo</button>
+        <button class="g-btn ghost" id="erase">Erase</button>
+        <button class="g-btn ghost" id="notes" aria-pressed="false">Notes: off</button>
+        <button class="g-btn ghost" id="hint">Hint</button>
+        <button class="g-btn ghost" id="check">Check</button>
+      </div>
+      <div class="pad" id="pad"></div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <div class="g-overlay" id="win" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+      <div class="card">
+        <div class="big" aria-hidden="true">🎉</div>
+        <h2 id="winTitle">Solved!</h2>
+        <p id="winText"></p>
+        <button class="g-btn" id="again">New puzzle</button>
+      </div>
+    </div>
+
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

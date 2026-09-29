@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spell Sprout</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="hero">
+      <h1>Spell Sprout</h1>
+      <p>Grow your spelling garden one word at a time.</p>
+    </header>
+
+    <section class="panel controls">
+      <label for="difficulty">
+        Difficulty
+        <select id="difficulty">
+          <option value="easy">Easy (Ages 5-7)</option>
+          <option value="medium">Medium (Ages 7-9)</option>
+          <option value="hard">Hard (Ages 9-10)</option>
+        </select>
+      </label>
+      <button id="newGame" class="btn btn-soft" type="button">New Game</button>
+      <button id="hearWord" class="btn btn-primary" type="button">Hear Word</button>
+      <button id="useHint" class="btn btn-soft" type="button">Hint</button>
+    </section>
+
+    <section class="panel hud">
+      <article class="status-pill">
+        <span class="label">Score</span>
+        <strong id="scoreValue">0</strong>
+      </article>
+      <article class="status-pill">
+        <span class="label">Best</span>
+        <strong id="bestValue">0</strong>
+      </article>
+      <article class="status-pill">
+        <span class="label">Streak</span>
+        <strong id="streakValue">0</strong>
+      </article>
+      <article class="status-pill">
+        <span class="label">Lives</span>
+        <strong id="livesValue">❤❤❤❤❤</strong>
+      </article>
+      <article class="status-pill">
+        <span class="label">Round</span>
+        <strong id="roundValue">1</strong>
+      </article>
+      <article class="status-pill">
+        <span class="label">Solved</span>
+        <strong id="solvedValue">0</strong>
+      </article>
+    </section>
+
+    <section class="panel word-card" id="wordCard">
+      <div class="word-top">
+        <div class="clue">
+          <span id="clueEmoji" aria-hidden="true">🌟</span>
+          <p id="clueText">Press "Hear Word" and spell what you hear.</p>
+          <span id="resultMark" class="result-mark hidden" aria-live="polite" aria-label="Spelling result"></span>
+        </div>
+        <figure id="wordVisual" class="word-visual hidden" aria-label="Word photo">
+          <img id="wordPhoto" alt="" loading="lazy" referrerpolicy="no-referrer">
+        </figure>
+      </div>
+      <div id="slots" class="slots" aria-label="Letter slots"></div>
+      <div id="celebration" class="celebration" aria-hidden="true"></div>
+    </section>
+
+    <section class="panel bank-wrap">
+      <h2>Letter Bank</h2>
+      <div id="bank" class="bank" aria-label="Letter bank"></div>
+      <div class="actions">
+        <button id="backspace" class="btn btn-soft" type="button">Backspace</button>
+        <button id="checkWord" class="btn btn-primary" type="button">Check Word</button>
+      </div>
+    </section>
+
+    <p id="message" class="message info" aria-live="polite">Pick a difficulty and start spelling.</p>
+
+  </main>
+
+  <section id="gameOverModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <h2>Garden Rest Time</h2>
+      <p id="gameOverText">Great effort!</p>
+      <p><strong>Score:</strong> <span id="finalScore">0</span></p>
+      <p><strong>Words Solved:</strong> <span id="finalWords">0</span></p>
+      <button id="playAgain" class="btn btn-primary" type="button">Play Again</button>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+    <script src="../../assets/back-link.js"></script>
+  </body>
+</html>

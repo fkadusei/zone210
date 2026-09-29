@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Oware · Game Room</title>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Oware</h1>
+          <p>The classic seed-sowing game of Ghana and West Africa (also called Ayo or Warri).</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn" id="restart">New Game</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Game options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="cpu" aria-pressed="true">vs Computer</button>
+            <button class="g-chip" data-value="two" aria-pressed="false">2 players</button>
+          </div></div>
+        <div class="opt" id="levelRow"><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+            <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
+            <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+          </div></div>
+        <div class="opt" id="startRow"><span class="lbl">Starts</span>
+          <div class="g-chips" id="first" role="group" aria-label="Who starts">
+            <button class="g-chip" data-value="me" aria-pressed="true">Me</button>
+            <button class="g-chip" data-value="cpu" aria-pressed="false">Computer</button>
+          </div></div>
+      </section>
+
+      <div class="scores">
+        <div class="score north" id="scoreN"><span class="who" id="nameN">Computer</span><b id="storeN">0</b></div>
+        <div class="score south" id="scoreS"><span class="who" id="nameS">You</span><b id="storeS">0</b></div>
+      </div>
+
+      <div class="board-wrap">
+        <div class="board" id="board" role="group" aria-label="Oware board">
+          <div class="row north" id="rowN"></div>
+          <div class="row south" id="rowS"></div>
+        </div>
+      </div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+
+      <details class="g-panel rules">
+        <summary>How to play</summary>
+        <ul>
+          <li>Each player owns the six pits nearest them. Every pit starts with 4 seeds. The player to move picks one of their pits.</li>
+          <li>Pick up all its seeds and sow them one at a time, <b>counter-clockwise</b>, into the following pits. On 12+ seeds the pit you started from is skipped.</li>
+          <li>If your last seed lands in an <b>opponent's</b> pit that now holds <b>2 or 3</b> seeds, you capture them. You also capture the pit before it, and the one before that, as long as each holds 2 or 3.</li>
+          <li>You can't capture <i>all</i> of your opponent's seeds in one move (that "grand slam" captures nothing). If your opponent has no seeds you must play a move that gives them some.</li>
+          <li>First to capture <b>25</b> seeds wins. If nobody can move, each player keeps the seeds on their own side.</li>
+        </ul>
+      </details>
+    </main>
+
+    <div class="g-overlay" id="win" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+      <div class="card">
+        <div class="trophy" aria-hidden="true" id="winEmoji">🏆</div>
+        <h2 id="winTitle">You win!</h2>
+        <p id="winText"></p>
+        <button class="g-btn" id="again">Play again</button>
+      </div>
+    </div>
+
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

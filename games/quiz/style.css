@@ -1,0 +1,41 @@
+.narrow { max-width: 620px; }
+.start { display: grid; gap: 14px; }
+.opt { display: grid; gap: 6px; }
+.lbl { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.best { margin: 0; color: var(--muted); font-size: 0.9rem; min-height: 1.2em; }
+.go { justify-self: start; padding: 12px 28px; font-size: 1.1rem; }
+
+.bar { height: 8px; margin: 0 0 12px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #35a86d, #f2c230, #e5484d); background-size: 300% 100%; transform-origin: left; transition: transform 0.2s linear; }
+.bar.off { visibility: hidden; }
+
+.qbox { display: grid; gap: 12px; }
+.topic { justify-self: start; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #1b120c; background: var(--gold); }
+#qtext { margin: 0; font-size: clamp(1.2rem, 4.2vw, 1.6rem); line-height: 1.3; }
+.answers { display: grid; gap: 10px; }
+.ans {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 14px;
+  text-align: left;
+  font: 700 1.05rem "Avenir Next", "Trebuchet MS", system-ui, sans-serif;
+  color: var(--ink);
+  background: linear-gradient(180deg, rgba(70, 52, 40, 0.9), rgba(36, 26, 20, 0.92));
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.1s, border-color 0.15s, background 0.15s;
+}
+.ans:hover:not(:disabled) { border-color: var(--gold); transform: translateX(3px); }
+.ans .k { flex: none; width: 1.9em; height: 1.9em; display: grid; place-items: center; border-radius: 50%; background: rgba(255, 255, 255, 0.1); font-size: 0.85rem; }
+.ans.right { border-color: #35a86d; background: linear-gradient(180deg, #2a6b49, #1d4a33); animation: pop 0.35s; }
+.ans.wrong { border-color: #e5484d; background: linear-gradient(180deg, #7a2a2d, #4a1a1c); animation: shake 0.35s; }
+.ans:disabled { cursor: default; }
+.ans:disabled:not(.right):not(.wrong) { opacity: 0.55; }
+@keyframes pop { 40% { transform: scale(1.03); } }
+@keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.why { margin: 0; min-height: 1.4em; color: #e6dcc9; }
+.big { font-size: 3.2rem; }

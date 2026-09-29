@@ -1,0 +1,156 @@
+/* Shared look for the portal and the simple games. Warm wood + gold, matching Ghana Ludo 3D. */
+:root {
+  --bg1: #4a3225;
+  --bg2: #2a1b13;
+  --bg3: #150d09;
+  --ink: #f6efe2;
+  --muted: #b9ad9a;
+  --panel: rgba(34, 24, 18, 0.82);
+  --panel-solid: #241812;
+  --line: rgba(255, 233, 190, 0.16);
+  --gold: #f2c230;
+  --red: #e5484d;
+  --green: #35a86d;
+  --blue: #4a7de8;
+  --yellow: #f2c230;
+  --purple: #9b6be0;
+  --radius: 14px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  color: var(--ink);
+  background: radial-gradient(ellipse at 50% 20%, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%) fixed;
+  -webkit-tap-highlight-color: transparent;
+}
+
+[hidden] { display: none !important; }
+
+/* Page frame for simple games */
+.g-page {
+  max-width: 940px;
+  margin: 0 auto;
+  padding: max(64px, calc(env(safe-area-inset-top) + 56px)) 16px 40px;
+}
+.g-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.g-head h1 { margin: 0; font-size: clamp(1.5rem, 4vw, 2.1rem); letter-spacing: 0.01em; }
+.g-head p { margin: 4px 0 0; color: var(--muted); }
+.g-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* Panels & stats */
+.g-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(6px);
+}
+.g-stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.g-stat {
+  min-width: 84px;
+  padding: 7px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+}
+.g-stat b { display: block; font-size: 1.15rem; line-height: 1.2; }
+.g-stat span { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+/* Buttons */
+.g-btn {
+  font: inherit;
+  font-weight: 700;
+  color: #1b120c;
+  background: linear-gradient(180deg, #ffd85a 0%, #f2c230 45%, #d59f12 100%);
+  border: 1px solid rgba(255, 244, 200, 0.55);
+  border-radius: 10px;
+  padding: 9px 16px;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  transition: transform 0.12s ease, filter 0.12s ease, opacity 0.12s ease;
+}
+.g-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
+.g-btn:active:not(:disabled) { transform: translateY(1px); }
+.g-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.g-btn.ghost {
+  color: var(--ink);
+  background: linear-gradient(180deg, rgba(60, 44, 34, 0.8), rgba(28, 20, 15, 0.85));
+  border-color: var(--line);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.g-btn:focus-visible, .g-chip:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (pointer: coarse) { .g-btn { min-height: 44px; } }
+
+/* Segmented chips */
+.g-chips { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.g-chip {
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.g-chip[aria-pressed="true"] { background: rgba(242, 194, 48, 0.2); border-color: var(--gold); }
+
+/* Status line + overlays */
+.g-status { min-height: 1.6em; margin: 10px 0 0; font-weight: 700; text-align: center; }
+.g-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: 16px;
+  background: rgba(10, 6, 4, 0.62);
+  z-index: 20;
+}
+.g-overlay.show { display: grid; }
+.g-overlay .card {
+  width: min(420px, 100%);
+  padding: 26px 22px;
+  text-align: center;
+  background: linear-gradient(170deg, #33241b, #1d130e);
+  border: 1px solid rgba(242, 194, 48, 0.3);
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: g-rise 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.g-overlay h2 { margin: 6px 0 8px; font-size: 1.7rem; }
+.g-overlay p { margin: 0 0 16px; color: #e6dcc9; }
+@keyframes g-rise { from { transform: translateY(14px) scale(0.97); opacity: 0; } }
+
+/* Back-to-portal pill (injected by back-link.js on games that don't have their own) */
+.back-link {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(10px, env(safe-area-inset-left));
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  font: 700 0.85rem "Avenir Next", "Trebuchet MS", system-ui, sans-serif;
+  color: #f6efe2;
+  text-decoration: none;
+  background: rgba(28, 20, 15, 0.82);
+  border: 1px solid rgba(255, 233, 190, 0.22);
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+.back-link:hover { background: rgba(60, 44, 34, 0.92); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

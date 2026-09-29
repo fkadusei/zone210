@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Ghana &amp; Africa Quiz · Game Room</title>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Ghana &amp; Africa Quiz</h1>
+          <p>Ten questions. Pick your level and topic, then beat the clock.</p>
+        </div>
+      </div>
+
+      <!-- Start screen -->
+      <section class="g-panel start" id="start">
+        <div class="opt"><span class="lbl">Who's playing</span>
+          <div class="g-chips" id="aud" role="group" aria-label="Level">
+            <button class="g-chip" data-value="kids" aria-pressed="false">🧒 Kids</button>
+            <button class="g-chip" data-value="family" aria-pressed="true">👨‍👩‍👧 Family</button>
+            <button class="g-chip" data-value="adults" aria-pressed="false">🧑 Adults</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Topic</span>
+          <div class="g-chips" id="topic" role="group" aria-label="Topic">
+            <button class="g-chip" data-value="All" aria-pressed="true">All</button>
+            <button class="g-chip" data-value="Ghana" aria-pressed="false">🇬🇭 Ghana</button>
+            <button class="g-chip" data-value="Africa" aria-pressed="false">🌍 Africa</button>
+            <button class="g-chip" data-value="World" aria-pressed="false">🌐 World</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Timer</span>
+          <div class="g-chips" id="timer" role="group" aria-label="Timer">
+            <button class="g-chip" data-value="on" aria-pressed="true">15 s per question</button>
+            <button class="g-chip" data-value="off" aria-pressed="false">Relaxed (no timer)</button>
+          </div></div>
+        <p class="best" id="best"></p>
+        <button class="g-btn go" id="go">Start quiz</button>
+      </section>
+
+      <!-- Question screen -->
+      <section class="quiz" id="quiz" hidden>
+        <div class="g-stats">
+          <div class="g-stat"><b id="qn">1/10</b><span>Question</span></div>
+          <div class="g-stat"><b id="score">0</b><span>Score</span></div>
+          <div class="g-stat"><b id="streak">0</b><span>Streak</span></div>
+        </div>
+        <div class="bar" id="bar" aria-hidden="true"><i id="barfill"></i></div>
+        <div class="g-panel qbox">
+          <span class="topic" id="qtopic"></span>
+          <h2 id="qtext"></h2>
+          <div class="answers" id="answers"></div>
+          <p class="why" id="why" role="status" aria-live="polite"></p>
+          <button class="g-btn" id="next" hidden>Next question →</button>
+        </div>
+      </section>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="big" id="endEmoji" aria-hidden="true">🏆</div>
+        <h2 id="endTitle">Great job!</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="review">Change settings</button>
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
