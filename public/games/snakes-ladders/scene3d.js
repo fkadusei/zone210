@@ -68,7 +68,7 @@ function makeBoardTexture(renderer) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = S;
   const ctx = canvas.getContext("2d");
-  const palette = [["#fff1cf", "#f6dfa6"], ["#a9ddf0", "#7fc4de"], ["#ffd9c7", "#f6b79b"], ["#c9ecc9", "#9bd39b"]];
+  const palette = [["#f1dea6", "#e4c77f"], ["#8ccbe3", "#62aecb"]];
   for (let idx = 0; idx < 100; idx += 1) {
     const n = idx + 1;
     const row = Math.floor(idx / 10);
@@ -82,20 +82,22 @@ function makeBoardTexture(renderer) {
     ctx.fillStyle = g;
     ctx.fillRect(x, y, U, U);
     // soft bevel
-    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.strokeStyle = "rgba(255,255,255,0.3)";
     ctx.lineWidth = 5;
     ctx.strokeRect(x + 3, y + 3, U - 6, U - 6);
     ctx.strokeStyle = "rgba(90,60,30,0.28)";
     ctx.lineWidth = 3;
     ctx.strokeRect(x, y, U, U);
-    // number
-    ctx.font = "800 62px Georgia, 'Times New Roman', serif";
+    // number: large, dark, with a light halo so it reads on either colour
+    ctx.font = "900 92px Georgia, 'Times New Roman', serif";
     ctx.textBaseline = "top";
     ctx.textAlign = "left";
-    ctx.fillStyle = "rgba(255,255,255,0.75)";
-    ctx.fillText(String(n), x + 15, y + 13);
-    ctx.fillStyle = "#6a4426";
-    ctx.fillText(String(n), x + 13, y + 11);
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 14;
+    ctx.strokeStyle = "rgba(255,255,255,0.92)";
+    ctx.strokeText(String(n), x + 14, y + 8);
+    ctx.fillStyle = "#2e1a0a";
+    ctx.fillText(String(n), x + 14, y + 8);
   }
   // START and FINISH
   const startX = 0;
@@ -105,10 +107,13 @@ function makeBoardTexture(renderer) {
   sg.addColorStop(1, "#4fbf70");
   ctx.fillStyle = sg;
   ctx.fillRect(startX + 4, startY + 4, U - 8, U - 8);
-  ctx.fillStyle = "#1f5a33";
-  ctx.font = "800 62px Georgia, serif";
-  ctx.fillText("1", startX + 13, startY + 11);
-  ctx.font = "800 34px Georgia, serif";
+  ctx.fillStyle = "#123d22";
+  ctx.font = "900 92px Georgia, serif";
+  ctx.lineWidth = 14;
+  ctx.strokeStyle = "rgba(255,255,255,0.92)";
+  ctx.strokeText("1", startX + 14, startY + 8);
+  ctx.fillText("1", startX + 14, startY + 8);
+  ctx.font = "900 36px Georgia, serif";
   ctx.textAlign = "center";
   ctx.fillText("START", startX + U / 2, startY + U - 60);
   const fx = 0;
@@ -119,9 +124,12 @@ function makeBoardTexture(renderer) {
   ctx.fillStyle = fg;
   ctx.fillRect(fx + 4, fy + 4, U - 8, U - 8);
   ctx.textAlign = "left";
-  ctx.fillStyle = "#6a4004";
-  ctx.font = "800 62px Georgia, serif";
-  ctx.fillText("100", fx + 13, fy + 11);
+  ctx.fillStyle = "#4a2a02";
+  ctx.font = "900 84px Georgia, serif";
+  ctx.lineWidth = 14;
+  ctx.strokeStyle = "rgba(255,255,255,0.92)";
+  ctx.strokeText("100", fx + 14, fy + 10);
+  ctx.fillText("100", fx + 14, fy + 10);
   ctx.textAlign = "center";
   ctx.font = "800 34px Georgia, serif";
   ctx.fillText("FINISH", fx + U / 2, fy + U - 60);
@@ -278,7 +286,7 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.02;
+  renderer.toneMappingExposure = 0.88;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   container.appendChild(renderer.domElement);
@@ -290,7 +298,7 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
   const scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = 0.32;
+  scene.environmentIntensity = 0.22;
 
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -306,8 +314,8 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
   controls.target.copy(TARGET);
 
   // lights
-  scene.add(new THREE.HemisphereLight(0xfff4e0, 0x3a2a20, 0.6));
-  const sun = new THREE.DirectionalLight(0xffefd6, 2.2);
+  scene.add(new THREE.HemisphereLight(0xfff4e0, 0x3a2a20, 0.42));
+  const sun = new THREE.DirectionalLight(0xffefd6, 1.55);
   sun.position.set(-6, 15, 9);
   sun.castShadow = true;
   sun.shadow.mapSize.set(4096, 4096);
@@ -346,7 +354,7 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
   const boardTex = makeBoardTexture(renderer);
   const paint = new THREE.Mesh(
     new THREE.PlaneGeometry(10, 10),
-    new THREE.MeshPhysicalMaterial({ map: boardTex, bumpMap: boardTex, bumpScale: 0.6, roughness: 0.42, clearcoat: 0.25, clearcoatRoughness: 0.25 })
+    new THREE.MeshPhysicalMaterial({ map: boardTex, roughness: 0.78, clearcoat: 0.04, clearcoatRoughness: 0.6 })
   );
   paint.rotation.x = -Math.PI / 2;
   paint.position.y = 0.012;
@@ -749,10 +757,10 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
         p.root.position.y += (bob - p.root.position.y) * Math.min(1, dt * 12);
       }
       p.ring.visible = i === turn && !p.busy;
-      if (p.ring.visible) p.ring.material.opacity = 0.55 + Math.sin(time * 5) * 0.3;
+      if (p.ring.visible) p.ring.material.opacity = 0.32 + Math.sin(time * 5) * 0.16;
       p.blob.position.y = 0.02 - p.root.position.y;
     });
-    diceRing.material.opacity = diceEnabled && !diceRolling ? 0.35 + Math.sin(time * 4) * 0.25 : 0;
+    diceRing.material.opacity = diceEnabled && !diceRolling ? 0.16 + Math.sin(time * 4) * 0.1 : 0;
     for (let i = bursts.length - 1; i >= 0; i -= 1) {
       const b = bursts[i];
       b.life -= dt;
