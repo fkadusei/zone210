@@ -29,8 +29,8 @@ let audio = null;
 function beep(freq, dur = 0.12, type = "sine", vol = 0.12) {
   if (muted) return;
   try {
-    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-    if (audio.state !== "running") audio.resume();
+    audio = window.z210Audio ? window.z210Audio.get() : audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (!audio) return;
     const t = audio.currentTime;
     const o = audio.createOscillator();
     const g = audio.createGain();

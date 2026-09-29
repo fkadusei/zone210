@@ -81,8 +81,8 @@ let audio = null;
 function tone(freq, start, length, type = "sine", gain = 0.09) {
   if (settings.muted) return;
   try {
-    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-    if (audio.state === "suspended") audio.resume();
+    audio = window.z210Audio ? window.z210Audio.get() : audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (!audio) return;
     const t = audio.currentTime + start;
     const osc = audio.createOscillator();
     const amp = audio.createGain();
@@ -766,6 +766,7 @@ function renderTime() {
 
 let panelTick = 0;
 let raf = 0;
+let drawFlip = false;
 // The loop only runs while something is moving. Ready, paused and game-over screens draw once and stop,
 // which keeps the phone and laptop cool.
 function kick() {
@@ -778,9 +779,13 @@ function frame(now) {
   const dt = Math.min(64, now - (last || now));
   last = now;
   if (state !== "paused") update(dt);
-  draw();
-  drawMini(hctx, $("hold"), [holdType], 1);
-  drawMini(nctx, $("next"), queue.slice(0, 5), 5);
+  // battery saver draws every other frame while playing (game speed is unchanged)
+  drawFlip = !drawFlip;
+  if (!(window.z210Saver && window.z210Saver.on && state === "playing") || drawFlip) {
+    draw();
+    drawMini(hctx, $("hold"), [holdType], 1);
+    drawMini(nctx, $("next"), queue.slice(0, 5), 5);
+  }
   panelTick += dt;
   if (panelTick > 100 || state !== "playing") {
     panelTick = 0;
@@ -841,6 +846,7 @@ syncMute();
 newGame();
 kick();
 window.addEventListener("resize", kick);
+window.addEventListener("z210:saver", kick);
 new MutationObserver(kick).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 window.__tetris = {
   get s() { return { state, score, lines, level, piece, board, queue, holdType, combo }; },

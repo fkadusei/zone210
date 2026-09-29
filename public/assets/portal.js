@@ -85,6 +85,7 @@ function card(game, index) {
   // gentle 3D tilt that follows the pointer (mouse only)
   if (window.matchMedia("(hover: hover) and (pointer: fine)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     a.addEventListener("pointermove", (e) => {
+      if (window.z210Saver && window.z210Saver.on) return; // no tilt effects in battery saver
       const r = a.getBoundingClientRect();
       const x = (e.clientX - r.left) / r.width;
       const y = (e.clientY - r.top) / r.height;

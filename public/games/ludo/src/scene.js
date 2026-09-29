@@ -10,6 +10,10 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { PATH, SIZE } from "./engine.js";
 
+const saverOn = () => !!(window.z210Saver && window.z210Saver.on);
+const pixelRatio = () => (saverOn() ? 1 : Math.min(window.devicePixelRatio || 1, window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2));
+
+
 const COLORS = { blue: 0x2b5fd0, red: 0xe03a3a, yellow: 0xf2c230, green: 0x2f9e63 };
 // Pawns use deeper shades than the board so they stand out against their own yard.
 const PAWN_COLORS = { blue: 0x102f7a, red: 0x861219, yellow: 0x9c6f00, green: 0x0d5730 }
@@ -314,7 +318,7 @@ function makeBlobTexture() {
 
 export function createScene(container, game, { onTokenClick, onDiceClick }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2));
+  renderer.setPixelRatio(pixelRatio());
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
@@ -931,6 +935,16 @@ export function createScene(container, game, { onTokenClick, onDiceClick }) {
   }
   new ResizeObserver(resize).observe(container);
   resize();
+  // Battery saver: lower resolution, no shadows, lower frame rate
+  const applySaver = () => {
+    renderer.setPixelRatio(pixelRatio());
+    sun.castShadow = !saverOn();
+    resize();
+    
+  };
+  sun.castShadow = !saverOn();
+  window.addEventListener("z210:saver", applySaver);
+
   camera.position.copy(defaultCameraPosition());
   controls.update();
 
@@ -1046,7 +1060,8 @@ export function createScene(container, game, { onTokenClick, onDiceClick }) {
     const busyNow = tweens.size > 0 || bursts.length > 0 || shocks.length > 0 || diceRolling || moved;
     const nowMs = performance.now();
     // the active player's glow and the dice ring pulse all the time, which only needs ~30 fps
-    if (!busyNow && nowMs - lastDraw < 33) return;
+    const gap = saverOn() ? (busyNow ? 33 : 66) : busyNow ? 0 : 33; // frame-rate cap: lower in battery saver
+    if (nowMs - lastDraw < gap) return;
     lastDraw = nowMs;
     renderer.render(scene, camera);
   });

@@ -7,6 +7,10 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+const saverOn = () => !!(window.z210Saver && window.z210Saver.on);
+const pixelRatio = () => (saverOn() ? 1 : Math.min(window.devicePixelRatio || 1, window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2));
+
 import { buildPiece } from "./pieces3d.js";
 
 const isWhitePiece = (p) => p === p.toUpperCase();
@@ -75,7 +79,7 @@ function glowTexture(r, g, b) {
 
 export function createView3D(container, { onSquare }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2));
+  renderer.setPixelRatio(pixelRatio());
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.95;
@@ -362,6 +366,16 @@ export function createView3D(container, { onSquare }) {
     if (!userMoved) camera.position.copy(cameraPosition());
   }
   new ResizeObserver(resize).observe(container);
+  // Battery saver: lower resolution, no shadows, lower frame rate
+  const applySaver = () => {
+    renderer.setPixelRatio(pixelRatio());
+    key.castShadow = !saverOn();
+    resize();
+    wake();
+  };
+  key.castShadow = !saverOn();
+  window.addEventListener("z210:saver", applySaver);
+
   resize();
   camera.position.copy(cameraPosition());
 
@@ -614,7 +628,8 @@ export function createView3D(container, { onSquare }) {
     if (wakeFrames > 0) wakeFrames -= 1;
     if (!busyNow && !pulsing && wakeFrames === 0) return; // nothing is changing: skip drawing
     const nowMs = performance.now();
-    if (!busyNow && wakeFrames === 0 && nowMs - lastDraw < 33) return; // gentle pulses only need ~30 fps
+    const gap = saverOn() ? (busyNow ? 33 : 66) : busyNow ? 0 : 33; // frame-rate cap: lower in battery saver
+    if (wakeFrames === 0 && nowMs - lastDraw < gap) return;
     lastDraw = nowMs;
     renderer.render(scene, camera);
   });

@@ -10,6 +10,10 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
+const saverOn = () => !!(window.z210Saver && window.z210Saver.on);
+const pixelRatio = () => (saverOn() ? 1 : Math.min(window.devicePixelRatio || 1, window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2));
+
+
 const PAWN_COLORS = ["#a3161c", "#123b8f", "#0f6a3a", "#a87500"];
 const RIM_COLORS = ["#ffc4c4", "#bcd0ff", "#bdf0d3", "#fff0b0"];
 const SNAKE_STYLES = [
@@ -281,7 +285,7 @@ function makeBlobTexture() {
 // ---------------------------------------------------------------------------
 export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2));
+  renderer.setPixelRatio(pixelRatio());
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.88;
@@ -683,6 +687,16 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
   }
   resize();
   placeCamera();
+  // Battery saver: lower resolution, no shadows, lower frame rate
+  const applySaver = () => {
+    renderer.setPixelRatio(pixelRatio());
+    sun.castShadow = !saverOn();
+    resize();
+    wake();
+  };
+  sun.castShadow = !saverOn();
+  window.addEventListener("z210:saver", applySaver);
+
   window.addEventListener("resize", () => {
     resize();
     placeCamera();
@@ -753,7 +767,8 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
     const pulsing = diceEnabled || pawns.some((p) => p.ring.visible);
     if (wakeFrames > 0) wakeFrames -= 1;
     if (!busyNow && !pulsing && wakeFrames === 0) return; // nothing changing: skip drawing
-    if (!busyNow && wakeFrames === 0 && now - lastDraw < 33) return; // idle pulses only need ~30 fps
+    const gap = saverOn() ? (busyNow ? 33 : 66) : busyNow ? 0 : 33; // frame-rate cap: lower in battery saver
+    if (wakeFrames === 0 && now - lastDraw < gap) return;
     lastDraw = now;
     renderer.render(scene, camera);
   });

@@ -90,7 +90,9 @@ body::after {
 }
 
 /* Game pages keep the background still (set by theme.js) so the GPU and battery go to the game */
-:root[data-motion="calm"] body::before { animation: none; will-change: auto; }
+:root[data-motion="calm"] body::before,
+:root[data-saver="on"] body::before { animation: none; will-change: auto; }
+:root[data-saver="on"] .grid > li, :root[data-saver="on"] .card { animation: none !important; }
 
 [hidden] { display: none !important; }
 

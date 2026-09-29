@@ -174,8 +174,8 @@ let audio = null;
 function tone(freq, start, length, type = "sine", gain = 0.08) {
   if (settings.muted) return;
   try {
-    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-    if (audio.state === "suspended") audio.resume();
+    audio = window.z210Audio ? window.z210Audio.get() : audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (!audio) return;
     const t = audio.currentTime + start;
     const osc = audio.createOscillator();
     const amp = audio.createGain();
