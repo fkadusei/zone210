@@ -58,8 +58,8 @@ export const GAMES = [
   },
   {
     id: "math-cross",
-    title: "Math Cross Puzzle",
-    tagline: "Crossword-style grids where every lane is a valid sum. Pick your range and difficulty.",
+    title: "Math Cross",
+    tagline: "A crossword made of sums. Four levels, hints, undo, a timer and best times.",
     audience: "all",
     tags: ["Puzzle", "Math", "Offline"],
     players: "1 player",

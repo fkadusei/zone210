@@ -13,7 +13,7 @@ saved games stay on the player's own device.
 | **Oware** | Everyone | Ghana's traditional mancala (Abapa rules), vs computer or 2 players |
 | **Ghana & Africa Quiz** | Everyone | 76 questions; Kids / Family / Adults levels, timer optional |
 | **Connect Four** | Everyone | minimax computer with three levels, or 2 players |
-| **Math Cross Puzzle** | Everyone | crossword-style sums (the static UI of the original Python app) |
+| **Math Cross** | Everyone | crossword-style sums, four levels up to an 11x11 grid, hints, undo, keyboard entry, timer and best times |
 | **Memory Match** | Kids | themes, three sizes, 1–2 players |
 | **Doodle & Color** | Kids | rainbow brush, stamps, colouring pages with a paint bucket, save as PNG |
 | **Spell Sprout** | Kids | spelling practice with spoken words |

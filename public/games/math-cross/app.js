@@ -1,40 +1,6 @@
-const defaultPuzzle = {
-  grid: [
-    ["8", "+", "4", "=", "12"],
-    ["-", null, "-", null, "+"],
-    ["9", "+", "2", "=", "11"],
-    ["=", null, "=", null, "="],
-    ["6", "-", "1", "=", "5"],
-  ],
-  equations: [],
-  bank: [],
-};
-
-const STORAGE_KEY = "math-cross-puzzle-v7";
-const boardEl = document.getElementById("board");
-const bankEl = document.getElementById("bank");
-const statusEl = document.getElementById("status-text");
-const checkBtn = document.getElementById("check-btn");
-const solveBtn = document.getElementById("solve-btn");
-const resetBtn = document.getElementById("reset-btn");
-const generateBtn = document.getElementById("generate-btn");
-const boardWrap = document.querySelector(".board-wrap");
-const clockDateEl = document.getElementById("clock-date");
-const clockTimeEl = document.getElementById("clock-time");
-const rangeMinInput = document.getElementById("range-min");
-const rangeMaxInput = document.getElementById("range-max");
-const difficultyInput = document.getElementById("difficulty");
-const difficultyLabel = document.getElementById("difficulty-label");
-
-let selectedBankId = null;
-const placements = new Map();
-let puzzle = normalizePuzzle(defaultPuzzle);
-let celebrationArmed = true;
+// ---- puzzle engine: layout generation, solving and validation ----
 let generationToken = 0;
-let isGenerating = false;
-let regenerateTimer = null;
 let solveToken = 0;
-let currentSolution = null;
 
 function cellId(row, col) {
   return `r${row}c${col}`;
@@ -99,23 +65,6 @@ function pushSequence(sequences, seq, grid) {
   if (eqCount === 1) {
     sequences.push(seq);
   }
-}
-
-function normalizePuzzle(data) {
-  const normalized = {
-    grid: data.grid,
-    equations: data.equations,
-    bank: normalizeBank(data.bank || []),
-  };
-  return normalized;
-}
-
-function normalizeBank(values) {
-  return values.map((value, index) => ({ id: `n${index + 1}`, value }));
-}
-
-function countEmptyCells(grid) {
-  return grid.flat().filter((cell) => cell === ".").length;
 }
 
 function isGridConnected(grid) {
@@ -203,146 +152,8 @@ function validatePuzzle(data) {
   return null;
 }
 
-function setPuzzle(nextPuzzle, message, solutionMap = null) {
-  const normalized = normalizePuzzle(nextPuzzle);
-  normalized.equations = buildCrosswordEquations(normalized.grid);
-  const error = validatePuzzle(normalized);
-  if (error) {
-    statusEl.textContent = error;
-    return false;
-  }
-
-  puzzle = normalized;
-  placements.clear();
-  selectedBankId = null;
-  clearHighlights();
-  renderBoard();
-  renderBank();
-  statusEl.textContent = message;
-  celebrationArmed = true;
-  currentSolution = solutionMap;
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({
-      grid: puzzle.grid,
-      equations: puzzle.equations,
-      bank: puzzle.bank.map((item) => item.value),
-      solution: solutionMap ? Object.fromEntries(solutionMap.entries()) : null,
-    })
-  );
-  return true;
-}
-
-function renderBoard() {
-  boardEl.innerHTML = "";
-  const size = puzzle.grid[0]?.length || 5;
-  let cellSize = 64;
-  if (size >= 15) cellSize = 28;
-  else if (size >= 13) cellSize = 32;
-  else if (size >= 11) cellSize = 36;
-  else if (size >= 9) cellSize = 42;
-  else if (size >= 7) cellSize = 50;
-  boardEl.style.setProperty("--cell-size", `${cellSize}px`);
-  boardEl.style.gridTemplateColumns = `repeat(${size}, var(--cell-size, ${cellSize}px))`;
-  puzzle.grid.forEach((row, rowIndex) => {
-    row.forEach((cell, colIndex) => {
-      const el = document.createElement("div");
-      const id = cellId(rowIndex, colIndex);
-      el.dataset.cellId = id;
-      el.classList.add("cell");
-
-      if (cell === null) {
-        el.classList.add("blank");
-      } else if (cell === ".") {
-        el.classList.add("empty");
-        const value = getPlacedValue(id);
-        if (value !== null) {
-          el.classList.add("filled");
-          el.textContent = value;
-        }
-        el.addEventListener("click", () => handleEmptyCellClick(id));
-      } else {
-        el.classList.add("fixed");
-        if (["-", "+"].includes(cell)) {
-          el.classList.add("op");
-        }
-        el.textContent = cell;
-      }
-
-      boardEl.appendChild(el);
-    });
-  });
-}
-
-function renderBank() {
-  bankEl.innerHTML = "";
-  puzzle.bank.forEach((item) => {
-    if (isBankItemUsed(item.id)) return;
-    const tile = document.createElement("button");
-    tile.className = "bank-tile";
-    tile.textContent = item.value;
-    tile.dataset.bankId = item.id;
-    if (selectedBankId === item.id) {
-      tile.classList.add("selected");
-    }
-    tile.addEventListener("click", () => selectBankTile(item.id));
-    bankEl.appendChild(tile);
-  });
-}
-
-function isBankItemUsed(id) {
-  return [...placements.values()].includes(id);
-}
-
-function selectBankTile(id) {
-  selectedBankId = selectedBankId === id ? null : id;
-  renderBank();
-}
-
-function handleEmptyCellClick(id) {
-  if (isGenerating) return;
-  const cellHasValue = placements.has(id);
-  if (cellHasValue) {
-    placements.delete(id);
-    renderBoard();
-    renderBank();
-    statusEl.textContent = "Removed number from the board.";
-    celebrationArmed = true;
-    return;
-  }
-
-  if (!selectedBankId) {
-    statusEl.textContent = "Pick a number from the bank first.";
-    return;
-  }
-
-  const item = puzzle.bank.find((entry) => entry.id === selectedBankId);
-  if (!item) return;
-
-  placements.set(id, item.id);
-  selectedBankId = null;
-  renderBoard();
-  renderBank();
-  statusEl.textContent = "Placed number.";
-  celebrationArmed = true;
-}
-
-function evaluateEquation(tokens) {
-  const values = tokens.map((token) => getCellValue(token, placements));
-  const eqIndex = values.indexOf("=");
-  if (eqIndex === -1 || values.filter((val) => val === "=").length > 1) {
-    return { status: "invalid" };
-  }
-
-  const left = values.slice(0, eqIndex);
-  const right = values.slice(eqIndex + 1);
-
-  const leftEval = evaluateExpression(left);
-  const rightEval = evaluateExpression(right);
-
-  if (!leftEval.valid || !rightEval.valid) return { status: "invalid" };
-  if (!leftEval.complete || !rightEval.complete) return { status: "incomplete" };
-  return leftEval.value === rightEval.value ? { status: "ok" } : { status: "invalid" };
+function countEmptyCells(grid) {
+  return grid.flat().filter((cell) => cell === ".").length;
 }
 
 function evaluateEquationWithGrid(grid, tokens) {
@@ -398,147 +209,6 @@ function evaluateExpression(tokens) {
     result = op === "+" ? result + next : result - next;
   }
   return { valid: true, complete: true, value: result };
-}
-
-function getCellValue(token, valueMap) {
-  const [row, col] = token
-    .replace("r", "")
-    .split("c")
-    .map((n) => Number(n));
-  const cell = puzzle.grid[row][col];
-  if (cell === null) return null;
-  if (cell === ".") {
-    return getPlacedValue(token, valueMap);
-  }
-  if (cell === "=" || cell === "-" || cell === "+") return cell;
-  return Number(cell);
-}
-
-function getPlacedValue(cellKey, valueMap = placements) {
-  if (!valueMap.has(cellKey)) return null;
-  const bankId = valueMap.get(cellKey);
-  const item = puzzle.bank.find((entry) => entry.id === bankId);
-  return item ? item.value : null;
-}
-
-function clearHighlights() {
-  document.querySelectorAll(".cell.ok, .cell.bad").forEach((cell) => {
-    cell.classList.remove("ok", "bad");
-  });
-}
-
-function highlightEquation(tokens, status) {
-  tokens.forEach((token) => {
-    const cell = document.querySelector(`[data-cell-id="${token}"]`);
-    if (!cell) return;
-    if (status === "ok") cell.classList.add("ok");
-    if (status === "invalid") cell.classList.add("bad");
-  });
-}
-
-function checkBoard() {
-  if (isGenerating) return;
-  clearHighlights();
-  let completed = 0;
-  let invalid = 0;
-
-  puzzle.equations.forEach((eq) => {
-    const result = evaluateEquation(eq);
-    if (result.status === "ok") completed += 1;
-    if (result.status === "invalid") invalid += 1;
-    if (result.status !== "incomplete") {
-      highlightEquation(eq, result.status);
-    }
-  });
-
-  if (invalid > 0) {
-    statusEl.textContent = "Some equations are incorrect.";
-  } else if (completed === puzzle.equations.length) {
-    statusEl.textContent = "All equations are correct. Great job!";
-    if (celebrationArmed) {
-      launchConfetti();
-      celebrationArmed = false;
-    }
-  } else {
-    statusEl.textContent = "Keep going. Some equations are incomplete.";
-  }
-}
-
-function resetBoard() {
-  if (isGenerating) return;
-  placements.clear();
-  selectedBankId = null;
-  clearHighlights();
-  renderBoard();
-  renderBank();
-  statusEl.textContent = "Board reset.";
-  celebrationArmed = true;
-}
-
-async function solveCurrentPuzzle() {
-  if (isGenerating) return;
-  const token = (solveToken += 1);
-  isGenerating = true;
-  checkBtn.disabled = true;
-  resetBtn.disabled = true;
-  solveBtn.disabled = true;
-  generateBtn.disabled = true;
-  boardWrap?.classList.add("busy");
-  statusEl.textContent = "Solving puzzle...";
-
-  let solution = currentSolution;
-  if (!solution) {
-    solution = await solveWithBank(
-      puzzle.grid,
-      puzzle.equations,
-      puzzle.bank.map((item) => item.value),
-      token,
-      performance.now() + 800
-    );
-  }
-
-  if (token !== solveToken) {
-    isGenerating = false;
-    checkBtn.disabled = false;
-    resetBtn.disabled = false;
-    solveBtn.disabled = false;
-    generateBtn.disabled = false;
-    boardWrap?.classList.remove("busy");
-    return;
-  }
-
-  if (!solution) {
-    statusEl.textContent = "Unable to solve this puzzle. Try generating a new one.";
-  } else {
-    placements.clear();
-    const idsByValue = new Map();
-    puzzle.bank.forEach((item) => {
-      if (!idsByValue.has(item.value)) idsByValue.set(item.value, []);
-      idsByValue.get(item.value).push(item.id);
-    });
-    puzzle.grid.forEach((row, r) => {
-      row.forEach((cell, c) => {
-        if (cell === ".") {
-          const key = cellId(r, c);
-          const value = solution.get(key);
-          const ids = idsByValue.get(value) || [];
-          const id = ids.pop();
-          if (id) placements.set(key, id);
-        }
-      });
-    });
-    renderBoard();
-    renderBank();
-    statusEl.textContent = "Solved! You can review the answers.";
-    celebrationArmed = false;
-  }
-
-  isGenerating = false;
-  checkBtn.disabled = false;
-  resetBtn.disabled = false;
-  solveBtn.disabled = false;
-  generateBtn.disabled = false;
-  boardWrap?.classList.remove("busy");
 }
 
 async function solveWithBank(grid, equations, bankValues, token, deadline) {
@@ -636,56 +306,12 @@ async function solveWithBank(grid, equations, bankValues, token, deadline) {
   return null;
 }
 
-function loadSavedPuzzle() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (!saved) return false;
-  try {
-    const parsed = JSON.parse(saved);
-    const bankValues = Array.isArray(parsed.bank) ? parsed.bank : [];
-    const solutionMap = parsed.solution
-      ? new Map(Object.entries(parsed.solution).map(([key, value]) => [key, Number(value)]))
-      : null;
-    const ok = setPuzzle(
-      {
-        grid: parsed.grid,
-        equations: parsed.equations,
-        bank: bankValues,
-      },
-      "Loaded saved puzzle.",
-      solutionMap
-    );
-    return ok;
-  } catch (error) {
-    return false;
-  }
-}
-
 function shuffle(values) {
   for (let i = values.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [values[i], values[j]] = [values[j], values[i]];
   }
   return values;
-}
-
-function difficultyText(value) {
-  if (value <= 1) return "Easy";
-  if (value === 2) return "Normal";
-  if (value === 3) return "Medium";
-  if (value === 4) return "Hard";
-  return "Expert";
-}
-
-function getGeneratorOptions() {
-  let min = Number(rangeMinInput.value) || 1;
-  let max = Number(rangeMaxInput.value) || 20;
-  if (max <= min) max = min + 1;
-  rangeMinInput.value = String(min);
-  rangeMaxInput.value = String(max);
-  const difficulty = Number(difficultyInput.value) || 3;
-  let size = 9;
-  if (difficulty <= 2) size = 7;
-  return { size, min, max, difficulty };
 }
 
 async function solvePuzzle(grid, equations, range, token, deadline) {
@@ -833,7 +459,7 @@ function randomOp() {
 function buildNumberMask(size, difficulty) {
   const numbersPerSide = Math.ceil(size / 2);
   const total = numbersPerSide * numbersPerSide;
-  let target = Math.floor(total * (0.75 - (difficulty - 1) * 0.08));
+  let target = Math.floor(total * (0.5 + (difficulty - 1) * 0.07));
   target = Math.max(8, Math.min(total, target));
 
   const start = [
@@ -983,229 +609,700 @@ function generateLayout(options) {
   return { grid: layout, equations, numberSlots };
 }
 
+// ---- game state and interface ----
+const STORAGE_KEY = "zone210_mathcross_v8";
+const BEST_KEY = "zone210_mathcross_best";
+const SETTINGS_KEY = "zone210_mathcross_settings";
+const LEVELS = { easy: 1, medium: 3, hard: 4, expert: 5 };
+const RANGES = { 10: [1, 10], 20: [1, 20], 50: [1, 50] };
+
+const $ = (id) => document.getElementById(id);
+const boardEl = $("board");
+const bankEl = $("bank");
+const statusEl = $("status");
+const boardWrap = document.querySelector(".board-wrap");
+const buttons = ["generate-btn", "undo-btn", "hint-btn", "check-btn", "reset-btn", "solve-btn"].map($);
+
+const store = {
+  get(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (err) {
+      return fallback;
+    }
+  },
+  set(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (err) {
+      /* private mode: play on without saving */
+    }
+  },
+};
+
+const settings = { level: "medium", range: "20", ...store.get(SETTINGS_KEY, {}) };
+if (!LEVELS[settings.level]) settings.level = "medium";
+if (!RANGES[settings.range]) settings.range = "20";
+
+let puzzle = null; // { grid, equations, bank: [{id, value}] }
+let currentSolution = null; // Map cellId -> value
+const placements = new Map(); // cellId -> bank item id
+const hinted = new Set();
+let history = [];
+let selectedBankId = null;
+let activeCell = null;
+let showErrors = false;
+let solved = false;
+let assisted = false; // solved with the Solve button
+let hintCount = 0;
+let elapsed = 0; // seconds
+let lastTick = 0;
+let timerId = null;
+let isBusy = false;
+let regenerateTimer = null;
+let digitBuffer = "";
+let digitTimer = null;
+
+const parseId = (id) => id.replace("r", "").split("c").map(Number);
+const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+const bestKey = () => `${settings.level}-${settings.range}`;
+
+function setStatus(text) {
+  statusEl.textContent = text;
+}
+
+function setBusy(value) {
+  isBusy = value;
+  boardWrap.classList.toggle("busy", value);
+  buttons.forEach((b) => (b.disabled = value));
+}
+
+// ---------- timer ----------
+function startTimer() {
+  if (timerId || solved) return;
+  lastTick = performance.now();
+  timerId = setInterval(tick, 500);
+}
+function stopTimer() {
+  if (!timerId) return;
+  tick();
+  clearInterval(timerId);
+  timerId = null;
+}
+function tick() {
+  const now = performance.now();
+  if (!document.hidden) elapsed += (now - lastTick) / 1000;
+  lastTick = now;
+  $("time").textContent = fmtTime(elapsed);
+}
+
+// ---------- persistence ----------
+function persist() {
+  if (!puzzle) return;
+  store.set(STORAGE_KEY, {
+    grid: puzzle.grid,
+    bank: puzzle.bank.map((item) => item.value),
+    solution: currentSolution ? Object.fromEntries(currentSolution) : null,
+    placements: [...placements],
+    hinted: [...hinted],
+    elapsed,
+    hints: hintCount,
+    solved,
+    assisted,
+    level: settings.level,
+    range: settings.range,
+  });
+}
+
+// ---------- puzzle setup ----------
+function setPuzzle(next, solution = null, restore = null) {
+  const equations = buildCrosswordEquations(next.grid);
+  const candidate = { grid: next.grid, equations, bank: next.bank.map((value, i) => ({ id: `n${i + 1}`, value })) };
+  const error = validatePuzzle(candidate);
+  if (error) {
+    setStatus(error);
+    return false;
+  }
+  puzzle = candidate;
+  currentSolution = solution;
+  placements.clear();
+  hinted.clear();
+  history = [];
+  selectedBankId = null;
+  activeCell = null;
+  showErrors = false;
+  solved = false;
+  assisted = false;
+  hintCount = 0;
+  elapsed = 0;
+  stopTimer();
+  if (restore) {
+    (restore.placements || []).forEach(([cell, id]) => placements.set(cell, id));
+    (restore.hinted || []).forEach((cell) => hinted.add(cell));
+    hintCount = restore.hints || 0;
+    elapsed = restore.elapsed || 0;
+    solved = !!restore.solved;
+    assisted = !!restore.assisted;
+  }
+  render();
+  if (!solved && placements.size > 0) startTimer();
+  return true;
+}
+
+function loadSaved() {
+  const saved = store.get(STORAGE_KEY, null);
+  if (!saved || !Array.isArray(saved.grid) || !Array.isArray(saved.bank)) return false;
+  if (LEVELS[saved.level]) settings.level = saved.level;
+  if (RANGES[saved.range]) settings.range = saved.range;
+  syncChips();
+  const solution = saved.solution ? new Map(Object.entries(saved.solution).map(([k, v]) => [k, Number(v)])) : null;
+  const ok = setPuzzle({ grid: saved.grid, bank: saved.bank }, solution, saved);
+  if (ok) setStatus(solved ? "Solved. Start a new puzzle when you are ready." : "Welcome back. Your puzzle is where you left it.");
+  return ok;
+}
+
+// ---------- rendering ----------
+function equationMarks() {
+  const marks = new Map(); // cellId -> "ok" | "bad"
+  let okCount = 0;
+  puzzle.equations.forEach((eq) => {
+    const result = evaluateEquation(eq);
+    if (result.status === "ok") okCount += 1;
+    if (result.status === "ok" || (result.status === "invalid" && showErrors)) {
+      eq.forEach((id) => {
+        if (result.status === "invalid" || !marks.has(id)) marks.set(id, result.status === "ok" ? "ok" : "bad");
+      });
+    }
+  });
+  return { marks, okCount };
+}
+
+function getPlacedValue(cellKey) {
+  const bankId = placements.get(cellKey);
+  if (!bankId) return null;
+  const item = puzzle.bank.find((entry) => entry.id === bankId);
+  return item ? item.value : null;
+}
+
+function getCellValue(token) {
+  const [row, col] = parseId(token);
+  const cell = puzzle.grid[row][col];
+  if (cell === null) return null;
+  if (cell === ".") return getPlacedValue(token);
+  if (cell === "=" || cell === "-" || cell === "+") return cell;
+  return Number(cell);
+}
+
+function evaluateEquation(tokens) {
+  const values = tokens.map(getCellValue);
+  const eqIndex = values.indexOf("=");
+  if (eqIndex === -1) return { status: "invalid" };
+  const left = evaluateExpression(values.slice(0, eqIndex));
+  const right = evaluateExpression(values.slice(eqIndex + 1));
+  if (!left.valid || !right.valid) return { status: "invalid" };
+  if (!left.complete || !right.complete) return { status: "incomplete" };
+  return left.value === right.value ? { status: "ok" } : { status: "invalid" };
+}
+
+function emptyCellIds() {
+  const ids = [];
+  puzzle.grid.forEach((row, r) => row.forEach((cell, c) => cell === "." && ids.push(cellId(r, c))));
+  return ids;
+}
+
+function render(popCell = null) {
+  const size = puzzle.grid.length;
+  const { marks } = equationMarks();
+  boardEl.style.setProperty("--n", size);
+  boardEl.innerHTML = "";
+  puzzle.grid.forEach((row, r) => {
+    row.forEach((cell, c) => {
+      const id = cellId(r, c);
+      const mark = marks.get(id);
+      let el;
+      if (cell === null) {
+        el = document.createElement("div");
+        el.className = "cell blank";
+      } else if (cell === ".") {
+        el = document.createElement("button");
+        el.type = "button";
+        el.className = "cell empty";
+        const value = getPlacedValue(id);
+        if (value !== null) {
+          el.classList.add("filled");
+          el.textContent = value;
+          if (hinted.has(id)) el.classList.add("hinted");
+          el.setAttribute("aria-label", `Row ${r / 2 + 1}, column ${c / 2 + 1}: ${value}. Press to remove.`);
+        } else {
+          el.setAttribute("aria-label", `Row ${r / 2 + 1}, column ${c / 2 + 1}: empty`);
+        }
+        if (id === activeCell) el.classList.add("active");
+        if (id === popCell) el.classList.add("pop");
+        el.addEventListener("click", () => onCell(id));
+        el.addEventListener("focus", () => {
+          activeCell = id;
+        });
+      } else {
+        el = document.createElement("div");
+        const isSym = cell === "+" || cell === "-" || cell === "=";
+        el.className = `cell ${isSym ? "sym" : "num"}${cell === "=" ? " eq" : ""}`;
+        el.textContent = cell === "-" ? "−" : cell;
+      }
+      el.dataset.cell = id;
+      if (mark) el.classList.add(mark);
+      boardEl.appendChild(el);
+    });
+  });
+  renderBank();
+  renderStats();
+}
+
+function renderBank() {
+  bankEl.innerHTML = "";
+  const free = puzzle.bank.filter((item) => ![...placements.values()].includes(item.id));
+  free.sort((a, b) => a.value - b.value || a.id.localeCompare(b.id, undefined, { numeric: true }));
+  free.forEach((item) => {
+    const tile = document.createElement("button");
+    tile.type = "button";
+    tile.className = "bank-tile" + (selectedBankId === item.id ? " selected" : "");
+    tile.textContent = item.value;
+    tile.dataset.bankId = item.id;
+    tile.addEventListener("click", () => onBankTile(item.id));
+    bankEl.appendChild(tile);
+  });
+  if (!free.length) {
+    const done = document.createElement("span");
+    done.className = "bank-done";
+    done.textContent = "All numbers placed";
+    bankEl.appendChild(done);
+  }
+}
+
+function renderStats() {
+  $("left").textContent = emptyCellIds().length - placements.size;
+  $("hints").textContent = hintCount;
+  $("time").textContent = fmtTime(elapsed);
+  const best = store.get(BEST_KEY, {})[bestKey()];
+  $("best").textContent = best ? fmtTime(best) : "-";
+}
+
+// ---------- moves ----------
+function snapshot() {
+  history.push({ placements: [...placements], hinted: [...hinted], hints: hintCount });
+  if (history.length > 200) history.shift();
+}
+
+function nextEmptyAfter(id) {
+  const empties = emptyCellIds().filter((cell) => !placements.has(cell));
+  if (!empties.length) return null;
+  const all = emptyCellIds();
+  const start = all.indexOf(id);
+  return empties.find((cell) => all.indexOf(cell) > start) || empties[0];
+}
+
+function changed(popCell = null, message = "") {
+  showErrors = false;
+  if (placements.size > 0) startTimer();
+  render(popCell);
+  if (activeCell) {
+    const el = boardEl.querySelector(`[data-cell="${activeCell}"]`);
+    if (el && document.activeElement === document.body) el.focus({ preventScroll: true });
+  }
+  persist();
+  const { okCount } = equationMarks();
+  if (emptyCellIds().length === placements.size && okCount === puzzle.equations.length) {
+    win();
+  } else if (message) {
+    setStatus(message);
+  }
+}
+
+function placeValue(cell, bankId, message = "") {
+  snapshot();
+  placements.delete(cell);
+  placements.set(cell, bankId);
+  hinted.delete(cell);
+  selectedBankId = null;
+  activeCell = nextEmptyAfter(cell) || cell;
+  changed(cell, message);
+}
+
+function removeValue(cell) {
+  if (!placements.has(cell)) return;
+  snapshot();
+  placements.delete(cell);
+  hinted.delete(cell);
+  activeCell = cell;
+  changed(null, "");
+}
+
+function onCell(id) {
+  if (isBusy || solved) return;
+  if (placements.has(id)) {
+    removeValue(id);
+    return;
+  }
+  if (selectedBankId) {
+    placeValue(id, selectedBankId);
+    return;
+  }
+  activeCell = id;
+  render();
+  boardEl.querySelector(`[data-cell="${id}"]`)?.focus({ preventScroll: true });
+  setStatus("Now pick a number from the bank.");
+}
+
+function onBankTile(bankId) {
+  if (isBusy || solved) return;
+  if (activeCell && !placements.has(activeCell)) {
+    placeValue(activeCell, bankId);
+    return;
+  }
+  selectedBankId = selectedBankId === bankId ? null : bankId;
+  renderBank();
+  if (selectedBankId) setStatus("Now tap an empty square.");
+}
+
+function undo() {
+  if (isBusy || solved || !history.length) return;
+  const prev = history.pop();
+  placements.clear();
+  prev.placements.forEach(([cell, id]) => placements.set(cell, id));
+  hinted.clear();
+  prev.hinted.forEach((cell) => hinted.add(cell));
+  hintCount = prev.hints;
+  changed(null, "Undone.");
+}
+
+function resetBoard() {
+  if (isBusy) return;
+  snapshot();
+  placements.clear();
+  hinted.clear();
+  selectedBankId = null;
+  activeCell = null;
+  solved = false;
+  assisted = false;
+  elapsed = 0;
+  stopTimer();
+  $("time").textContent = "0:00";
+  changed(null, "Board cleared.");
+}
+
+function checkBoard() {
+  if (isBusy || solved) return;
+  showErrors = true;
+  render();
+  const { okCount } = equationMarks();
+  let wrong = 0;
+  puzzle.equations.forEach((eq) => evaluateEquation(eq).status === "invalid" && (wrong += 1));
+  if (wrong) setStatus(`${wrong} equation${wrong === 1 ? " doesn't" : "s don't"} add up yet (shown in red).`);
+  else if (okCount === puzzle.equations.length) setStatus("All correct!");
+  else setStatus(`${okCount} of ${puzzle.equations.length} equations done, no mistakes so far.`);
+}
+
+async function ensureSolution() {
+  if (currentSolution) return currentSolution;
+  const token = (solveToken += 1);
+  currentSolution = await solveWithBank(puzzle.grid, puzzle.equations, puzzle.bank.map((b) => b.value), token, performance.now() + 1500);
+  return currentSolution;
+}
+
+function bankIdFor(value, exceptCell) {
+  // a free tile with this value, or one used in a cell we are allowed to take it from
+  const used = new Map();
+  placements.forEach((id, cell) => used.set(id, cell));
+  const matches = puzzle.bank.filter((item) => item.value === value);
+  // only take a tile from a square where it doesn't belong in the solution, so hints never undo each other
+  const misplaced = (item) => used.get(item.id) !== exceptCell && currentSolution.get(used.get(item.id)) !== item.value;
+  const pick = matches.find((item) => !used.has(item.id)) || matches.find(misplaced);
+  return pick ? pick.id : null;
+}
+
+async function hint() {
+  if (isBusy || solved) return;
+  setBusy(true);
+  setStatus("Finding a hint…");
+  const solution = await ensureSolution();
+  setBusy(false);
+  if (!solution) {
+    setStatus("Couldn't work out a hint for this one. Try a new puzzle.");
+    return;
+  }
+  const empties = emptyCellIds();
+  let target = null;
+  if (activeCell && !placements.has(activeCell)) target = activeCell;
+  if (!target) target = empties.find((cell) => !placements.has(cell)) || null;
+  if (!target) {
+    // everything is filled but something is off: fix a cell whose value differs from the solution
+    const { marks } = (showErrors = true, equationMarks());
+    target = empties.find((cell) => marks.get(cell) === "bad" && getPlacedValue(cell) !== solution.get(cell)) || empties.find((cell) => getPlacedValue(cell) !== solution.get(cell));
+  }
+  if (!target) return;
+  const value = solution.get(target);
+  const bankId = bankIdFor(value, target);
+  if (!bankId) return;
+  snapshot();
+  placements.forEach((id, cell) => id === bankId && cell !== target && placements.delete(cell));
+  placements.set(target, bankId);
+  hinted.add(target);
+  hintCount += 1;
+  assisted = true;
+  activeCell = nextEmptyAfter(target) || target;
+  changed(target, `Hint: that square is ${value}.`);
+}
+
+async function solveCurrent() {
+  if (isBusy || solved) return;
+  setBusy(true);
+  setStatus("Solving…");
+  const solution = await ensureSolution();
+  setBusy(false);
+  if (!solution) {
+    setStatus("Couldn't solve this one. Try a new puzzle.");
+    return;
+  }
+  snapshot();
+  placements.clear();
+  hinted.clear();
+  const idsByValue = new Map();
+  puzzle.bank.forEach((item) => {
+    if (!idsByValue.has(item.value)) idsByValue.set(item.value, []);
+    idsByValue.get(item.value).push(item.id);
+  });
+  emptyCellIds().forEach((cell) => {
+    const id = (idsByValue.get(solution.get(cell)) || []).pop();
+    if (id) placements.set(cell, id);
+  });
+  assisted = true;
+  solved = true;
+  stopTimer();
+  render();
+  persist();
+  setStatus("Here is the solution. Start a new puzzle when you are ready.");
+}
+
+// ---------- winning ----------
+function win() {
+  solved = true;
+  stopTimer();
+  const times = store.get(BEST_KEY, {});
+  const key = bestKey();
+  let record = false;
+  if (!assisted && (!times[key] || elapsed < times[key])) {
+    times[key] = Math.max(1, Math.round(elapsed));
+    store.set(BEST_KEY, times);
+    record = true;
+  }
+  persist();
+  renderStats();
+  const lines = [`Time ${fmtTime(elapsed)}`];
+  if (hintCount) lines.push(`${hintCount} hint${hintCount === 1 ? "" : "s"}`);
+  $("winText").textContent = lines.join(" · ") + (record ? " · New best!" : assisted ? " · Best times count only unassisted solves." : "");
+  setStatus("Solved!");
+  $("win").classList.add("show");
+  launchConfetti();
+}
+
+function launchConfetti() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  document.getElementById("confetti-canvas")?.remove();
+  const canvas = document.createElement("canvas");
+  canvas.id = "confetti-canvas";
+  Object.assign(canvas.style, { position: "fixed", inset: "0", pointerEvents: "none", zIndex: "80" });
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+  const colors = ["#34d399", "#60a5fa", "#fbbf24", "#f472b6", "#a78bfa"];
+  const bits = Array.from({ length: 140 }, (_, i) => ({
+    x: Math.random() * canvas.width,
+    y: -20 - Math.random() * canvas.height * 0.3,
+    vx: (Math.random() - 0.5) * 2,
+    vy: 2 + Math.random() * 3,
+    s: 6 + Math.random() * 6,
+    c: colors[i % colors.length],
+    r: Math.random() * Math.PI,
+    vr: (Math.random() - 0.5) * 0.2,
+  }));
+  const end = performance.now() + 2600;
+  (function frame(now) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    bits.forEach((p) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.r += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.r);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.6);
+      ctx.restore();
+    });
+    if (now < end) requestAnimationFrame(frame);
+    else canvas.remove();
+  })(performance.now());
+}
+
+// ---------- generating ----------
 async function generatePuzzle() {
-  let attempts = 0;
-  const options = getGeneratorOptions();
+  const [min, max] = RANGES[settings.range];
+  const difficulty = LEVELS[settings.level];
+  const size = difficulty <= 2 ? 7 : difficulty >= 5 ? 11 : 9;
+  const options = { size, difficulty };
   const token = (generationToken += 1);
-  const attemptLimit = 14;
-  const baseBudget = 220;
-  isGenerating = true;
-  generateBtn.disabled = true;
-  checkBtn.disabled = true;
-  resetBtn.disabled = true;
-  boardWrap?.classList.add("busy");
-  while (attempts < attemptLimit) {
-    attempts += 1;
+  setBusy(true);
+  setStatus("Building a puzzle…");
+  await new Promise((r) => setTimeout(r, 30));
+
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    if (token !== generationToken) return;
     const layout = generateLayout(options);
+    if (!layout || !isGridConnected(layout.grid)) continue;
 
-    if (!layout) {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-      continue;
-    }
-    if (!isGridConnected(layout.grid)) continue;
-
-    const timeBudget = options.difficulty >= 4 ? baseBudget * 0.75 : baseBudget;
-    const solution = await solvePuzzle(
-      layout.grid,
-      layout.equations,
-      {
-        min: options.min,
-        max: options.max,
-      },
-      token,
-      performance.now() + timeBudget
-    );
-
-    if (token !== generationToken) {
-      generateBtn.disabled = false;
-      checkBtn.disabled = false;
-      resetBtn.disabled = false;
-      boardWrap?.classList.remove("busy");
-      isGenerating = false;
-      return;
-    }
-
+    const budget = Math.min(700, 220 + attempt * 40);
+    const solution = await solvePuzzle(layout.grid, layout.equations, { min, max }, token, performance.now() + budget);
+    if (token !== generationToken) return;
     if (!solution) {
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((r) => setTimeout(r, 0));
       continue;
     }
 
-    const numberSlots = layout.numberSlots || [];
-    const minEmpty = Math.max(3, Math.floor(numberSlots.length * 0.25));
-    const maxEmpty = Math.min(numberSlots.length - 2, Math.ceil(numberSlots.length * 0.7));
-    const targetEmpty =
-      minEmpty +
-      Math.round(((options.difficulty - 1) / 4) * (maxEmpty - minEmpty));
-
-    shuffle(numberSlots);
-    const emptySet = new Set(
-      numberSlots.slice(0, targetEmpty).map(([r, c]) => cellId(r, c))
-    );
-
-    numberSlots.forEach(([r, c]) => {
+    const slots = layout.numberSlots || [];
+    const fraction = 0.3 + ((difficulty - 1) / 4) * 0.35;
+    const targetEmpty = Math.max(4, Math.min(slots.length - 2, Math.round(slots.length * fraction)));
+    shuffle(slots);
+    const empty = new Set(slots.slice(0, targetEmpty).map(([r, c]) => cellId(r, c)));
+    const bank = [];
+    slots.forEach(([r, c]) => {
       const key = cellId(r, c);
-      if (emptySet.has(key)) {
+      if (empty.has(key)) {
         layout.grid[r][c] = ".";
+        bank.push(solution.get(key));
       } else {
         layout.grid[r][c] = String(solution.get(key));
       }
     });
 
-    const bankValues = [];
-    const filledGrid = layout.grid.map((row, r) =>
-      row.map((cell, c) => {
-        if (cell === ".") {
-          const value = solution.get(cellId(r, c));
-          bankValues.push(value);
-          return value;
-        }
-        if (cell === null) return null;
-        if (cell === "+" || cell === "-" || cell === "=") return cell;
-        return Number(cell);
-      })
+    const filled = layout.grid.map((row, r) =>
+      row.map((cell, c) => (cell === "." ? solution.get(cellId(r, c)) : cell === null || "+-=".includes(cell) ? cell : Number(cell)))
     );
+    if (!layout.equations.every((eq) => evaluateEquationWithGrid(filled, eq))) continue;
 
-    const allValid = layout.equations.every((eq) => evaluateEquationWithGrid(filledGrid, eq));
-    if (!allValid) continue;
-
-    setPuzzle(
-      {
-        grid: layout.grid,
-        equations: layout.equations,
-        bank: bankValues,
-      },
-      "Generated a new layout and puzzle.",
-      solution
-    );
-    generateBtn.disabled = false;
-    checkBtn.disabled = false;
-    resetBtn.disabled = false;
-    boardWrap?.classList.remove("busy");
-    isGenerating = false;
+    shuffle(bank);
+    setBusy(false);
+    if (setPuzzle({ grid: layout.grid, bank }, solution)) {
+      persist();
+      setStatus("Fresh puzzle. Pick a square, then a number.");
+    }
     return;
   }
-
-  statusEl.textContent = "Failed to generate a puzzle. Try again.";
-  generateBtn.disabled = false;
-  checkBtn.disabled = false;
-  resetBtn.disabled = false;
-  boardWrap?.classList.remove("busy");
-  isGenerating = false;
+  setBusy(false);
+  setStatus("Couldn't build a puzzle just now. Press New Puzzle to try again.");
 }
-
-checkBtn.addEventListener("click", checkBoard);
-resetBtn.addEventListener("click", resetBoard);
-generateBtn.addEventListener("click", () => {
-  generatePuzzle();
-});
-solveBtn.addEventListener("click", () => {
-  solveCurrentPuzzle();
-});
-difficultyInput.addEventListener("input", () => {
-  difficultyLabel.textContent = difficultyText(Number(difficultyInput.value));
-  scheduleRegenerate();
-});
-
-rangeMinInput.addEventListener("input", () => {
-  scheduleRegenerate();
-});
-
-rangeMaxInput.addEventListener("input", () => {
-  scheduleRegenerate();
-});
 
 function scheduleRegenerate() {
-  if (isGenerating) {
-    generationToken += 1;
-  }
-  statusEl.textContent = "Updating puzzle...";
-  if (regenerateTimer) clearTimeout(regenerateTimer);
-  regenerateTimer = setTimeout(() => {
-    generatePuzzle();
-  }, 200);
+  clearTimeout(regenerateTimer);
+  generationToken += 1;
+  setStatus("Updating puzzle…");
+  regenerateTimer = setTimeout(generatePuzzle, 250);
 }
 
-difficultyLabel.textContent = difficultyText(Number(difficultyInput.value));
-
-if (!loadSavedPuzzle()) {
+// ---------- controls ----------
+function syncChips() {
+  document.querySelectorAll("#level .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.level)));
+  document.querySelectorAll("#range .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.range)));
+}
+document.querySelectorAll("#level .g-chip, #range .g-chip").forEach((b) =>
+  b.addEventListener("click", () => {
+    const group = b.parentElement.id;
+    if (settings[group] === b.dataset.value) return;
+    settings[group] = b.dataset.value;
+    store.set(SETTINGS_KEY, settings);
+    syncChips();
+    scheduleRegenerate();
+  })
+);
+$("generate-btn").addEventListener("click", generatePuzzle);
+$("undo-btn").addEventListener("click", undo);
+$("hint-btn").addEventListener("click", hint);
+$("check-btn").addEventListener("click", checkBoard);
+$("reset-btn").addEventListener("click", resetBoard);
+$("solve-btn").addEventListener("click", solveCurrent);
+$("win-review").addEventListener("click", () => $("win").classList.remove("show"));
+$("win-next").addEventListener("click", () => {
+  $("win").classList.remove("show");
   generatePuzzle();
-}
+});
 
-function launchConfetti() {
-  const existing = document.getElementById("confetti-canvas");
-  if (existing) existing.remove();
-
-  const canvas = document.createElement("canvas");
-  canvas.id = "confetti-canvas";
-  canvas.style.position = "fixed";
-  canvas.style.inset = "0";
-  canvas.style.pointerEvents = "none";
-  canvas.style.zIndex = "50";
-  document.body.appendChild(canvas);
-
-  const ctx = canvas.getContext("2d");
-  const colors = ["#34d399", "#60a5fa", "#fbbf24", "#f472b6", "#22c55e"];
-  const particles = [];
-  const count = 140;
-  const endTime = performance.now() + 2400;
-
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  resize();
-
-  for (let i = 0; i < count; i += 1) {
-    particles.push({
-      x: Math.random() * canvas.width,
-      y: -20 - Math.random() * canvas.height * 0.2,
-      vx: (Math.random() - 0.5) * 2,
-      vy: 2 + Math.random() * 3,
-      size: 6 + Math.random() * 6,
-      color: colors[i % colors.length],
-      rotation: Math.random() * Math.PI,
-      vr: (Math.random() - 0.5) * 0.2,
-    });
-  }
-
-  function tick(time) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach((p) => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.rotation += p.vr;
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rotation);
-      ctx.fillStyle = p.color;
-      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
-      ctx.restore();
-    });
-
-    if (time < endTime) {
-      requestAnimationFrame(tick);
-    } else {
-      canvas.remove();
+function moveFocus(dr, dc) {
+  const empties = emptyCellIds();
+  if (!empties.length) return;
+  const from = activeCell ? parseId(activeCell) : [0, 0];
+  let best = null;
+  let bestScore = Infinity;
+  empties.forEach((id) => {
+    if (id === activeCell) return;
+    const [r, c] = parseId(id);
+    const along = dr ? (r - from[0]) * dr : (c - from[1]) * dc;
+    const across = Math.abs(dr ? c - from[1] : r - from[0]);
+    if (along <= 0) return;
+    const score = along * 3 + across;
+    if (score < bestScore) {
+      bestScore = score;
+      best = id;
     }
+  });
+  if (!best && !activeCell) best = empties[0];
+  if (best) {
+    activeCell = best;
+    boardEl.querySelector(`[data-cell="${best}"]`)?.focus();
+    render();
+    boardEl.querySelector(`[data-cell="${best}"]`)?.focus({ preventScroll: true });
   }
-
-  requestAnimationFrame(tick);
 }
 
-function updateClock() {
-  if (!clockDateEl || !clockTimeEl) return;
-  const now = new Date();
-  clockDateEl.textContent = now.toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-  clockTimeEl.textContent = now.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+function typeDigit(d) {
+  if (!activeCell || placements.has(activeCell)) return;
+  clearTimeout(digitTimer);
+  digitBuffer += d;
+  const free = () => puzzle.bank.filter((item) => ![...placements.values()].includes(item.id));
+  const exact = free().find((item) => String(item.value) === digitBuffer);
+  const longer = free().some((item) => String(item.value).length > digitBuffer.length && String(item.value).startsWith(digitBuffer));
+  const commit = () => {
+    const item = free().find((it) => String(it.value) === digitBuffer);
+    digitBuffer = "";
+    if (item && activeCell && !placements.has(activeCell)) placeValue(activeCell, item.id);
+    else if (!item) setStatus("That number isn't in the bank.");
+  };
+  if (exact && !longer) commit();
+  else if (exact || longer) digitTimer = setTimeout(commit, 650);
+  else {
+    digitBuffer = "";
+    setStatus("That number isn't in the bank.");
+  }
 }
 
-updateClock();
-setInterval(updateClock, 1000);
+document.addEventListener("keydown", (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey || isBusy || solved || !puzzle) return;
+  if (e.key >= "0" && e.key <= "9") {
+    typeDigit(e.key);
+    e.preventDefault();
+  } else if (e.key === "Backspace" || e.key === "Delete") {
+    if (activeCell) removeValue(activeCell);
+    e.preventDefault();
+  } else if (e.key.startsWith("Arrow")) {
+    moveFocus(e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0, e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0);
+    e.preventDefault();
+  }
+});
+
+document.addEventListener("visibilitychange", () => {
+  lastTick = performance.now();
+  if (document.hidden) persist();
+});
+addEventListener("pagehide", persist);
+
+syncChips();
+if (!loadSaved()) generatePuzzle();
