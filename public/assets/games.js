@@ -47,6 +47,16 @@ export const GAMES = [
     colors: ["#e5484d", "#f8b4a8"],
   },
   {
+    id: "dame",
+    title: "Dame",
+    tagline: "Ghana's draughts. Men capture backwards, kings fly across the board, and a missed capture can be huffed.",
+    audience: "all",
+    tags: ["Board", "Strategy", "Ghana"],
+    players: "1–2 players",
+    emoji: "⚫",
+    colors: ["#8a5a37", "#e6c99b"],
+  },
+  {
     id: "dots-boxes",
     title: "Dots & Boxes",
     tagline: "Draw lines, close boxes and go again. A pencil-and-paper classic with a clever computer opponent.",
