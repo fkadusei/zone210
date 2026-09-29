@@ -1,13 +1,12 @@
-/* Shared look for the portal and the simple games. Warm wood + gold, matching Ghana Ludo 3D. */
+/* Shared look for the landing page and the simpler games: a calm, neutral dark theme with one gold accent. */
 :root {
-  --bg1: #4a3225;
-  --bg2: #2a1b13;
-  --bg3: #150d09;
-  --ink: #f6efe2;
-  --muted: #b9ad9a;
-  --panel: rgba(34, 24, 18, 0.82);
-  --panel-solid: #241812;
-  --line: rgba(255, 233, 190, 0.16);
+  --bg: #0f1013;
+  --surface: #17191f;
+  --ink: #f3f3f5;
+  --muted: #9b9ea8;
+  --panel: rgba(255, 255, 255, 0.045);
+  --panel-solid: #191b21;
+  --line: rgba(255, 255, 255, 0.1);
   --gold: #f2c230;
   --red: #e5484d;
   --green: #35a86d;
@@ -25,7 +24,10 @@ html, body {
   min-height: 100%;
   font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
   color: var(--ink);
-  background: radial-gradient(ellipse at 50% 20%, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%) fixed;
+  background:
+    radial-gradient(1100px 480px at 50% -12%, rgba(255, 255, 255, 0.055), transparent 65%),
+    var(--bg);
+  background-attachment: fixed;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -48,15 +50,13 @@ html, body {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 14px;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(6px);
 }
 .g-stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
 .g-stat {
   min-width: 84px;
   padding: 7px 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--panel);
   border: 1px solid var(--line);
 }
 .g-stat b { display: block; font-size: 1.15rem; line-height: 1.2; }
@@ -66,25 +66,24 @@ html, body {
 .g-btn {
   font: inherit;
   font-weight: 700;
-  color: #1b120c;
-  background: linear-gradient(180deg, #ffd85a 0%, #f2c230 45%, #d59f12 100%);
-  border: 1px solid rgba(255, 244, 200, 0.55);
+  color: #17130a;
+  background: var(--gold);
+  border: 0;
   border-radius: 10px;
   padding: 9px 16px;
   cursor: pointer;
   touch-action: manipulation;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.55);
   transition: transform 0.12s ease, filter 0.12s ease, opacity 0.12s ease;
 }
-.g-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
+.g-btn:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
 .g-btn:active:not(:disabled) { transform: translateY(1px); }
 .g-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .g-btn.ghost {
   color: var(--ink);
-  background: linear-gradient(180deg, rgba(60, 44, 34, 0.8), rgba(28, 20, 15, 0.85));
-  border-color: var(--line);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
 }
+.g-btn.ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
 .g-btn:focus-visible, .g-chip:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 @media (pointer: coarse) { .g-btn { min-height: 44px; } }
 
@@ -95,14 +94,15 @@ html, body {
   font-weight: 700;
   font-size: 0.9rem;
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.07);
-  border: 2px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid transparent;
   border-radius: 999px;
   padding: 6px 14px;
   cursor: pointer;
   touch-action: manipulation;
 }
-.g-chip[aria-pressed="true"] { background: rgba(242, 194, 48, 0.2); border-color: var(--gold); }
+.g-chip:hover { background: rgba(255, 255, 255, 0.1); }
+.g-chip[aria-pressed="true"] { background: rgba(242, 194, 48, 0.16); border-color: var(--gold); }
 
 /* Status line + overlays */
 .g-status { min-height: 1.6em; margin: 10px 0 0; font-weight: 700; text-align: center; }
@@ -112,7 +112,7 @@ html, body {
   display: none;
   place-items: center;
   padding: 16px;
-  background: rgba(10, 6, 4, 0.62);
+  background: rgba(8, 9, 11, 0.7);
   z-index: 20;
 }
 .g-overlay.show { display: grid; }
@@ -120,14 +120,14 @@ html, body {
   width: min(420px, 100%);
   padding: 26px 22px;
   text-align: center;
-  background: linear-gradient(170deg, #33241b, #1d130e);
-  border: 1px solid rgba(242, 194, 48, 0.3);
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
   border-radius: 18px;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
   animation: g-rise 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .g-overlay h2 { margin: 6px 0 8px; font-size: 1.7rem; }
-.g-overlay p { margin: 0 0 16px; color: #e6dcc9; }
+.g-overlay p { margin: 0 0 16px; color: #d6d7dc; }
 @keyframes g-rise { from { transform: translateY(14px) scale(0.97); opacity: 0; } }
 
 /* Back-to-portal pill (injected by back-link.js on games that don't have their own) */
@@ -141,15 +141,14 @@ html, body {
   gap: 6px;
   padding: 7px 13px;
   font: 700 0.85rem "Avenir Next", "Trebuchet MS", system-ui, sans-serif;
-  color: #f6efe2;
+  color: #f3f3f5;
   text-decoration: none;
-  background: rgba(28, 20, 15, 0.82);
-  border: 1px solid rgba(255, 233, 190, 0.22);
+  background: rgba(23, 25, 31, 0.9);
+  border: 1px solid var(--line);
   border-radius: 999px;
   backdrop-filter: blur(6px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
-.back-link:hover { background: rgba(60, 44, 34, 0.92); }
+.back-link:hover { background: rgba(40, 43, 52, 0.95); }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }

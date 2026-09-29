@@ -12,8 +12,8 @@
   gap: 2px;
   padding: 8px;
   border-radius: 12px;
-  background: #33231a;
-  box-shadow: 0 0 0 3px #201510, 0 20px 40px rgba(0, 0, 0, 0.5);
+  background: #23252c;
+  box-shadow: 0 0 0 3px #17181d, 0 20px 40px rgba(0, 0, 0, 0.5);
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;

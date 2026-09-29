@@ -18,7 +18,6 @@ export const GAMES = [
   },
   {
     id: "oware",
-    art: ["🫘", "🌰", "🟤", "🫘"],
     title: "Oware",
     tagline: "The classic seed-sowing game of Ghana and West Africa. Out-plan the computer or a friend.",
     audience: "all",
@@ -29,7 +28,6 @@ export const GAMES = [
   },
   {
     id: "quiz",
-    art: ["❓", "🇬🇭", "🌍", "💡"],
     title: "Ghana & Africa Quiz",
     tagline: "Ten questions about Ghana, Africa and the world, with levels for kids, families and adults.",
     audience: "all",
@@ -40,7 +38,6 @@ export const GAMES = [
   },
   {
     id: "connect-four",
-    art: ["🔴", "🟡", "🔴", "🟡"],
     title: "Connect Four",
     tagline: "Drop discs and line up four in a row. Play a friend or a computer that gets smarter on Hard.",
     audience: "all",
@@ -51,7 +48,6 @@ export const GAMES = [
   },
   {
     id: "math-cross",
-    art: ["7", "+", "=", "12"],
     title: "Math Cross Puzzle",
     tagline: "Crossword-style grids where every lane is a valid sum. Pick your range and difficulty.",
     audience: "all",
@@ -62,7 +58,6 @@ export const GAMES = [
   },
   {
     id: "memory-match",
-    art: ["🐶", "🍎", "🚗", "🌸"],
     title: "Memory Match",
     tagline: "Flip cards and find the pairs. Pick a theme and a size, or take turns with a friend.",
     audience: "kids",
@@ -73,7 +68,6 @@ export const GAMES = [
   },
   {
     id: "doodle",
-    art: ["🖍️", "⭐", "🌈", "🖌️"],
     title: "Doodle & Color",
     tagline: "Draw with a rainbow brush, stamp stickers, or fill colouring pages. Save your picture.",
     audience: "kids",
@@ -84,7 +78,6 @@ export const GAMES = [
   },
   {
     id: "spell-sprout",
-    art: ["A", "B", "C", "🌿"],
     title: "Spell Sprout",
     tagline: "Spelling practice for ages 5–10 with spoken words and three difficulty levels.",
     audience: "kids",
@@ -95,7 +88,6 @@ export const GAMES = [
   },
   {
     id: "word-guess",
-    art: ["W", "O", "R", "D"],
     title: "Word Guess",
     tagline: "Find the hidden five-letter word in six tries. A new daily word every day, plus practice mode.",
     audience: "adults",
@@ -106,7 +98,6 @@ export const GAMES = [
   },
   {
     id: "sudoku",
-    art: ["5", "3", "7", "9"],
     title: "Sudoku",
     tagline: "Fresh puzzles at three levels, each with exactly one solution. Notes, hints and auto-save.",
     audience: "adults",
@@ -117,7 +108,6 @@ export const GAMES = [
   },
   {
     id: "tile-merge",
-    art: ["2", "4", "8", "16"],
     title: "Tile Merge",
     tagline: "Slide and merge matching numbers to reach 2048. Swipe on a phone, arrow keys on a computer.",
     audience: "adults",
@@ -128,7 +118,6 @@ export const GAMES = [
   },
   {
     id: "minesweeper",
-    art: ["🚩", "1", "2", "💣"],
     title: "Minesweeper",
     tagline: "Clear the field without hitting a mine. Three sizes, flags, chording and best times.",
     audience: "adults",
