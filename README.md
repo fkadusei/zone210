@@ -9,6 +9,7 @@ saved games stay on the player's own device.
 | Game | For | Notes |
 |---|---|---|
 | **Ghana Ludo 3D** | Everyone | three.js board, online rooms (peer-to-peer), computer players, Easy/Normal/Hard |
+| **Chess** | Everyone | full rules (castling, en passant, promotion, draws), computer at three levels, hints, undo, saved games |
 | **Oware** | Everyone | Ghana's traditional mancala (Abapa rules), vs computer or 2 players |
 | **Ghana & Africa Quiz** | Everyone | 76 questions; Kids / Family / Adults levels, timer optional |
 | **Connect Four** | Everyone | minimax computer with three levels, or 2 players |

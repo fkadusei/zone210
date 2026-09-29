@@ -17,6 +17,16 @@ export const GAMES = [
     featured: true,
   },
   {
+    id: "chess",
+    title: "Chess",
+    tagline: "The classic game of strategy: full rules, hints and undo, with a computer opponent at three levels.",
+    audience: "all",
+    tags: ["Board", "Strategy", "Classic"],
+    players: "1–2 players",
+    emoji: "♟️",
+    colors: ["#5b6fd6", "#b9c6ff"],
+  },
+  {
     id: "oware",
     title: "Oware",
     tagline: "The classic seed-sowing game of Ghana and West Africa. Out-plan the computer or a friend.",
