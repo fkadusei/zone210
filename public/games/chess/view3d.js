@@ -75,7 +75,7 @@ function glowTexture(r, g, b) {
 
 export function createView3D(container, { onSquare }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.95;
@@ -348,7 +348,12 @@ export function createView3D(container, { onSquare }) {
     const polar = aspect < 0.85 ? 0.6 : 0.92;
     return new THREE.Vector3(Math.sin(az) * Math.sin(polar) * dist, Math.cos(polar) * dist, Math.cos(az) * Math.sin(polar) * dist).add(controls.target);
   }
+  let wakeFrames = 8; // draw a few frames after anything changes; when nothing changes, nothing is drawn
+  const wake = () => {
+    wakeFrames = 8;
+  };
   function resize() {
+    wake();
     const w = Math.max(1, container.clientWidth);
     const h = Math.max(1, container.clientHeight);
     renderer.setSize(w, h);
@@ -395,6 +400,7 @@ export function createView3D(container, { onSquare }) {
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   let hoverSq = -1;
+  controls.addEventListener("change", wake);
   let pickable = new Set();
   let downAt = null;
 
@@ -412,11 +418,14 @@ export function createView3D(container, { onSquare }) {
   }
   renderer.domElement.addEventListener("pointermove", (e) => {
     if (e.buttons) return;
+    const prevHover = hoverSq;
     hoverSq = squareAt(e);
+    if (hoverSq !== prevHover) wake();
     renderer.domElement.style.cursor = hoverSq >= 0 && pickable.has(hoverSq) ? "pointer" : "grab";
   });
   renderer.domElement.addEventListener("pointerleave", () => {
     hoverSq = -1;
+    wake();
   });
   renderer.domElement.addEventListener("pointerdown", (e) => {
     downAt = { x: e.clientX, y: e.clientY };
@@ -545,6 +554,7 @@ export function createView3D(container, { onSquare }) {
 
   /* ---------- frame loop ---------- */
   const clock = new THREE.Clock();
+  let lastDraw = 0;
   renderer.setAnimationLoop(() => {
     const raw = clock.getDelta();
     const dt = Math.min(raw, 0.05);
@@ -598,16 +608,33 @@ export function createView3D(container, { onSquare }) {
         bursts.splice(i, 1);
       }
     }
-    controls.update();
+    const moved = controls.update();
+    const busyNow = tweens.size > 0 || bursts.length > 0 || moved;
+    const pulsing = targetMarkers.length > 0 || selRing.visible || checkGlow.visible || hoverTile.visible || hintTiles.some((t) => t.visible) || [...pieces.values()].some((g) => g.userData.rest);
+    if (wakeFrames > 0) wakeFrames -= 1;
+    if (!busyNow && !pulsing && wakeFrames === 0) return; // nothing is changing: skip drawing
+    const nowMs = performance.now();
+    if (!busyNow && wakeFrames === 0 && nowMs - lastDraw < 33) return; // gentle pulses only need ~30 fps
+    lastDraw = nowMs;
     renderer.render(scene, camera);
   });
 
   return {
-    update,
+    wake,
+    update: (...a) => {
+      wake();
+      return update(...a);
+    },
     animateMove,
-    setFlipped,
+    setFlipped: (...a) => {
+      wake();
+      return setFlipped(...a);
+    },
     intro,
-    celebrate,
+    celebrate: (...a) => {
+      wake();
+      return celebrate(...a);
+    },
     resetView: () => setFlipped(flipped, true),
     dispose() {
       renderer.setAnimationLoop(null);

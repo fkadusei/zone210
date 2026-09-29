@@ -7,8 +7,6 @@ body { overflow-x: hidden; }
   top: 0;
   z-index: 50;
   background: color-mix(in srgb, var(--bg) 78%, transparent);
-  backdrop-filter: saturate(160%) blur(14px);
-  -webkit-backdrop-filter: saturate(160%) blur(14px);
   border-bottom: 1px solid var(--line);
 }
 .nav-in { max-width: 1100px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
@@ -41,8 +39,6 @@ body { overflow-x: hidden; }
   letter-spacing: 0.04em;
   color: var(--muted);
   background: color-mix(in srgb, var(--surface) 76%, transparent);
-  backdrop-filter: blur(12px) saturate(140%);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
   border: 1px solid var(--line);
   border-radius: 999px;
   box-shadow: var(--shadow);
@@ -59,9 +55,7 @@ body { overflow-x: hidden; }
   justify-content: space-between;
   gap: 14px;
 }
-.tabs { display: inline-flex; gap: 2px; padding: 4px; background: color-mix(in srgb, var(--surface) 76%, transparent);
-  backdrop-filter: blur(12px) saturate(140%);
-  -webkit-backdrop-filter: blur(12px) saturate(140%); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow); }
+.tabs { display: inline-flex; gap: 2px; padding: 4px; background: color-mix(in srgb, var(--surface) 76%, transparent); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow); }
 .tab {
   font: inherit;
   font-weight: 700;
@@ -86,8 +80,6 @@ body { overflow-x: hidden; }
   padding: 0 14px;
   color: var(--muted);
   background: color-mix(in srgb, var(--surface) 76%, transparent);
-  backdrop-filter: blur(12px) saturate(140%);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
   border: 1px solid var(--line);
   border-radius: 999px;
   box-shadow: var(--shadow);
@@ -144,7 +136,6 @@ body { overflow-x: hidden; }
   transform: perspective(900px) translateY(var(--ty)) rotateX(var(--rx)) rotateY(var(--ry));
   transform-style: preserve-3d;
   transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.35s ease, border-color 0.25s ease;
-  will-change: transform;
 }
 .card::after {
   content: "";
@@ -196,8 +187,6 @@ body { overflow-x: hidden; }
   line-height: 1;
   background: rgba(255, 255, 255, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2), 0 1px 0 rgba(255, 255, 255, 0.7) inset;
   transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
 }

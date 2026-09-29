@@ -43,7 +43,6 @@
   text-align: center;
   border-radius: 10px;
   background: rgba(8, 12, 28, 0.72);
-  backdrop-filter: blur(3px);
   color: #eef1fa;
   z-index: 3;
 }

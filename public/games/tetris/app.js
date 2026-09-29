@@ -329,6 +329,7 @@ function bestKeyFor(mode = settings.mode) {
   return mode;
 }
 function newGame() {
+  kick();
   board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
   piece = null;
   holdType = null;
@@ -356,6 +357,7 @@ function modeBlurb() {
   return { marathon: "Play until you top out. Clear lines to level up.", sprint: "Clear 40 lines as fast as you can.", blitz: "Score as much as you can in two minutes." }[settings.mode];
 }
 function start() {
+  kick();
   if (state === "paused") return resume();
   if (state !== "ready") return;
   hideVeil();
@@ -371,6 +373,7 @@ function pause() {
   $("pause").textContent = "Resume";
 }
 function resume() {
+  kick();
   if (state !== "paused") return;
   state = pausedFrom;
   hideVeil();
@@ -445,6 +448,7 @@ const KEYMAP = {
   x: "rotate", X: "rotate", z: "ccw", Z: "ccw", c: "hold", C: "hold", Shift: "hold", p: "pause", P: "pause", Escape: "pause",
 };
 function act(name, on = true) {
+  kick();
   if (state === "ready" || state === "over") {
     if (on && (name === "drop" || name === "rotate") && state === "ready" && !$("end").classList.contains("show")) start();
     return;
@@ -761,7 +765,16 @@ function renderTime() {
 }
 
 let panelTick = 0;
+let raf = 0;
+// The loop only runs while something is moving. Ready, paused and game-over screens draw once and stop,
+// which keeps the phone and laptop cool.
+function kick() {
+  if (raf) return;
+  last = performance.now();
+  raf = requestAnimationFrame(frame);
+}
 function frame(now) {
+  raf = 0;
   const dt = Math.min(64, now - (last || now));
   last = now;
   if (state !== "paused") update(dt);
@@ -769,12 +782,13 @@ function frame(now) {
   drawMini(hctx, $("hold"), [holdType], 1);
   drawMini(nctx, $("next"), queue.slice(0, 5), 5);
   panelTick += dt;
-  if (panelTick > 100) {
+  if (panelTick > 100 || state !== "playing") {
     panelTick = 0;
     renderTime();
     renderPanels();
   }
-  requestAnimationFrame(frame);
+  const active = state === "playing" || state === "clearing" || particles.length > 0 || flashes.length > 0 || shake > 0;
+  if (active) raf = requestAnimationFrame(frame);
 }
 
 // ---------- controls ----------
@@ -818,13 +832,16 @@ mute.addEventListener("click", () => {
 });
 document.addEventListener("visibilitychange", () => {
   last = performance.now();
+  kick();
   if (document.hidden) pause();
 });
 
 syncChips();
 syncMute();
 newGame();
-requestAnimationFrame(frame);
+kick();
+window.addEventListener("resize", kick);
+new MutationObserver(kick).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 window.__tetris = {
   get s() { return { state, score, lines, level, piece, board, queue, holdType, combo }; },
   act, newGame, start, tick: update, rotate, move, hardDrop, hold, collides, cellsOf, spawn, setBoard: (b) => (board = b), PIECES, ROT, COLS, ROWS, HIDDEN,

@@ -8,6 +8,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 const PAWN_COLORS = ["#a3161c", "#123b8f", "#0f6a3a", "#a87500"];
 const RIM_COLORS = ["#ffc4c4", "#bcd0ff", "#bdf0d3", "#fff0b0"];
@@ -280,7 +281,7 @@ function makeBlobTexture() {
 // ---------------------------------------------------------------------------
 export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.88;
@@ -315,7 +316,7 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
   const sun = new THREE.DirectionalLight(0xffefd6, 1.55);
   sun.position.set(-6, 15, 9);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(4096, 4096);
+  sun.shadow.mapSize.set(2048, 2048);
   Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 13, bottom: -11, near: 1, far: 45 });
   sun.shadow.bias = -0.0004;
   sun.shadow.normalBias = 0.03;
@@ -404,6 +405,8 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
   const ladderWood = new THREE.MeshPhysicalMaterial({ map: makeWoodTexture(renderer, { base: "#c98a45", repeat: 1 }), roughness: 0.5, clearcoat: 0.3 });
   const railGeo = new THREE.BoxGeometry(0.07, 0.08, 1);
   const rungGeo = new THREE.CylinderGeometry(0.03, 0.03, 1, 10);
+  // all ladder rails and rungs are merged into one mesh: one draw call instead of ~100
+  const ladderParts = [];
   Object.entries(LADDERS).forEach(([from, to]) => {
     const a = cellPos(Number(from));
     const b = cellPos(Number(to));
@@ -418,7 +421,6 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
       const rail = new THREE.Mesh(railGeo, ladderWood);
       rail.scale.z = len;
       rail.position.x = off;
-      rail.castShadow = true;
       g.add(rail);
     });
     const rungs = Math.max(3, Math.round(len / 0.45));
@@ -427,11 +429,19 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
       rung.rotation.z = Math.PI / 2;
       rung.scale.y = 0.3;
       rung.position.set(0, 0.02, -len / 2 + (i / rungs) * len);
-      rung.castShadow = true;
       g.add(rung);
     }
-    scene.add(g);
+    g.updateMatrixWorld(true);
+    g.children.forEach((child) => {
+      const geo = child.geometry.clone();
+      geo.applyMatrix4(child.matrixWorld);
+      ladderParts.push(geo);
+    });
   });
+  const ladderMesh = new THREE.Mesh(mergeGeometries(ladderParts), ladderWood);
+  ladderMesh.castShadow = true;
+  ladderMesh.receiveShadow = true;
+  scene.add(ladderMesh);
 
   // snakes are painted on the board; these curves only guide a pawn sliding down
   const snakeCurves = {};
@@ -659,7 +669,12 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
     controls.target.copy(TARGET);
     controls.update();
   }
+  let wakeFrames = 8; // draw a few frames after anything changes
+  const wake = () => {
+    wakeFrames = 8;
+  };
   function resize() {
+    wake();
     const w = container.clientWidth || 640;
     const h = container.clientHeight || 640;
     renderer.setSize(w, h, false);
@@ -692,6 +707,8 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
 
   // ---- render loop ----
   const clock = new THREE.Clock();
+  let lastDraw = 0;
+  controls.addEventListener("change", wake);
   renderer.setAnimationLoop(() => {
     const dt = Math.min(0.05, clock.getDelta());
     const now = performance.now();
@@ -731,9 +748,25 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
         bursts.splice(i, 1);
       }
     }
-    controls.update();
+    const moved = controls.update();
+    const busyNow = tweens.size > 0 || bursts.length > 0 || diceRolling || moved;
+    const pulsing = diceEnabled || pawns.some((p) => p.ring.visible);
+    if (wakeFrames > 0) wakeFrames -= 1;
+    if (!busyNow && !pulsing && wakeFrames === 0) return; // nothing changing: skip drawing
+    if (!busyNow && wakeFrames === 0 && now - lastDraw < 33) return; // idle pulses only need ~30 fps
+    lastDraw = now;
     renderer.render(scene, camera);
   });
 
+  // any call from the game wakes the loop for a moment
+  Object.keys(api).forEach((k) => {
+    if (typeof api[k] !== "function" || k === "dispose") return;
+    const fn = api[k];
+    api[k] = (...a) => {
+      wake();
+      return fn(...a);
+    };
+  });
+  window.addEventListener("resize", wake);
   return api;
 }

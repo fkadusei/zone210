@@ -88,7 +88,6 @@ button.ghost {
   color: var(--ink);
   background: linear-gradient(180deg, rgba(60, 44, 34, 0.75), rgba(28, 20, 15, 0.8));
   border: 1px solid var(--panel-line);
-  backdrop-filter: blur(6px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 button.hidden { display: none; }
@@ -120,7 +119,6 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
   border: 1px solid var(--panel-line);
   border-radius: 14px;
   padding: 10px 14px;
-  backdrop-filter: blur(8px);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
 }
 .turn-card { display: flex; flex-direction: column; border-left: 6px solid transparent; }
@@ -162,7 +160,6 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
   background: var(--panel);
   border: 1px solid var(--panel-line);
   border-radius: 999px;
-  backdrop-filter: blur(8px);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
   z-index: 4;
 }

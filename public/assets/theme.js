@@ -16,6 +16,9 @@
   }
   if (saved !== "light" && saved !== "dark") saved = null;
 
+  // game pages hold the animated background still to save GPU and battery
+  if (/\/games\//.test(location.pathname)) root.setAttribute("data-motion", "calm");
+
   var mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
   var effective = function () {
     return saved || (mq && mq.matches ? "dark" : "light");
