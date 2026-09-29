@@ -1,4 +1,4 @@
-import { WORDS } from "./words.js";
+import { THEMES, poolFor } from "./words.js";
 
 const ROUNDS = 10;
 const TRIES = 3;
@@ -7,7 +7,7 @@ const EXTRA_LETTERS = { easy: 2, medium: 3, hard: 4 };
 const NEXT_LEVEL = { easy: "medium", medium: "hard", hard: "easy" };
 const PLANT = { 3: "🌻", 2: "🌷", 1: "🌿", 0: "🥀" };
 const CHEERS = ["Great job!", "Wonderful!", "You got it!", "Brilliant!", "Super speller!", "Fantastic!", "Well done!"];
-const KEYS = { best: "zone210_spell_best", seen: "zone210_spell_seen", level: "zone210_spell_level", mute: "zone210_spell_mute" };
+const KEYS = { best: "zone210_spell_best", seen: "zone210_spell_seen", level: "zone210_spell_level", mute: "zone210_spell_mute", theme: "zone210_spell_theme" };
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -38,6 +38,7 @@ const store = {
 
 const game = {
   level: store.get(KEYS.level, "easy"),
+  theme: store.get(KEYS.theme, "mixed"),
   muted: store.get(KEYS.mute, false),
   words: [],
   index: 0,
@@ -47,7 +48,9 @@ const game = {
   round: null,
   locked: false,
 };
-if (!WORDS[game.level]) game.level = "easy";
+if (!["easy", "medium", "hard"].includes(game.level)) game.level = "easy";
+if (!THEMES.some((t) => t.id === game.theme)) game.theme = "mixed";
+const packKey = () => `${game.level}:${game.theme}`;
 
 const shuffle = (list) => {
   const a = [...list];
@@ -127,8 +130,9 @@ function setMessage(text, kind = "") {
 }
 
 function pickWords() {
-  const pool = WORDS[game.level];
-  const seen = new Set((store.get(KEYS.seen, {})[game.level] || []));
+  const pool = poolFor(game.level, game.theme);
+  const all = store.get(KEYS.seen, {});
+  const seen = new Set(all[packKey()] || []);
   let fresh = pool.filter((w) => !seen.has(w.word));
   if (fresh.length < ROUNDS) {
     seen.clear();
@@ -136,8 +140,7 @@ function pickWords() {
   }
   const chosen = shuffle(fresh).slice(0, ROUNDS);
   chosen.forEach((w) => seen.add(w.word));
-  const all = store.get(KEYS.seen, {});
-  all[game.level] = [...seen];
+  all[packKey()] = [...seen];
   store.set(KEYS.seen, all);
   return chosen;
 }
@@ -157,7 +160,7 @@ function renderGarden() {
 function renderStats() {
   el.score.textContent = game.score;
   el.streak.textContent = game.streak;
-  el.best.textContent = bestScores()[game.level] || 0;
+  el.best.textContent = bestScores()[packKey()] || 0;
   el.round.textContent = `${Math.min(game.index + 1, ROUNDS)}/${ROUNDS}`;
 }
 
@@ -336,8 +339,8 @@ async function check() {
     const points = POINTS[game.level] * stars + Math.min(game.streak - 1, 5) * 2;
     game.score += points;
     const all = bestScores();
-    if (game.score > (all[game.level] || 0)) {
-      all[game.level] = game.score;
+    if (game.score > (all[packKey()] || 0)) {
+      all[packKey()] = game.score;
       store.set(KEYS.best, all);
     }
     sfx.right();
@@ -448,6 +451,23 @@ function setLevel(level) {
   store.set(KEYS.level, level);
   document.querySelectorAll("#level .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === level)));
 }
+
+const themeBox = $("theme");
+THEMES.forEach((t) => {
+  const b = document.createElement("button");
+  b.className = "g-chip";
+  b.dataset.value = t.id;
+  b.setAttribute("aria-pressed", String(t.id === game.theme));
+  b.textContent = `${t.emoji} ${t.label}`;
+  b.addEventListener("click", () => {
+    if (t.id === game.theme) return;
+    game.theme = t.id;
+    store.set(KEYS.theme, t.id);
+    themeBox.querySelectorAll(".g-chip").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.value === t.id)));
+    newGame();
+  });
+  themeBox.appendChild(b);
+});
 
 document.querySelectorAll("#level .g-chip").forEach((b) =>
   b.addEventListener("click", () => {

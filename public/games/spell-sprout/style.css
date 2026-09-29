@@ -1,6 +1,9 @@
 .narrow { max-width: 620px; }
 .big { font-size: 3.4rem; }
-.level { margin-bottom: 12px; }
+.level { margin-bottom: 10px; }
+.theme-row { display: grid; gap: 6px; margin-bottom: 12px; }
+.lbl { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+#theme .g-chip { font-size: 0.85rem; padding: 6px 12px; }
 .g-chip small { display: block; font-weight: 600; font-size: 0.68rem; color: var(--muted); }
 .g-stats .g-stat { flex: 1 1 0; min-width: 0; padding-left: 6px; padding-right: 6px; text-align: center; }
 

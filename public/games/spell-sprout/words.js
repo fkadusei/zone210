@@ -328,7 +328,7 @@ microphone|🎤|It makes your voice louder.
 headphones|🎧|You wear them over your ears to hear music.`,
 };
 
-export const WORDS = Object.fromEntries(
+const WORDS_BY_LEVEL = Object.fromEntries(
   Object.entries(RAW).map(([level, text]) => [
     level,
     text.split("\n").map((line) => {
@@ -337,3 +337,364 @@ export const WORDS = Object.fromEntries(
     }),
   ])
 );
+
+// ---------- themed packs ----------
+export const THEMES = [
+  { id: "mixed", label: "Mixed", emoji: "🎲" },
+  { id: "animals", label: "Animals", emoji: "🐾" },
+  { id: "food", label: "Food", emoji: "🍎" },
+  { id: "space", label: "Space", emoji: "🚀" },
+  { id: "ocean", label: "Ocean", emoji: "🌊" },
+  { id: "nature", label: "Nature", emoji: "🌿" },
+  { id: "home", label: "Home & School", emoji: "🏠" },
+  { id: "sports", label: "Sports & Music", emoji: "⚽" },
+  { id: "jobs", label: "Jobs & Places", emoji: "🏙️" },
+  { id: "fantasy", label: "Fantasy & Fun", emoji: "✨" },
+];
+
+// existing words that also belong to a theme
+const TAGS = {
+  animals: "cat dog fish frog bird duck pig cow bee bear lion horse mouse whale ant bat owl fox hen bug crab swan seal wolf deer goat sheep snail worm fly monkey turtle rabbit spider tiger zebra parrot chicken turkey lobster shrimp beetle cricket ladybug otter beaver badger gorilla rhino hippo camel llama koala panda peacock eagle elephant dinosaur butterfly crocodile dolphin giraffe kangaroo penguin octopus hedgehog squirrel flamingo caterpillar alligator hippopotamus rhinoceros chimpanzee starfish rooster chameleon",
+  food: "apple bread cake corn egg grape lemon milk pizza pie peach pear rice soup taco candy cheese juice tea nut melon orange banana cherry cookie butter carrot potato cupcake pepper dinner cocoa coconut avocado lettuce onion garlic peanut pretzel noodles waffle donut honey coffee pancake bagel tomato chocolate pineapple strawberry watermelon hamburger sandwich broccoli cucumber pumpkin spaghetti popcorn lollipop doughnut tangerine salt spoon fork bowl",
+  space: "planet rocket comet galaxy star moon sun satellite astronaut spaceship telescope",
+  ocean: "fish whale sea crab seal dolphin octopus starfish shrimp lobster boat ship anchor beach island mermaid pirate treasure turtle penguin",
+  nature: "tree leaf rose flower rain snow cloud rainbow thunder tulip cactus mushroom sunflower lightning tornado snowflake thunderstorm hurricane sunshine sunset desert forest volcano mountain island jungle garden plant sun moon",
+  home: "door bed key bell lock map coat dress sofa bath broom soap pen chair plant bowl fork spoon window basket bucket candle mirror hammer wrench ladder thread battery ticket clock book pencil school library backpack scissors umbrella calendar notebook keyboard computer telephone envelope newspaper flashlight paintbrush lantern",
+  sports: "ball drum guitar piano violin trumpet volleyball basketball football baseball tennis surfing bowling archery gymnastics swimming saxophone microphone headphones skateboard bicycle champion trophy medal soccer kite puzzle",
+  jobs: "school hospital library police firefighter scientist detective astronaut supermarket restaurant bakery stadium airport castle circus statue bridge tractor truck ambulance helicopter",
+  fantasy: "dragon wizard fairy unicorn mermaid genie ghost robot castle pirate treasure wand crown rainbow fireworks circus spaceship dinosaur",
+};
+
+// new themed words: "word|emoji|clue" (level comes from word length)
+const NEW = {
+  animals: `puppy|🐶|A baby dog.
+kitten|🐱|A baby cat.
+bunny|🐰|A cute, fluffy hopper.
+cheetah|🐆|The fastest runner on land.
+leopard|🐆|A big spotted cat that climbs trees.
+buffalo|🐃|A large wild animal with curved horns.
+raccoon|🦝|A masked animal that washes its food.
+skunk|🦨|A black and white animal with a smelly spray.
+sloth|🦥|A very slow animal that hangs from trees.
+dove|🕊️|A white bird that is a sign of peace.
+chick|🐤|A fluffy baby bird that hatches from an egg.
+lizard|🦎|A small reptile that loves to sunbathe.
+snake|🐍|A long animal with no legs that slithers.
+shark|🦈|A fierce fish with sharp teeth.
+moose|🦌|A giant deer with wide flat antlers.
+pony|🐴|A small horse.
+gecko|🦎|A little lizard that can climb walls.
+toad|🐸|A bumpy relative of the frog.
+crow|🐦|A clever black bird that says caw.
+robin|🐦|A small bird with a red chest.
+falcon|🦅|A very fast bird that hunts.
+vulture|🦅|A large bird that eats leftovers.
+antelope|🦌|A graceful animal that leaps across grasslands.
+tortoise|🐢|A slow land animal with a domed shell.
+platypus|🦆|An odd Australian animal with a bill like a duck.
+grasshopper|🦗|A green insect that jumps high.
+dragonfly|🦋|An insect with long see-through wings that zips over ponds.
+scorpion|🦂|A desert creature with pincers and a stinging tail.
+bumblebee|🐝|A big, fuzzy bee.
+crocodile|🐊|A big reptile with a long snout.`,
+  food: `salad|🥗|A bowl of mixed greens and vegetables.
+sushi|🍣|Rolled rice and fish from Japan.
+mango|🥭|A sweet orange tropical fruit.
+kiwi|🥝|A fuzzy brown fruit that is green inside.
+fries|🍟|Crispy sticks of fried potato.
+hotdog|🌭|A sausage served in a long bun.
+steak|🥩|A thick slice of cooked meat.
+bacon|🥓|Crispy strips of salty pork for breakfast.
+pasta|🍝|Shapes made from dough, like macaroni.
+cereal|🥣|A breakfast you pour milk over.
+pudding|🍮|A soft, sweet dessert.
+omelette|🍳|Beaten eggs cooked flat in a pan.
+sugar|🍬|The sweet white crystals in your tea.
+cocoa|🍫|A hot chocolate drink.
+muffin|🧁|A small round cake for breakfast.
+toast|🍞|Sliced bread that is browned until crisp.
+cracker|🍘|A thin, crisp biscuit.
+peas|🫛|Tiny green balls in a pod.
+beans|🫘|Seeds that come in a pod and go on toast.
+jelly|🍮|A wobbly fruity dessert.
+biscuit|🍪|A crunchy baked treat you dunk in tea.
+burrito|🌯|A tortilla wrapped around a filling.
+dumpling|🥟|A little parcel of dough with a filling.
+lasagna|🍝|Layers of pasta, sauce and cheese.
+raisin|🍇|A dried grape.
+almond|🥜|A pale nut used in marzipan.
+cashew|🥜|A curved nut that grows on trees.
+oatmeal|🥣|A warm breakfast porridge.
+sundae|🍨|Ice cream with sauce and a cherry on top.
+banana|🍌|A long yellow fruit.`,
+  space: `orbit|🪐|The path a moon takes around a planet.
+meteor|☄️|A shooting star that burns up in the sky.
+asteroid|☄️|A big space rock.
+alien|👽|A visitor from another world, in stories.
+saturn|🪐|The planet with big rings.
+jupiter|🪐|The biggest planet of all.
+mars|🔴|The red planet.
+earth|🌍|The planet we live on.
+venus|🌕|The hottest planet, shining like a bright star.
+neptune|🔵|A far-away blue planet.
+uranus|🔵|A planet that spins on its side.
+mercury|⚪|The planet closest to the sun.
+eclipse|🌒|When the moon hides the sun.
+crater|🌑|A big round dent on the moon.
+gravity|🍎|The force that pulls things down.
+universe|🌌|Everything that exists, from tiny dust to giant stars.
+shuttle|🚀|A spacecraft that can be used again.
+launch|🚀|The moment a rocket blasts off.
+countdown|⏱️|Ten, nine, eight... before blast-off.
+constellation|✨|A pattern of stars, like the Big Dipper.
+nebula|🌌|A glowing cloud of gas and dust in space.
+supernova|💥|A giant exploding star.
+spacesuit|🧑‍🚀|What an astronaut wears outside the ship.
+blastoff|🚀|The start of a rocket's journey.
+lunar|🌙|Anything to do with the moon.
+solar|☀️|Anything to do with the sun.
+cosmos|🌌|Another word for the whole universe.
+rover|🚙|A robot car that explores other planets.
+sunlight|🌞|The bright light that comes from our star.
+starlight|✨|The glow you see from stars at night.`,
+  ocean: `shark|🦈|A fierce fish with sharp teeth.
+wave|🌊|A moving ridge of water.
+shell|🐚|The hard home of a sea snail.
+seashell|🐚|You can find one on the sand and hear the sea in it.
+seaweed|🌿|Green plants that float under the water.
+clam|🦪|A shellfish that opens and closes.
+oyster|🦪|A shellfish that can hold a pearl.
+pearl|🦪|A shiny white gem made in a shell.
+sailor|⚓|A person who works on a ship.
+captain|🧑‍✈️|The leader of a ship.
+harbor|⚓|A safe place where boats stay.
+sailboat|⛵|A boat pushed by the wind.
+surfboard|🏄|You stand on it to ride waves.
+snorkel|🤿|A tube for breathing while you swim face-down.
+diving|🤿|Swimming deep underwater.
+tide|🌊|The sea rising and falling each day.
+ocean|🌊|A huge body of salt water.
+pufferfish|🐡|A fish that blows up like a balloon.
+goldfish|🐠|A small orange fish kept in a bowl.
+tropical|🐠|Warm and sunny, like a coral reef.
+sandcastle|🏖️|You build it at the beach with a bucket.
+seagull|🐦|A noisy white bird by the sea.
+flipper|🐬|A swimmer's flat foot, or a dolphin's fin.
+lifeboat|🚤|A small boat used to rescue people.
+waterfall|🏞️|Water tumbling off a high cliff.
+raft|🛶|A simple flat boat made from logs.
+canoe|🛶|A narrow boat you paddle.
+paddle|🛶|You pull it through water to move a boat.
+island|🏝️|Land with water all around.
+lagoon|🏝️|A calm pool of sea water by an island.`,
+  nature: `river|🏞️|Water that flows to the sea.
+valley|🏞️|Low land between two hills.
+meadow|🌾|A grassy field full of wildflowers.
+grass|🌱|The green stuff on a lawn.
+seed|🌱|You plant it and a flower grows.
+sprout|🌱|A tiny new plant poking out of the soil.
+branch|🌿|The part of a tree that leaves grow on.
+petal|🌸|The coloured part of a flower.
+bloom|🌸|When a flower opens.
+daisy|🌼|A white flower with a yellow middle.
+bamboo|🎍|A tall, hollow plant that pandas eat.
+palm|🌴|A tree with big leaves on top, found on beaches.
+pine|🌲|An evergreen tree with needles.
+maple|🍁|A tree with red leaves in autumn.
+autumn|🍂|The season when leaves fall.
+spring|🌸|The season when flowers bloom.
+summer|☀️|The hottest season.
+breeze|🌬️|A gentle wind.
+wind|💨|Moving air that blows kites.
+storm|⛈️|Wild weather with rain and thunder.
+fog|🌫️|A thick cloud close to the ground.
+frost|❄️|Icy white crystals on cold mornings.
+raindrop|💧|One tiny piece of a shower.
+drizzle|🌦️|Very light rain.
+sunrise|🌅|When the sun comes up in the morning.
+canyon|🏜️|A deep valley with steep rocky walls.
+acorn|🌰|The nut of an oak tree.
+pebble|🪨|A small smooth stone.
+moss|🌿|Soft green stuff that grows on rocks.
+puddle|💧|A little pool of water on the ground.`,
+  home: `kitchen|🍳|The room where you cook.
+bedroom|🛏️|The room where you sleep.
+garage|🚗|A place to park the car.
+roof|🏠|The top of a house that keeps out the rain.
+wall|🧱|The side of a room, made of bricks.
+stairs|🪜|Steps that take you up to the next floor.
+fridge|🧊|A cold box that keeps food fresh.
+oven|🔥|You bake cakes in it.
+pillow|🛏️|A soft cushion for your head.
+blanket|🛏️|A cosy cover for your bed.
+towel|🛁|You dry yourself with it after a bath.
+shower|🚿|Water sprays down on you to get you clean.
+lamp|💡|A light that sits on a table.
+toaster|🍞|It makes bread crispy and brown.
+teapot|🫖|You pour tea from it.
+plate|🍽️|You put your dinner on it.
+mug|☕|A cup with a handle.
+vase|💐|You put flowers in it.
+teddy|🧸|A soft bear you cuddle at bedtime.
+doll|🧸|A toy that looks like a tiny person.
+blocks|🧱|Toy pieces you stack into towers.
+crayon|🖍️|A waxy stick for colouring.
+ruler|📏|You use it to draw straight lines and measure.
+eraser|🧽|It rubs out pencil marks.
+glue|🧴|A sticky liquid that joins paper.
+glasses|👓|You wear them to see better.
+watch|⌚|You wear it on your wrist to tell the time.
+shirt|👕|Clothing for your top half.
+pants|👖|Clothing for your legs.
+jacket|🧥|A short coat.
+scarf|🧣|You wrap it around your neck in winter.
+gloves|🧤|They keep your fingers warm.
+boots|🥾|Sturdy shoes for muddy walks.
+desk|🖥️|A table where you do your work.
+teacher|🧑‍🏫|The person who helps you learn at school.
+homework|📝|Schoolwork you do at home.
+lesson|📖|A class where you learn something.`,
+  sports: `golf|⛳|A game where you hit a small ball into a hole.
+hockey|🏒|A game played with sticks and a puck.
+karate|🥋|A martial art from Japan.
+skiing|⛷️|Gliding down snowy mountains on long boards.
+skating|⛸️|Gliding on ice with blades on your shoes.
+running|🏃|Moving fast on your feet.
+cycling|🚴|Riding a bike as a sport.
+rowing|🚣|Pulling oars to move a boat.
+fishing|🎣|Trying to catch fish with a rod.
+darts|🎯|Throwing small arrows at a round board.
+chess|♟️|A board game with kings and queens.
+rugby|🏉|A team game with an oval ball and tackling.
+badminton|🏸|A game played with a shuttlecock and racket.
+marathon|🏃|A very long race of 26 miles.
+racket|🎾|You hit a tennis ball with it.
+goalie|🥅|The player who guards the net.
+melody|🎵|The tune of a song.
+rhythm|🎶|The beat in music.
+singer|🎤|A person who sings songs.
+concert|🎤|A live music show.
+dancer|💃|Someone who moves to the music.
+ballet|🩰|A graceful dance on tiptoe.
+flute|🎶|A thin instrument you blow across.
+drummer|🥁|The one who keeps the band's beat.
+guitar|🎸|A string instrument you strum.
+band|🎸|A group of musicians.
+orchestra|🎼|A big group playing many instruments together.
+whistle|🎶|A referee blows it to stop the game.
+medal|🥇|A prize for coming first.
+podium|🥇|The stand where winners stand.
+stretch|🤸|What you do to warm up your muscles.
+javelin|🏹|A long spear athletes throw.
+sprinter|🏃|A runner who dashes short distances.
+jumping|🤾|Leaping off the ground.
+teammate|🤝|A person on your side in a game.`,
+  jobs: `doctor|🧑‍⚕️|A person who helps sick people get better.
+nurse|🧑‍⚕️|A person who cares for patients.
+teacher|🧑‍🏫|A person who helps you learn.
+farmer|🧑‍🌾|A person who grows crops and raises animals.
+chef|🧑‍🍳|A person who cooks in a restaurant.
+pilot|🧑‍✈️|A person who flies an aeroplane.
+artist|🧑‍🎨|A person who paints or draws.
+driver|🚕|A person who steers a bus or taxi.
+builder|👷|A person who builds houses.
+baker|🥖|A person who bakes bread and cakes.
+mechanic|🧑‍🔧|A person who fixes cars.
+dentist|🦷|A person who looks after your teeth.
+judge|⚖️|A person who decides cases in a court.
+office|🏢|A room where people do desk work.
+museum|🏛️|A place with art and old things to look at.
+church|⛪|A building where people go to pray.
+bank|🏦|A place that keeps people's money safe.
+hotel|🏨|A building where travellers sleep.
+factory|🏭|A place where machines make things.
+farm|🚜|Land where animals and crops are looked after.
+market|🛒|A place with lots of stalls selling things.
+zoo|🦁|A park where you can see wild animals.
+park|🌳|A green space with swings and benches.
+cinema|🎬|A place where you watch films on a big screen.
+theater|🎭|A place where you watch plays.
+shop|🏪|A place where you buy things.
+station|🚉|Where trains stop to let passengers on.
+city|🏙️|A big town with tall buildings.
+village|🏘️|A small group of houses in the countryside.
+postman|📮|A person who delivers letters.
+plumber|🔧|A person who fixes pipes.
+electrician|💡|A person who fixes wires and lights.
+gardener|🧑‍🌾|A person who looks after plants.
+librarian|📚|A person who works with books.
+captain|🧑‍✈️|The person in charge of a ship or plane.
+soldier|🪖|A person who serves in the army.
+lawyer|⚖️|A person who gives legal advice.
+vet|🐕|An animal doctor.
+tailor|🧵|A person who makes and mends clothes.
+cashier|💷|The person who takes your money at the shop.`,
+  fantasy: `magic|🪄|Special powers that make impossible things happen.
+spell|✨|Magic words a wizard says.
+potion|🧪|A bubbling magical drink.
+witch|🧙|A magical woman with a broomstick.
+elf|🧝|A pointy-eared magical helper.
+knight|🛡️|A brave soldier in shining armour.
+shield|🛡️|A knight holds it to block attacks.
+kingdom|🏰|A land ruled by a king or queen.
+princess|👸|A king's daughter.
+prince|🤴|A king's son.
+king|🤴|A man who wears a crown and rules a land.
+queen|👸|A woman who rules a kingdom.
+monster|👾|A scary creature in stories.
+goblin|👺|A mischievous little green creature.
+vampire|🧛|A spooky character with pointy teeth.
+hero|🦸|Someone who does brave things.
+superhero|🦸|A hero with special powers and a cape.
+villain|🦹|The bad guy in a story.
+mask|🎭|You wear it over your face.
+balloon|🎈|It floats when you fill it with air or helium.
+party|🎉|A fun get-together with cake and games.
+confetti|🎊|Tiny bits of paper thrown at celebrations.
+clown|🤡|A funny circus performer with a red nose.
+magician|🎩|A performer who pulls rabbits from hats.
+sparkle|✨|To shine with tiny flashes of light.
+dragon|🐉|A creature that breathes fire.
+phoenix|🔥|A bird that rises from the flames.
+treasure|💎|Riches hidden by pirates.
+adventure|🧭|An exciting journey.
+giant|🧌|A huge person in fairy tales.
+enchanted|✨|Put under a magic spell.
+wizard|🧙|A man with magic powers and a long beard.
+cauldron|🧪|A big pot where a witch brews potions.
+lantern|🏮|A lamp you can carry.
+fairytale|📖|A story with magic and happy endings.`,
+};
+
+const BAND = (len) => (len <= 5 ? "easy" : len <= 7 ? "medium" : "hard");
+export const WORD_LEVEL_BAND = BAND;
+
+const byWord = new Map();
+Object.entries(WORDS_BY_LEVEL).forEach(([level, list]) =>
+  list.forEach((e) => byWord.set(e.word, { ...e, level, themes: new Set() }))
+);
+Object.entries(TAGS).forEach(([theme, text]) =>
+  text.split(/\s+/).forEach((w) => byWord.get(w) && byWord.get(w).themes.add(theme))
+);
+Object.entries(NEW).forEach(([theme, text]) =>
+  text.split("\n").forEach((line) => {
+    const [word, emoji, clue] = line.split("|").map((x) => x.trim());
+    if (!word) return;
+    const existing = byWord.get(word);
+    if (existing) existing.themes.add(theme);
+    else byWord.set(word, { word, emoji, clue, level: BAND(word.length), themes: new Set([theme]) });
+  })
+);
+
+export const ALL_WORDS = [...byWord.values()];
+
+/** Words for a level and theme. Themed packs are split by word length; short packs are topped up with the nearest lengths. */
+export function poolFor(level, theme, minimum = 12) {
+  if (!theme || theme === "mixed") return ALL_WORDS.filter((w) => w.level === level && w.themes.size >= 0);
+  const themed = ALL_WORDS.filter((w) => w.themes.has(theme));
+  const inBand = themed.filter((w) => BAND(w.word.length) === level);
+  if (inBand.length >= minimum) return inBand;
+  const target = { easy: 4, medium: 6, hard: 9 }[level];
+  const rest = themed.filter((w) => !inBand.includes(w)).sort((a, b) => Math.abs(a.word.length - target) - Math.abs(b.word.length - target));
+  return [...inBand, ...rest.slice(0, minimum - inBand.length)];
+}
