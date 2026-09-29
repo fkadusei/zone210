@@ -6,6 +6,14 @@
     <title>Snakes &amp; Ladders · Zone 210</title>
     <meta name="theme-color" content="#eef0f5" />
     <script src="../../assets/theme.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
     <link rel="stylesheet" href="../../assets/shell.css" />
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -39,15 +47,12 @@
 
       <div class="players" id="players" aria-label="Players"></div>
 
-      <div class="board-wrap" id="wrap">
-        <div class="grid" id="grid" aria-label="Game board"></div>
-        <svg class="art" id="art" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
-        <div class="tokens" id="tokens"></div>
-      </div>
+      <div class="stage" id="stage" aria-label="Game board"><div class="stage-loading">Setting up the board…</div></div>
 
       <div class="roller">
-        <div class="die" id="die" aria-live="polite" aria-label="Dice"></div>
+        <div id="dieBox" hidden><div class="die" id="die" aria-label="Dice"></div></div>
         <button class="g-btn roll" id="roll">Roll the dice</button>
+        <button class="g-btn ghost" id="resetView" hidden>Reset view</button>
       </div>
       <p class="g-status" id="status" role="status" aria-live="polite"></p>
     </main>

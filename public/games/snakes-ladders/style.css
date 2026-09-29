@@ -95,3 +95,20 @@
   .pl .dot { width: 18px; height: 18px; }
   .sq { padding: 2px 3px; }
 }
+
+/* 3D stage */
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1.1;
+  max-height: 82vh;
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #241812, #120c09);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-lg);
+}
+.stage.is2d { aspect-ratio: auto; max-height: none; background: none; border: 0; box-shadow: none; overflow: visible; }
+.stage-loading { position: absolute; inset: 0; display: grid; place-items: center; color: #d9c8b4; font-weight: 600; }
+.stage canvas { cursor: grab; }
+@media (max-width: 560px) { .stage { aspect-ratio: 1 / 1.3; } }

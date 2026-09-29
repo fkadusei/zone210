@@ -31,7 +31,7 @@ if (!["cpu", "2", "3", "4"].includes(settings.mode)) settings.mode = "cpu";
 const SPEED = new URLSearchParams(location.search).has("fast") ? 25 : 1; // ?fast is for testing
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms / SPEED));
 
-// number n (1..100) -> centre of its square in 0..100 board units, y from the top
+
 function centre(n) {
   const idx = n - 1;
   const row = Math.floor(idx / 10);
@@ -69,7 +69,7 @@ const sfx = {
   win: () => [523, 659, 784, 1046, 784, 1046, 1318].forEach((f, i) => tone(f, i * 0.1, 0.26, "triangle", 0.1)),
 };
 
-// ---------- drawing the board ----------
+
 function svgEl(name, attrs) {
   const e = document.createElementNS("http://www.w3.org/2000/svg", name);
   Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
@@ -157,15 +157,100 @@ function drawArt() {
   });
 }
 
+// ---------- flat fallback view (used when WebGL is unavailable) ----------
+function createView2D(container) {
+  container.classList.add("is2d");
+  container.innerHTML = `<div class="board-wrap" id="wrap"><div class="grid" id="grid" aria-label="Game board"></div><svg class="art" id="art" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg><div class="tokens" id="tokens"></div></div>`;
+  $("dieBox").hidden = false;
+  const tokensEl = $("tokens");
+  const dieEl = $("die");
+  let pos = [];
+  let turnIdx = -1;
+  const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+  const showDie = (n) => {
+    dieEl.innerHTML = "";
+    for (let i = 0; i < 9; i += 1) {
+      const p = document.createElement("i");
+      if (n && PIPS[n].includes(i)) p.className = "on";
+      dieEl.appendChild(p);
+    }
+  };
+  showDie(0);
+  function tokenPos(i) {
+    if (!pos[i]) return { x: 8 + i * 7, y: 95.45 };
+    const c = centre(pos[i]);
+    const same = pos.map((q, k) => (q === pos[i] ? k : -1)).filter((k) => k >= 0);
+    const slot = same.indexOf(i);
+    const spread = same.length > 1 ? 2.6 : 0;
+    const dx = same.length > 1 ? ((slot % 2) - 0.5) * spread * 1.6 : 0;
+    const dy = same.length > 1 ? (Math.floor(slot / 2) - 0.5) * spread * 1.6 : 0;
+    return { x: c.x + dx, y: (c.y + dy) * 0.90909 };
+  }
+  function paint(slide = false) {
+    pos.forEach((_, i) => {
+      const el = tokensEl.children[i];
+      const p = tokenPos(i);
+      el.classList.toggle("slide", slide);
+      el.classList.toggle("now", i === turnIdx);
+      el.style.left = `${p.x}%`;
+      el.style.top = `${p.y}%`;
+    });
+  }
+  drawGrid();
+  drawArt();
+  return {
+    setPlayers(list) {
+      tokensEl.innerHTML = "";
+      pos = list.map(() => 0);
+      list.forEach((p) => {
+        const el = document.createElement("div");
+        el.className = "tok";
+        el.style.setProperty("--c", p.color);
+        tokensEl.appendChild(el);
+      });
+      paint();
+    },
+    setTurn(i) {
+      turnIdx = i;
+      paint();
+    },
+    setPos(i, p) {
+      pos[i] = p;
+      paint();
+    },
+    async hop(i, p) {
+      pos[i] = p;
+      paint();
+      await sleep(150);
+    },
+    async jump(i, from, to) {
+      pos[i] = to;
+      paint(true);
+      await sleep(750);
+      paint(false);
+    },
+    async rollDice(value) {
+      dieEl.classList.add("rolling");
+      for (let k = 0; k < 7; k += 1) {
+        showDie(1 + Math.floor(Math.random() * 6));
+        await sleep(85);
+      }
+      dieEl.classList.remove("rolling");
+      showDie(value);
+    },
+    setDiceEnabled() {},
+    celebrate() {},
+    resetView() {},
+  };
+}
+
 // ---------- state ----------
 let players = []; // { name, color, cpu, pos }
 let turn = 0;
 let busy = false;
 let over = false;
-let dice = 0;
+let view = null;
 
-const tokensEl = $("tokens");
-const dieEl = $("die");
 const statusEl = $("status");
 const rollBtn = $("roll");
 const setStatus = (t, kind = "") => {
@@ -173,44 +258,6 @@ const setStatus = (t, kind = "") => {
   statusEl.className = "g-status" + (kind ? ` ${kind}` : "");
 };
 
-const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
-function showDie(n) {
-  dieEl.innerHTML = "";
-  for (let i = 0; i < 9; i += 1) {
-    const p = document.createElement("i");
-    if (n && PIPS[n].includes(i)) p.className = "on";
-    dieEl.appendChild(p);
-  }
-  dieEl.setAttribute("aria-label", n ? `Dice: ${n}` : "Dice");
-}
-
-function tokenPos(i) {
-  const p = players[i];
-  if (p.pos === 0) return { x: 8 + i * 7, y: 95.45 };
-  const c = centre(p.pos);
-  const same = players.map((q, k) => (q.pos === p.pos ? k : -1)).filter((k) => k >= 0);
-  const slot = same.indexOf(i);
-  const spread = same.length > 1 ? 2.6 : 0;
-  const dx = same.length > 1 ? ((slot % 2) - 0.5) * spread * 1.6 : 0;
-  const dy = same.length > 1 ? (Math.floor(slot / 2) - 0.5) * spread * 1.6 : 0;
-  return { x: c.x + dx, y: (c.y + dy) * 0.90909 };
-}
-function renderTokens(slide = false) {
-  players.forEach((p, i) => {
-    let el = tokensEl.children[i];
-    if (!el) {
-      el = document.createElement("div");
-      el.className = "tok";
-      el.style.setProperty("--c", p.color);
-      tokensEl.appendChild(el);
-    }
-    const pos = tokenPos(i);
-    el.classList.toggle("slide", slide);
-    el.classList.toggle("now", i === turn && !over);
-    el.style.left = `${pos.x}%`;
-    el.style.top = `${pos.y}%`;
-  });
-}
 function renderPlayers() {
   const box = $("players");
   box.innerHTML = "";
@@ -231,24 +278,22 @@ function newGame() {
     cpu: settings.mode === "cpu" && i === 1,
     pos: 0,
   }));
-  tokensEl.innerHTML = "";
   turn = 0;
   busy = false;
   over = false;
-  dice = 0;
   $("end").classList.remove("show");
-  showDie(0);
-  renderTokens();
+  view.setPlayers(players);
   renderPlayers();
   beginTurn();
 }
 
 function beginTurn() {
   renderPlayers();
-  renderTokens();
+  view.setTurn(over ? -1 : turn);
   const p = players[turn];
   if (over) return;
   rollBtn.disabled = p.cpu;
+  view.setDiceEnabled(!p.cpu);
   rollBtn.textContent = p.cpu ? "Computer's turn…" : players.length > 1 && settings.mode !== "cpu" ? `${p.name}: roll the dice` : "Roll the dice";
   setStatus(p.cpu ? "The computer is rolling…" : `${p.name === "You" ? "Your" : `${p.name}'s`} turn. Roll the dice!`);
   if (p.cpu) setTimeout(roll, 900 / SPEED);
@@ -258,17 +303,12 @@ async function roll() {
   if (busy || over) return;
   busy = true;
   rollBtn.disabled = true;
+  view.setDiceEnabled(false);
   const p = players[turn];
+  const idx = turn;
   const value = 1 + Math.floor(Math.random() * 6);
-  dieEl.classList.add("rolling");
   sfx.roll();
-  for (let i = 0; i < 7; i += 1) {
-    showDie(1 + Math.floor(Math.random() * 6));
-    await sleep(85);
-  }
-  dieEl.classList.remove("rolling");
-  showDie(value);
-  dice = value;
+  await view.rollDice(value);
   await sleep(250);
 
   const target = p.pos + value;
@@ -280,23 +320,21 @@ async function roll() {
   setStatus(`${p.name === "You" ? "You" : p.name} rolled a ${value}.`);
   for (let s = p.pos + 1; s <= target; s += 1) {
     p.pos = s;
-    renderTokens();
     sfx.step();
-    await sleep(150);
+    await view.hop(idx, s);
   }
   const jump = JUMPS[p.pos];
   if (jump) {
     const up = jump > p.pos;
-    await sleep(250);
+    await sleep(200);
     setStatus(up ? `A ladder! Up to ${jump}.` : `A snake! Down to ${jump}.`, up ? "good" : "bad");
     up ? sfx.ladder() : sfx.snake();
+    const from = p.pos;
     p.pos = jump;
-    renderTokens(true);
-    await sleep(750);
-    renderTokens(false);
+    await view.jump(idx, from, jump, up ? "ladder" : "snake");
   }
   renderPlayers();
-  if (p.pos === 100) return win(p);
+  if (p.pos === 100) return win(p, idx);
   await sleep(200);
   endTurn(value === 6 && settings.bonus === "on");
 }
@@ -308,18 +346,48 @@ function endTurn(again) {
   if (again) setStatus(`${players[turn].name === "You" ? "You" : players[turn].name} rolled a 6, so roll again!`, "good");
 }
 
-function win(p) {
+function win(p, idx) {
   over = true;
   busy = false;
   rollBtn.disabled = true;
+  view.setDiceEnabled(false);
+  view.setTurn(-1);
+  view.celebrate(idx);
   renderPlayers();
-  renderTokens();
   sfx.win();
   const you = settings.mode === "cpu";
   $("endTitle").textContent = you ? (p.cpu ? "The computer wins" : "You win!") : `${p.name} wins!`;
   $("endText").textContent = you && p.cpu ? "Better luck next time. Every game is a fresh roll." : "First to square 100. Well played!";
   setStatus(`${p.name} reached 100!`, "good");
-  setTimeout(() => $("end").classList.add("show"), 500);
+  setTimeout(() => $("end").classList.add("show"), 1300 / SPEED);
+}
+
+// ---------- start-up: 3D board when WebGL works, flat board otherwise ----------
+function hasWebGL() {
+  try {
+    const c = document.createElement("canvas");
+    return !!(c.getContext("webgl2") || c.getContext("webgl"));
+  } catch (err) {
+    return false;
+  }
+}
+async function mountView() {
+  const stage = $("stage");
+  if (hasWebGL()) {
+    try {
+      const { createView3D } = await import("./scene3d.js");
+      $("dieBox").hidden = true;
+      stage.innerHTML = "";
+      view = createView3D(stage, { LADDERS, SNAKES, onDiceClick: () => roll() });
+      $("resetView").hidden = false;
+      document.body.classList.add("mode3d");
+      return;
+    } catch (err) {
+      console.warn("3D board unavailable, using the flat board", err);
+      stage.innerHTML = "";
+    }
+  }
+  view = createView2D(stage);
 }
 
 // ---------- controls ----------
@@ -341,6 +409,7 @@ rollBtn.addEventListener("click", roll);
 $("newGame").addEventListener("click", newGame);
 $("again").addEventListener("click", newGame);
 $("endView").addEventListener("click", () => $("end").classList.remove("show"));
+$("resetView").addEventListener("click", () => view && view.resetView());
 const mute = $("mute");
 function syncMute() {
   mute.textContent = settings.muted ? "Sound Off" : "Sound On";
@@ -358,9 +427,9 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-drawGrid();
-drawArt();
 syncChips();
 syncMute();
-newGame();
-window.__sl = { get players() { return players; }, roll, newGame, JUMPS, get busy() { return busy; }, get over() { return over; }, get turn() { return turn; } };
+mountView().then(() => {
+  newGame();
+  window.__sl = { get players() { return players; }, roll, newGame, JUMPS, get busy() { return busy; }, get over() { return over; }, get turn() { return turn; }, get view() { return view; } };
+});
