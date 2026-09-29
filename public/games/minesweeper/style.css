@@ -3,14 +3,14 @@
 .mode { margin-left: auto; align-self: center; }
 .mode[aria-pressed="true"] { border-color: var(--gold); background: var(--gold-soft); }
 
-/* Minefield palette: sand in light mode, slate blue in dark mode */
+/* Minefield palette: soft periwinkle in light mode, slate blue in dark mode */
 :root {
-  --ms-field: #d9ccb6;
-  --ms-ring: #b9a98f;
-  --ms-closed-a: #b48a5a;
-  --ms-closed-b: #8d6640;
-  --ms-open: #efe6d3;
-  --ms-mine: #f0d5d5;
+  --ms-field: #dde3f3;
+  --ms-ring: #b3bedd;
+  --ms-closed-a: #93a5dc;
+  --ms-closed-b: #7186c4;
+  --ms-open: #f4f6fc;
+  --ms-mine: #f6d3da;
   --ms-n1: #2b6cb0;
   --ms-n2: #2f855a;
   --ms-n3: #d12c33;
@@ -39,7 +39,7 @@
 
 .wrap { display: grid; place-items: center; overflow-x: auto; padding: 6px 0 4px; }
 .field {
-  --cell: min(calc((100vw - 40px) / var(--cols)), 40px);
+  --cell: min(calc((100vw - 48px - (var(--cols) - 1) * 2px) / var(--cols)), 40px);
   display: grid;
   grid-template-columns: repeat(var(--cols), var(--cell));
   grid-auto-rows: var(--cell);
