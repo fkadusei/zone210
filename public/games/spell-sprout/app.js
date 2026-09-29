@@ -1,1234 +1,499 @@
-const WORD_BANK = {
-  easy: [
-    { word: "cat", clue: "A pet that says meow.", emoji: "🐱" },
-    { word: "dog", clue: "A pet that says woof.", emoji: "🐶" },
-    { word: "sun", clue: "It shines in the sky in daytime.", emoji: "☀️" },
-    { word: "hat", clue: "You wear it on your head.", emoji: "🧢" },
-    { word: "fish", clue: "It swims in water.", emoji: "🐟" },
-    { word: "milk", clue: "A white drink from a cup.", emoji: "🥛" },
-    { word: "frog", clue: "A green jumper near ponds.", emoji: "🐸" },
-    { word: "book", clue: "You read this to learn stories.", emoji: "📚" },
-    { word: "tree", clue: "A tall plant with leaves.", emoji: "🌳" },
-    { word: "ball", clue: "You can kick or throw it.", emoji: "⚽" },
-    { word: "star", clue: "Twinkles in the night sky.", emoji: "⭐" },
-    { word: "cake", clue: "A sweet treat for birthdays.", emoji: "🎂" }
-  ],
-  medium: [
-    { word: "planet", clue: "Earth is one of these.", emoji: "🪐" },
-    { word: "rocket", clue: "It blasts into space.", emoji: "🚀" },
-    { word: "garden", clue: "Flowers can grow here.", emoji: "🌼" },
-    { word: "butter", clue: "You can spread it on toast.", emoji: "🧈" },
-    { word: "jungle", clue: "A wild forest with many animals.", emoji: "🌴" },
-    { word: "pencil", clue: "You use this to write.", emoji: "✏️" },
-    { word: "winter", clue: "The coldest season.", emoji: "❄️" },
-    { word: "dragon", clue: "A magical fire-breathing creature.", emoji: "🐉" },
-    { word: "bridge", clue: "Roads can pass over water on it.", emoji: "🌉" },
-    { word: "cookie", clue: "A round baked snack.", emoji: "🍪" },
-    { word: "soccer", clue: "A game played by kicking a ball.", emoji: "🥅" },
-    { word: "school", clue: "A place where kids learn.", emoji: "🏫" }
-  ],
-  hard: [
-    { word: "elephant", clue: "A huge animal with a long trunk.", emoji: "🐘" },
-    { word: "dinosaur", clue: "A giant reptile from long ago.", emoji: "🦖" },
-    { word: "rainbow", clue: "A colorful arc after rain.", emoji: "🌈" },
-    { word: "treasure", clue: "Hidden gold and gems.", emoji: "💎" },
-    { word: "sandwich", clue: "A meal between two slices of bread.", emoji: "🥪" },
-    { word: "library", clue: "A place with many books.", emoji: "📖" },
-    { word: "playground", clue: "A place for swings and slides.", emoji: "🛝" },
-    { word: "adventure", clue: "An exciting trip or quest.", emoji: "🧭" },
-    { word: "mountain", clue: "A very high hill.", emoji: "⛰️" },
-    { word: "hospital", clue: "Doctors help people here.", emoji: "🏥" },
-    { word: "question", clue: "What you ask when you need an answer.", emoji: "❓" },
-    { word: "calendar", clue: "It shows days, weeks, and months.", emoji: "📅" }
-  ]
-};
+import { WORDS } from "./words.js";
 
+const ROUNDS = 10;
+const TRIES = 3;
 const POINTS = { easy: 10, medium: 15, hard: 20 };
-const MAX_LIVES = 5;
-const WORD_DIFFICULTY_RULES = {
-  easy: { minLength: 3, maxLength: 5, emoji: "🌱" },
-  medium: { minLength: 5, maxLength: 7, emoji: "🌿" },
-  hard: { minLength: 7, maxLength: 10, emoji: "🌳" }
-};
-const REMOTE_TOPICS = {
-  easy: ["animals", "school", "food", "nature", "sports", "family", "colors", "toys", "music", "weather"],
-  medium: ["science", "space", "music", "travel", "weather", "ocean", "history", "art", "garden", "reading"],
-  hard: ["history", "geography", "technology", "adventure", "culture", "astronomy", "engineering", "literature", "environment", "mountains"]
-};
-const REMOTE_WORD_API = "https://en.wikipedia.org/w/api.php";
-const REMOTE_WORD_CACHE_KEY = "spellSproutRemoteWordsV3";
-const LEGACY_REMOTE_WORD_CACHE_KEYS = ["spellSproutRemoteWordsV1", "spellSproutRemoteWordsV2"];
-const REMOTE_WORD_TIMEOUT_MS = 4500;
-const REMOTE_MIN_WORD_COUNT = 8;
-const REMOTE_SEARCH_LIMIT = 50;
-const WORD_IMAGE_CACHE_KEY = "spellSproutWordImageCacheV2";
-const WORD_IMAGE_THUMB_SIZE = 220;
-const MAX_WORD_IMAGE_CACHE_ENTRIES = 250;
-const HARD_BLOCKED_WORDS = new Set([
-  "anal", "anus", "arse", "ass", "asshole", "bastard", "bitch", "bloody", "boner", "boob", "boobs", "booty",
-  "buttsex", "cock", "coon", "crap", "cunt", "damn", "dick", "dildo", "drugs", "fag", "faggot", "fuck",
-  "fucker", "fucking", "hell", "hentai", "jerkoff", "jizz", "kike", "milf", "nazi", "nigga", "nigger",
-  "nude", "nudes", "orgasm", "penis", "porn", "pussy", "rape", "rapist", "sex", "sexy", "shit", "slut",
-  "tits", "vagina", "whore", "xxx"
-]);
-const HARD_BLOCKED_PATTERNS = [
-  /f+u+c*k+/,
-  /s+h+i+t+/,
-  /b+i+t+c+h+/,
-  /a+s+s+h*o+l+e+/,
-  /d+i+c+k+/,
-  /c+u+n+t+/,
-  /p+e+n+i+s+/,
-  /v+a+g+i+n+a+/,
-  /n+i+g+g+e*r+/,
-  /r+a+p+e+/,
-  /p+o+r+n+/,
-  /s+e+x+/,
-  /x+x+x+/
-];
-const KID_SAFE_ALLOWLIST = new Set([
-  "adventure", "ant", "ape", "apple", "apricot", "artist", "astronaut", "backpack", "badge", "ball", "banana",
-  "barn", "basket", "beach", "bear", "bee", "beetle", "bench", "berry", "bicycle", "bird", "blanket", "boat",
-  "book", "bottle", "bread", "bridge", "broccoli", "broom", "bubble", "bucket", "butter", "butterfly", "cabin",
-  "calendar", "camel", "camera", "candle", "candy", "canoe", "car", "carpet", "carrot", "castle", "cat",
-  "caterpillar", "chair", "cheese", "cherry", "chicken", "cloud", "coat", "coconut", "cookie", "corn", "cow",
-  "crayon", "cup", "cupcake", "deer", "desk", "diamond", "dinosaur", "dolphin", "donkey", "dragon", "drum",
-  "duck", "eagle", "ear", "earth", "elephant", "engine", "eraser", "falcon", "family", "farm", "feather",
-  "fence", "field", "fire", "firefly", "fish", "flag", "flower", "forest", "fork", "fox", "frog", "fruit",
-  "friend", "garden", "giraffe", "globe", "goat", "grape", "grass", "guitar", "hammer", "happy", "hat", "hippo",
-  "holiday", "horse", "hospital", "house", "island", "jacket", "jelly", "jungle", "kangaroo", "kitten", "koala",
-  "ladder", "lamp", "leaf", "lemon", "library", "lion", "lizard", "magic", "magnet", "mango", "map", "marble",
-  "melon", "milk", "mirror", "monkey", "moon", "mountain", "mouse", "music", "nest", "notebook", "ocean",
-  "octopus", "orange", "otter", "owl", "panda", "paper", "parrot", "peach", "pear", "pencil", "penguin",
-  "piano", "planet", "playground", "plum", "pond", "potato", "pumpkin", "puppy", "question", "rabbit", "rain",
-  "rainbow", "rocket", "rose", "ruler", "sand", "sandwich", "school", "science", "scissors", "sea", "seashell",
-  "shark", "sheep", "ship", "shoe", "sky", "snail", "snake", "snow", "soccer", "star", "strawberry", "sun",
-  "table", "teacher", "tiger", "tomato", "train", "treasure", "tree", "turtle", "village", "violin", "volcano",
-  "water", "waterfall", "weather", "whale", "window", "winter", "wizard", "wolf", "yellow", "zebra",
-  "airplane", "airplanes", "alligator", "alphabet", "aquarium", "backyard", "baseball", "bathroom", "beautiful",
-  "birthday", "bookmark", "breakfast", "building", "campfire", "carnation", "carpenter", "classroom", "climbing",
-  "colorful", "computer", "cupboard", "dandelion", "daylight", "discovery", "distance", "dragonfly", "envelope",
-  "favorite", "festival", "fireplace", "fireworks", "football", "friendship", "furniture", "gardener", "geography",
-  "gingerbread", "glittering", "hamburger", "handprint", "happiness", "harmonica", "headphones", "helicopter",
-  "homework", "imagine", "important", "jellyfish", "keyboard", "landscape", "language", "librarian", "lighthouse",
-  "magazine", "marshmallow", "microscope", "mushroom", "orchestra", "painting", "pancakes", "pineapple", "popcorn",
-  "princess", "raincoat", "rainstorm", "recess", "reindeer", "riverbank", "sandcastle", "scarecrow", "schoolbus",
-  "seahorse", "shoelace", "shoulders", "snowflake", "snowman", "spaceship", "spaghetti", "sparkling", "sunflower",
-  "sunshine", "surprise", "telescope", "tomorrow", "triangle", "umbrella", "vacation", "watermelon", "weekend",
-  "wildlife", "wonderful", "workbook", "xylophone", "yesterday", "zookeeper"
-]);
+const EXTRA_LETTERS = { easy: 2, medium: 3, hard: 4 };
+const NEXT_LEVEL = { easy: "medium", medium: "hard", hard: "easy" };
+const PLANT = { 3: "🌻", 2: "🌷", 1: "🌿", 0: "🥀" };
+const CHEERS = ["Great job!", "Wonderful!", "You got it!", "Brilliant!", "Super speller!", "Fantastic!", "Well done!"];
+const KEYS = { best: "zone210_spell_best", seen: "zone210_spell_seen", level: "zone210_spell_level", mute: "zone210_spell_mute" };
 
-function dedupeWordEntries(entries) {
-  const seen = new Set();
-  const result = [];
-  entries.forEach((entry) => {
-    if (!entry || typeof entry.word !== "string") return;
-    const normalized = entry.word.toLowerCase();
-    if (seen.has(normalized)) return;
-    seen.add(normalized);
-    result.push({
-      word: normalized,
-      clue: typeof entry.clue === "string" ? entry.clue : "Spell this word.",
-      emoji: typeof entry.emoji === "string" ? entry.emoji : "🌟"
-    });
-  });
-  return result;
-}
-
-function createPracticeEntries(words, difficulty) {
-  return words.map((word) => ({
-    word,
-    clue: "Practice word: listen and spell it.",
-    emoji: WORD_DIFFICULTY_RULES[difficulty].emoji
-  }));
-}
-
-function classifyWordDifficulty(word) {
-  if (word.length <= 5) return "easy";
-  if (word.length <= 7) return "medium";
-  return "hard";
-}
-
-function createInitialWordBank() {
-  const grouped = { easy: [], medium: [], hard: [] };
-  KID_SAFE_ALLOWLIST.forEach((word) => {
-    grouped[classifyWordDifficulty(word)].push(word);
-  });
-
-  return {
-    easy: dedupeWordEntries([...WORD_BANK.easy, ...createPracticeEntries(grouped.easy, "easy")]),
-    medium: dedupeWordEntries([...WORD_BANK.medium, ...createPracticeEntries(grouped.medium, "medium")]),
-    hard: dedupeWordEntries([...WORD_BANK.hard, ...createPracticeEntries(grouped.hard, "hard")])
-  };
-}
-
-const INITIAL_WORD_BANK = createInitialWordBank();
-
-const POSITIVE_MESSAGES = [
-  "Awesome spelling!",
-  "Super work!",
-  "You nailed it!",
-  "Great job!",
-  "Fantastic!"
-];
-
-const ui = {
-  difficulty: document.getElementById("difficulty"),
-  newGame: document.getElementById("newGame"),
-  hearWord: document.getElementById("hearWord"),
-  useHint: document.getElementById("useHint"),
-  backspace: document.getElementById("backspace"),
-  checkWord: document.getElementById("checkWord"),
-  scoreValue: document.getElementById("scoreValue"),
-  bestValue: document.getElementById("bestValue"),
-  streakValue: document.getElementById("streakValue"),
-  livesValue: document.getElementById("livesValue"),
-  roundValue: document.getElementById("roundValue"),
-  solvedValue: document.getElementById("solvedValue"),
-  clueEmoji: document.getElementById("clueEmoji"),
-  clueText: document.getElementById("clueText"),
-  resultMark: document.getElementById("resultMark"),
-  wordVisual: document.getElementById("wordVisual"),
-  wordPhoto: document.getElementById("wordPhoto"),
-  slots: document.getElementById("slots"),
-  bank: document.getElementById("bank"),
-  message: document.getElementById("message"),
-  wordCard: document.getElementById("wordCard"),
-  celebration: document.getElementById("celebration"),
-  gameOverModal: document.getElementById("gameOverModal"),
-  gameOverText: document.getElementById("gameOverText"),
-  finalScore: document.getElementById("finalScore"),
-  finalWords: document.getElementById("finalWords"),
-  playAgain: document.getElementById("playAgain")
+const $ = (id) => document.getElementById(id);
+const el = {
+  score: $("score"), streak: $("streak"), best: $("best"), round: $("round"),
+  garden: $("garden"), card: $("card"), picture: $("picture"), clue: $("clue"),
+  tries: $("tries"), slots: $("slots"), bank: $("bank"), msg: $("msg"), burst: $("burst"),
+  hear: $("hear"), slow: $("slow"), hint: $("hint"), back: $("back"), check: $("check"),
+  end: $("end"),
 };
 
-const state = {
-  difficulty: "easy",
-  queue: [],
-  wordBank: {
-    easy: [...INITIAL_WORD_BANK.easy],
-    medium: [...INITIAL_WORD_BANK.medium],
-    hard: [...INITIAL_WORD_BANK.hard]
+const store = {
+  get(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw === null ? fallback : JSON.parse(raw);
+    } catch (err) {
+      return fallback;
+    }
   },
-  currentWord: null,
-  guess: [],
-  activeSlot: 0,
+  set(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (err) {
+      /* private mode */
+    }
+  },
+};
+
+const game = {
+  level: store.get(KEYS.level, "easy"),
+  muted: store.get(KEYS.mute, false),
+  words: [],
+  index: 0,
   score: 0,
   streak: 0,
-  lives: MAX_LIVES,
-  round: 0,
-  solved: 0,
-  hintUsed: false,
+  results: [], // stars per finished word (0 = missed)
+  round: null,
   locked: false,
-  isDownloadingWords: false,
-  bankLetters: [],
-  bankLetterCounts: {},
-  imageCache: trimWordImageCache(readWordImageCache()),
-  imageRequestId: 0,
-  bestScore: Number(localStorage.getItem("spellSproutBest") || "0")
+};
+if (!WORDS[game.level]) game.level = "easy";
+
+const shuffle = (list) => {
+  const a = [...list];
+  for (let i = a.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const bestScores = () => store.get(KEYS.best, {});
+
+// ---------- sound ----------
+let audio = null;
+function tone(freq, start, length, type = "sine", gain = 0.12) {
+  if (game.muted) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === "suspended") audio.resume();
+    const t = audio.currentTime + start;
+    const osc = audio.createOscillator();
+    const amp = audio.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    amp.gain.setValueAtTime(0.0001, t);
+    amp.gain.exponentialRampToValueAtTime(gain, t + 0.02);
+    amp.gain.exponentialRampToValueAtTime(0.0001, t + length);
+    osc.connect(amp).connect(audio.destination);
+    osc.start(t);
+    osc.stop(t + length + 0.02);
+  } catch (err) {
+    /* audio unavailable */
+  }
+}
+const sfx = {
+  tap: () => tone(620, 0, 0.06, "triangle", 0.08),
+  right: () => [523, 659, 784, 1046].forEach((f, i) => tone(f, i * 0.09, 0.22, "triangle")),
+  wrong: () => {
+    tone(220, 0, 0.18, "sawtooth", 0.07);
+    tone(175, 0.13, 0.25, "sawtooth", 0.07);
+  },
+  win: () => [523, 659, 784, 659, 784, 1046, 1318].forEach((f, i) => tone(f, i * 0.11, 0.3, "triangle")),
 };
 
-let sfxAudioContext = null;
-let preferredSpeechVoice = null;
-let speechVoicesPrimed = false;
-
-function shuffle(list) {
-  const copy = [...list];
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
+// ---------- speech ----------
+let voice = null;
+function pickVoice() {
+  if (!("speechSynthesis" in window)) return;
+  const voices = speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang));
+  const score = (v) =>
+    (/^en-(US|GB|AU)/i.test(v.lang) ? 2 : 0) + (/natural|premium|enhanced|samantha|daniel|karen|google/i.test(v.name) ? 3 : 0) + (v.localService ? 0 : 1);
+  voice = voices.sort((a, b) => score(b) - score(a))[0] || null;
 }
-
-function randomLetter() {
-  const alphabet = "abcdefghijklmnopqrstuvwxyz";
-  return alphabet[Math.floor(Math.random() * alphabet.length)];
+if ("speechSynthesis" in window) {
+  pickVoice();
+  speechSynthesis.addEventListener?.("voiceschanged", pickVoice);
 }
-
-function randomPositiveMessage() {
-  return POSITIVE_MESSAGES[Math.floor(Math.random() * POSITIVE_MESSAGES.length)];
-}
-
-function scoreSpeechVoice(voice) {
-  const name = String(voice?.name || "").toLowerCase();
-  const lang = String(voice?.lang || "").toLowerCase();
-  let score = 0;
-
-  if (lang === "en-us") score += 40;
-  else if (lang.startsWith("en-")) score += 25;
-  if (voice?.localService) score += 10;
-  if (name.includes("google us english")) score += 100;
-  if (name.includes("aria")) score += 85;
-  if (name.includes("samantha")) score += 80;
-  if (name.includes("alex")) score += 75;
-  if (name.includes("zira")) score += 70;
-  if (name.includes("allison")) score += 65;
-  if (name.includes("karen")) score += 60;
-  if (name.includes("english")) score += 15;
-
-  return score;
-}
-
-function getPreferredSpeechVoice() {
-  if (!("speechSynthesis" in window)) return null;
-
-  const voices = speechSynthesis.getVoices();
-  if (!Array.isArray(voices) || voices.length === 0) return null;
-
-  if (preferredSpeechVoice && voices.includes(preferredSpeechVoice)) {
-    return preferredSpeechVoice;
-  }
-
-  const englishVoices = voices.filter((voice) => /^en(-|$)/i.test(voice?.lang || ""));
-  const pool = englishVoices.length ? englishVoices : voices;
-  preferredSpeechVoice = [...pool].sort((a, b) => scoreSpeechVoice(b) - scoreSpeechVoice(a))[0] || null;
-  return preferredSpeechVoice;
-}
-
-function primeSpeechVoices() {
-  if (!("speechSynthesis" in window) || speechVoicesPrimed) return;
-  speechVoicesPrimed = true;
-  getPreferredSpeechVoice();
-
-  if (typeof speechSynthesis.addEventListener === "function") {
-    speechSynthesis.addEventListener("voiceschanged", () => {
-      preferredSpeechVoice = null;
-      getPreferredSpeechVoice();
-    });
-  }
-}
-
-function readRemoteWordCache() {
-  try {
-    const raw = localStorage.getItem(REMOTE_WORD_CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return null;
-    return parsed;
-  } catch (_) {
-    return null;
-  }
-}
-
-function writeRemoteWordCache(cache) {
-  try {
-    localStorage.setItem(REMOTE_WORD_CACHE_KEY, JSON.stringify(cache));
-  } catch (_) {
-    // Ignore localStorage write failures and continue with in-memory words.
-  }
-}
-
-function readWordImageCache() {
-  try {
-    const raw = localStorage.getItem(WORD_IMAGE_CACHE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return {};
-    return parsed;
-  } catch (_) {
-    return {};
-  }
-}
-
-function writeWordImageCache(cache) {
-  try {
-    localStorage.setItem(WORD_IMAGE_CACHE_KEY, JSON.stringify(cache));
-  } catch (_) {
-    // Ignore localStorage write failures and continue with in-memory cache.
-  }
-}
-
-function trimWordImageCache(cache) {
-  const entries = Object.entries(cache);
-  if (entries.length <= MAX_WORD_IMAGE_CACHE_ENTRIES) return cache;
-  return Object.fromEntries(entries.slice(entries.length - MAX_WORD_IMAGE_CACHE_ENTRIES));
-}
-
-function getCachedWordImage(word) {
-  if (!Object.prototype.hasOwnProperty.call(state.imageCache, word)) return undefined;
-  const value = state.imageCache[word];
-  return typeof value === "string" && value ? value : undefined;
-}
-
-function cacheWordImage(word, imageUrl) {
-  if (!word || !imageUrl) return;
-  state.imageCache[word] = imageUrl;
-  state.imageCache = trimWordImageCache(state.imageCache);
-  writeWordImageCache(state.imageCache);
-}
-
-function clearWordImage() {
-  if (!ui.wordVisual || !ui.wordPhoto) return;
-  ui.wordVisual.classList.add("hidden");
-  ui.wordVisual.classList.remove("loading");
-  ui.wordPhoto.removeAttribute("src");
-  ui.wordPhoto.alt = "";
-}
-
-function showWordImageLoading() {
-  if (!ui.wordVisual || !ui.wordPhoto) return;
-  ui.wordVisual.classList.remove("hidden");
-  ui.wordVisual.classList.add("loading");
-  ui.wordPhoto.removeAttribute("src");
-  ui.wordPhoto.alt = "Loading image";
-}
-
-function showWordImage(imageUrl, word) {
-  if (!ui.wordVisual || !ui.wordPhoto) return;
-  ui.wordVisual.classList.remove("hidden");
-  ui.wordVisual.classList.remove("loading");
-  ui.wordPhoto.src = imageUrl;
-  ui.wordPhoto.alt = `Photo of ${word}`;
-}
-
-function singularizeForImageMatch(text) {
-  if (text.endsWith("ies") && text.length > 4) return `${text.slice(0, -3)}y`;
-  if (text.endsWith("es") && text.length > 4) return text.slice(0, -2);
-  if (text.endsWith("s") && text.length > 3) return text.slice(0, -1);
-  return text;
-}
-
-function normalizeForImageMatch(value) {
-  const cleaned = String(value || "").toLowerCase().replace(/\s*\([^)]*\)\s*/g, " ");
-  return cleaned.replace(/[^a-z]/g, "");
-}
-
-function scoreImageTitleMatch(word, pageTitle) {
-  const normalizedWord = normalizeForImageMatch(word);
-  const normalizedTitle = normalizeForImageMatch(pageTitle);
-  if (!normalizedWord || !normalizedTitle) return 0;
-
-  if (normalizedWord === normalizedTitle) return 100;
-
-  const singularWord = singularizeForImageMatch(normalizedWord);
-  const singularTitle = singularizeForImageMatch(normalizedTitle);
-  if (singularWord && singularWord === singularTitle) return 90;
-
-  return 0;
-}
-
-function pickImageFromWikipediaResponse(data, word) {
-  const pages = Object.values(data?.query?.pages || {});
-  const candidates = pages
-    .filter((page) => page?.thumbnail?.source && !(page?.pageprops && "disambiguation" in page.pageprops))
-    .map((page) => ({ page, score: scoreImageTitleMatch(word, page.title) }))
-    .filter((entry) => entry.score > 0)
-    .sort((a, b) => b.score - a.score || (a.page.index || 9999) - (b.page.index || 9999));
-
-  return candidates.length ? candidates[0].page.thumbnail.source : null;
-}
-
-function getWikipediaImageQueryParams() {
-  return {
-    format: "json",
-    origin: "*",
-    prop: "pageimages|pageprops",
-    piprop: "thumbnail",
-    pithumbsize: String(WORD_IMAGE_THUMB_SIZE),
-    pilimit: "12"
-  };
-}
-
-async function fetchWordImageByExactTitle(word) {
-  const params = new URLSearchParams({
-    action: "query",
-    titles: word,
-    redirects: "1",
-    ...getWikipediaImageQueryParams()
-  });
-  const query = `${REMOTE_WORD_API}?${params.toString()}`;
-  const data = await fetchJsonWithTimeout(query, REMOTE_WORD_TIMEOUT_MS);
-  return pickImageFromWikipediaResponse(data, word);
-}
-
-async function fetchWordImageBySearch(word, searchTerm) {
-  const params = new URLSearchParams({
-    action: "query",
-    generator: "search",
-    gsrsearch: searchTerm,
-    gsrlimit: "12",
-    ...getWikipediaImageQueryParams()
-  });
-  const query = `${REMOTE_WORD_API}?${params.toString()}`;
-  const data = await fetchJsonWithTimeout(query, REMOTE_WORD_TIMEOUT_MS);
-  return pickImageFromWikipediaResponse(data, word);
-}
-
-async function fetchWordImage(word) {
-  try {
-    const exactMatch = await fetchWordImageByExactTitle(word);
-    if (exactMatch) return exactMatch;
-  } catch (_) {
-    // Try search fallback.
-  }
-
-  const searchTerms = [`intitle:"${word}"`, `intitle:${word}`];
-  for (const searchTerm of searchTerms) {
-    try {
-      const imageUrl = await fetchWordImageBySearch(word, searchTerm);
-      if (imageUrl) return imageUrl;
-    } catch (_) {
-      // Try next query strategy.
-    }
-  }
-
-  return null;
-}
-
-function renderWordImageForCurrentWord() {
-  if (!state.currentWord || !ui.wordVisual || !ui.wordPhoto) return;
-  const word = state.currentWord.word.toLowerCase();
-  const cachedImage = getCachedWordImage(word);
-
-  if (cachedImage) {
-    showWordImage(cachedImage, word);
+function say(text, rate = 0.9) {
+  if (!("speechSynthesis" in window)) {
+    setMessage("This browser can't speak. Use the picture and the clue.");
     return;
   }
+  const u = new SpeechSynthesisUtterance(text);
+  if (voice) {
+    u.voice = voice;
+    u.lang = voice.lang;
+  } else u.lang = "en-US";
+  u.rate = rate;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
 
-  if (navigator.onLine === false) {
-    clearWordImage();
-    return;
+// ---------- helpers ----------
+function setMessage(text, kind = "") {
+  el.msg.textContent = text;
+  el.msg.className = "g-status" + (kind ? ` ${kind}` : "");
+}
+
+function pickWords() {
+  const pool = WORDS[game.level];
+  const seen = new Set((store.get(KEYS.seen, {})[game.level] || []));
+  let fresh = pool.filter((w) => !seen.has(w.word));
+  if (fresh.length < ROUNDS) {
+    seen.clear();
+    fresh = pool;
   }
-
-  const requestId = ++state.imageRequestId;
-  showWordImageLoading();
-
-  fetchWordImage(word)
-    .then((imageUrl) => {
-      if (requestId !== state.imageRequestId) return;
-      if (!state.currentWord || state.currentWord.word.toLowerCase() !== word) return;
-      if (!imageUrl) {
-        clearWordImage();
-        return;
-      }
-      cacheWordImage(word, imageUrl);
-      showWordImage(imageUrl, word);
-    })
-    .catch(() => {
-      if (requestId !== state.imageRequestId) return;
-      clearWordImage();
-    });
+  const chosen = shuffle(fresh).slice(0, ROUNDS);
+  chosen.forEach((w) => seen.add(w.word));
+  const all = store.get(KEYS.seen, {});
+  all[game.level] = [...seen];
+  store.set(KEYS.seen, all);
+  return chosen;
 }
 
-function handleWordImageError() {
-  if (!state.currentWord) {
-    clearWordImage();
-    return;
-  }
-  const word = state.currentWord.word.toLowerCase();
-  if (state.imageCache[word]) {
-    delete state.imageCache[word];
-    writeWordImageCache(state.imageCache);
-  }
-  clearWordImage();
-}
-
-function purgeLegacyRemoteWordCaches() {
-  LEGACY_REMOTE_WORD_CACHE_KEYS.forEach((key) => {
-    try {
-      localStorage.removeItem(key);
-    } catch (_) {
-      // Ignore localStorage failures and continue.
-    }
-  });
-}
-
-function normalizeOnlineWord(rawWord) {
-  return String(rawWord || "").trim().toLowerCase();
-}
-
-function normalizeForSafety(rawWord) {
-  const leetMap = {
-    "0": "o",
-    "1": "i",
-    "3": "e",
-    "4": "a",
-    "5": "s",
-    "7": "t",
-    "8": "b",
-    "9": "g"
-  };
-  const replaced = String(rawWord || "")
-    .toLowerCase()
-    .replace(/[01345789]/g, (digit) => leetMap[digit] || "");
-  return replaced.replace(/[^a-z]/g, "");
-}
-
-function isKidSafeWord(word) {
-  const normalized = normalizeForSafety(word);
-  if (!normalized) return false;
-  if (HARD_BLOCKED_WORDS.has(normalized)) return false;
-  if (HARD_BLOCKED_PATTERNS.some((pattern) => pattern.test(normalized))) return false;
-  return KID_SAFE_ALLOWLIST.has(normalized);
-}
-
-function isUsableOnlineWord(word, difficulty) {
-  const rules = WORD_DIFFICULTY_RULES[difficulty];
-  if (!rules) return false;
-  if (!/^[a-z]+$/.test(word)) return false;
-  if (word.length < rules.minLength || word.length > rules.maxLength) return false;
-  if (!isKidSafeWord(word)) return false;
-  return true;
-}
-
-function uniqueWordEntries(entries) {
-  return dedupeWordEntries(entries);
-}
-
-function mergeRemoteWordsIntoBank(difficulty, remoteEntries) {
-  const merged = uniqueWordEntries([...remoteEntries, ...INITIAL_WORD_BANK[difficulty]]);
-  if (merged.length > 0) {
-    state.wordBank[difficulty] = merged;
+// ---------- rendering ----------
+function renderGarden() {
+  el.garden.innerHTML = "";
+  for (let i = 0; i < ROUNDS; i += 1) {
+    const plot = document.createElement("div");
+    const done = i < game.results.length;
+    plot.className = "plot" + (i === game.index && !done ? " now" : "") + (done ? " grown" : "");
+    plot.textContent = done ? PLANT[game.results[i]] : i === game.index ? "🌱" : "";
+    el.garden.appendChild(plot);
   }
 }
 
-function sanitizeWordBank() {
-  ["easy", "medium", "hard"].forEach((difficulty) => {
-    const builtInWords = new Set(INITIAL_WORD_BANK[difficulty].map((entry) => entry.word.toLowerCase()));
-    const source = Array.isArray(state.wordBank[difficulty]) ? state.wordBank[difficulty] : [];
-    const filtered = source.filter((entry) => {
-      if (!entry || typeof entry.word !== "string") return false;
-      const normalized = normalizeOnlineWord(entry.word);
-      if (builtInWords.has(normalized)) return true;
-      return isUsableOnlineWord(normalized, difficulty);
-    });
-    state.wordBank[difficulty] = uniqueWordEntries([...filtered, ...INITIAL_WORD_BANK[difficulty]]);
-  });
+function renderStats() {
+  el.score.textContent = game.score;
+  el.streak.textContent = game.streak;
+  el.best.textContent = bestScores()[game.level] || 0;
+  el.round.textContent = `${Math.min(game.index + 1, ROUNDS)}/${ROUNDS}`;
 }
 
-function loadCachedRemoteWords() {
-  const cached = readRemoteWordCache();
-  if (!cached) return;
-
-  ["easy", "medium", "hard"].forEach((difficulty) => {
-    const entries = Array.isArray(cached[difficulty]) ? cached[difficulty] : [];
-    if (!entries.length) return;
-
-    const filtered = entries.filter((entry) => {
-      if (!entry || typeof entry.word !== "string") return false;
-      return isUsableOnlineWord(entry.word.toLowerCase(), difficulty);
-    });
-    if (filtered.length) {
-      mergeRemoteWordsIntoBank(difficulty, filtered);
-    }
-  });
-}
-
-async function fetchJsonWithTimeout(url, timeoutMs) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-  } finally {
-    clearTimeout(timeoutId);
+function renderTries() {
+  el.tries.innerHTML = "";
+  for (let i = 0; i < TRIES; i += 1) {
+    const s = document.createElement("span");
+    s.textContent = i < game.round.tries ? "💚" : "🤍";
+    el.tries.appendChild(s);
   }
+  el.tries.setAttribute("aria-label", `${game.round.tries} tries left`);
 }
 
-function buildRemoteWordEntry(word, difficulty) {
-  const firstLetter = word[0] ? word[0].toUpperCase() : "?";
-  return {
-    word,
-    clue: `Online bonus word: ${word.length} letters, starts with ${firstLetter}.`,
-    emoji: WORD_DIFFICULTY_RULES[difficulty].emoji
-  };
-}
-
-function extractCandidateWords(text) {
-  return String(text || "")
-    .toLowerCase()
-    .replace(/[^a-z\s]/g, " ")
-    .split(/\s+/)
-    .filter(Boolean);
-}
-
-async function fetchWikipediaTopicWords(topic, difficulty) {
-  const randomOffset = Math.floor(Math.random() * 800);
-  const params = new URLSearchParams({
-    action: "query",
-    list: "search",
-    format: "json",
-    origin: "*",
-    utf8: "1",
-    srlimit: String(REMOTE_SEARCH_LIMIT),
-    sroffset: String(randomOffset),
-    srsearch: `${topic} words for kids`
-  });
-
-  const query = `${REMOTE_WORD_API}?${params.toString()}`;
-  const data = await fetchJsonWithTimeout(query, REMOTE_WORD_TIMEOUT_MS);
-  const rows = Array.isArray(data?.query?.search) ? data.query.search : [];
-  const entries = [];
-
-  rows.forEach((row) => {
-    extractCandidateWords(row.title).forEach((candidate) => {
-      if (!isUsableOnlineWord(candidate, difficulty)) return;
-      entries.push(buildRemoteWordEntry(candidate, difficulty));
-    });
-  });
-
-  return uniqueWordEntries(entries);
-}
-
-async function downloadWordsForDifficulty(difficulty) {
-  const topics = REMOTE_TOPICS[difficulty] || [];
-  if (!topics.length) return [];
-
-  const requests = topics.map(async (topic) => {
-    try {
-      return await fetchWikipediaTopicWords(topic, difficulty);
-    } catch (_) {
-      return [];
-    }
-  });
-
-  const settled = await Promise.all(requests);
-  const newEntries = [];
-  const seen = new Set(state.wordBank[difficulty].map((entry) => entry.word.toLowerCase()));
-
-  settled.forEach((entries) => {
-    entries.forEach((entry) => {
-      const normalized = normalizeOnlineWord(entry.word);
-      if (seen.has(normalized)) return;
-      seen.add(normalized);
-      newEntries.push(entry);
-    });
-  });
-
-  return uniqueWordEntries(newEntries).slice(0, 30);
-}
-
-async function refreshWordsFromInternet(difficulty) {
-  const likelyOffline = navigator.onLine === false;
-  const downloaded = await downloadWordsForDifficulty(difficulty);
-  if (downloaded.length < REMOTE_MIN_WORD_COUNT) {
-    return likelyOffline ? "offline" : "failed";
-  }
-
-  mergeRemoteWordsIntoBank(difficulty, downloaded);
-
-  const cache = readRemoteWordCache() || {};
-  cache[difficulty] = downloaded;
-  cache.savedAt = Date.now();
-  writeRemoteWordCache(cache);
-  return "downloaded";
-}
-
-function setMessage(text, type = "info") {
-  ui.message.className = `message ${type}`;
-  ui.message.textContent = text;
-}
-
-function setResultMark(status) {
-  if (!ui.resultMark) return;
-
-  if (status === "correct") {
-    ui.resultMark.textContent = "✓";
-    ui.resultMark.className = "result-mark correct";
-    ui.resultMark.setAttribute("aria-label", "Correct spelling");
-    return;
-  }
-  if (status === "wrong") {
-    ui.resultMark.textContent = "✗";
-    ui.resultMark.className = "result-mark wrong";
-    ui.resultMark.setAttribute("aria-label", "Incorrect spelling");
-    return;
-  }
-  ui.resultMark.textContent = "";
-  ui.resultMark.className = "result-mark hidden";
-  ui.resultMark.setAttribute("aria-label", "Spelling result");
-}
-
-function updateHud() {
-  ui.scoreValue.textContent = String(state.score);
-  ui.bestValue.textContent = String(state.bestScore);
-  ui.streakValue.textContent = String(state.streak);
-  ui.livesValue.textContent = `${"❤".repeat(state.lives)}${"♡".repeat(MAX_LIVES - state.lives)}`;
-  ui.roundValue.textContent = String(state.round);
-  ui.solvedValue.textContent = String(state.solved);
-}
-
-function nextEmptySlot(startIndex = 0) {
-  for (let i = startIndex; i < state.guess.length; i += 1) {
-    if (!state.guess[i]) return i;
-  }
-  for (let i = 0; i < state.guess.length; i += 1) {
-    if (!state.guess[i]) return i;
-  }
-  return state.guess.length - 1;
-}
-
-function countLetters(chars) {
-  const counts = {};
-  chars.forEach((char) => {
-    const normalized = String(char || "").toLowerCase();
-    if (!normalized) return;
-    counts[normalized] = (counts[normalized] || 0) + 1;
-  });
-  return counts;
-}
-
-function usedLetterCount(letter) {
-  const normalized = letter.toLowerCase();
-  return state.guess.reduce((total, guessLetter) => total + (guessLetter === normalized ? 1 : 0), 0);
-}
-
-function canUseLetterFromBank(letter) {
-  const normalized = letter.toLowerCase();
-  const available = state.bankLetterCounts[normalized] || 0;
-  return usedLetterCount(normalized) < available;
-}
-
-function updateLetterBankState() {
-  const buttons = ui.bank.querySelectorAll(".letter-btn");
-  buttons.forEach((button) => {
-    const letter = button.dataset.letter || "";
-    if (!letter) return;
-    const disabled = !canUseLetterFromBank(letter);
-    button.disabled = disabled;
-    button.setAttribute("aria-disabled", disabled ? "true" : "false");
-  });
-}
-
-function renderSlots() {
-  const slotEls = ui.slots.querySelectorAll(".slot");
-  slotEls.forEach((slot, index) => {
-    slot.textContent = state.guess[index] ? state.guess[index].toUpperCase() : "";
-    slot.classList.toggle("filled", Boolean(state.guess[index]));
-    slot.classList.toggle("active", index === state.activeSlot);
-  });
-  updateLetterBankState();
-}
-
-function renderWordCard() {
-  ui.clueEmoji.textContent = state.currentWord.emoji;
-  ui.clueText.textContent = state.currentWord.clue;
-  setResultMark("none");
-
-  ui.slots.innerHTML = "";
-  state.currentWord.word.split("").forEach((_, index) => {
+function renderSlots(flash = null) {
+  const r = game.round;
+  el.slots.innerHTML = "";
+  el.slots.style.setProperty("--len", r.letters.length);
+  r.letters.forEach((_, i) => {
     const slot = document.createElement("button");
     slot.type = "button";
-    slot.className = "slot";
-    slot.setAttribute("aria-label", `Letter ${index + 1}`);
-    slot.addEventListener("click", () => {
-      state.activeSlot = index;
-      renderSlots();
-    });
-    ui.slots.appendChild(slot);
+    const g = r.guess[i];
+    slot.className = "slot" + (g ? " filled" : "") + (r.locked[i] ? " locked" : "") + (flash && flash[i] ? ` ${flash[i]}` : "");
+    slot.textContent = g ? g.ch : "";
+    slot.setAttribute("aria-label", g ? `Letter ${i + 1}: ${g.ch}${r.locked[i] ? ", correct" : ". Press to remove"}` : `Letter ${i + 1}: empty`);
+    slot.addEventListener("click", () => removeAt(i));
+    el.slots.appendChild(slot);
   });
-
-  renderSlots();
-  renderWordImageForCurrentWord();
 }
 
-function buildLetterBank() {
-  const letters = state.currentWord.word.split("");
-  const extraCount = Math.max(8, 14 - letters.length);
-  const extras = [];
-
-  while (extras.length < extraCount) {
-    extras.push(randomLetter());
-  }
-
-  const pool = shuffle([...letters, ...extras]);
-  state.bankLetters = [...pool];
-  state.bankLetterCounts = countLetters(pool);
-  ui.bank.innerHTML = "";
-
-  pool.forEach((char) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "letter-btn";
-    button.textContent = char.toUpperCase();
-    button.dataset.letter = char.toLowerCase();
-    button.setAttribute("aria-label", `Letter ${char.toUpperCase()}`);
-    button.addEventListener("click", () => addLetter(char));
-    ui.bank.appendChild(button);
+function renderBank() {
+  const r = game.round;
+  el.bank.innerHTML = "";
+  r.tiles.forEach((tile) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "tile" + (tile.used ? " used" : "");
+    b.textContent = tile.ch;
+    b.disabled = tile.used;
+    b.setAttribute("aria-label", tile.ch);
+    b.addEventListener("click", () => addTile(tile));
+    el.bank.appendChild(b);
   });
-  updateLetterBankState();
 }
 
-async function startGame(options = {}) {
-  const { downloadOnlineWords = false } = options;
-  if (state.isDownloadingWords) return;
-
-  state.difficulty = ui.difficulty.value;
-  sanitizeWordBank();
-  let downloadStatus = "skipped";
-  if (downloadOnlineWords) {
-    state.isDownloadingWords = true;
-    ui.newGame.disabled = true;
-    setMessage("Checking internet for new words...", "info");
-    try {
-      downloadStatus = await refreshWordsFromInternet(state.difficulty);
-    } catch (_) {
-      downloadStatus = "failed";
-    }
-    state.isDownloadingWords = false;
-    ui.newGame.disabled = false;
-  }
-
-  state.queue = shuffle(state.wordBank[state.difficulty]);
-  state.currentWord = null;
-  state.guess = [];
-  state.activeSlot = 0;
-  state.score = 0;
-  state.streak = 0;
-  state.lives = MAX_LIVES;
-  state.round = 0;
-  state.solved = 0;
-  state.hintUsed = false;
-  state.locked = false;
-  state.bankLetters = [];
-  state.bankLetterCounts = {};
-  state.imageRequestId += 1;
-  clearWordImage();
-  ui.useHint.disabled = false;
-  ui.gameOverModal.classList.add("hidden");
-  ui.gameOverModal.setAttribute("aria-hidden", "true");
-  nextRound();
-  if (downloadStatus === "downloaded") {
-    setMessage("New words downloaded. Press Hear Word and start spelling!", "good");
-  } else if (downloadStatus === "failed") {
-    setMessage("Could not download new words. Using saved words.", "info");
-  } else if (downloadStatus === "offline") {
-    setMessage("You are offline. Using saved words.", "info");
-  } else {
-    setMessage("Press Hear Word and start spelling!", "info");
-  }
-}
-
-function nextRound() {
-  if (state.lives <= 0) {
-    showGameOver();
-    return;
-  }
-
-  if (state.queue.length === 0) {
-    state.queue = shuffle(state.wordBank[state.difficulty]);
-  }
-
-  state.round += 1;
-  state.currentWord = state.queue.pop();
-  state.guess = new Array(state.currentWord.word.length).fill("");
-  state.activeSlot = 0;
-  state.hintUsed = false;
-  state.locked = false;
-
-  ui.useHint.disabled = false;
-  renderWordCard();
-  buildLetterBank();
-  updateHud();
-}
-
-function addLetter(letter) {
-  if (state.locked || !state.currentWord) return;
-  const normalizedLetter = letter.toLowerCase();
-  if (!canUseLetterFromBank(normalizedLetter)) {
-    setMessage(`No more ${normalizedLetter.toUpperCase()} tiles left in the letter bank.`, "info");
-    return;
-  }
-
-  let index = state.activeSlot;
-  if (state.guess[index]) {
-    index = nextEmptySlot(index);
-  }
-  if (index < 0) return;
-
-  state.guess[index] = normalizedLetter;
-  state.activeSlot = nextEmptySlot(index + 1);
+function renderAll() {
+  renderStats();
+  renderGarden();
+  renderTries();
   renderSlots();
-  setResultMark("none");
+  renderBank();
+}
 
-  if (!state.guess.includes("")) {
-    const attempt = state.guess.join("").toLowerCase();
-    if (attempt !== state.currentWord.word) return;
+// ---------- round flow ----------
+function startRound() {
+  const entry = game.words[game.index];
+  const letters = entry.word.split("");
+  const extras = shuffle("abcdefghijklmnopqrstuvwxyz".split("").filter((c) => !letters.includes(c))).slice(0, EXTRA_LETTERS[game.level]);
+  game.round = {
+    entry,
+    letters,
+    guess: Array(letters.length).fill(null),
+    locked: Array(letters.length).fill(false),
+    tiles: shuffle([...letters, ...extras]).map((ch, id) => ({ id, ch, used: false })),
+    tries: TRIES,
+    hints: 0,
+    mistakes: 0,
+  };
+  game.locked = false;
+  el.picture.textContent = entry.emoji;
+  el.picture.classList.remove("pop");
+  void el.picture.offsetWidth;
+  el.picture.classList.add("pop");
+  el.clue.textContent = entry.clue;
+  el.hint.disabled = false;
+  el.check.disabled = false;
+  renderAll();
+  setMessage("Listen, then spell the word.");
+  if (!game.muted) setTimeout(() => game.round?.entry === entry && say(entry.word), 450);
+}
 
-    setTimeout(() => {
-      const latestAttempt = state.guess.join("").toLowerCase();
-      if (!state.locked && !state.guess.includes("") && latestAttempt === state.currentWord.word) {
-        checkWord();
-      }
-    }, 120);
+function newGame() {
+  game.words = pickWords();
+  game.index = 0;
+  game.score = 0;
+  game.streak = 0;
+  game.results = [];
+  el.end.classList.remove("show");
+  startRound();
+}
+
+function addTile(tile) {
+  const r = game.round;
+  if (game.locked || tile.used) return;
+  const slot = r.guess.findIndex((g, i) => !g && !r.locked[i]);
+  if (slot === -1) return;
+  tile.used = true;
+  r.guess[slot] = { ch: tile.ch, tile };
+  sfx.tap();
+  renderSlots();
+  renderBank();
+  if (r.guess.every(Boolean)) setMessage("Press Check when you are ready.");
+}
+
+function removeAt(i) {
+  const r = game.round;
+  if (game.locked || !r.guess[i] || r.locked[i]) return;
+  r.guess[i].tile.used = false;
+  r.guess[i] = null;
+  renderSlots();
+  renderBank();
+}
+
+function removeLast() {
+  const r = game.round;
+  for (let i = r.guess.length - 1; i >= 0; i -= 1) {
+    if (r.guess[i] && !r.locked[i]) return removeAt(i);
   }
 }
 
-function removeLetter() {
-  if (state.locked || !state.currentWord) return;
-
-  let index = state.activeSlot;
-  if (!state.guess[index]) {
-    index = state.guess.map((char, i) => (char ? i : -1)).filter((i) => i >= 0).pop();
-  }
-
-  if (typeof index !== "number") return;
-  state.guess[index] = "";
-  state.activeSlot = index;
-  renderSlots();
-  setResultMark("none");
-}
-
-function revealHelpfulLetter() {
-  const answer = state.currentWord.word;
-  const mismatch = [];
-  for (let i = 0; i < answer.length; i += 1) {
-    if (state.guess[i] !== answer[i]) mismatch.push(i);
-  }
-  if (mismatch.length === 0) return false;
-
-  const revealIndex = mismatch[Math.floor(Math.random() * mismatch.length)];
-  state.guess[revealIndex] = answer[revealIndex];
-
-  for (let i = 0; i < answer.length; i += 1) {
-    if (i !== revealIndex && state.guess[i] !== answer[i]) {
-      state.guess[i] = "";
-    }
-  }
-
-  state.activeSlot = nextEmptySlot(revealIndex + 1);
-  renderSlots();
-  return true;
+function typeLetter(ch) {
+  const tile = game.round.tiles.find((t) => t.ch === ch && !t.used);
+  if (tile) addTile(tile);
+  else sfx.wrong();
 }
 
 function useHint() {
-  if (state.locked || !state.currentWord) return;
-  if (state.hintUsed) {
-    setMessage("You already used a hint for this word.", "info");
+  const r = game.round;
+  if (game.locked) return;
+  const i = r.guess.findIndex((g, idx) => !r.locked[idx] && (!g || g.ch !== r.letters[idx]));
+  if (i === -1) return;
+  if (r.hints >= r.letters.length - 1) {
+    setMessage("You have all the hints you can have. You can do it!");
     return;
   }
-
-  const revealed = revealHelpfulLetter();
-  if (!revealed) return;
-
-  state.hintUsed = true;
-  ui.useHint.disabled = true;
-  setResultMark("none");
-  setMessage("Hint used: one correct letter has been filled in.", "info");
-}
-
-function celebrate() {
-  for (let i = 0; i < 14; i += 1) {
-    const spark = document.createElement("span");
-    spark.className = "spark";
-    spark.style.left = `${Math.random() * 100}%`;
-    spark.style.background = `hsl(${Math.floor(Math.random() * 360)}, 85%, 60%)`;
-    spark.style.animationDelay = `${Math.random() * 0.1}s`;
-    ui.celebration.appendChild(spark);
-    spark.addEventListener("animationend", () => spark.remove());
+  if (r.guess[i]) {
+    r.guess[i].tile.used = false;
+    r.guess[i] = null;
   }
-}
-
-function getSfxContext() {
-  const AudioCtx = window.AudioContext || window.webkitAudioContext;
-  if (!AudioCtx) return null;
-
-  if (!sfxAudioContext) {
-    sfxAudioContext = new AudioCtx();
+  const ch = r.letters[i];
+  let tile = r.tiles.find((t) => t.ch === ch && !t.used);
+  if (!tile) {
+    // the letter is sitting in a wrong slot: take it from there
+    const from = r.guess.findIndex((g, idx) => g && g.ch === ch && !r.locked[idx] && idx !== i);
+    tile = r.guess[from].tile;
+    r.guess[from] = null;
   }
-
-  if (sfxAudioContext.state === "suspended") {
-    sfxAudioContext.resume().catch(() => {});
-  }
-  return sfxAudioContext;
+  tile.used = true;
+  r.guess[i] = { ch, tile };
+  r.locked[i] = true;
+  r.hints += 1;
+  sfx.tap();
+  renderSlots();
+  renderBank();
+  setMessage(`Hint: letter ${i + 1} is ${ch.toUpperCase()}.`);
 }
 
-function playCheerSound() {
-  const ctx = getSfxContext();
-  if (!ctx) return;
-
-  const now = ctx.currentTime + 0.02;
-  const notes = [523.25, 659.25, 783.99, 1046.5];
-
-  notes.forEach((freq, index) => {
-    const start = now + index * 0.08;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(freq, start);
-
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(0.15, start + 0.03);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.18);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(start);
-    osc.stop(start + 0.2);
-  });
+function starsFor(r) {
+  return Math.max(1, 3 - r.mistakes - r.hints);
 }
 
-function playWrongSound() {
-  const ctx = getSfxContext();
-  if (!ctx) return;
-
-  const now = ctx.currentTime + 0.02;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.type = "sawtooth";
-  osc.frequency.setValueAtTime(320, now);
-  osc.frequency.exponentialRampToValueAtTime(150, now + 0.26);
-
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.12, now + 0.03);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(now);
-  osc.stop(now + 0.3);
-}
-
-function animateWordCard(animationClass) {
-  ui.wordCard.classList.remove("shake", "pulse");
-  void ui.wordCard.offsetWidth;
-  ui.wordCard.classList.add(animationClass);
-}
-
-function checkWord() {
-  if (state.locked || !state.currentWord) return;
-  if (state.guess.includes("")) {
-    setMessage("Fill every letter box first.", "info");
+async function check() {
+  const r = game.round;
+  if (game.locked) return;
+  if (!r.guess.every(Boolean)) {
+    setMessage("Fill in every box first.");
     return;
   }
+  game.locked = true;
+  const flash = r.guess.map((g, i) => (g.ch === r.letters[i] ? "good" : "bad"));
+  renderSlots(flash);
 
-  state.locked = true;
-  const answer = state.currentWord.word;
-  const attempt = state.guess.join("").toLowerCase();
-
-  if (attempt === answer) {
-    let points = POINTS[state.difficulty] + Math.min(state.streak * 2, 10);
-    if (state.hintUsed) points = Math.max(points - 3, 5);
-
-    state.score += points;
-    state.streak += 1;
-    state.solved += 1;
-    if (state.score > state.bestScore) {
-      state.bestScore = state.score;
-      localStorage.setItem("spellSproutBest", String(state.bestScore));
+  if (flash.every((f) => f === "good")) {
+    const stars = starsFor(r);
+    game.results.push(stars);
+    game.streak += 1;
+    const points = POINTS[game.level] * stars + Math.min(game.streak - 1, 5) * 2;
+    game.score += points;
+    const all = bestScores();
+    if (game.score > (all[game.level] || 0)) {
+      all[game.level] = game.score;
+      store.set(KEYS.best, all);
     }
-
-    updateHud();
-    setResultMark("correct");
-    animateWordCard("pulse");
-    celebrate();
-    playCheerSound();
-    setMessage(`${randomPositiveMessage()} +${points} points`, "good");
-
-    setTimeout(() => {
-      state.locked = false;
-      nextRound();
-    }, 900);
-    return;
+    sfx.right();
+    burst("✨");
+    el.card.classList.add("cheer");
+    setMessage(`${CHEERS[Math.floor(Math.random() * CHEERS.length)]} ${"⭐".repeat(stars)} +${points}`, "good");
+    renderStats();
+    renderGarden();
+    if (!game.muted) say(r.entry.word, 1);
+    await sleep(1500);
+    el.card.classList.remove("cheer");
+    return advance();
   }
 
-  state.lives -= 1;
-  state.streak = 0;
-  updateHud();
-  setResultMark("wrong");
-  animateWordCard("shake");
-  playWrongSound();
+  // wrong
+  sfx.wrong();
+  r.mistakes += 1;
+  r.tries -= 1;
+  game.streak = 0;
+  el.card.classList.add("shake");
+  setTimeout(() => el.card.classList.remove("shake"), 500);
+  renderTries();
+  renderStats();
+  await sleep(900);
 
-  if (state.lives <= 0) {
-    setMessage(`The word was ${answer.toUpperCase()}.`, "bad");
-    setTimeout(() => {
-      state.locked = false;
-      showGameOver();
-    }, 1000);
-    return;
+  if (r.tries <= 0) {
+    // show the answer, then move on
+    r.tiles.forEach((t) => (t.used = false));
+    r.letters.forEach((ch, i) => {
+      const tile = r.tiles.find((t) => t.ch === ch && !t.used);
+      tile.used = true;
+      r.guess[i] = { ch, tile };
+      r.locked[i] = true;
+    });
+    game.results.push(0);
+    renderSlots();
+    renderBank();
+    renderGarden();
+    setMessage(`The word was ${r.entry.word.toUpperCase()}. You'll get it next time!`, "bad");
+    if (!game.muted) say(`${r.entry.word}. ${r.entry.word.split("").join(", ")}.`, 0.75);
+    await sleep(2800);
+    return advance();
   }
 
-  state.locked = false;
-  setMessage(`Not quite. Listen again and try. Lives left: ${state.lives}`, "bad");
-}
-
-function speakWord() {
-  if (!state.currentWord) return;
-
-  if (!("speechSynthesis" in window)) {
-    setMessage("This browser has no speech support. Use the clue text.", "info");
-    return;
-  }
-
-  const word = state.currentWord.word.toLowerCase();
-  const utterance = new SpeechSynthesisUtterance(word);
-  const voice = getPreferredSpeechVoice();
-  if (voice) {
-    utterance.voice = voice;
-    utterance.lang = voice.lang || "en-US";
-  } else {
-    utterance.lang = "en-US";
-  }
-  utterance.rate = 0.88;
-  utterance.pitch = 1;
-  utterance.volume = 1;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(utterance);
-  setMessage("Listen carefully and spell the word you hear.", "info");
-}
-
-function showGameOver() {
-  state.locked = true;
-  ui.gameOverModal.classList.remove("hidden");
-  ui.gameOverModal.setAttribute("aria-hidden", "false");
-  ui.finalScore.textContent = String(state.score);
-  ui.finalWords.textContent = String(state.solved);
-
-  if (state.solved >= 10) {
-    ui.gameOverText.textContent = "Amazing! Your spelling garden is blooming!";
-  } else if (state.solved >= 5) {
-    ui.gameOverText.textContent = "Nice work! Keep practicing to grow more words.";
-  } else {
-    ui.gameOverText.textContent = "Great effort! Start again and beat your score.";
-  }
-}
-
-function handleKeyboard(event) {
-  if (state.locked) return;
-  const key = event.key;
-
-  if (/^[a-zA-Z]$/.test(key)) {
-    addLetter(key.toLowerCase());
-    return;
-  }
-
-  if (key === "Backspace") {
-    event.preventDefault();
-    removeLetter();
-    return;
-  }
-
-  if (key === "Enter") {
-    checkWord();
-  }
-}
-
-function bindEvents() {
-  primeSpeechVoices();
-  ui.newGame.addEventListener("click", () => {
-    startGame({ downloadOnlineWords: true });
+  // keep the right letters, send the wrong ones back to the bank
+  r.guess.forEach((g, i) => {
+    if (g.ch === r.letters[i]) r.locked[i] = true;
+    else {
+      g.tile.used = false;
+      r.guess[i] = null;
+    }
   });
-  ui.hearWord.addEventListener("click", speakWord);
-  ui.useHint.addEventListener("click", useHint);
-  ui.backspace.addEventListener("click", removeLetter);
-  ui.checkWord.addEventListener("click", checkWord);
-  ui.playAgain.addEventListener("click", () => {
-    startGame({ downloadOnlineWords: true });
-  });
-  ui.difficulty.addEventListener("change", () => {
-    startGame();
-  });
-  if (ui.wordPhoto) {
-    ui.wordPhoto.addEventListener("error", handleWordImageError);
-  }
-  document.addEventListener("keydown", handleKeyboard);
+  game.locked = false;
+  renderSlots();
+  renderBank();
+  setMessage(`Not quite. Green letters are right. ${r.tries} ${r.tries === 1 ? "try" : "tries"} left.`, "bad");
 }
 
-purgeLegacyRemoteWordCaches();
-loadCachedRemoteWords();
-bindEvents();
-startGame();
+function advance() {
+  game.index += 1;
+  if (game.index >= ROUNDS) return finish();
+  startRound();
+}
+
+function finish() {
+  const stars = game.results.reduce((a, b) => a + b, 0);
+  const missed = game.words.filter((_, i) => game.results[i] === 0);
+  const perfect = missed.length === 0;
+  $("endEmoji").textContent = stars >= 24 ? "🌻" : stars >= 14 ? "🌷" : "🌱";
+  $("endTitle").textContent = stars >= 24 ? "Amazing garden!" : stars >= 14 ? "Lovely garden!" : "Your garden is growing!";
+  $("endText").textContent = `${stars} of ${ROUNDS * 3} stars · ${game.score} points`;
+  $("endGarden").textContent = game.results.map((s) => PLANT[s]).join(" ");
+  const practice = $("practice");
+  practice.hidden = perfect;
+  practice.innerHTML = "";
+  if (!perfect) {
+    const h = document.createElement("b");
+    h.textContent = "Words to practice";
+    practice.appendChild(h);
+    missed.forEach((w) => {
+      const s = document.createElement("span");
+      s.textContent = `${w.emoji} ${w.word}`;
+      practice.appendChild(s);
+    });
+  }
+  $("endNext").textContent = game.level === "hard" ? "Start over at Easy" : `Try ${NEXT_LEVEL[game.level]}`;
+  el.end.classList.add("show");
+  sfx.win();
+  burst("🌟", 20);
+}
+
+function burst(symbol, count = 12) {
+  el.burst.innerHTML = "";
+  for (let i = 0; i < count; i += 1) {
+    const p = document.createElement("span");
+    p.textContent = symbol;
+    p.style.setProperty("--x", `${(Math.random() - 0.5) * 320}px`);
+    p.style.setProperty("--y", `${-40 - Math.random() * 160}px`);
+    p.style.setProperty("--d", `${Math.random() * 0.2}s`);
+    el.burst.appendChild(p);
+  }
+  setTimeout(() => (el.burst.innerHTML = ""), 1400);
+}
+
+// ---------- controls ----------
+function setLevel(level) {
+  game.level = level;
+  store.set(KEYS.level, level);
+  document.querySelectorAll("#level .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === level)));
+}
+
+document.querySelectorAll("#level .g-chip").forEach((b) =>
+  b.addEventListener("click", () => {
+    if (b.dataset.value === game.level) return;
+    setLevel(b.dataset.value);
+    newGame();
+  })
+);
+$("newGame").addEventListener("click", newGame);
+$("endAgain").addEventListener("click", newGame);
+$("endNext").addEventListener("click", () => {
+  setLevel(NEXT_LEVEL[game.level]);
+  newGame();
+});
+el.hear.addEventListener("click", () => say(game.round.entry.word, 0.9));
+el.slow.addEventListener("click", () => say(game.round.entry.word.split("").join(" ... ") , 0.6));
+el.hint.addEventListener("click", useHint);
+el.back.addEventListener("click", removeLast);
+el.check.addEventListener("click", check);
+
+const mute = $("mute");
+function syncMute() {
+  mute.textContent = game.muted ? "Sound Off" : "Sound On";
+  mute.setAttribute("aria-pressed", String(game.muted));
+}
+mute.addEventListener("click", () => {
+  game.muted = !game.muted;
+  store.set(KEYS.mute, game.muted);
+  if (game.muted && "speechSynthesis" in window) speechSynthesis.cancel();
+  syncMute();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey || !game.round || el.end.classList.contains("show")) return;
+  if (e.target instanceof HTMLButtonElement && (e.key === "Enter" || e.key === " ")) return;
+  if (game.locked) return;
+  if (/^[a-z]$/i.test(e.key)) typeLetter(e.key.toLowerCase());
+  else if (e.key === "Backspace") {
+    removeLast();
+    e.preventDefault();
+  } else if (e.key === "Enter") check();
+});
+
+setLevel(game.level);
+syncMute();
+newGame();
+
+// exposed for testing
+window.__spell = { game, check, addTile, useHint };

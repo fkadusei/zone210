@@ -1,98 +1,81 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spell Sprout</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <main class="game-shell">
-    <header class="hero">
-      <h1>Spell Sprout</h1>
-      <p>Grow your spelling garden one word at a time.</p>
-    </header>
-
-    <section class="panel controls">
-      <label for="difficulty">
-        Difficulty
-        <select id="difficulty">
-          <option value="easy">Easy (Ages 5-7)</option>
-          <option value="medium">Medium (Ages 7-9)</option>
-          <option value="hard">Hard (Ages 9-10)</option>
-        </select>
-      </label>
-      <button id="newGame" class="btn btn-soft" type="button">New Game</button>
-      <button id="hearWord" class="btn btn-primary" type="button">Hear Word</button>
-      <button id="useHint" class="btn btn-soft" type="button">Hint</button>
-    </section>
-
-    <section class="panel hud">
-      <article class="status-pill">
-        <span class="label">Score</span>
-        <strong id="scoreValue">0</strong>
-      </article>
-      <article class="status-pill">
-        <span class="label">Best</span>
-        <strong id="bestValue">0</strong>
-      </article>
-      <article class="status-pill">
-        <span class="label">Streak</span>
-        <strong id="streakValue">0</strong>
-      </article>
-      <article class="status-pill">
-        <span class="label">Lives</span>
-        <strong id="livesValue">❤❤❤❤❤</strong>
-      </article>
-      <article class="status-pill">
-        <span class="label">Round</span>
-        <strong id="roundValue">1</strong>
-      </article>
-      <article class="status-pill">
-        <span class="label">Solved</span>
-        <strong id="solvedValue">0</strong>
-      </article>
-    </section>
-
-    <section class="panel word-card" id="wordCard">
-      <div class="word-top">
-        <div class="clue">
-          <span id="clueEmoji" aria-hidden="true">🌟</span>
-          <p id="clueText">Press "Hear Word" and spell what you hear.</p>
-          <span id="resultMark" class="result-mark hidden" aria-live="polite" aria-label="Spelling result"></span>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Spell Sprout · Zone 210</title>
+    <meta name="theme-color" content="#eef0f5" />
+    <script src="../../assets/theme.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Spell Sprout</h1>
+          <p>Listen to the word, then spell it to grow your garden.</p>
         </div>
-        <figure id="wordVisual" class="word-visual hidden" aria-label="Word photo">
-          <img id="wordPhoto" alt="" loading="lazy" referrerpolicy="no-referrer">
-        </figure>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn" id="newGame">New Game</button>
+        </div>
       </div>
-      <div id="slots" class="slots" aria-label="Letter slots"></div>
-      <div id="celebration" class="celebration" aria-hidden="true"></div>
-    </section>
 
-    <section class="panel bank-wrap">
-      <h2>Letter Bank</h2>
-      <div id="bank" class="bank" aria-label="Letter bank"></div>
-      <div class="actions">
-        <button id="backspace" class="btn btn-soft" type="button">Backspace</button>
-        <button id="checkWord" class="btn btn-primary" type="button">Check Word</button>
+      <div class="g-bar level">
+        <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+          <button class="g-chip" data-value="easy" aria-pressed="true">Easy <small>ages 5–7</small></button>
+          <button class="g-chip" data-value="medium" aria-pressed="false">Medium <small>ages 7–9</small></button>
+          <button class="g-chip" data-value="hard" aria-pressed="false">Hard <small>ages 9+</small></button>
+        </div>
       </div>
-    </section>
 
-    <p id="message" class="message info" aria-live="polite">Pick a difficulty and start spelling.</p>
+      <div class="g-stats">
+        <div class="g-stat"><b id="score">0</b><span>Score</span></div>
+        <div class="g-stat"><b id="streak">0</b><span>Streak</span></div>
+        <div class="g-stat"><b id="best">0</b><span>Best</span></div>
+        <div class="g-stat"><b id="round">1/10</b><span>Word</span></div>
+      </div>
 
-  </main>
+      <div class="garden" id="garden" aria-label="Your garden"></div>
 
-  <section id="gameOverModal" class="modal hidden" aria-hidden="true">
-    <div class="modal-card">
-      <h2>Garden Rest Time</h2>
-      <p id="gameOverText">Great effort!</p>
-      <p><strong>Score:</strong> <span id="finalScore">0</span></p>
-      <p><strong>Words Solved:</strong> <span id="finalWords">0</span></p>
-      <button id="playAgain" class="btn btn-primary" type="button">Play Again</button>
+      <section class="g-panel card-word" id="card">
+        <div class="picture" id="picture" aria-hidden="true">🌱</div>
+        <p class="clue" id="clue"></p>
+        <div class="hearing">
+          <button class="g-btn" id="hear">🔊 Hear word</button>
+          <button class="g-btn ghost" id="slow">🐢 Slowly</button>
+          <button class="g-btn ghost" id="hint">💡 Hint</button>
+        </div>
+        <div class="tries" id="tries" aria-label="Tries left"></div>
+        <div class="slots" id="slots" aria-label="Your spelling"></div>
+        <div class="burst" id="burst" aria-hidden="true"></div>
+      </section>
+
+      <section class="bank" id="bank" aria-label="Letters"></section>
+
+      <div class="tools">
+        <button class="g-btn ghost" id="back">⌫ Back</button>
+        <button class="g-btn" id="check">Check</button>
+      </div>
+      <p class="g-status" id="msg" role="status" aria-live="polite"></p>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="big" id="endEmoji" aria-hidden="true">🌻</div>
+        <h2 id="endTitle">Garden complete!</h2>
+        <p id="endText"></p>
+        <div class="end-garden" id="endGarden" aria-hidden="true"></div>
+        <div class="practice" id="practice" hidden></div>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endNext">Next level</button>
+          <button class="g-btn" id="endAgain">Play again</button>
+        </div>
+      </div>
     </div>
-  </section>
 
-  <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
     <script src="../../assets/back-link.js"></script>
   </body>
 </html>

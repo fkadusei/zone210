@@ -89,7 +89,7 @@ export const GAMES = [
   {
     id: "spell-sprout",
     title: "Spell Sprout",
-    tagline: "Spelling practice for ages 5–10 with spoken words and three difficulty levels.",
+    tagline: "Hear a word, spell it, and grow a garden. 135 picture words in three levels for ages 5–10.",
     audience: "kids",
     tags: ["Words", "Learning", "Offline"],
     players: "1 player",
