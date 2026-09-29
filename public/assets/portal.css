@@ -100,35 +100,77 @@ body { overflow-x: hidden; }
 .link-btn:hover { text-decoration: underline; text-underline-offset: 4px; }
 
 /* ---------- grid and cards ---------- */
+:root {
+  --card-top: #ffffff;
+  --card-bottom: #eef1fb;
+  --card-rim: rgba(22, 26, 43, 0.14);
+}
+:root[data-theme="dark"] {
+  --card-top: #34407a;
+  --card-bottom: #212a58;
+  --card-rim: rgba(160, 178, 255, 0.28);
+}
 .wrap { max-width: 1100px; margin: 0 auto; padding: 8px 20px 10px; }
 .count { margin: 0 0 14px; color: var(--muted); font-size: 0.85rem; font-weight: 600; }
-.grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 22px; }
+.grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 28px; }
 .grid > li { animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; animation-delay: calc(var(--i, 0) * 45ms); }
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
 
 .card {
   --a: #888;
   --b: #bbb;
+  --rx: 0deg;
+  --ry: 0deg;
+  --ty: 0px;
+  --mx: 50%;
+  --my: 0%;
+  --edge: color-mix(in srgb, var(--a) 38%, #060a18);
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
   color: inherit;
   text-decoration: none;
-  background: color-mix(in srgb, var(--surface) 76%, transparent);
-  backdrop-filter: blur(12px) saturate(140%);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
-  border: 1px solid var(--line);
+  /* a solid, lighter slab that clearly sits above the background */
+  background: linear-gradient(180deg, var(--card-top), var(--card-bottom));
+  border: 1px solid var(--card-rim);
   border-radius: 22px;
-  box-shadow: var(--shadow);
-  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.16) inset,
+    0 7px 0 var(--edge),
+    0 22px 34px -6px rgba(3, 6, 20, 0.55),
+    0 0 0 0 transparent;
+  transform: perspective(900px) translateY(var(--ty)) rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.35s ease, border-color 0.25s ease;
+  will-change: transform;
+}
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(420px circle at var(--mx) var(--my), rgba(255, 255, 255, 0.22), transparent 55%);
+  transition: opacity 0.3s ease;
 }
 .card:hover, .card:focus-visible {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
-  border-color: color-mix(in srgb, var(--a) 60%, var(--line));
+  --ty: -10px;
+  border-color: color-mix(in srgb, var(--a) 70%, var(--card-rim));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.22) inset,
+    0 11px 0 var(--edge),
+    0 34px 46px -8px rgba(3, 6, 20, 0.65),
+    0 0 46px -6px color-mix(in srgb, var(--a) 55%, transparent);
 }
-.card:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.card:hover::after, .card:focus-visible::after { opacity: 1; }
+.card.tilting { transition: transform 0.08s linear, box-shadow 0.35s ease, border-color 0.25s ease; }
+.card:active { --ty: -3px; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 4px 0 var(--edge), 0 12px 20px -6px rgba(3, 6, 20, 0.5); }
+.card:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+.grid > li { perspective: 1200px; }
 
 .art {
   position: relative;
@@ -161,7 +203,8 @@ body { overflow-x: hidden; }
 }
 .card:hover .icon-tile { transform: scale(1.08) rotate(-3deg); }
 .art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; transition: transform 0.5s ease; }
-.card:hover .art img { transform: scale(1.04); }
+.card:hover .art img { transform: scale(1.07); }
+.art img, .icon-tile { transform: translateZ(0); }
 .flag {
   position: absolute;
   top: 12px;
@@ -220,4 +263,8 @@ body { overflow-x: hidden; }
   .tools { justify-content: space-between; }
   .search { flex: 1; }
   #search { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .card:hover { --rx: 0deg !important; --ry: 0deg !important; }
 }

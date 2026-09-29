@@ -81,6 +81,25 @@ function card(game, index) {
 
   a.append(art, body);
   li.appendChild(a);
+
+  // gentle 3D tilt that follows the pointer (mouse only)
+  if (window.matchMedia("(hover: hover) and (pointer: fine)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    a.addEventListener("pointermove", (e) => {
+      const r = a.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width;
+      const y = (e.clientY - r.top) / r.height;
+      a.classList.add("tilting");
+      a.style.setProperty("--ry", `${((x - 0.5) * 12).toFixed(2)}deg`);
+      a.style.setProperty("--rx", `${((0.5 - y) * 9).toFixed(2)}deg`);
+      a.style.setProperty("--mx", `${(x * 100).toFixed(1)}%`);
+      a.style.setProperty("--my", `${(y * 100).toFixed(1)}%`);
+    });
+    a.addEventListener("pointerleave", () => {
+      a.classList.remove("tilting");
+      a.style.removeProperty("--rx");
+      a.style.removeProperty("--ry");
+    });
+  }
   return li;
 }
 
