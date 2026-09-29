@@ -1,15 +1,19 @@
 /**
- * Cloudflare Pages Function: GET /api/turn
+ * Cloudflare Worker for Zone 210.
  *
- * Mints short-lived TURN relay credentials from Cloudflare Realtime TURN, so the API token never
- * reaches the browser or the (public) repo. The game fetches this when a room is created or joined
- * (see TURN_CREDENTIALS_URL in src/config.js) and adds the result to its ICE servers.
+ * Static files (public/) are served straight from Cloudflare's asset store. This Worker only runs for
+ * /api/* (see run_worker_first in wrangler.jsonc). Today that's one endpoint:
  *
- * Required environment variables (Pages project -> Settings -> Variables and Secrets):
- *   TURN_KEY_ID         the TURN key's ID          (plain text is fine)
- *   TURN_KEY_API_TOKEN  the TURN key's API token   (add as a *Secret*)
+ *   GET /api/turn  mints short-lived TURN relay credentials from Cloudflare Realtime TURN, so the API token
+ *                  never reaches the browser or the (public) repo. Ghana Ludo 3D fetches it when a room is
+ *                  created or joined (see TURN_CREDENTIALS_URL in public/games/ludo/src/config.js).
  *
- * If either is missing, or Cloudflare errors, this returns an empty list and the game simply falls
+ * Secrets (Worker -> Settings -> Variables and Secrets; add BOTH as type "Secret" so a redeploy can never
+ * overwrite them):
+ *   TURN_KEY_ID          the TURN key's ID
+ *   TURN_KEY_API_TOKEN   the TURN key's API token
+ *
+ * If either is missing, or Cloudflare errors, the endpoint returns an empty list and the game simply falls
  * back to direct peer-to-peer connections, so it can never break online play.
  */
 
@@ -21,7 +25,7 @@ const json = (body, status = 200, extra = {}) =>
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...extra },
   });
 
-export async function onRequestGet({ request, env }) {
+async function turnCredentials(request, env) {
   // Only the site itself should be asking. Browsers label cross-site fetches; refuse those.
   const site = request.headers.get("Sec-Fetch-Site");
   if (site && site !== "same-origin" && site !== "none") return json([], 403);
@@ -57,3 +61,12 @@ export async function onRequestGet({ request, env }) {
     return json([], 200, { "X-Relay": "error" });
   }
 }
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === "/api/turn" && request.method === "GET") return turnCredentials(request, env);
+    if (url.pathname.startsWith("/api/")) return json({ error: "not found" }, 404);
+    return env.ASSETS.fetch(request); // safety net; static files normally never reach the Worker
+  },
+};

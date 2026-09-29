@@ -18,7 +18,7 @@ export const TURN_SERVERS = [
  * or joined). Use this with providers that mint short-lived credentials, so no secret lives in the repo.
  * Example shape: [{ "urls": "turn:...", "username": "...", "credential": "..." }]
  *
- * "/api/turn" is the Cloudflare Pages Function in functions/api/turn.js, which mints Cloudflare Realtime
+ * "/api/turn" is the Cloudflare Worker in src/worker.js (at /api/turn), which mints Cloudflare Realtime
  * TURN credentials. On hosts without that function (e.g. plain GitHub Pages) the request 404s and the
  * game just uses direct connections, so it is safe to leave set.
  */
