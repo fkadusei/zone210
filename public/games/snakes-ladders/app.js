@@ -250,6 +250,7 @@ let turn = 0;
 let busy = false;
 let over = false;
 let view = null;
+let epoch = 0; // bumps on every new game so a roll from the old game can never touch the new one
 
 const statusEl = $("status");
 const rollBtn = $("roll");
@@ -271,6 +272,7 @@ function renderPlayers() {
 }
 
 function newGame() {
+  epoch += 1;
   const count = settings.mode === "cpu" ? 2 : Number(settings.mode);
   players = Array.from({ length: count }, (_, i) => ({
     name: settings.mode === "cpu" ? (i === 0 ? "You" : "Computer") : NAMES[i],
@@ -296,46 +298,59 @@ function beginTurn() {
   view.setDiceEnabled(!p.cpu);
   rollBtn.textContent = p.cpu ? "Computer's turn…" : players.length > 1 && settings.mode !== "cpu" ? `${p.name}: roll the dice` : "Roll the dice";
   setStatus(p.cpu ? "The computer is rolling…" : `${p.name === "You" ? "Your" : `${p.name}'s`} turn. Roll the dice!`);
-  if (p.cpu) setTimeout(roll, 900 / SPEED);
+  const e = epoch;
+  if (p.cpu) setTimeout(() => e === epoch && roll(), 900 / SPEED);
 }
 
 async function roll() {
   if (busy || over) return;
   busy = true;
+  const my = epoch;
+  const stale = () => my !== epoch;
   rollBtn.disabled = true;
   view.setDiceEnabled(false);
   const p = players[turn];
   const idx = turn;
+  const who = p.name === "You" ? "You" : p.name;
   const value = 1 + Math.floor(Math.random() * 6);
   sfx.roll();
   await view.rollDice(value);
+  if (stale()) return;
   await sleep(250);
+  if (stale()) return;
 
-  const target = p.pos + value;
+  const start = p.pos;
+  const target = start + value;
   if (target > 100) {
-    setStatus(`${p.name === "You" ? "You" : p.name} rolled ${value}, but needs an exact roll to reach 100.`);
-    await sleep(900);
+    setStatus(`${who} rolled ${value}, but ${start} + ${value} is past 100. You need the exact number to finish.`);
+    await sleep(1100);
+    if (stale()) return;
     return endTurn(false);
   }
-  setStatus(`${p.name === "You" ? "You" : p.name} rolled a ${value}.`);
-  for (let s = p.pos + 1; s <= target; s += 1) {
+  setStatus(`${who} rolled a ${value}: ${start} → ${target}`);
+  for (let s = start + 1; s <= target; s += 1) {
     p.pos = s;
     sfx.step();
     await view.hop(idx, s);
+    if (stale()) return;
+    renderPlayers();
   }
   const jump = JUMPS[p.pos];
   if (jump) {
     const up = jump > p.pos;
     await sleep(200);
-    setStatus(up ? `A ladder! Up to ${jump}.` : `A snake! Down to ${jump}.`, up ? "good" : "bad");
+    if (stale()) return;
+    setStatus(up ? `${who} rolled a ${value}: ${start} → ${target}. A ladder! Up to ${jump}.` : `${who} rolled a ${value}: ${start} → ${target}. A snake! Down to ${jump}.`, up ? "good" : "bad");
     up ? sfx.ladder() : sfx.snake();
     const from = p.pos;
     p.pos = jump;
     await view.jump(idx, from, jump, up ? "ladder" : "snake");
+    if (stale()) return;
   }
   renderPlayers();
   if (p.pos === 100) return win(p, idx);
   await sleep(200);
+  if (stale()) return;
   endTurn(value === 6 && settings.bonus === "on");
 }
 
@@ -359,7 +374,8 @@ function win(p, idx) {
   $("endTitle").textContent = you ? (p.cpu ? "The computer wins" : "You win!") : `${p.name} wins!`;
   $("endText").textContent = you && p.cpu ? "Better luck next time. Every game is a fresh roll." : "First to square 100. Well played!";
   setStatus(`${p.name} reached 100!`, "good");
-  setTimeout(() => $("end").classList.add("show"), 1300 / SPEED);
+  const e = epoch;
+  setTimeout(() => e === epoch && $("end").classList.add("show"), 1300 / SPEED);
 }
 
 // ---------- start-up: 3D board when WebGL works, flat board otherwise ----------

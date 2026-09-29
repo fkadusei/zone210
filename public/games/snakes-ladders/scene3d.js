@@ -62,89 +62,170 @@ function makeWoodTexture(renderer, { base, repeat }) {
   return tex;
 }
 
-function makeBoardTexture(renderer) {
+// board-unit centre of a square (x right, y down, one unit per square)
+function cellBoard(n) {
+  const idx = n - 1;
+  const row = Math.floor(idx / 10);
+  const col = row % 2 === 0 ? idx % 10 : 9 - (idx % 10);
+  return { x: col + 0.5, y: 9 - row + 0.5 };
+}
+
+// the wavy line a snake follows, from head (higher square) to tail, in board units
+function snakePoints(from, to, N = 60) {
+  const h = cellBoard(from);
+  const t = cellBoard(to);
+  const dx = t.x - h.x;
+  const dy = t.y - h.y;
+  const len = Math.hypot(dx, dy);
+  const px = -dy / len;
+  const py = dx / len;
+  const waves = Math.max(1.5, len / 3.3);
+  const amp = 0.3 + Math.min(0.26, len / 30);
+  const pts = [];
+  for (let k = 0; k <= N; k += 1) {
+    const u = k / N;
+    const off = Math.sin(u * Math.PI * 2 * waves) * amp * (0.4 + 0.6 * Math.sin(Math.min(1, u * 1.2) * Math.PI * 0.5));
+    pts.push({ x: h.x + dx * u + px * off, y: h.y + dy * u + py * off });
+  }
+  return pts;
+}
+
+function drawFlatSnake(ctx, U, pts, base, dark) {
+  const width = (u) => U * (u < 0.05 ? 0.19 : 0.17 * (1 - 0.66 * Math.pow(u, 1.3)) + 0.025);
+  const seg = (i, w, style) => {
+    ctx.strokeStyle = style;
+    ctx.lineWidth = w;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(pts[i - 1].x * U, pts[i - 1].y * U);
+    ctx.lineTo(pts[i].x * U, pts[i].y * U);
+    ctx.stroke();
+  };
+  const N = pts.length - 1;
+  for (let i = 1; i <= N; i += 1) seg(i, width(i / N) + U * 0.04, "rgba(20,10,0,0.55)");
+  for (let i = 1; i <= N; i += 1) seg(i, width(i / N), base);
+  for (let i = 2; i <= N; i += 3) {
+    ctx.fillStyle = dark;
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.arc(pts[i].x * U, pts[i].y * U, width(i / N) * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  // head
+  const hx = pts[0].x * U;
+  const hy = pts[0].y * U;
+  const ang = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x) + Math.PI;
+  ctx.save();
+  ctx.translate(hx, hy);
+  ctx.rotate(ang);
+  ctx.fillStyle = base;
+  ctx.strokeStyle = "rgba(20,10,0,0.5)";
+  ctx.lineWidth = U * 0.02;
+  ctx.beginPath();
+  ctx.ellipse(U * 0.03, 0, U * 0.2, U * 0.15, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  [-1, 1].forEach((sgn) => {
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(U * 0.08, sgn * U * 0.075, U * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#111";
+    ctx.beginPath();
+    ctx.arc(U * 0.09, sgn * U * 0.075, U * 0.02, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.strokeStyle = "#e11d48";
+  ctx.lineWidth = U * 0.018;
+  ctx.beginPath();
+  ctx.moveTo(U * 0.22, 0);
+  ctx.lineTo(U * 0.32, 0);
+  ctx.moveTo(U * 0.32, 0);
+  ctx.lineTo(U * 0.37, -U * 0.03);
+  ctx.moveTo(U * 0.32, 0);
+  ctx.lineTo(U * 0.37, U * 0.03);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function makeBoardTexture(renderer, SNAKES) {
   const S = 2048;
   const U = S / 10;
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = S;
   const ctx = canvas.getContext("2d");
   const palette = [["#f1dea6", "#e4c77f"], ["#8ccbe3", "#62aecb"]];
-  for (let idx = 0; idx < 100; idx += 1) {
-    const n = idx + 1;
+  const cellOf = (idx) => {
     const row = Math.floor(idx / 10);
     const col = row % 2 === 0 ? idx % 10 : 9 - (idx % 10);
-    const x = col * U;
-    const y = (9 - row) * U;
+    return { row, col, x: col * U, y: (9 - row) * U };
+  };
+  for (let idx = 0; idx < 100; idx += 1) {
+    const { row, col, x, y } = cellOf(idx);
     const [a, b] = palette[(row + col) % 2 === 0 ? 0 : 1];
     const g = ctx.createLinearGradient(x, y, x, y + U);
     g.addColorStop(0, a);
     g.addColorStop(1, b);
     ctx.fillStyle = g;
     ctx.fillRect(x, y, U, U);
-    // soft bevel
     ctx.strokeStyle = "rgba(255,255,255,0.3)";
     ctx.lineWidth = 5;
     ctx.strokeRect(x + 3, y + 3, U - 6, U - 6);
     ctx.strokeStyle = "rgba(90,60,30,0.28)";
     ctx.lineWidth = 3;
     ctx.strokeRect(x, y, U, U);
-    // number: large, dark, with a light halo so it reads on either colour
-    ctx.font = "900 92px Georgia, 'Times New Roman', serif";
-    ctx.textBaseline = "top";
-    ctx.textAlign = "left";
-    ctx.lineJoin = "round";
-    ctx.lineWidth = 14;
-    ctx.strokeStyle = "rgba(255,255,255,0.92)";
-    ctx.strokeText(String(n), x + 14, y + 8);
-    ctx.fillStyle = "#2e1a0a";
-    ctx.fillText(String(n), x + 14, y + 8);
   }
-  // START and FINISH
-  const startX = 0;
-  const startY = 9 * U;
-  const sg = ctx.createLinearGradient(startX, startY, startX, startY + U);
+  // START and FINISH squares
+  const st = cellOf(0);
+  const sg = ctx.createLinearGradient(st.x, st.y, st.x, st.y + U);
   sg.addColorStop(0, "#9be3a8");
   sg.addColorStop(1, "#4fbf70");
   ctx.fillStyle = sg;
-  ctx.fillRect(startX + 4, startY + 4, U - 8, U - 8);
-  ctx.fillStyle = "#123d22";
-  ctx.font = "900 92px Georgia, serif";
-  ctx.lineWidth = 14;
-  ctx.strokeStyle = "rgba(255,255,255,0.92)";
-  ctx.strokeText("1", startX + 14, startY + 8);
-  ctx.fillText("1", startX + 14, startY + 8);
-  ctx.font = "900 36px Georgia, serif";
-  ctx.textAlign = "center";
-  ctx.fillText("START", startX + U / 2, startY + U - 60);
-  const fx = 0;
-  const fy = 0; // 100 is top-left on a 10-row boustrophedon board
-  const fg = ctx.createLinearGradient(fx, fy, fx + U, fy + U);
+  ctx.fillRect(st.x + 4, st.y + 4, U - 8, U - 8);
+  const fin = cellOf(99);
+  const fg = ctx.createLinearGradient(fin.x, fin.y, fin.x + U, fin.y + U);
   fg.addColorStop(0, "#ffe27a");
   fg.addColorStop(1, "#f0a91a");
   ctx.fillStyle = fg;
-  ctx.fillRect(fx + 4, fy + 4, U - 8, U - 8);
+  ctx.fillRect(fin.x + 4, fin.y + 4, U - 8, U - 8);
+  // snakes are painted flat, thin, under the numbers
+  Object.entries(SNAKES).forEach(([from, to], i) => {
+    const [base, dark] = SNAKE_STYLES[i % SNAKE_STYLES.length];
+    drawFlatSnake(ctx, U, snakePoints(Number(from), Number(to)), base, dark);
+  });
+  // numbers last so they are always on top: near-black with a light halo
+  ctx.textBaseline = "top";
   ctx.textAlign = "left";
-  ctx.fillStyle = "#4a2a02";
-  ctx.font = "900 84px Georgia, serif";
-  ctx.lineWidth = 14;
-  ctx.strokeStyle = "rgba(255,255,255,0.92)";
-  ctx.strokeText("100", fx + 14, fy + 10);
-  ctx.fillText("100", fx + 14, fy + 10);
+  ctx.lineJoin = "round";
+  for (let idx = 0; idx < 100; idx += 1) {
+    const { x, y } = cellOf(idx);
+    const n = idx + 1;
+    ctx.font = `900 ${n === 100 ? 84 : 92}px Georgia, 'Times New Roman', serif`;
+    ctx.lineWidth = 13;
+    ctx.strokeStyle = "rgba(255,255,255,0.9)";
+    ctx.strokeText(String(n), x + 14, y + 8);
+    ctx.fillStyle = "#1a0d04";
+    ctx.fillText(String(n), x + 14, y + 8);
+  }
   ctx.textAlign = "center";
-  ctx.font = "800 34px Georgia, serif";
-  ctx.fillText("FINISH", fx + U / 2, fy + U - 60);
-  // little crown
+  ctx.font = "900 36px Georgia, serif";
+  ctx.fillStyle = "#123d22";
+  ctx.fillText("START", st.x + U / 2, st.y + U - 60);
+  ctx.fillStyle = "#4a2a02";
+  ctx.fillText("FINISH", fin.x + U / 2, fin.y + U - 60);
+  // little crown on the finish square
   ctx.fillStyle = "#b8790a";
   ctx.beginPath();
-  const cx = fx + U * 0.62;
-  const cy = fy + U * 0.28;
-  ctx.moveTo(cx - 34, cy + 22);
-  ctx.lineTo(cx - 34, cy - 14);
-  ctx.lineTo(cx - 17, cy + 4);
-  ctx.lineTo(cx, cy - 22);
-  ctx.lineTo(cx + 17, cy + 4);
-  ctx.lineTo(cx + 34, cy - 14);
-  ctx.lineTo(cx + 34, cy + 22);
+  const cx = fin.x + U * 0.66;
+  const cy = fin.y + U * 0.3;
+  ctx.moveTo(cx - 30, cy + 20);
+  ctx.lineTo(cx - 30, cy - 12);
+  ctx.lineTo(cx - 15, cy + 4);
+  ctx.lineTo(cx, cy - 20);
+  ctx.lineTo(cx + 15, cy + 4);
+  ctx.lineTo(cx + 30, cy - 12);
+  ctx.lineTo(cx + 30, cy + 20);
   ctx.closePath();
   ctx.fill();
   const tex = new THREE.CanvasTexture(canvas);
@@ -182,51 +263,6 @@ function makeDiceFaceTexture(value) {
   return tex;
 }
 
-function makeScaleTexture(base, dark, renderer) {
-  const W = 256;
-  const H = 256;
-  const canvas = document.createElement("canvas");
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = base;
-  ctx.fillRect(0, 0, W, H);
-  // belly stripe along the seam, diamond pattern across the back
-  const rows = 8;
-  const cols = 6;
-  for (let r = -1; r <= rows; r += 1) {
-    for (let c = 0; c <= cols; c += 1) {
-      const x = (c + (r % 2 ? 0.5 : 0)) * (W / cols);
-      const y = r * (H / rows);
-      ctx.beginPath();
-      ctx.moveTo(x, y - 16);
-      ctx.lineTo(x + 16, y);
-      ctx.lineTo(x, y + 16);
-      ctx.lineTo(x - 16, y);
-      ctx.closePath();
-      ctx.fillStyle = dark;
-      ctx.globalAlpha = 0.55;
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.strokeStyle = "rgba(255,255,255,0.35)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-  }
-  const belly = ctx.createLinearGradient(0, 0, W, 0);
-  belly.addColorStop(0, "rgba(255,245,200,0.75)");
-  belly.addColorStop(0.12, "rgba(255,245,200,0)");
-  belly.addColorStop(0.88, "rgba(255,245,200,0)");
-  belly.addColorStop(1, "rgba(255,245,200,0.75)");
-  ctx.fillStyle = belly;
-  ctx.fillRect(0, 0, W, H);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  return tex;
-}
-
 function makeBlobTexture() {
   const S = 128;
   const canvas = document.createElement("canvas");
@@ -239,45 +275,6 @@ function makeBlobTexture() {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, S, S);
   return new THREE.CanvasTexture(canvas);
-}
-
-// a tube whose radius changes along its length
-function taperedTube(curve, radiusAt, { segments = 160, radial = 20, tile = 9 } = {}) {
-  const pts = curve.getPoints(segments);
-  const frames = curve.computeFrenetFrames(segments, false);
-  const pos = [];
-  const nor = [];
-  const uv = [];
-  const idx = [];
-  for (let i = 0; i <= segments; i += 1) {
-    const t = i / segments;
-    const r = radiusAt(t);
-    const p = pts[i];
-    const n = frames.normals[i];
-    const b = frames.binormals[i];
-    for (let j = 0; j <= radial; j += 1) {
-      const a = (j / radial) * Math.PI * 2;
-      const dx = n.x * Math.cos(a) + b.x * Math.sin(a);
-      const dy = n.y * Math.cos(a) + b.y * Math.sin(a);
-      const dz = n.z * Math.cos(a) + b.z * Math.sin(a);
-      pos.push(p.x + dx * r, p.y + dy * r, p.z + dz * r);
-      nor.push(dx, dy, dz);
-      uv.push(j / radial, t * tile);
-    }
-  }
-  for (let i = 0; i < segments; i += 1) {
-    for (let j = 0; j < radial; j += 1) {
-      const a = i * (radial + 1) + j;
-      const b = a + radial + 1;
-      idx.push(a, a + 1, b, b, a + 1, b + 1);
-    }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
-  g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
-  g.setIndex(idx);
-  return g;
 }
 
 // ---------------------------------------------------------------------------
@@ -351,7 +348,7 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
   frame.castShadow = true;
   frame.receiveShadow = true;
   scene.add(frame);
-  const boardTex = makeBoardTexture(renderer);
+  const boardTex = makeBoardTexture(renderer, SNAKES);
   const paint = new THREE.Mesh(
     new THREE.PlaneGeometry(10, 10),
     new THREE.MeshPhysicalMaterial({ map: boardTex, roughness: 0.78, clearcoat: 0.04, clearcoatRoughness: 0.6 })
@@ -405,8 +402,8 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
 
   // ladders
   const ladderWood = new THREE.MeshPhysicalMaterial({ map: makeWoodTexture(renderer, { base: "#c98a45", repeat: 1 }), roughness: 0.5, clearcoat: 0.3 });
-  const railGeo = new THREE.BoxGeometry(0.11, 0.09, 1);
-  const rungGeo = new THREE.CylinderGeometry(0.05, 0.05, 1, 10);
+  const railGeo = new THREE.BoxGeometry(0.07, 0.08, 1);
+  const rungGeo = new THREE.CylinderGeometry(0.03, 0.03, 1, 10);
   Object.entries(LADDERS).forEach(([from, to]) => {
     const a = cellPos(Number(from));
     const b = cellPos(Number(to));
@@ -417,7 +414,7 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
     const g = new THREE.Group();
     g.position.set(mid.x, 0.07, mid.z);
     g.rotation.y = yaw;
-    [-0.2, 0.2].forEach((off) => {
+    [-0.15, 0.15].forEach((off) => {
       const rail = new THREE.Mesh(railGeo, ladderWood);
       rail.scale.z = len;
       rail.position.x = off;
@@ -428,7 +425,7 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
     for (let i = 1; i < rungs; i += 1) {
       const rung = new THREE.Mesh(rungGeo, ladderWood);
       rung.rotation.z = Math.PI / 2;
-      rung.scale.y = 0.4;
+      rung.scale.y = 0.3;
       rung.position.set(0, 0.02, -len / 2 + (i / rungs) * len);
       rung.castShadow = true;
       g.add(rung);
@@ -436,70 +433,11 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
     scene.add(g);
   });
 
-  // snakes
+  // snakes are painted on the board; these curves only guide a pawn sliding down
   const snakeCurves = {};
-  Object.entries(SNAKES).forEach(([from, to], i) => {
-    const head = cellPos(Number(from));
-    const tail = cellPos(Number(to));
-    const dir = new THREE.Vector3().subVectors(tail, head);
-    const len = dir.length();
-    const side = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
-    const waves = Math.max(1.5, len / 3.3);
-    const amp = 0.42 + Math.min(0.35, len / 22);
-    const pts = [];
-    const N = 34;
-    for (let k = 0; k <= N; k += 1) {
-      const t = k / N;
-      const off = Math.sin(t * Math.PI * 2 * waves) * amp * (0.4 + 0.6 * Math.sin(Math.min(1, t * 1.2) * Math.PI * 0.5));
-      const p = head.clone().addScaledVector(dir, t).addScaledVector(side, off);
-      p.y = 0.2 + Math.sin(t * Math.PI * waves * 2) * 0.03;
-      pts.push(p);
-    }
-    const curve = new THREE.CatmullRomCurve3(pts);
-    snakeCurves[from] = curve;
-    const [base, dark] = SNAKE_STYLES[i % SNAKE_STYLES.length];
-    const tex = makeScaleTexture(base, dark, renderer);
-    const radiusAt = (t) => {
-      if (t < 0.06) return 0.16;
-      const body = 0.2 - 0.03 * t;
-      const taper = t > 0.62 ? Math.pow(1 - (t - 0.62) / 0.38, 1.4) : 1;
-      return Math.max(0.028, body * taper);
-    };
-    const geo = taperedTube(curve, radiusAt, { segments: Math.round(60 + len * 12), radial: 18, tile: Math.max(5, len * 1.6) });
-    const mat = new THREE.MeshPhysicalMaterial({ map: tex, roughness: 0.32, clearcoat: 0.6, clearcoatRoughness: 0.25 });
-    const body = new THREE.Mesh(geo, mat);
-    body.castShadow = true;
-    body.receiveShadow = true;
-    scene.add(body);
-    // head
-    const headGroup = new THREE.Group();
-    const p0 = curve.getPointAt(0);
-    const tangent = curve.getTangentAt(0).multiplyScalar(-1); // pointing away from the body
-    headGroup.position.copy(p0);
-    headGroup.lookAt(p0.clone().add(tangent));
-    const skull = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), new THREE.MeshPhysicalMaterial({ color: base, roughness: 0.3, clearcoat: 0.6 }));
-    skull.scale.set(0.27, 0.19, 0.36);
-    skull.position.set(0, 0.02, 0.1);
-    skull.castShadow = true;
-    headGroup.add(skull);
-    [-1, 1].forEach((s) => {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 12), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.2, clearcoat: 1 }));
-      eye.position.set(0.14 * s, 0.11, 0.2);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 10), new THREE.MeshBasicMaterial({ color: 0x111111 }));
-      pupil.position.set(0.15 * s, 0.12, 0.26);
-      headGroup.add(eye, pupil);
-    });
-    const tongueMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.5 });
-    const stem = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.012, 0.3), tongueMat);
-    stem.position.set(0, 0, 0.52);
-    headGroup.add(stem);
-    [-1, 1].forEach((s) => {
-      const fork = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.012, 0.14), tongueMat);
-      fork.position.set(0.05 * s, 0, 0.72);
-      fork.rotation.y = 0.5 * s;
-      headGroup.add(fork);
-    });
-    scene.add(headGroup);
+  Object.keys(SNAKES).forEach((from) => {
+    const pts = snakePoints(Number(from), SNAKES[from]).map((p) => new THREE.Vector3(p.x - 5, 0.08, p.y - 5));
+    snakeCurves[from] = new THREE.CatmullRomCurve3(pts);
   });
 
   // pawns
@@ -690,6 +628,18 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
       window.removeEventListener("resize", resize);
     },
     el: renderer.domElement,
+    dieTop() {
+      let best = 0;
+      let val = 0;
+      DICE_FACES.forEach(({ v, n }) => {
+        const y = new THREE.Vector3(...n).applyQuaternion(dice.quaternion).y;
+        if (y > best) {
+          best = y;
+          val = v;
+        }
+      });
+      return val;
+    },
   };
 
   // ---- camera and sizing ----
