@@ -10,13 +10,13 @@
   justify-content: space-between;
   padding: 8px 14px;
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
   border: 2px solid var(--line);
   transition: border-color 0.2s, background 0.2s;
 }
 .score .who { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .score b { font-size: 1.6rem; }
-.score.turn { border-color: var(--gold); background: rgba(242, 194, 48, 0.16); }
+.score.turn { border-color: var(--gold); background: var(--gold-soft); }
 
 .board-wrap { display: grid; place-items: center; }
 .board {
@@ -82,5 +82,5 @@
 .trophy { font-size: 3.4rem; }
 .rules { margin-top: 16px; }
 .rules summary { cursor: pointer; font-weight: 800; }
-.rules ul { margin: 10px 0 0; padding-left: 20px; line-height: 1.55; color: #4a4556; }
+.rules ul { margin: 10px 0 0; padding-left: 20px; line-height: 1.55; color: var(--muted); }
 .row.south::before, .row.north::before { content: none; }

@@ -4,6 +4,7 @@ const $ = (id) => document.getElementById(id);
 const grid = $("grid");
 const emptyEl = $("empty");
 const searchEl = $("search");
+const countEl = $("count");
 
 const AUDIENCE_LABEL = { kids: "Kids", adults: "Adults", all: "Everyone" };
 const state = { audience: "all", query: "" };
@@ -20,10 +21,15 @@ function matches(game) {
   return true;
 }
 
-function card(game) {
+const ARROW =
+  '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+function card(game, index) {
   const li = document.createElement("li");
+  li.style.setProperty("--i", index);
   const wide = game.featured && state.audience === "all" && !state.query;
   if (wide) li.className = "featured"; // the grid item is the <li>, so it is the one that spans two columns
+
   const a = document.createElement("a");
   a.className = `card${wide ? " featured" : ""}`;
   a.href = `games/${game.id}/`;
@@ -31,25 +37,37 @@ function card(game) {
   a.style.setProperty("--a", game.colors[0]);
   a.style.setProperty("--b", game.colors[1]);
 
-  const thumb = document.createElement("div");
-  thumb.className = "thumb";
-  const emoji = document.createElement("span");
-  emoji.className = "emoji";
-  emoji.textContent = game.emoji;
-  emoji.setAttribute("aria-hidden", "true");
-  thumb.appendChild(emoji);
+  const art = document.createElement("div");
+  art.className = "art";
+  const tile = document.createElement("span");
+  tile.className = "icon-tile";
+  tile.textContent = game.emoji;
+  tile.setAttribute("aria-hidden", "true");
+  art.appendChild(tile);
   const img = document.createElement("img");
   img.alt = "";
   img.loading = "lazy";
   img.src = `assets/thumbs/${game.id}.jpg`;
-  img.addEventListener("load", () => emoji.remove());
+  img.addEventListener("load", () => tile.remove());
   img.addEventListener("error", () => img.remove());
-  thumb.appendChild(img);
+  art.appendChild(img);
+  if (game.featured) {
+    const flag = document.createElement("span");
+    flag.className = "flag";
+    flag.textContent = "Featured";
+    art.appendChild(flag);
+  }
 
   const body = document.createElement("div");
   body.className = "body";
+  const row = document.createElement("div");
+  row.className = "title-row";
   const h = document.createElement("h2");
   h.textContent = game.title;
+  const go = document.createElement("span");
+  go.className = "go";
+  go.innerHTML = ARROW;
+  row.append(h, go);
   const p = document.createElement("p");
   p.textContent = game.tagline;
   const meta = document.createElement("div");
@@ -57,10 +75,12 @@ function card(game) {
   const aud = document.createElement("span");
   aud.className = "aud";
   aud.textContent = AUDIENCE_LABEL[game.audience];
-  meta.append(aud, document.createTextNode(` · ${game.players}`));
-  body.append(h, p, meta);
+  const players = document.createElement("span");
+  players.textContent = game.players;
+  meta.append(aud, players);
+  body.append(row, p, meta);
 
-  a.append(thumb, body);
+  a.append(art, body);
   li.appendChild(a);
   return li;
 }
@@ -68,8 +88,9 @@ function card(game) {
 function render() {
   const list = GAMES.filter(matches);
   grid.innerHTML = "";
-  list.forEach((g) => grid.appendChild(card(g)));
+  list.forEach((g, i) => grid.appendChild(card(g, i)));
   emptyEl.hidden = list.length > 0;
+  countEl.textContent = `${list.length} ${list.length === 1 ? "game" : "games"}`;
 }
 
 document.querySelectorAll(".tab").forEach((tab) => {

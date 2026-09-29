@@ -1,6 +1,44 @@
 .narrow { max-width: 520px; }
 .level { margin-bottom: 12px; }
 
+/* Sudoku palette: paper-like in light mode, deep navy in dark mode */
+:root {
+  --sd-frame: #161a2b;
+  --sd-bg: #f3f1ea;
+  --sd-cell: #fbfaf6;
+  --sd-given: #ebe7db;
+  --sd-peer: #efe9d2;
+  --sd-same: #f6dc8a;
+  --sd-sel: #ffd85a;
+  --sd-sel-ring: #d39a0c;
+  --sd-thin: #c9c4b3;
+  --sd-thick: #3a3d52;
+  --sd-ink: #1c2033;
+  --sd-entry: #2b5fc7;
+  --sd-bad: #d12c33;
+  --sd-hint: #1f7a3d;
+  --sd-wrong: #ffc9c9;
+  --sd-notes: #6b6f82;
+}
+:root[data-theme="dark"] {
+  --sd-frame: #8892b6;
+  --sd-bg: #0f1526;
+  --sd-cell: #161d33;
+  --sd-given: #1e2745;
+  --sd-peer: #1c2542;
+  --sd-same: #3b4a80;
+  --sd-sel: #3d56b8;
+  --sd-sel-ring: #f5b41f;
+  --sd-thin: #2a3455;
+  --sd-thick: #7b86ad;
+  --sd-ink: #eef1fa;
+  --sd-entry: #8fb2ff;
+  --sd-bad: #ff7b82;
+  --sd-hint: #62d99b;
+  --sd-wrong: #5a2a36;
+  --sd-notes: #98a1bb;
+}
+
 .grid {
   --size: min(94vw, 470px);
   display: grid;
@@ -8,56 +46,58 @@
   width: var(--size);
   height: var(--size);
   margin: 0 auto;
-  border: 3px solid #2a2433;
-  border-radius: 10px;
+  border: 3px solid var(--sd-frame);
+  border-radius: 12px;
   overflow: hidden;
-  background: #f6efe2;
-  box-shadow: 0 12px 30px rgba(74, 50, 12, 0.18);
+  background: var(--sd-bg);
+  box-shadow: var(--shadow-lg);
 }
 .cell {
   position: relative;
   padding: 0;
   border: 0;
-  border-right: 1px solid #c9bda5;
-  border-bottom: 1px solid #c9bda5;
-  background: #fffaf0;
-  color: #2b6cb0;
-  font: 700 clamp(1.1rem, 5.6vw, 1.9rem) "Avenir Next", "Trebuchet MS", system-ui, sans-serif;
+  border-right: 1px solid var(--sd-thin);
+  border-bottom: 1px solid var(--sd-thin);
+  background: var(--sd-cell);
+  color: var(--sd-entry);
+  font: 700 clamp(1.1rem, 5.6vw, 1.9rem) var(--font);
   cursor: pointer;
   touch-action: manipulation;
 }
-.cell:nth-child(3n) { border-right: 2px solid #3b2a1f; }
+.cell:nth-child(3n) { border-right: 2px solid var(--sd-thick); }
 .cell:nth-child(9n) { border-right: 0; }
-.cell:nth-child(n + 19):nth-child(-n + 27), .cell:nth-child(n + 46):nth-child(-n + 54) { border-bottom: 2px solid #3b2a1f; }
+.cell:nth-child(n + 19):nth-child(-n + 27), .cell:nth-child(n + 46):nth-child(-n + 54) { border-bottom: 2px solid var(--sd-thick); }
 .cell:nth-child(n + 73) { border-bottom: 0; }
-.cell.given { color: #2a1b13; background: #f0e6d2; }
-.cell.peer { background: #f3e7c8; }
-.cell.same { background: #f7d98a; }
-.cell.selected { background: #ffd85a; outline: 3px solid #d59f12; outline-offset: -3px; z-index: 1; }
-.cell.bad { color: #d12c33; }
-.cell.wrong { background: #ffc4c4; animation: shake 0.4s; }
-.cell.hinted { color: #1f7a3d; }
-.cell:focus-visible { outline: 3px solid #4a7de8; outline-offset: -3px; z-index: 2; }
+.cell.given { color: var(--sd-ink); background: var(--sd-given); }
+.cell.peer { background: var(--sd-peer); }
+.cell.same { background: var(--sd-same); }
+.cell.selected { background: var(--sd-sel); outline: 3px solid var(--sd-sel-ring); outline-offset: -3px; z-index: 1; }
+:root[data-theme="dark"] .cell.selected { color: #fff; }
+.cell.bad { color: var(--sd-bad); }
+.cell.wrong { background: var(--sd-wrong); animation: shake 0.4s; }
+.cell.hinted { color: var(--sd-hint); }
+.cell:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; z-index: 2; }
 @keyframes shake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 
-.notes { position: absolute; inset: 2px; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); font-size: clamp(0.5rem, 2.3vw, 0.75rem); font-weight: 700; color: #6b5f4a; line-height: 1; pointer-events: none; }
+.notes { position: absolute; inset: 2px; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); font-size: clamp(0.5rem, 2.3vw, 0.75rem); font-weight: 700; color: var(--sd-notes); line-height: 1; pointer-events: none; }
 .notes span { display: grid; place-items: center; }
 
-.tools { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 14px 0 10px; }
-.tools .g-btn[aria-pressed="true"] { border-color: var(--gold); background: rgba(242, 194, 48, 0.22); }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 16px 0 12px; }
+.tools .g-btn[aria-pressed="true"] { border-color: var(--gold); background: var(--gold-soft); }
 .pad { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; max-width: 470px; margin: 0 auto; }
 .pad button {
   position: relative;
   padding: 10px 0 12px;
-  font: 800 clamp(1.05rem, 5vw, 1.6rem) "Avenir Next", "Trebuchet MS", system-ui, sans-serif;
+  font: 800 clamp(1.05rem, 5vw, 1.6rem) var(--font);
   color: var(--ink);
-  background: #fff;
-  border: 1px solid var(--line);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
   border-radius: 10px;
-  box-shadow: 0 3px 0 rgba(42, 36, 51, 0.1);
+  box-shadow: 0 3px 0 var(--line);
   cursor: pointer;
   touch-action: manipulation;
 }
+.pad button:hover:not(:disabled) { background: var(--surface-2); }
 .pad button small { position: absolute; left: 0; right: 0; bottom: 1px; font-size: 0.6rem; font-weight: 600; color: var(--muted); }
 .pad button:disabled { opacity: 0.3; cursor: default; }
 .big { font-size: 3.4rem; }

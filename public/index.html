@@ -4,41 +4,57 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Zone 210</title>
-    <meta name="description" content="Free games and activities for kids and adults. Play in your browser: no installs, no sign-ups." />
-    <meta name="theme-color" content="#fffaf1" />
+    <meta name="description" content="Free games and activities for kids and adults. Play in your browser: no installs, no sign-up." />
+    <meta name="theme-color" content="#eef0f5" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%B2%3C/text%3E%3C/svg%3E" />
+    <script src="assets/theme.js"></script>
     <link rel="stylesheet" href="assets/shell.css" />
     <link rel="stylesheet" href="assets/portal.css" />
   </head>
   <body>
-    <header class="top">
-      <span class="wordmark">Zone 210</span>
+    <header class="nav">
+      <div class="nav-in">
+        <a class="brand" href="./" aria-label="Zone 210 home">
+          <span class="logo" aria-hidden="true">210</span>
+          <span class="brand-name">Zone 210</span>
+        </a>
+        <button class="theme-toggle" data-theme-toggle type="button" aria-label="Switch theme"></button>
+      </div>
     </header>
 
-    <main class="wrap">
-      <section class="intro">
-        <h1>Welcome! <span>Let's play.</span></h1>
-        <p>Free games and activities for kids and grown-ups. Pick one and jump in: no installs, no sign-up.</p>
+    <main>
+      <section class="hero">
+        <div class="hero-in">
+          <p class="eyebrow">Free to play · No sign-up</p>
+          <h1>Welcome! <span class="grad">Let's play.</span></h1>
+          <p class="lead">Board games, brain teasers and creative activities for kids and grown-ups. Pick one and jump in.</p>
+
+          <div class="controls">
+            <div class="tabs" role="tablist" aria-label="Who is playing?">
+              <button class="tab" role="tab" data-audience="all" aria-selected="true">Everyone</button>
+              <button class="tab" role="tab" data-audience="kids" aria-selected="false">Kids</button>
+              <button class="tab" role="tab" data-audience="adults" aria-selected="false">Adults</button>
+            </div>
+            <div class="tools">
+              <label class="search">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <input id="search" type="search" placeholder="Search games" aria-label="Search games" autocomplete="off" />
+              </label>
+              <button id="surprise" class="link-btn" type="button" title="Open a random game">Surprise me</button>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <div class="bar">
-        <div class="tabs" role="tablist" aria-label="Who is playing?">
-          <button class="tab" role="tab" data-audience="all" aria-selected="true">Everyone</button>
-          <button class="tab" role="tab" data-audience="kids" aria-selected="false">Kids</button>
-          <button class="tab" role="tab" data-audience="adults" aria-selected="false">Adults</button>
-        </div>
-        <div class="tools">
-          <input id="search" type="search" placeholder="Search" aria-label="Search games" autocomplete="off" />
-          <button id="surprise" class="link-btn" title="Open a random game">Surprise me</button>
-        </div>
-      </div>
-
-      <ul class="grid" id="grid"></ul>
-      <p class="empty" id="empty" hidden>No games match. Try a different search.</p>
+      <section class="wrap">
+        <p class="count" id="count" aria-live="polite"></p>
+        <ul class="grid" id="grid"></ul>
+        <p class="empty" id="empty" hidden>No games match. Try a different search.</p>
+      </section>
     </main>
 
     <footer class="foot">
-      <p>Your scores and saved games stay on your own device.</p>
+      <p><strong>Zone 210</strong> · Your scores and saved games stay on your own device.</p>
     </footer>
 
     <script type="module" src="assets/portal.js"></script>

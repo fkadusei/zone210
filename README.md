@@ -32,7 +32,8 @@ public/               the website itself (everything below is served as static f
   assets/
     games.js          the catalog: one entry per game
     portal.js/.css    landing page
-    shell.css         shared theme used by the simpler games
+    shell.css         shared design system: light + dark theme tokens, buttons, panels
+    theme.js          light/dark switch (follows the device setting, remembers the choice)
     back-link.js      injects the "← All games" pill into a game page
     thumbs/<id>.jpg   optional card screenshot (falls back to generated art)
   games/<id>/         one folder per game (index.html + its own files)
@@ -46,7 +47,9 @@ Oware seed conservation over hundreds of random games, scoring checked against a
 
 1. Create `public/games/my-game/index.html` (any tech you like; use relative paths).
 2. Add `<script src="../../assets/back-link.js"></script>` before `</body>` so players can get back, or link to
-   `../../` yourself. For the shared look, also link `../../assets/shell.css`.
+   `../../` yourself. For the shared look and the light/dark switch, put `<script src="../../assets/theme.js"></script>`
+   and `<link rel="stylesheet" href="../../assets/shell.css" />` in `<head>` and colour things with the CSS variables
+   (`--surface`, `--ink`, `--muted`, `--line`, `--gold`...) instead of fixed colours so both themes work.
 3. Add an entry to `public/assets/games.js` (`id` must match the folder name). Set `audience` to `kids`, `adults` or `all`.
 4. Optional: drop a 16:10 screenshot at `public/assets/thumbs/my-game.jpg`.
 

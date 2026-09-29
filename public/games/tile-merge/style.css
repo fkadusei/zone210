@@ -1,4 +1,6 @@
 .narrow { max-width: 520px; }
+:root { --tm-board: #bfae98; --tm-ring: #a99880; --tm-cell: rgba(255, 255, 255, 0.42); }
+:root[data-theme="dark"] { --tm-board: #232b45; --tm-ring: #161c31; --tm-cell: rgba(255, 255, 255, 0.07); }
 .board {
   --gap: 3.2%;
   position: relative;
@@ -6,8 +8,8 @@
   aspect-ratio: 1;
   padding: var(--gap);
   border-radius: 16px;
-  background: #bfae98;
-  box-shadow: 0 0 0 4px #a99880, 0 22px 40px rgba(0, 0, 0, 0.5);
+  background: var(--tm-board);
+  box-shadow: 0 0 0 4px var(--tm-ring), 0 22px 40px rgba(0, 0, 0, 0.5);
   touch-action: none; /* we handle swipes ourselves */
   outline: none;
   -webkit-user-select: none;
@@ -16,7 +18,7 @@
 .board:focus-visible { box-shadow: 0 0 0 4px var(--gold), 0 22px 40px rgba(0, 0, 0, 0.5); }
 .cells, .tiles { position: absolute; inset: var(--gap); }
 .cells { display: grid; grid-template: repeat(4, 1fr) / repeat(4, 1fr); gap: 0; }
-.cells > i { display: block; margin: 6%; border-radius: 10px; background: rgba(255, 255, 255, 0.42); }
+.cells > i { display: block; margin: 6%; border-radius: 10px; background: var(--tm-cell); }
 
 .tile {
   position: absolute;

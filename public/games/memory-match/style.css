@@ -52,6 +52,6 @@
 @keyframes pop { 40% { transform: rotateY(0) scale(1.12); } }
 @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
-.turn { padding: 7px 14px; border-radius: 999px; font-weight: 800; border: 2px solid var(--line); background: #fff; }
+.turn { padding: 7px 14px; border-radius: 999px; font-weight: 800; border: 2px solid var(--line); background: var(--surface); }
 .turn.on { border-color: var(--gold); background: var(--gold-soft); }
 .big { font-size: 3.4rem; }

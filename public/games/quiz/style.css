@@ -5,7 +5,7 @@
 .best { margin: 0; color: var(--muted); font-size: 0.9rem; min-height: 1.2em; }
 .go { justify-self: start; padding: 12px 28px; font-size: 1.1rem; }
 
-.bar { height: 8px; margin: 0 0 12px; border-radius: 99px; background: rgba(42, 36, 51, 0.1); overflow: hidden; }
+.bar { height: 8px; margin: 0 0 12px; border-radius: 99px; background: var(--line); overflow: hidden; }
 .bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #35a86d, #f2c230, #e5484d); background-size: 300% 100%; transform-origin: left; transition: transform 0.2s linear; }
 .bar.off { visibility: hidden; }
 
@@ -22,21 +22,21 @@
   text-align: left;
   font: 700 1.05rem "Avenir Next", "Trebuchet MS", system-ui, sans-serif;
   color: var(--ink);
-  background: #fff;
-  border: 2px solid var(--line);
-  box-shadow: 0 3px 0 rgba(42, 36, 51, 0.08);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 3px 0 var(--line);
   border-radius: 12px;
   cursor: pointer;
   touch-action: manipulation;
   transition: transform 0.1s, border-color 0.15s, background 0.15s;
 }
 .ans:hover:not(:disabled) { border-color: var(--gold); transform: translateX(3px); }
-.ans .k { flex: none; width: 1.9em; height: 1.9em; display: grid; place-items: center; border-radius: 50%; background: rgba(42, 36, 51, 0.08); font-size: 0.85rem; }
-.ans.right { border-color: #1f9d61; background: #dff5e8; animation: pop 0.35s; }
-.ans.wrong { border-color: #e5484d; background: #fde3e3; animation: shake 0.35s; }
+.ans .k { flex: none; width: 1.9em; height: 1.9em; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); font-size: 0.85rem; }
+.ans.right { border-color: var(--green); background: color-mix(in srgb, var(--green) 18%, var(--surface)); animation: pop 0.35s; }
+.ans.wrong { border-color: var(--red); background: color-mix(in srgb, var(--red) 16%, var(--surface)); animation: shake 0.35s; }
 .ans:disabled { cursor: default; }
 .ans:disabled:not(.right):not(.wrong) { opacity: 0.55; }
 @keyframes pop { 40% { transform: scale(1.03); } }
 @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-.why { margin: 0; min-height: 1.4em; color: #4a4556; }
+.why { margin: 0; min-height: 1.4em; color: var(--muted); }
 .big { font-size: 3.2rem; }
