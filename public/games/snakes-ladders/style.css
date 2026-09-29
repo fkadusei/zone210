@@ -1,0 +1,97 @@
+.narrow { max-width: 640px; }
+.bigemoji { font-size: 3.4rem; }
+.setup { display: grid; gap: 10px; margin-bottom: 12px; }
+.opt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.lbl { width: 62px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+.players { display: flex; gap: 8px; margin-bottom: 12px; }
+.pl {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  box-shadow: var(--shadow);
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.pl .dot { width: 22px; height: 22px; border-radius: 50%; flex: none; background: var(--c); box-shadow: inset -2px -3px 0 rgba(0, 0, 0, 0.22), inset 2px 2px 0 rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3); }
+.pl small { display: block; color: var(--muted); font-weight: 600; font-size: 0.72rem; }
+.pl .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl.turn { border-color: var(--c); transform: translateY(-3px); }
+
+.board-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 10 / 11;
+  padding: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 88%, #3b82f6);
+  border: 3px solid var(--line-strong);
+  box-shadow: var(--shadow-lg);
+}
+.grid, .art { position: absolute; left: 0; top: 0; width: 100%; height: 90.909%; }
+.grid { display: grid; grid-template: repeat(10, 1fr) / repeat(10, 1fr); }
+.sq {
+  position: relative;
+  padding: 3px 4px;
+  font-size: clamp(0.5rem, 2.1vw, 0.8rem);
+  font-weight: 800;
+  color: rgba(22, 26, 43, 0.5);
+  background: var(--t1);
+}
+.sq.alt { background: var(--t2); }
+:root { --t1: #fde9b8; --t2: #bfe3f7; }
+:root[data-theme="dark"] .sq { color: rgba(255, 255, 255, 0.55); }
+:root[data-theme="dark"] { --t1: #35406e; --t2: #26315c; }
+.sq.end { background: linear-gradient(135deg, #ffd25a, #f5b41f); color: #2b1f00; }
+.sq.end::after { content: "🏁"; position: absolute; right: 4px; bottom: 2px; font-size: clamp(0.8rem, 3vw, 1.3rem); }
+.sq.first::after { content: "START"; position: absolute; left: 0; right: 0; bottom: 2px; text-align: center; font-size: 0.5rem; letter-spacing: 0.06em; }
+.art { pointer-events: none; z-index: 1; }
+.tokens { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.tok {
+  position: absolute;
+  width: 5.2%;
+  aspect-ratio: 1;
+  margin: -2.6% 0 0 -2.6%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--c) 55%, #fff), var(--c) 55%, color-mix(in srgb, var(--c) 70%, #000));
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.45);
+  transition: left 0.15s linear, top 0.15s linear;
+}
+.tok.slide { transition: left 0.6s cubic-bezier(0.5, 0, 0.3, 1), top 0.6s cubic-bezier(0.5, 0, 0.3, 1); }
+.tok.now { z-index: 3; animation: bob 0.7s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-14%); } }
+
+.roller { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 16px; }
+.die {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  padding: 11px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fff, #dfe4f4);
+  border: 1px solid rgba(22, 26, 43, 0.25);
+  box-shadow: 0 5px 0 #aab3d0, 0 14px 20px -6px rgba(0, 0, 0, 0.45);
+}
+.die i { width: 78%; aspect-ratio: 1; align-self: center; justify-self: center; border-radius: 50%; background: transparent; }
+.die i.on { background: radial-gradient(circle at 35% 30%, #4a5273, #12162b); }
+.die.rolling { animation: tumble 0.16s linear infinite; }
+@keyframes tumble { 25% { transform: rotate(-10deg) translateY(-4px); } 75% { transform: rotate(10deg) translateY(-4px); } }
+.roll { min-width: 170px; font-size: 1.05rem; padding: 14px 22px; }
+.g-status.good { color: var(--green); }
+.g-status.bad { color: var(--red); }
+
+@media (max-width: 480px) {
+  .pl { padding: 6px 8px; font-size: 0.78rem; gap: 6px; }
+  .pl .dot { width: 18px; height: 18px; }
+  .sq { padding: 2px 3px; }
+}

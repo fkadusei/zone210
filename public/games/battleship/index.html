@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Battleship · Zone 210</title>
+    <meta name="theme-color" content="#eef0f5" />
+    <script src="../../assets/theme.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Battleship</h1>
+          <p>Hide your fleet, then hunt down the enemy ships before they find yours.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn" id="newGame">New Game</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Options">
+        <div class="opt"><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+            <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
+            <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+          </div></div>
+      </section>
+
+      <!-- placing ships -->
+      <section id="placing">
+        <div class="g-panel place-info">
+          <div class="ships" id="tray" aria-label="Your ships"></div>
+          <div class="g-bar">
+            <button class="g-btn ghost" id="rotate">Rotate ⟳</button>
+            <button class="g-btn ghost" id="random">Random</button>
+            <button class="g-btn ghost" id="clearShips">Clear</button>
+            <button class="g-btn" id="start" disabled>Start battle</button>
+          </div>
+        </div>
+        <div class="grid-title">Your waters. Pick a ship, then tap where it goes.</div>
+        <div class="grid" id="placeGrid" role="grid" aria-label="Place your ships"></div>
+      </section>
+
+      <!-- battle -->
+      <section id="battle" hidden>
+        <div class="fleets">
+          <div class="fleet" id="enemyFleet"></div>
+          <div class="fleet" id="myFleet"></div>
+        </div>
+        <div class="grid-title">Enemy waters. Tap to fire.</div>
+        <div class="grid enemy" id="enemyGrid" role="grid" aria-label="Enemy waters"></div>
+        <div class="grid-title small">Your fleet</div>
+        <div class="grid mine" id="myGrid" role="grid" aria-label="Your fleet"></div>
+      </section>
+
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="bigemoji" id="endEmoji" aria-hidden="true">🏆</div>
+        <h2 id="endTitle">Game over</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endView">View board</button>
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="../../assets/back-link.js"></script>
+  </body>
+</html>

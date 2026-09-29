@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Snakes &amp; Ladders · Zone 210</title>
+    <meta name="theme-color" content="#eef0f5" />
+    <script src="../../assets/theme.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Snakes &amp; Ladders</h1>
+          <p>Race to square 100. Climb the ladders, dodge the snakes.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn" id="newGame">New Game</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Options">
+        <div class="opt"><span class="lbl">Players</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Players">
+            <button class="g-chip" data-value="cpu" aria-pressed="true">vs Computer</button>
+            <button class="g-chip" data-value="2" aria-pressed="false">2 friends</button>
+            <button class="g-chip" data-value="3" aria-pressed="false">3 friends</button>
+            <button class="g-chip" data-value="4" aria-pressed="false">4 friends</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Rule</span>
+          <div class="g-chips" id="bonus" role="group" aria-label="Bonus roll on six">
+            <button class="g-chip" data-value="on" aria-pressed="true">Roll again on a 6</button>
+            <button class="g-chip" data-value="off" aria-pressed="false">No bonus roll</button>
+          </div></div>
+      </section>
+
+      <div class="players" id="players" aria-label="Players"></div>
+
+      <div class="board-wrap" id="wrap">
+        <div class="grid" id="grid" aria-label="Game board"></div>
+        <svg class="art" id="art" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div class="tokens" id="tokens"></div>
+      </div>
+
+      <div class="roller">
+        <div class="die" id="die" aria-live="polite" aria-label="Dice"></div>
+        <button class="g-btn roll" id="roll">Roll the dice</button>
+      </div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="bigemoji" aria-hidden="true">🏆</div>
+        <h2 id="endTitle">We have a winner!</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endView">View board</button>
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="../../assets/back-link.js"></script>
+  </body>
+</html>

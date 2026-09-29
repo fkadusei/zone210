@@ -1,0 +1,85 @@
+.narrow { max-width: 560px; }
+.bigemoji { font-size: 3.4rem; }
+[hidden] { display: none !important; }
+.setup { display: grid; gap: 10px; margin-bottom: 12px; }
+.opt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.lbl { width: 58px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+.place-info { display: grid; gap: 12px; margin-bottom: 12px; }
+.ships { display: flex; flex-wrap: wrap; gap: 8px; }
+.ship-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font: 700 0.85rem var(--font);
+  color: var(--ink);
+  background: var(--surface-2);
+  border: 2px solid var(--line-strong);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.ship-btn .len { display: inline-flex; gap: 2px; }
+.ship-btn .len i { width: 12px; height: 12px; border-radius: 3px; background: #7c8cae; }
+.ship-btn.sel { border-color: var(--gold); background: var(--gold-soft); }
+.ship-btn.placed { opacity: 0.55; }
+.ship-btn.placed .len i { background: var(--green); }
+.grid-title { margin: 6px 2px 8px; font-weight: 700; color: var(--muted); font-size: 0.9rem; }
+.grid-title.small { margin-top: 18px; }
+
+.grid {
+  --w: #3d7fbd;
+  --w2: #3474af;
+  display: grid;
+  grid-template: repeat(10, 1fr) / repeat(10, 1fr);
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 4px solid var(--line-strong);
+  box-shadow: var(--shadow-lg);
+  background: var(--w);
+  -webkit-user-select: none;
+  user-select: none;
+}
+:root[data-theme="dark"] .grid { --w: #1f4a7a; --w2: #1a4070; }
+.grid.mine { width: 70%; margin: 0 auto; }
+.cell {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0;
+  background: var(--w);
+  cursor: default;
+}
+.cell:nth-child(2n) { background: var(--w2); }
+.enemy .cell:not(.shot), #placeGrid .cell { cursor: pointer; }
+.enemy .cell:not(.shot):hover { background: rgba(255, 255, 255, 0.28); }
+.cell:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; z-index: 2; }
+
+.cell.ship { background: linear-gradient(180deg, #a9b3c9, #7d89a6); border-color: rgba(0, 0, 0, 0.25); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3); }
+.cell.ship.h.s { border-radius: 60% 0 0 60%; }
+.cell.ship.h.e { border-radius: 0 60% 60% 0; }
+.cell.ship.v.s { border-radius: 60% 60% 0 0; }
+.cell.ship.v.e { border-radius: 0 0 60% 60%; }
+.cell.preview { background: rgba(102, 220, 150, 0.7); }
+.cell.preview.bad { background: rgba(239, 100, 97, 0.7); }
+.cell.miss::after { content: ""; position: absolute; left: 32%; top: 32%; width: 36%; height: 36%; border-radius: 50%; background: rgba(255, 255, 255, 0.85); animation: splash 0.4s ease; }
+.cell.hit::after { content: ""; position: absolute; left: 22%; top: 22%; width: 56%; height: 56%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ff9a8b, #e5484d 60%, #8c1d21); box-shadow: 0 0 10px 2px rgba(255, 90, 60, 0.7); animation: boom 0.4s ease; }
+.cell.sunk { background: linear-gradient(180deg, #6b4a4a, #4a2f2f); }
+.cell.sunk::after { background: radial-gradient(circle at 35% 30%, #ffb199, #b3262b 65%, #5a1114); }
+@keyframes splash { from { transform: scale(2.4); opacity: 0.2; } }
+@keyframes boom { from { transform: scale(0.2); } 60% { transform: scale(1.4); } }
+
+.fleets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+.fleet { padding: 10px 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); font-size: 0.78rem; font-weight: 700; }
+.fleet h3 { margin: 0 0 6px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.fleet .row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+.fleet .len { display: inline-flex; gap: 2px; }
+.fleet .len i { width: 10px; height: 10px; border-radius: 3px; background: #7c8cae; }
+.fleet .row.sunk { opacity: 0.6; text-decoration: line-through; }
+.fleet .row.sunk .len i { background: var(--red); }
+.g-status.good { color: var(--green); }
+.g-status.bad { color: var(--red); }

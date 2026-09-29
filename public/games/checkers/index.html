@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Checkers · Zone 210</title>
+    <meta name="theme-color" content="#eef0f5" />
+    <script src="../../assets/theme.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Checkers</h1>
+          <p>Jump over your opponent's pieces. Captures are compulsory. Reach the far side to crown a king.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn" id="newGame">New Game</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="cpu" aria-pressed="true">vs Computer</button>
+            <button class="g-chip" data-value="two" aria-pressed="false">2 players</button>
+          </div></div>
+        <div class="opt" id="levelRow"><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+            <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
+            <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+          </div></div>
+      </section>
+
+      <div class="bars">
+        <div class="pbar" id="topBar"></div>
+      </div>
+      <div class="board" id="board" role="grid" aria-label="Checkers board">
+        <div class="squares" id="squares"></div>
+        <div class="pieces" id="pieces"></div>
+      </div>
+      <div class="bars">
+        <div class="pbar" id="bottomBar"></div>
+      </div>
+
+      <div class="tools">
+        <button class="g-btn ghost" id="undo">Undo</button>
+        <button class="g-btn ghost" id="hint">Hint</button>
+      </div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="bigemoji" id="endEmoji" aria-hidden="true">🏆</div>
+        <h2 id="endTitle">Game over</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endView">View board</button>
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="../../assets/back-link.js"></script>
+  </body>
+</html>

@@ -1,0 +1,53 @@
+.narrow { max-width: 620px; }
+.bigemoji { font-size: 3.4rem; }
+.setup { display: grid; gap: 10px; margin-bottom: 12px; }
+.opt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.opt[hidden] { display: none; }
+.lbl { width: 58px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+.scores { display: flex; gap: 10px; margin-bottom: 12px; }
+.sc {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  box-shadow: var(--shadow);
+  font-weight: 700;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.sc .who { display: inline-flex; align-items: center; gap: 8px; }
+.sc .dot { width: 16px; height: 16px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 30%, transparent); }
+.sc b { font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.sc.turn { border-color: var(--c); transform: translateY(-3px); }
+
+.board {
+  width: min(100%, 76vh);
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-lg);
+}
+svg { display: block; width: 100%; height: auto; touch-action: manipulation; }
+.hit { fill: none; stroke: transparent; stroke-width: 26; stroke-linecap: round; cursor: pointer; }
+.hit.taken { pointer-events: none; }
+.edge { stroke: color-mix(in srgb, var(--ink) 16%, transparent); stroke-width: 6; stroke-linecap: round; transition: stroke 0.15s ease, stroke-width 0.15s ease; pointer-events: none; }
+.hit:hover + .edge, .hit:focus-visible + .edge { stroke: color-mix(in srgb, var(--ink) 45%, transparent); stroke-width: 9; }
+.edge.on { stroke: var(--c); stroke-width: 9; }
+.edge.new { animation: draw 0.3s ease; }
+@keyframes draw { from { stroke-width: 2; opacity: 0.3; } }
+.dotc { fill: var(--ink); }
+.box { opacity: 0.24; }
+.box.pop { animation: boxpop 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.4); transform-box: fill-box; transform-origin: center; }
+@keyframes boxpop { from { transform: scale(0.3); opacity: 0; } }
+.boxtxt { font: 800 22px var(--font); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.hint { stroke: var(--gold) !important; stroke-width: 11 !important; }
+.tools { display: flex; justify-content: center; margin-top: 10px; }
+.g-status.good { color: var(--green); }
+.g-status.bad { color: var(--red); }

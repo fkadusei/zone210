@@ -16,6 +16,10 @@ saved games stay on the player's own device.
 | **Math Cross** | Everyone | crossword-style sums, four levels up to an 11x11 grid, hints, undo, keyboard entry, timer and best times |
 | **24 Game** | Everyone | make 24 from four numbers, three levels (some need fractions), hints, answers, 90-second sprint, best times |
 | **Tetris** | Everyone | 7-bag pieces, wall kicks, hold, ghost piece, lock delay, Marathon / 40 Lines / 2-Min Blitz, touch controls, best scores |
+| **Snakes & Ladders** | Kids | classic 100-square board, 1-4 players or vs computer, animated dice, optional bonus roll on a 6 |
+| **Checkers** | Everyone | compulsory captures, multi-jumps, kings, three computer levels, hints and undo |
+| **Dots & Boxes** | Everyone | 3x3 to 5x5 boards, vs computer (three levels) or a friend, chain-aware computer |
+| **Battleship** | Everyone | place your fleet by hand or randomly, three computer levels (smart targeting on Hard) |
 | **Memory Match** | Kids | themes, three sizes, 1–2 players |
 | **Doodle & Color** | Kids | rainbow brush, stamps, colouring pages with a paint bucket, save as PNG |
 | **Spell Sprout** | Kids | 800 picture words, 12 themed packs and three levels, spoken aloud, hints, stars and a garden that grows (fully offline) |
