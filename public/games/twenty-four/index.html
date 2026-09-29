@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>24 Game · Zone 210</title>
+    <meta name="theme-color" content="#eef0f5" />
+    <script src="../../assets/theme.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>24 Game</h1>
+          <p>Combine the four numbers with + − × ÷ to make exactly 24. Use every number once.</p>
+        </div>
+        <div class="g-bar"><button class="g-btn" id="next">New Puzzle</button></div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="practice" aria-pressed="true">Practice</button>
+            <button class="g-chip" data-value="sprint" aria-pressed="false">90s Sprint</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+            <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
+            <button class="g-chip" data-value="medium" aria-pressed="true">Medium</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+          </div></div>
+      </section>
+
+      <div class="g-stats">
+        <div class="g-stat"><b id="time">0:00</b><span id="timeLabel">Time</span></div>
+        <div class="g-stat"><b id="solved">0</b><span>Solved</span></div>
+        <div class="g-stat"><b id="streak">0</b><span>Streak</span></div>
+        <div class="g-stat"><b id="best">-</b><span id="bestLabel">Best</span></div>
+      </div>
+
+      <section class="table" aria-label="Puzzle">
+        <div class="goal" aria-hidden="true">Make <b>24</b></div>
+        <div class="cards" id="cards"></div>
+        <div class="ops" id="ops" role="group" aria-label="Operations">
+          <button class="op" data-op="+" aria-label="Add">+</button>
+          <button class="op" data-op="-" aria-label="Subtract">−</button>
+          <button class="op" data-op="*" aria-label="Multiply">×</button>
+          <button class="op" data-op="/" aria-label="Divide">÷</button>
+        </div>
+        <div class="working" id="working" aria-live="polite"></div>
+      </section>
+
+      <div class="tools">
+        <button class="g-btn ghost" id="undo">Undo</button>
+        <button class="g-btn ghost" id="reset">Restart</button>
+        <button class="g-btn ghost" id="hint">Hint</button>
+        <button class="g-btn ghost" id="show">Show answer</button>
+      </div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+
+      <details class="g-panel how">
+        <summary>How to play</summary>
+        <ul>
+          <li>Tap a number, then an operation, then a second number. The two numbers are replaced by the answer.</li>
+          <li>Keep going until one number is left. If it is <b>24</b>, you win.</li>
+          <li>Every puzzle can be solved. Some need fractions on the way, for example 8 ÷ (3 − 8 ÷ 3).</li>
+          <li>Keyboard: press <b>1–4</b> to pick a card, then <b>+ − * /</b>, then another card. Backspace undoes.</li>
+          <li><b>Sprint:</b> solve as many as you can in 90 seconds. Skipping is free.</li>
+        </ul>
+      </details>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card-end card">
+        <div class="bigemoji" aria-hidden="true">⏱️</div>
+        <h2 id="endTitle">Time's up!</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="../../assets/back-link.js"></script>
+  </body>
+</html>

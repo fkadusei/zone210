@@ -14,6 +14,7 @@ saved games stay on the player's own device.
 | **Ghana & Africa Quiz** | Everyone | 76 questions; Kids / Family / Adults levels, timer optional |
 | **Connect Four** | Everyone | minimax computer with three levels, or 2 players |
 | **Math Cross** | Everyone | crossword-style sums, four levels up to an 11x11 grid, hints, undo, keyboard entry, timer and best times |
+| **24 Game** | Everyone | make 24 from four numbers, three levels (some need fractions), hints, answers, 90-second sprint, best times |
 | **Memory Match** | Kids | themes, three sizes, 1–2 players |
 | **Doodle & Color** | Kids | rainbow brush, stamps, colouring pages with a paint bucket, save as PNG |
 | **Spell Sprout** | Kids | 800 picture words, 12 themed packs and three levels, spoken aloud, hints, stars and a garden that grows (fully offline) |

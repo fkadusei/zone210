@@ -67,6 +67,16 @@ export const GAMES = [
     colors: ["#6c8cff", "#b4c6ff"],
   },
   {
+    id: "twenty-four",
+    title: "24 Game",
+    tagline: "Combine four numbers with + − × ÷ to make exactly 24. Quick rounds, hints, and a 90-second sprint.",
+    audience: "all",
+    tags: ["Math", "Puzzle", "Brain"],
+    players: "1 player",
+    emoji: "🎯",
+    colors: ["#8a5ce0", "#d9c6ff"],
+  },
+  {
     id: "memory-match",
     title: "Memory Match",
     tagline: "Flip cards and find the pairs. Pick a theme and a size, or take turns with a friend.",
