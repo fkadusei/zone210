@@ -238,7 +238,7 @@ function showStats(afterGame = false) {
 $("next").addEventListener("click", () => start("random", true));
 
 $("share").addEventListener("click", async () => {
-  const head = `Game Room Word Guess ${mode === "daily" ? `#${dayNumber()}` : "(practice)"} ${won ? guesses.length : "X"}/${ROWS}`;
+  const head = `Zone 210 Word Guess ${mode === "daily" ? `#${dayNumber()}` : "(practice)"} ${won ? guesses.length : "X"}/${ROWS}`;
   const text = `${head}\n\n${shareGrid(scores)}`;
   try {
     await navigator.clipboard.writeText(text);
