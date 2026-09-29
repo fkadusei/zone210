@@ -1,5 +1,7 @@
 # Zone 210
 
+**Play now: https://zone210.com**
+
 A free, no-sign-up games and activities site for kids and adults. It is a plain static site (HTML, CSS and
 ES modules; no build step) with a landing page and one folder per game. Everything runs in the browser and scores /
 saved games stay on the player's own device.
