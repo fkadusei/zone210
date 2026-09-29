@@ -2,6 +2,7 @@
 :root {
   /* light theme: soft cool grey, never stark white */
   --bg: #eef0f5;
+  --bg-grad: linear-gradient(155deg, #e4e9fb 0%, #f2e9f7 48%, #e2f0fa 100%);
   --surface: #ffffff;
   --surface-2: #f5f6fa;
   --ink: #161a2b;
@@ -10,8 +11,13 @@
   --line-strong: rgba(22, 26, 43, 0.24);
   --shadow: 0 1px 2px rgba(22, 26, 43, 0.06), 0 10px 28px rgba(22, 26, 43, 0.08);
   --shadow-lg: 0 2px 4px rgba(22, 26, 43, 0.08), 0 24px 48px rgba(22, 26, 43, 0.14);
-  --glow-a: rgba(245, 176, 30, 0.16);
-  --glow-b: rgba(91, 107, 240, 0.13);
+  /* animated background colours */
+  --blob-1: rgba(99, 102, 241, 0.42);
+  --blob-2: rgba(244, 114, 182, 0.36);
+  --blob-3: rgba(56, 189, 248, 0.40);
+  --blob-4: rgba(251, 191, 36, 0.36);
+  --sheen: rgba(255, 255, 255, 0.55);
+  --sheen-soft: rgba(255, 255, 255, 0.18);
   --gold: #f5b41f;
   --gold-deep: #cf9410;
   --gold-soft: #fff1c8;
@@ -30,6 +36,7 @@
 :root[data-theme="dark"] {
   /* dark theme: deep midnight blue with cool, soft surfaces (not black, not brown) */
   --bg: #0a0e1a;
+  --bg-grad: linear-gradient(155deg, #0a1030 0%, #14163f 42%, #1b1145 72%, #0b1a33 100%);
   --surface: #131a2b;
   --surface-2: #1a2238;
   --ink: #eef1fa;
@@ -38,8 +45,12 @@
   --line-strong: rgba(255, 255, 255, 0.2);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.5), 0 28px 56px rgba(0, 0, 0, 0.5);
-  --glow-a: rgba(245, 176, 30, 0.1);
-  --glow-b: rgba(91, 107, 240, 0.2);
+  --blob-1: rgba(99, 102, 241, 0.55);
+  --blob-2: rgba(217, 70, 239, 0.34);
+  --blob-3: rgba(20, 184, 166, 0.34);
+  --blob-4: rgba(245, 180, 31, 0.24);
+  --sheen: rgba(255, 255, 255, 0.22);
+  --sheen-soft: rgba(255, 255, 255, 0.07);
   --gold-soft: rgba(245, 180, 31, 0.16);
   --focus: #8ea2ff;
   color-scheme: dark;
@@ -47,34 +58,58 @@
 
 * { box-sizing: border-box; }
 
-html, body {
-  margin: 0;
+html {
   min-height: 100%;
+  background: var(--bg-grad), var(--bg);
+  transition: background-color 0.25s ease;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
   font-family: var(--font);
   color: var(--ink);
-  background:
-    radial-gradient(900px 420px at 8% -12%, var(--glow-a), transparent 65%),
-    radial-gradient(800px 420px at 96% -8%, var(--glow-b), transparent 65%),
-    var(--bg);
-  background-attachment: fixed;
+  background: transparent;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition: color 0.25s ease;
 }
 
-/* one thin stripe of Ghana-inspired colour across the top of every page */
-body::before {
+/* Glossy, slowly moving gradient behind everything: soft colour blobs that drift, plus a light sheen that sweeps across */
+body::before,
+body::after {
   content: "";
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  z-index: 60;
-  background: repeating-linear-gradient(90deg, #f5b41f 0 44px, #e5484d 44px 88px, #1f9d61 88px 132px, #161a2b 132px 176px);
+  z-index: -1;
+  pointer-events: none;
 }
-:root[data-theme="dark"] body::before {
-  background: repeating-linear-gradient(90deg, #f5b41f 0 44px, #e5484d 44px 88px, #1f9d61 88px 132px, #eef1fa 132px 176px);
+body::before {
+  inset: -25%;
+  background:
+    radial-gradient(42% 42% at 18% 22%, var(--blob-1), transparent 72%),
+    radial-gradient(38% 38% at 82% 18%, var(--blob-2), transparent 72%),
+    radial-gradient(46% 46% at 72% 82%, var(--blob-3), transparent 72%),
+    radial-gradient(38% 38% at 14% 86%, var(--blob-4), transparent 72%);
+  animation: bg-drift 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+body::after {
+  inset: 0;
+  background:
+    linear-gradient(118deg, transparent 0%, var(--sheen-soft) 22%, var(--sheen) 34%, var(--sheen-soft) 46%, transparent 62%),
+    linear-gradient(180deg, var(--sheen-soft), transparent 38%);
+  background-size: 220% 100%, 100% 100%;
+  background-position: 0% 0, 0 0;
+  animation: bg-sheen 18s ease-in-out infinite alternate;
+  mix-blend-mode: soft-light;
+}
+@keyframes bg-drift {
+  0%   { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  50%  { transform: translate3d(4%, -3%, 0) scale(1.1) rotate(5deg); }
+  100% { transform: translate3d(-4%, 4%, 0) scale(1.05) rotate(-4deg); }
+}
+@keyframes bg-sheen {
+  0%   { background-position: 0% 0, 0 0; }
+  100% { background-position: 100% 0, 0 0; }
 }
 
 [hidden] { display: none !important; }
@@ -92,7 +127,9 @@ body::before {
 
 /* Panels & stats */
 .g-panel {
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 14px;
@@ -103,7 +140,9 @@ body::before {
   min-width: 88px;
   padding: 8px 14px;
   border-radius: 12px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
 }
@@ -208,4 +247,5 @@ body::before {
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  body::before, body::after { animation: none !important; }
 }
