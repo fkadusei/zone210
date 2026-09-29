@@ -555,8 +555,9 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
         p.root.position.set(THREE.MathUtils.lerp(from.x, to.x, k), Math.sin(k * Math.PI) * 0.4, THREE.MathUtils.lerp(from.z, to.z, k));
       });
       p.root.position.copy(to);
+      p.target.copy(to);
       p.busy -= 1;
-      relayout(i, true);
+      relayout(-1, true);
     },
     async jump(i, fromSq, toSq, kind) {
       const p = pawns[i];
@@ -580,8 +581,9 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
         });
       }
       p.root.position.copy(end);
+      p.target.copy(end);
       p.busy -= 1;
-      relayout(i, true);
+      relayout(-1, true);
     },
     rollDice(value) {
       if (diceRolling) return Promise.resolve();
@@ -628,6 +630,9 @@ export function createView3D(container, { LADDERS, SNAKES, onDiceClick }) {
       window.removeEventListener("resize", resize);
     },
     el: renderer.domElement,
+    debug() {
+      return { positions: positions.slice(), worlds: pawns.map((p) => ({ x: +p.root.position.x.toFixed(2), z: +p.root.position.z.toFixed(2), y: +p.root.position.y.toFixed(2), busy: p.busy })), cell: (n) => { const c = cellPos(n); return { x: c.x, z: c.z }; } };
+    },
     dieTop() {
       let best = 0;
       let val = 0;
