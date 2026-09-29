@@ -13,7 +13,7 @@ export const GAMES = [
     tags: ["Board", "Multiplayer", "3D"],
     players: "1–4 players",
     emoji: "🎲",
-    colors: ["#c8281e", "#f2c230"],
+    colors: ["#ff8a5c", "#ffd166"],
     featured: true,
   },
   {
@@ -24,7 +24,7 @@ export const GAMES = [
     tags: ["Board", "Traditional", "Strategy"],
     players: "1–2 players",
     emoji: "🫘",
-    colors: ["#6b4225", "#c9852f"],
+    colors: ["#c98b4a", "#f0c987"],
   },
   {
     id: "quiz",
@@ -34,7 +34,7 @@ export const GAMES = [
     tags: ["Trivia", "Learning", "Offline"],
     players: "1 player",
     emoji: "🧠",
-    colors: ["#1f7a3d", "#f2c230"],
+    colors: ["#3fbf7f", "#ffd166"],
   },
   {
     id: "connect-four",
@@ -44,7 +44,7 @@ export const GAMES = [
     tags: ["Board", "Strategy"],
     players: "1–2 players",
     emoji: "🔴",
-    colors: ["#1e4fb8", "#4a7de8"],
+    colors: ["#4f83ff", "#8fc0ff"],
   },
   {
     id: "math-cross",
@@ -54,7 +54,7 @@ export const GAMES = [
     tags: ["Puzzle", "Math", "Offline"],
     players: "1 player",
     emoji: "➕",
-    colors: ["#2b5fd0", "#8fb4ff"],
+    colors: ["#6c8cff", "#b4c6ff"],
   },
   {
     id: "memory-match",
@@ -64,7 +64,7 @@ export const GAMES = [
     tags: ["Memory", "Learning", "Offline"],
     players: "1–2 players",
     emoji: "🃏",
-    colors: ["#e26bb4", "#f2c230"],
+    colors: ["#ff7eb6", "#ffd166"],
   },
   {
     id: "doodle",
@@ -74,7 +74,7 @@ export const GAMES = [
     tags: ["Creative", "Drawing", "Offline"],
     players: "1 player",
     emoji: "🎨",
-    colors: ["#9b6be0", "#2fb8c9"],
+    colors: ["#a678f0", "#5fd4e6"],
   },
   {
     id: "spell-sprout",
@@ -84,7 +84,7 @@ export const GAMES = [
     tags: ["Words", "Learning", "Offline"],
     players: "1 player",
     emoji: "🌱",
-    colors: ["#1f7a3d", "#8bd66b"],
+    colors: ["#4cc26f", "#b6ea7c"],
   },
   {
     id: "word-guess",
@@ -94,7 +94,7 @@ export const GAMES = [
     tags: ["Words", "Daily", "Offline"],
     players: "1 player",
     emoji: "🔤",
-    colors: ["#3f9d6f", "#c9a227"],
+    colors: ["#52c98a", "#f3d35e"],
   },
   {
     id: "sudoku",
@@ -104,7 +104,7 @@ export const GAMES = [
     tags: ["Puzzle", "Numbers", "Offline"],
     players: "1 player",
     emoji: "🔢",
-    colors: ["#2b6cb0", "#a9c8ff"],
+    colors: ["#5b8fe0", "#b9d3ff"],
   },
   {
     id: "tile-merge",
@@ -114,7 +114,7 @@ export const GAMES = [
     tags: ["Puzzle", "Numbers", "Offline"],
     players: "1 player",
     emoji: "🟧",
-    colors: ["#f28a4e", "#efc030"],
+    colors: ["#ff9a5c", "#ffd45e"],
   },
   {
     id: "minesweeper",
@@ -124,6 +124,6 @@ export const GAMES = [
     tags: ["Puzzle", "Logic", "Offline"],
     players: "1 player",
     emoji: "💣",
-    colors: ["#4a3f37", "#8d6640"],
+    colors: ["#7a86a3", "#c3cbe0"],
   },
 ];

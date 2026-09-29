@@ -6,9 +6,9 @@
   padding: 6px 14px;
   border-radius: 8px;
   font-weight: 800;
-  color: #1b120c;
-  background: #f6efe2;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  color: #fff;
+  background: #2a2433;
+  box-shadow: 0 6px 16px rgba(42, 36, 51, 0.3);
   animation: toast 1.6s ease forwards;
 }
 @keyframes toast { 0% { opacity: 0; transform: translateY(6px); } 10%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; } }
@@ -21,15 +21,15 @@
   height: var(--w);
   display: grid;
   place-items: center;
-  border: 2px solid rgba(255, 255, 255, 0.16);
+  border: 2px solid rgba(42, 36, 51, 0.2);
   border-radius: 6px;
   font: 800 calc(var(--w) * 0.55) "Avenir Next", "Trebuchet MS", system-ui, sans-serif;
   text-transform: uppercase;
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.04);
+  background: #fff;
   transition: border-color 0.1s;
 }
-.tile.filled { border-color: rgba(255, 255, 255, 0.55); animation: pop 0.1s; }
+.tile.filled { border-color: rgba(42, 36, 51, 0.65); animation: pop 0.1s; }
 @keyframes pop { 50% { transform: scale(1.08); } }
 .tile.reveal { animation: flip 0.5s ease forwards; animation-delay: calc(var(--i) * 0.25s); }
 @keyframes flip {
@@ -55,15 +55,15 @@
   font: 800 1rem "Avenir Next", "Trebuchet MS", system-ui, sans-serif;
   text-transform: uppercase;
   color: var(--ink);
-  background: #545863;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+  background: #e6e1d6;
+  box-shadow: 0 3px 0 rgba(42, 36, 51, 0.2);
   cursor: pointer;
   touch-action: manipulation;
 }
 .key.wide { flex: 1.6; max-width: 70px; font-size: 0.72rem; }
-.key.correct { background: #3f9d6f; }
-.key.present { background: #c9a227; }
-.key.absent { background: #24262d; color: #7d808b; }
+.key.correct { background: #3f9d6f; color: #fff; }
+.key.present { background: #c9a227; color: #fff; }
+.key.absent { background: #8c8f99; color: #fff; }
 .key:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35); }
 
 .big { font-size: 3rem; }

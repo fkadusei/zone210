@@ -10,7 +10,7 @@
   justify-content: space-between;
   padding: 8px 14px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
+  background: #fff;
   border: 2px solid var(--line);
   transition: border-color 0.2s, background 0.2s;
 }
@@ -82,5 +82,5 @@
 .trophy { font-size: 3.4rem; }
 .rules { margin-top: 16px; }
 .rules summary { cursor: pointer; font-weight: 800; }
-.rules ul { margin: 10px 0 0; padding-left: 20px; line-height: 1.55; color: #e0d5c2; }
+.rules ul { margin: 10px 0 0; padding-left: 20px; line-height: 1.55; color: #4a4556; }
 .row.south::before, .row.north::before { content: none; }

@@ -27,6 +27,7 @@ function card(game) {
   const a = document.createElement("a");
   a.className = `card${wide ? " featured" : ""}`;
   a.href = `games/${game.id}/`;
+  a.dataset.aud = game.audience;
   a.style.setProperty("--a", game.colors[0]);
   a.style.setProperty("--b", game.colors[1]);
 
