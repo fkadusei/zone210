@@ -27,8 +27,7 @@ const ARROW =
 function card(game, index) {
   const li = document.createElement("li");
   li.style.setProperty("--i", index);
-  const wide = game.featured && state.audience === "all" && !state.query;
-  if (wide) li.className = "featured"; // the grid item is the <li>, so it is the one that spans two columns
+  const wide = false; // every game gets the same size card; "featured" only adds the badge
 
   const a = document.createElement("a");
   a.className = `card${wide ? " featured" : ""}`;
