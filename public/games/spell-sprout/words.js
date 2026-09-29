@@ -325,8 +325,7 @@ bowling|🎳|You roll a ball to knock down pins.
 archery|🏹|A sport where you shoot arrows at a target.
 saxophone|🎷|A curved, shiny wind instrument.
 microphone|🎤|It makes your voice louder.
-headphones|🎧|You wear them over your ears to hear music.
-wheelbarrow|🛒|A cart with one wheel for carrying loads.`,
+headphones|🎧|You wear them over your ears to hear music.`,
 };
 
 export const WORDS = Object.fromEntries(
