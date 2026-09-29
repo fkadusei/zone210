@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Tetris · Zone 210</title>
+    <meta name="theme-color" content="#eef0f5" />
+    <script src="../../assets/theme.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page wide">
+      <div class="g-head">
+        <div>
+          <h1>Tetris</h1>
+          <p>Stack the falling blocks, clear lines and keep going as the speed climbs.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn ghost" id="pause">Pause</button>
+          <button class="g-btn" id="newGame">New Game</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="marathon" aria-pressed="true">Marathon</button>
+            <button class="g-chip" data-value="sprint" aria-pressed="false">40 Lines</button>
+            <button class="g-chip" data-value="blitz" aria-pressed="false">2-Min Blitz</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Start level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Starting level">
+            <button class="g-chip" data-value="1" aria-pressed="true">1</button>
+            <button class="g-chip" data-value="4" aria-pressed="false">4</button>
+            <button class="g-chip" data-value="8" aria-pressed="false">8</button>
+            <button class="g-chip" data-value="12" aria-pressed="false">12</button>
+          </div></div>
+      </section>
+
+      <div class="play">
+        <aside class="side left" aria-label="Hold and stats">
+          <div class="box"><div class="lbl">Hold</div><canvas id="hold" width="120" height="120" aria-label="Held piece"></canvas></div>
+          <div class="g-stat"><b id="score">0</b><span>Score</span></div>
+          <div class="g-stat"><b id="lines">0</b><span id="linesLabel">Lines</span></div>
+          <div class="g-stat"><b id="levelNow">1</b><span>Level</span></div>
+        </aside>
+
+        <div class="field" id="field">
+          <canvas id="board" aria-label="Tetris board"></canvas>
+          <div class="veil" id="veil">
+            <div class="veil-card">
+              <h2 id="veilTitle">Ready?</h2>
+              <p id="veilText">Clear lines to level up.</p>
+              <button class="g-btn" id="veilBtn">Play</button>
+              <p class="keys">← → move &nbsp;·&nbsp; ↑ / X rotate &nbsp;·&nbsp; Z rotate back &nbsp;·&nbsp; ↓ soft drop<br />Space hard drop &nbsp;·&nbsp; C / Shift hold &nbsp;·&nbsp; P pause</p>
+            </div>
+          </div>
+          <div class="toast" id="toast" aria-live="polite"></div>
+        </div>
+
+        <aside class="side right" aria-label="Next pieces">
+          <div class="box"><div class="lbl">Next</div><canvas id="next" width="120" height="330" aria-label="Upcoming pieces"></canvas></div>
+          <div class="g-stat"><b id="time">0:00</b><span id="timeLabel">Time</span></div>
+          <div class="g-stat"><b id="best">-</b><span id="bestLabel">Best</span></div>
+        </aside>
+      </div>
+
+      <div class="pad" id="pad" aria-label="Touch controls">
+        <button data-act="left" aria-label="Move left">◀</button>
+        <button data-act="rotate" aria-label="Rotate">⟳</button>
+        <button data-act="right" aria-label="Move right">▶</button>
+        <button data-act="hold" aria-label="Hold piece">Hold</button>
+        <button data-act="down" aria-label="Soft drop">▼</button>
+        <button data-act="drop" aria-label="Hard drop">Drop</button>
+      </div>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="bigemoji" id="endEmoji" aria-hidden="true">🧱</div>
+        <h2 id="endTitle">Game over</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endView">View board</button>
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="../../assets/back-link.js"></script>
+  </body>
+</html>

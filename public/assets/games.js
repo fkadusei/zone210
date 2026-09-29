@@ -67,6 +67,16 @@ export const GAMES = [
     colors: ["#6c8cff", "#b4c6ff"],
   },
   {
+    id: "tetris",
+    title: "Tetris",
+    tagline: "Stack falling blocks and clear lines. Hold, ghost piece, three modes, and touch controls for phones.",
+    audience: "all",
+    tags: ["Arcade", "Classic", "Reflex"],
+    players: "1 player",
+    emoji: "🧱",
+    colors: ["#6d5ce8", "#5fd2f0"],
+  },
+  {
     id: "twenty-four",
     title: "24 Game",
     tagline: "Combine four numbers with + − × ÷ to make exactly 24. Quick rounds, hints, and a 90-second sprint.",
