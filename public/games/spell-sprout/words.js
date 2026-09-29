@@ -350,6 +350,9 @@ export const THEMES = [
   { id: "sports", label: "Sports & Music", emoji: "⚽" },
   { id: "jobs", label: "Jobs & Places", emoji: "🏙️" },
   { id: "fantasy", label: "Fantasy & Fun", emoji: "✨" },
+  { id: "vehicles", label: "Vehicles", emoji: "🚗" },
+  { id: "school", label: "School Subjects", emoji: "🎒" },
+  { id: "holidays", label: "Holidays", emoji: "🎄" },
 ];
 
 // existing words that also belong to a theme
@@ -362,6 +365,9 @@ const TAGS = {
   home: "door bed key bell lock map coat dress sofa bath broom soap pen chair plant bowl fork spoon window basket bucket candle mirror hammer wrench ladder thread battery ticket clock book pencil school library backpack scissors umbrella calendar notebook keyboard computer telephone envelope newspaper flashlight paintbrush lantern",
   sports: "ball drum guitar piano violin trumpet volleyball basketball football baseball tennis surfing bowling archery gymnastics swimming saxophone microphone headphones skateboard bicycle champion trophy medal soccer kite puzzle",
   jobs: "school hospital library police firefighter scientist detective astronaut supermarket restaurant bakery stadium airport castle circus statue bridge tractor truck ambulance helicopter",
+  vehicles: "bus car boat train ship bike truck tractor airplane helicopter bicycle motorcycle ambulance locomotive skateboard rocket spaceship canoe raft sailboat lifeboat shuttle station airport garage pilot driver bridge",
+  school: "pencil book school library notebook ruler eraser crayon backpack calendar teacher homework lesson glue desk scissors globe magnet microscope volcano planet dinosaur",
+  holidays: "cake gift fireworks pumpkin snowman candy balloon party confetti candle ghost heart witch bunny basket chocolate chick turkey gingerbread lantern dragon snowflake",
   fantasy: "dragon wizard fairy unicorn mermaid genie ghost robot castle pirate treasure wand crown rainbow fireworks circus spaceship dinosaur",
 };
 
@@ -427,7 +433,37 @@ cashew|🥜|A curved nut that grows on trees.
 oatmeal|🥣|A warm breakfast porridge.
 sundae|🍨|Ice cream with sauce and a cherry on top.
 banana|🍌|A long yellow fruit.`,
-  space: `orbit|🪐|The path a moon takes around a planet.
+  space: `moonlight|🌙|The soft glow of the moon at night.
+rocketship|🚀|A vehicle that blasts off to the stars.
+spacecraft|🚀|Any vehicle built to fly in space.
+probe|🛰️|A small robot sent to explore space.
+observatory|🔭|A building with a big telescope.
+stargazer|🔭|Someone who loves watching the night sky.
+starship|🚀|A giant ship for flying to the stars, in stories.
+sunspot|☀️|A dark patch on the surface of the sun.
+aurora|🌌|Colourful lights that dance near the north pole.
+midnight|🌃|Twelve o'clock at night.
+twilight|🌆|The soft light just after the sun sets.
+sky|🌌|Everything you see above the Earth.
+space|🌌|The dark, huge place beyond our planet.
+starry|🌟|Filled with lots of stars.
+rings|🪐|The bands that circle Saturn.
+pluto|🪐|A small dwarf planet far from the sun.
+capsule|🚀|The small part of a rocket where astronauts sit.
+booster|🚀|It gives a rocket an extra push.
+thruster|🚀|A small engine that steers a spacecraft.
+cockpit|🚀|Where the pilot sits and steers.
+cadet|🧑‍🚀|A trainee astronaut.
+mission|🎯|An important job, like flying to the moon.
+crew|🧑‍🚀|The team who work on a spaceship.
+commander|🧑‍🚀|The astronaut in charge.
+float|🎈|What astronauts do without gravity.
+weightless|🧑‍🚀|Feeling as if you weigh nothing.
+moonbeam|🌙|A ray of light from the moon.
+moonwalk|🧑‍🚀|Walking on the surface of the moon.
+milkyway|🌌|Our home galaxy, a swirl of stars.
+telescope|🔭|You look through it to see the stars.
+orbit|🪐|The path a moon takes around a planet.
 meteor|☄️|A shooting star that burns up in the sky.
 asteroid|☄️|A big space rock.
 alien|👽|A visitor from another world, in stories.
@@ -457,7 +493,37 @@ cosmos|🌌|Another word for the whole universe.
 rover|🚙|A robot car that explores other planets.
 sunlight|🌞|The bright light that comes from our star.
 starlight|✨|The glow you see from stars at night.`,
-  ocean: `shark|🦈|A fierce fish with sharp teeth.
+  ocean: `coral|🐠|Colourful rock-like animals that make reefs.
+reef|🐠|A ridge of coral beneath the sea.
+kelp|🌿|A giant seaweed that grows in forests underwater.
+orca|🐳|A black and white whale, also called a killer whale.
+humpback|🐋|A big whale famous for its songs.
+blowhole|🐋|A whale breathes through it.
+squid|🦑|A sea animal with ten arms.
+eel|🐍|A long, slippery fish that looks like a snake.
+trident|🔱|A three-pronged spear held by the king of the sea.
+shipwreck|🚢|A boat that sank to the bottom.
+porthole|🚢|A round window on a ship.
+mast|⛵|The tall pole that holds a boat's sails.
+sail|⛵|Cloth that catches the wind to push a boat.
+deck|🚢|The floor of a ship.
+cabin|🚢|A small room on a boat.
+voyage|🚢|A long trip over the sea.
+whirlpool|🌀|Water that spins round and round.
+iceberg|🧊|A huge floating mountain of ice.
+polar|🐻‍❄️|To do with the icy top or bottom of the world.
+walrus|🦭|A big sea animal with long tusks.
+driftwood|🪵|Wood washed up on the beach.
+sandbar|🏖️|A ridge of sand under the water near the shore.
+narwhal|🐳|A whale with a long horn like a unicorn.
+plankton|🌊|Tiny living things that float in the sea.
+barnacle|🐚|A little creature that sticks to rocks and boats.
+stingray|🐟|A flat fish that glides along the seabed.
+seahorse|🐠|A tiny fish that swims upright.
+mackerel|🐟|A silvery fish that swims in schools.
+salmon|🐟|A pink fish that swims upstream.
+tuna|🐟|A large fish used in sandwiches.
+shark|🦈|A fierce fish with sharp teeth.
 wave|🌊|A moving ridge of water.
 shell|🐚|The hard home of a sea snail.
 seashell|🐚|You can find one on the sand and hear the sea in it.
@@ -664,6 +730,150 @@ wizard|🧙|A man with magic powers and a long beard.
 cauldron|🧪|A big pot where a witch brews potions.
 lantern|🏮|A lamp you can carry.
 fairytale|📖|A story with magic and happy endings.`,
+  vehicles: `taxi|🚕|A car you pay to take you somewhere.
+van|🚐|A boxy vehicle for carrying people or goods.
+jeep|🚙|A tough car for bumpy roads.
+scooter|🛴|You push it with one foot and glide.
+tram|🚊|A vehicle that runs on rails through the city streets.
+subway|🚇|A train that runs underground.
+monorail|🚝|A train that runs on a single track.
+plane|✈️|It flies in the sky with wings.
+jet|✈️|A very fast aeroplane.
+glider|🪂|A plane with no engine that floats on the air.
+balloon|🎈|A hot-air one carries people up in a basket.
+yacht|🛥️|A fancy boat for sailing.
+ferry|⛴️|A boat that carries people and cars across water.
+kayak|🛶|A small boat you paddle with two blades.
+sled|🛷|You ride it down a snowy hill.
+sleigh|🛷|Santa's ride, pulled by reindeer.
+cart|🛒|A small open vehicle pushed or pulled.
+trolley|🚎|A bus that runs on electric wires.
+digger|🚜|A machine that scoops up earth.
+bulldozer|🚜|A machine that pushes dirt and rubble.
+crane|🏗️|A tall machine that lifts heavy things.
+firetruck|🚒|A big red truck with a ladder and hose.
+limousine|🚘|A very long, fancy car.
+racecar|🏎️|A very fast car built for the track.
+camper|🚐|A van you can sleep in on holiday.
+caravan|🚐|A home on wheels pulled by a car.
+tricycle|🚲|A bike with three wheels for little kids.
+engine|🚂|The part that makes a vehicle go.
+carriage|🚃|A section of a train where passengers sit.
+railway|🛤️|Tracks that trains run along.
+runway|🛬|A long strip where planes take off.
+highway|🛣️|A wide, fast road.
+road|🛣️|A hard path for cars.
+tunnel|🚇|A passage through a mountain or under the ground.
+helmet|⛑️|You wear it on your head to stay safe on a bike.
+tugboat|🚢|A small, strong boat that pulls big ships.
+submarine|🚢|A ship that travels underwater.
+rickshaw|🛺|A small three-wheeled taxi.
+skates|🛼|Wheeled boots you glide along in.
+rollerblade|🛼|A boot with a line of wheels.
+speedboat|🚤|A very fast little boat.
+hovercraft|🚤|A vehicle that floats on a cushion of air.
+bulldozer|🚜|A machine with a big blade for pushing earth.
+seatbelt|🚗|You buckle it up in the car for safety.
+steering|🚗|What you do with the wheel to turn a car.
+passenger|🧳|A person who rides but does not drive.
+traffic|🚦|Lots of cars on the road.
+signal|🚦|A light that tells cars to stop or go.`,
+  school: `math|➕|The subject about numbers and sums.
+science|🔬|The subject where you do experiments.
+reading|📖|Looking at words and understanding them.
+writing|✍️|Putting words on paper.
+spelling|🔤|Getting the letters of words right.
+history|🏛️|The subject about the past.
+geography|🌍|The subject about places and maps.
+art|🎨|The subject where you paint and draw.
+music|🎵|The subject where you sing and play instruments.
+drama|🎭|The subject where you act.
+gym|🏋️|The class where you exercise.
+coding|💻|Writing instructions for computers.
+english|🔤|The subject about reading and writing our language.
+language|🗣️|Words we use to talk.
+numbers|🔢|One, two, three and more.
+letters|🔤|A, B, C and the rest of the alphabet.
+alphabet|🔤|All the letters from A to Z.
+addition|➕|Adding numbers together.
+subtract|➖|To take one number away from another.
+multiply|✖️|To make a number bigger by times.
+divide|➗|To share a number into equal groups.
+fraction|🍕|A part of a whole, like a half.
+shapes|🔷|Circles, squares and triangles.
+circle|⭕|A perfectly round shape.
+square|🟦|A shape with four equal sides.
+triangle|🔺|A shape with three sides.
+rectangle|🟦|A shape with four sides and four square corners.
+measure|📏|To find out how long or heavy something is.
+graph|📊|A picture that shows numbers with bars or lines.
+globe|🌍|A round model of the Earth.
+atlas|🗺️|A book of maps.
+experiment|🧪|A test done to learn something new.
+paragraph|📝|A group of sentences about one idea.
+sentence|📝|Words that make a complete thought.
+story|📖|A tale with a beginning, middle and end.
+poem|📜|Words arranged with rhythm and sometimes rhymes.
+author|✍️|The person who writes a book.
+chapter|📖|A section of a book.
+dictionary|📚|A book that tells you what words mean.
+classroom|🏫|The room where your class meets.
+lunchbox|🍱|You carry your school meal in it.
+uniform|👕|The clothes you wear to school.
+exam|📝|A test at school.
+quiz|❓|A short test with questions.
+alphabet|🔤|The letters in order.
+eraser|🧽|It rubs out pencil mistakes.
+ruler|📏|You draw straight lines with it.
+crayon|🖍️|A waxy colouring stick.
+pencil|✏️|You write and draw with it.
+notebook|📓|You write your notes in it.
+teacher|🧑‍🏫|The person who helps you learn.
+homework|📝|Schoolwork you do at home.`,
+  holidays: `christmas|🎄|A December holiday with trees and presents.
+santa|🎅|A jolly man in red who brings gifts.
+reindeer|🦌|An animal that pulls Santa's sleigh.
+present|🎁|A gift wrapped up for someone.
+stocking|🧦|You hang it by the fireplace at Christmas.
+ornament|🎄|A shiny decoration for the tree.
+tinsel|✨|Sparkly strands to decorate the tree.
+angel|👼|A winged, glowing figure in stories.
+halloween|🎃|The spooky night in October.
+costume|🎭|What you dress up in for a party.
+spooky|👻|Creepy in a fun way.
+treat|🍬|A sweet you get when you knock on doors on Halloween.
+easter|🐰|A spring holiday with eggs and bunnies.
+birthday|🎂|The day you turn a year older.
+celebrate|🎉|To do something fun for a special day.
+parade|🎉|A procession of floats and bands along the street.
+valentine|❤️|A card you send to someone you love.
+cupid|💘|A little archer who shoots arrows of love.
+thanksgiving|🦃|A holiday for saying thanks with a big feast.
+harvest|🌾|Gathering the crops in autumn.
+feast|🍽️|A very big and special meal.
+diwali|🪔|The festival of lights.
+hanukkah|🕎|The Jewish festival of lights.
+menorah|🕎|A candleholder with many branches.
+carnival|🎠|A fun fair with rides and games.
+picnic|🧺|A meal you eat outdoors on a blanket.
+vacation|🏖️|A break from school or work.
+holiday|🏖️|A time off to relax and have fun.
+sparkler|🎇|A handheld firework that fizzes with stars.
+gingerbread|🍪|A spiced biscuit shaped like a little man.
+carol|🎶|A song you sing at Christmas.
+wreath|🎄|A ring of leaves hung on the door.
+snowball|❄️|A ball of snow to throw.
+candle|🕯️|It has a small flame and lights up the dark.
+lantern|🏮|A paper light for festivals.
+pumpkin|🎃|An orange squash carved into a lantern.
+firework|🎆|A rocket that bursts into colour in the sky.
+decoration|🎊|Things you hang up to make a place look festive.
+tradition|🎉|Something families do every year.
+family|👨‍👩‍👧|The people you live with and love.
+gathering|🍽️|When people come together.
+surprise|🎁|Something you did not expect.
+greeting|💌|A friendly hello or card.
+mistletoe|🌿|A plant hung above doors at Christmas.`
 };
 
 const BAND = (len) => (len <= 5 ? "easy" : len <= 7 ? "medium" : "hard");
