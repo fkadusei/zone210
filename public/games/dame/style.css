@@ -119,3 +119,9 @@
 .how ul { margin: 10px 0 0; padding-left: 20px; color: var(--muted); line-height: 1.55; }
 .how b { color: var(--ink); }
 @media (max-width: 480px) { .frame { padding: 8px; border-radius: 14px; } }
+
+.lastmove { margin: 4px 0 0; min-height: 1.3em; text-align: center; font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+/* the piece that could have captured (about to be huffed) and the piece it could have taken */
+.sq.missed::before { content: ""; position: absolute; inset: 0; background: rgba(60, 220, 120, 0.35); }
+.sq.missed::after { content: ""; position: absolute; inset: 8%; border-radius: 50%; border: 4px dashed rgba(60, 255, 140, 0.95); box-sizing: border-box; animation: pulse2 0.7s ease-in-out infinite alternate; }
+@keyframes pulse2 { to { transform: scale(1.08); opacity: 0.6; } }

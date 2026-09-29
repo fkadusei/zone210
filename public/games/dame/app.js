@@ -227,6 +227,7 @@ let busy = false;
 let halfMoves = 0;
 let nextId = 1;
 let pendingHuff = null; // { offended, pieces: [squares] }
+let missedShow = null; // squares to highlight while a huff is explained
 let epoch = 0;
 const els = new Map();
 
@@ -274,6 +275,17 @@ const cpu = () => settings.mode === "cpu";
 const isCpuSide = (s) => cpu() && s === "d";
 const humanTurn = () => !isCpuSide(turn);
 const sqName = (i) => "abcdefgh"[i % 8] + (8 - Math.floor(i / 8));
+const setLast = (t) => {
+  $("lastMove").textContent = t;
+};
+function describe(mv, mover) {
+  const who = nameOf(mover);
+  if (mv.caps.length) {
+    const route = [sqName(mv.from), ...mv.path.map(sqName)].join(" → ");
+    return `${who} ${mover === "l" && cpu() ? "captured" : "captured"} ${mv.caps.length} piece${mv.caps.length > 1 ? "s" : ""} (${route}). Captured: ${mv.caps.map(sqName).join(", ")}.`;
+  }
+  return `${who} moved ${sqName(mv.from)} → ${sqName(mv.to)}.`;
+}
 const nameOf = (s) => (cpu() ? (s === "l" ? "You" : "The computer") : s === "l" ? "Light" : "Dark");
 
 // moves the current player may make
@@ -320,6 +332,7 @@ function render() {
     if (t) cls += t.caps.length ? " tgt cap" : " tgt";
     if (byFrom.has(i)) cls += " movable";
     if (huffable.has(i)) cls += " huffable";
+    if (missedShow && missedShow.includes(i)) cls += " missed";
     sq.className = cls;
     const p = board[i];
     sq.setAttribute("aria-label", `${sqName(i)}${p ? `, ${sideOf(p) === "l" ? "light" : "dark"} ${isKing(p) ? "king" : "piece"}` : ""}`);
@@ -380,6 +393,8 @@ function newGame() {
   busy = false;
   halfMoves = 0;
   pendingHuff = null;
+  missedShow = null;
+  setLast("");
   $("end").classList.remove("show");
   render();
   announce();
@@ -456,6 +471,7 @@ async function play(mv) {
   halfMoves = mv.caps.length || !isKing(piece) ? 0 : halfMoves + 1;
   last = { from: mv.from, to: mv.to };
   if (mv.promote) sfx.king();
+  setLast(describe(mv, mover) + (mv.promote ? " Crowned a king!" : ""));
   turn = mover === "l" ? "d" : "l";
   busy = false;
   render();
@@ -467,18 +483,27 @@ async function play(mv) {
     if (isCpuSide(offended)) {
       const wants = settings.level !== "easy" || Math.random() < 0.6;
       if (wants) {
-        const pick = eligible.sort((a, b) => (isKing(board[b]) ? 1 : 0) - (isKing(board[a]) ? 1 : 0) || Math.abs(rc(b)[0] - 3.5) - Math.abs(rc(a)[0] - 3.5))[0];
-        setStatus(`The computer huffs your piece at ${sqName(pick)}!`, "bad");
-        await sleep(650);
+        const pick = eligible.sort((x, y) => (isKing(board[y]) ? 1 : 0) - (isKing(board[x]) ? 1 : 0) || Math.abs(rc(y)[0] - 3.5) - Math.abs(rc(x)[0] - 3.5))[0];
+        // which capture was missed: the piece that could have jumped, and the piece(s) it could have taken
+        const missed = capBefore.filter((m) => (m.from === mv.from ? mv.to : m.from) === pick);
+        const prey = [...new Set(missed.flatMap((m) => m.caps.slice(0, 1)))];
+        missedShow = [pick, ...prey];
+        render();
+        setStatus(`You skipped a capture: your piece at ${sqName(pick)} could have jumped the piece at ${prey.map(sqName).join(" or ")}. The computer huffs it!`, "bad");
+        setLast(`Huff: a capture was available and not taken, so the computer removes the piece that could have made it.`);
+        await sleep(2200);
         if (my !== epoch) return;
+        missedShow = null;
         removeHuffed(pick);
-        await sleep(450);
+        setLast(`The computer huffed your piece at ${sqName(pick)} (it could have captured).`);
+        await sleep(500);
         if (my !== epoch) return;
       }
     } else {
       pendingHuff = { offended, offender: mover, pieces: eligible };
       render();
-      setStatus(`${nameOf(mover)} missed a capture. You can huff!`, "good");
+      setStatus(`${nameOf(mover)} missed a capture. You can huff! Tap a glowing piece to remove it.`, "good");
+      setLast(`${nameOf(mover)} could have captured but moved ${sqName(mv.from)} → ${sqName(mv.to)} instead.`);
       return;
     }
   }
@@ -497,6 +522,7 @@ function doHuff(i) {
   pendingHuff = null;
   removeHuffed(i);
   setStatus(`Huffed! ${nameOf(offender)} loses the piece at ${sqName(i)}.`, "good");
+  setLast(`You huffed the piece at ${sqName(i)} because it could have captured.`);
   setTimeout(() => proceed(true), 350);
 }
 
