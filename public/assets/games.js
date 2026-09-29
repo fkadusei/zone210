@@ -19,7 +19,7 @@ export const GAMES = [
   {
     id: "chess",
     title: "Chess",
-    tagline: "The classic game of strategy: full rules, hints and undo, with a computer opponent at three levels.",
+    tagline: "Full 3D chess: play the computer at three levels, a friend on one device, or a friend online.",
     audience: "all",
     tags: ["Board", "Strategy", "Classic"],
     players: "1–2 players",
