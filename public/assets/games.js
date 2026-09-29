@@ -7,10 +7,10 @@
 export const GAMES = [
   {
     id: "ludo",
-    title: "Ghana Ludo 3D",
-    tagline: "Race your pawns home on a 3D board. Play friends online, or take on the computer.",
+    title: "Ghana Ludo",
+    tagline: "Race your pawns home on a beautiful board. Play friends online, or take on the computer.",
     audience: "all",
-    tags: ["Board", "Multiplayer", "3D"],
+    tags: ["Board", "Multiplayer"],
     players: "1–4 players",
     emoji: "🎲",
     colors: ["#ff8a5c", "#ffd166"],
@@ -19,7 +19,7 @@ export const GAMES = [
   {
     id: "chess",
     title: "Chess",
-    tagline: "Full 3D chess: play the computer at three levels, a friend on one device, or a friend online.",
+    tagline: "Play the computer at three levels, a friend on one device, or a friend online.",
     audience: "all",
     tags: ["Board", "Strategy", "Classic"],
     players: "1–2 players",
