@@ -49,7 +49,7 @@ export const GAMES = [
   {
     id: "dame",
     title: "Dame",
-    tagline: "Ghana's draughts. Men capture backwards, kings fly across the board, and a missed capture can be huffed.",
+    tagline: "Ghana's draughts on a wooden board. Men capture backwards, kings fly across the board, and a capture is always your choice.",
     audience: "all",
     tags: ["Board", "Strategy", "Ghana"],
     players: "1–2 players",

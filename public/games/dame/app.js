@@ -151,8 +151,7 @@ function evaluate(b, s) {
 let deadline = 0;
 function search(b, s, depth, alpha, beta, ply) {
   if (Date.now() > deadline) throw new Error("time");
-  let moves = captureMoves(b, s);
-  if (!moves.length) moves = stepMoves(b, s);
+  const moves = captureMoves(b, s).concat(stepMoves(b, s)); // captures first for better pruning
   if (!moves.length) return -100000 + ply;
   if ((depth <= 0 && !moves[0].caps.length) || ply > 20) return evaluate(b, s);
   let best = -Infinity;
@@ -165,12 +164,8 @@ function search(b, s, depth, alpha, beta, ply) {
   return best;
 }
 
-function chooseMove(b, s, level, allowMiss = false) {
-  const caps = captureMoves(b, s);
-  const steps = stepMoves(b, s);
-  // Easy sometimes overlooks a capture, which gives the human a chance to huff
-  if (allowMiss && caps.length && steps.length && level === "easy" && Math.random() < 0.3) return steps[Math.floor(Math.random() * steps.length)];
-  const moves = caps.length ? caps : steps;
+function chooseMove(b, s, level) {
+  const moves = captureMoves(b, s).concat(stepMoves(b, s));
   if (moves.length <= 1) return moves[0] || null;
   const cfg = { easy: { depth: 2, ms: 250, noise: 70 }, normal: { depth: 4, ms: 600, noise: 8 }, hard: { depth: 8, ms: 1500, noise: 0 } }[level];
   let result = null;
@@ -208,11 +203,10 @@ const store = {
     }
   },
 };
-const SETTINGS_KEY = "zone210_dame_settings";
-const settings = { mode: "cpu", level: "normal", rule: "huff", muted: false, ...store.get(SETTINGS_KEY, {}) };
+const SETTINGS_KEY = "zone210_dame_settings_v2";
+const settings = { mode: "cpu", level: "normal", muted: false, ...store.get(SETTINGS_KEY, {}) };
 if (!["cpu", "two"].includes(settings.mode)) settings.mode = "cpu";
 if (!["easy", "normal", "hard"].includes(settings.level)) settings.level = "normal";
-if (!["huff", "force"].includes(settings.rule)) settings.rule = "huff";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let board = [];
@@ -226,8 +220,6 @@ let over = false;
 let busy = false;
 let halfMoves = 0;
 let nextId = 1;
-let pendingHuff = null; // { offended, pieces: [squares] }
-let missedShow = null; // squares to highlight while a huff is explained
 let epoch = 0;
 const els = new Map();
 
@@ -259,7 +251,6 @@ const sfx = {
     tone(330, 0.07, 0.1, "triangle", 0.09);
   },
   king: () => [523, 659, 784].forEach((f, i) => tone(f, i * 0.08, 0.16, "triangle", 0.09)),
-  huff: () => [400, 300, 200].forEach((f, i) => tone(f, i * 0.07, 0.14, "sawtooth", 0.07)),
   win: () => [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, i * 0.1, 0.24, "triangle", 0.1)),
   lose: () => [330, 262, 196].forEach((f, i) => tone(f, i * 0.16, 0.3, "sawtooth", 0.06)),
 };
@@ -289,10 +280,9 @@ function describe(mv, mover) {
 const nameOf = (s) => (cpu() ? (s === "l" ? "You" : "The computer") : s === "l" ? "Light" : "Dark");
 
 // moves the current player may make
+// Captures are optional in Dame: any capture or ordinary move is allowed, and nothing is taken for skipping one.
 function allowedMoves(b, s) {
-  const caps = captureMoves(b, s);
-  if (settings.rule === "force" && caps.length) return caps;
-  return caps.concat(stepMoves(b, s));
+  return captureMoves(b, s).concat(stepMoves(b, s));
 }
 
 function buildSquares() {
@@ -312,7 +302,7 @@ function buildSquares() {
 }
 
 function render() {
-  const canMove = !(over || busy || !humanTurn() || pendingHuff);
+  const canMove = !(over || busy || !humanTurn());
   const moves = canMove ? allowedMoves(board, turn) : [];
   const byFrom = new Map();
   moves.forEach((m) => {
@@ -320,7 +310,6 @@ function render() {
     byFrom.get(m.from).push(m);
   });
   const targets = selected >= 0 && byFrom.has(selected) ? byFrom.get(selected) : [];
-  const huffable = pendingHuff && !isCpuSide(pendingHuff.offended) ? new Set(pendingHuff.pieces) : new Set();
   [...squaresEl.children].forEach((sq, i) => {
     const [r, c] = rc(i);
     if (!isDark(r, c)) return;
@@ -331,8 +320,6 @@ function render() {
     const t = targets.find((m) => m.to === i);
     if (t) cls += t.caps.length ? " tgt cap" : " tgt";
     if (byFrom.has(i)) cls += " movable";
-    if (huffable.has(i)) cls += " huffable";
-    if (missedShow && missedShow.includes(i)) cls += " missed";
     sq.className = cls;
     const p = board[i];
     sq.setAttribute("aria-label", `${sqName(i)}${p ? `, ${sideOf(p) === "l" ? "light" : "dark"} ${isKing(p) ? "king" : "piece"}` : ""}`);
@@ -369,12 +356,6 @@ function render() {
   };
   bar($("topBar"), "d", 12 - count("l"), "#f1e6cc", cpu() ? "Computer" : "Dark");
   bar($("bottomBar"), "l", 12 - count("d"), "#1f120b", cpu() ? "You" : "Light");
-  const hb = $("huffBar");
-  const showBar = !!pendingHuff && !isCpuSide(pendingHuff.offended);
-  hb.hidden = !showBar;
-  if (showBar) {
-    $("huffText").textContent = `${nameOf(pendingHuff.offender)} skipped a capture! Tap a glowing piece to huff it.`;
-  }
 }
 
 function newGame() {
@@ -392,8 +373,6 @@ function newGame() {
   over = false;
   busy = false;
   halfMoves = 0;
-  pendingHuff = null;
-  missedShow = null;
   setLast("");
   $("end").classList.remove("show");
   render();
@@ -402,20 +381,14 @@ function newGame() {
 
 function announce() {
   if (over) return;
-  if (pendingHuff && !isCpuSide(pendingHuff.offended)) return;
   if (!humanTurn()) return setStatus("The computer is thinking…");
-  const mustJump = captureMoves(board, turn).length > 0;
   const who = cpu() ? "Your" : turn === "l" ? "Light's" : "Dark's";
-  setStatus(`${who} move.${mustJump && settings.rule === "force" ? " You must capture!" : ""}`, mustJump && settings.rule === "force" ? "bad" : "");
+  setStatus(`${who} move.`);
 }
 
 function onSquare(i) {
   if (over || busy) return;
   hintMove = null;
-  if (pendingHuff && !isCpuSide(pendingHuff.offended)) {
-    if (pendingHuff.pieces.includes(i)) doHuff(i);
-    return;
-  }
   if (!humanTurn()) return;
   const moves = allowedMoves(board, turn);
   if (selected >= 0) {
@@ -441,7 +414,6 @@ async function play(mv) {
   hintMove = null;
   snapshot();
   const mover = turn;
-  const capBefore = captureMoves(board, mover); // captures the mover could have made
   const el = els.get(ids[mv.from]);
   selected = -1;
   const piece = board[mv.from];
@@ -476,61 +448,8 @@ async function play(mv) {
   busy = false;
   render();
 
-  // huffing: the mover could have captured but did not
-  if (settings.rule === "huff" && !mv.caps.length && capBefore.length) {
-    const eligible = [...new Set(capBefore.map((m) => (m.from === mv.from ? mv.to : m.from)))];
-    const offended = turn;
-    if (isCpuSide(offended)) {
-      const wants = settings.level !== "easy" || Math.random() < 0.6;
-      if (wants) {
-        const pick = eligible.sort((x, y) => (isKing(board[y]) ? 1 : 0) - (isKing(board[x]) ? 1 : 0) || Math.abs(rc(y)[0] - 3.5) - Math.abs(rc(x)[0] - 3.5))[0];
-        // which capture was missed: the piece that could have jumped, and the piece(s) it could have taken
-        const missed = capBefore.filter((m) => (m.from === mv.from ? mv.to : m.from) === pick);
-        const prey = [...new Set(missed.flatMap((m) => m.caps.slice(0, 1)))];
-        missedShow = [pick, ...prey];
-        render();
-        setStatus(`You skipped a capture: your piece at ${sqName(pick)} could have jumped the piece at ${prey.map(sqName).join(" or ")}. The computer huffs it!`, "bad");
-        setLast(`Huff: a capture was available and not taken, so the computer removes the piece that could have made it.`);
-        await sleep(2200);
-        if (my !== epoch) return;
-        missedShow = null;
-        removeHuffed(pick);
-        setLast(`The computer huffed your piece at ${sqName(pick)} (it could have captured).`);
-        await sleep(500);
-        if (my !== epoch) return;
-      }
-    } else {
-      pendingHuff = { offended, offender: mover, pieces: eligible };
-      render();
-      setStatus(`${nameOf(mover)} missed a capture. You can huff! Tap a glowing piece to remove it.`, "good");
-      setLast(`${nameOf(mover)} could have captured but moved ${sqName(mv.from)} → ${sqName(mv.to)} instead.`);
-      return;
-    }
-  }
   proceed();
 }
-
-function removeHuffed(i) {
-  sfx.huff();
-  board[i] = null;
-  ids[i] = null;
-  render();
-}
-
-function doHuff(i) {
-  const offender = pendingHuff.offender;
-  pendingHuff = null;
-  removeHuffed(i);
-  setStatus(`Huffed! ${nameOf(offender)} loses the piece at ${sqName(i)}.`, "good");
-  setLast(`You huffed the piece at ${sqName(i)} because it could have captured.`);
-  setTimeout(() => proceed(true), 350);
-}
-
-$("huffSkip").addEventListener("click", () => {
-  if (!pendingHuff) return;
-  pendingHuff = null;
-  proceed();
-});
 
 function proceed(keepStatus = false) {
   if (checkEnd()) return;
@@ -574,7 +493,7 @@ function cpuMove() {
   render();
   setTimeout(() => {
     if (my !== epoch) return;
-    const mv = chooseMove(board, turn, settings.level, settings.rule === "huff");
+    const mv = chooseMove(board, turn, settings.level);
     busy = false;
     if (mv) play(mv);
     else proceed();
@@ -594,7 +513,6 @@ function undo() {
   halfMoves = prev.halfMoves;
   selected = -1;
   hintMove = null;
-  pendingHuff = null;
   over = false;
   epoch += 1; // cancel anything still animating
   $("end").classList.remove("show");
@@ -606,7 +524,7 @@ function undo() {
 }
 
 function showHint() {
-  if (over || busy || !humanTurn() || pendingHuff) return;
+  if (over || busy || !humanTurn()) return;
   const mv = chooseMove(board, turn, "normal");
   if (!mv) return;
   hintMove = mv;
@@ -619,10 +537,9 @@ function showHint() {
 function syncChips() {
   document.querySelectorAll("#mode .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.mode)));
   document.querySelectorAll("#level .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.level)));
-  document.querySelectorAll("#rule .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.rule)));
   $("levelRow").hidden = settings.mode !== "cpu";
 }
-document.querySelectorAll("#mode .g-chip, #level .g-chip, #rule .g-chip").forEach((b) =>
+document.querySelectorAll("#mode .g-chip, #level .g-chip").forEach((b) =>
   b.addEventListener("click", () => {
     const group = b.parentElement.id;
     if (settings[group] === b.dataset.value) return;
@@ -654,7 +571,7 @@ syncMute();
 newGame();
 window.__dame = {
   captureMoves, stepMoves, applyMove, chooseMove, initialBoard, allowedMoves,
-  get board() { return board; }, get turn() { return turn; }, get over() { return over; }, get busy() { return busy; }, get pending() { return pendingHuff; },
-  setBoard: (b, t = "l") => { epoch += 1; board = b; ids = b.map((p) => (p ? nextId++ : null)); els.forEach((e) => e.remove()); els.clear(); piecesEl.innerHTML = ""; turn = t; over = false; busy = false; history = []; pendingHuff = null; render(); announce(); },
+  get board() { return board; }, get turn() { return turn; }, get over() { return over; }, get busy() { return busy; },
+  setBoard: (b, t = "l") => { epoch += 1; board = b; ids = b.map((p) => (p ? nextId++ : null)); els.forEach((e) => e.remove()); els.clear(); piecesEl.innerHTML = ""; turn = t; over = false; busy = false; history = []; render(); announce(); },
   onSquare, play, settings, proceed,
 };

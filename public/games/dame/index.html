@@ -15,7 +15,7 @@
       <div class="g-head">
         <div>
           <h1>Dame</h1>
-          <p>The Ghanaian draughts. Men capture backwards, kings fly, and a missed capture can be huffed.</p>
+          <p>The Ghanaian draughts. Men capture backwards, kings fly, and a capture is your choice.</p>
         </div>
         <div class="g-bar">
           <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
@@ -35,11 +35,6 @@
             <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
             <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
           </div></div>
-        <div class="opt"><span class="lbl">Captures</span>
-          <div class="g-chips" id="rule" role="group" aria-label="Missed captures">
-            <button class="g-chip" data-value="huff" aria-pressed="true">Huffing</button>
-            <button class="g-chip" data-value="force" aria-pressed="false">Forced</button>
-          </div></div>
       </section>
 
       <div class="bars"><div class="pbar" id="topBar"></div></div>
@@ -50,11 +45,6 @@
         </div>
       </div>
       <div class="bars"><div class="pbar" id="bottomBar"></div></div>
-
-      <div class="huffbar" id="huffBar" hidden role="alert">
-        <span id="huffText"></span>
-        <button class="g-btn ghost" id="huffSkip">Let it go</button>
-      </div>
 
       <div class="tools">
         <button class="g-btn ghost" id="undo">Undo</button>
@@ -69,7 +59,7 @@
           <li>Light moves first. Men step one square diagonally forward and <b>capture in all four directions</b>.</li>
           <li><b>Kings fly</b>: they slide any distance along a diagonal, and after jumping a piece they can land on any empty square beyond it.</li>
           <li>You may pick any capture route, but once you start a capture you must finish the chain.</li>
-          <li><b>Huffing:</b> if you skip a capture you could have made, your opponent may remove the piece that could have captured. Choose <b>Forced</b> if you'd rather the game makes you capture.</li>
+          <li>A capture is <b>optional</b>: you may skip it. Nothing is ever taken from you for skipping one, and pieces only leave the board by being jumped.</li>
           <li>Reach the far side to crown a king. You win when your opponent has no pieces or no moves.</li>
         </ul>
       </details>
