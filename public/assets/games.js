@@ -88,7 +88,7 @@ export const GAMES = [
   },
   {
     id: "quiz",
-    title: "Ghana & Africa Quiz",
+    title: "Quizzz Time",
     tagline: "Ten questions about Ghana, Africa and the world, with levels for kids, families and adults.",
     audience: "all",
     tags: ["Trivia", "Learning", "Offline"],
