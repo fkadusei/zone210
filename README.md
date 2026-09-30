@@ -24,6 +24,10 @@ saved games stay on the player's own device.
 | **Reversi** | Everyone | 8x8 flipping board, three computer levels (alpha-beta with corner and mobility play, exact endgame on Hard), hints, undo, vs computer, 2 players, or online with a friend |
 | **Backgammon** | Everyone | full rules (bar, hitting, bearing off, must-play-maximum-dice, gammons), three computer levels (risk-aware, one-roll lookahead on Hard), hints, undo, vs computer, 2 players, or online with a friend |
 | **Dominoes** | Everyone | double-six draw game, single round or first to 100, three computer levels (Hard tracks the numbers you are out of), hot-seat hand-over screen, vs computer, 2 players, or online with a friend |
+| **Achi** | Everyone | Ghana's three-in-a-row game: place four pieces then slide them, three computer levels (Hard searches the whole game), hints, undo, vs computer, 2 players, or online with a friend |
+| **Morabaraba** | Everyone | southern African mills game: 12 pieces each, diagonal lines, flying at three pieces, three computer levels, hints, undo, vs computer, 2 players, or online with a friend |
+| **Nine Men's Morris** | Everyone | the classic mills game with 9 pieces, three computer levels, hints, undo, vs computer, 2 players, or online with a friend (shares its engine with Morabaraba in `assets/mills-engine.js`) |
+| **Mastermind** | Everyone | break or make a colour code: three sizes (up to 5 pegs, 8 colours), the computer can break your code with a real solver, 2 players on one device, or online where the code stays on the maker's device and roles swap on rematch |
 | **Dots & Boxes** | Everyone | 3x3 to 5x5 boards, vs computer (three levels), a friend, or online with a friend, chain-aware computer |
 | **Battleship** | Everyone | place your fleet by hand or randomly, three computer levels (smart targeting on Hard), or online with a friend |
 | **Memory Match** | Kids | themes, three sizes, 1–2 players or online with a friend |
