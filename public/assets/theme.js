@@ -1,7 +1,7 @@
 /**
  * Zone 210 theme switch (light / dark).
  * Load this in <head> (synchronously) so the right theme is applied before the page paints.
- *  - Follows the device setting until the visitor picks a theme; then remembers the choice.
+ *  - Dark by default; remembers the visitor's choice once they pick a theme.
  *  - Any element with [data-theme-toggle] becomes a toggle. Pages without one get a small floating button,
  *    unless <html data-no-theme-toggle> is set.
  */
@@ -19,9 +19,8 @@
   // game pages hold the animated background still to save GPU and battery
   if (/\/games\//.test(location.pathname)) root.setAttribute("data-motion", "calm");
 
-  var mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
   var effective = function () {
-    return saved || (mq && mq.matches ? "dark" : "light");
+    return saved || "dark";
   };
 
   function apply() {
@@ -50,12 +49,6 @@
   }
 
   apply();
-  if (mq && mq.addEventListener) {
-    mq.addEventListener("change", function () {
-      if (!saved) apply();
-    });
-  }
-
   var ICON =
     '<svg class="i-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">' +
     '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>' +
