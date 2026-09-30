@@ -18,7 +18,7 @@ saved games stay on the player's own device.
 | **Tetris** | Everyone | 7-bag pieces, wall kicks, hold, ghost piece, lock delay, Marathon / 40 Lines / 2-Min Blitz, touch controls, best scores |
 | **Snakes & Ladders** | Kids | classic 100-square board, 1-4 players or vs computer, animated dice, optional bonus roll on a 6 |
 | **Checkers** | Everyone | compulsory captures, multi-jumps, kings, three computer levels, hints and undo |
-| **Dame** | Everyone | Ghanaian draughts on a wooden board: men capture backwards, flying kings, optional captures (you may skip one, nothing is taken for it), three computer levels, hints and undo |
+| **Dame** | Everyone | Ghanaian draughts on a wooden board: men capture backwards, flying kings, optional captures (you may skip one), three computer levels, hints and undo, and online play by room code (peer to peer, same as Chess) |
 | **Dots & Boxes** | Everyone | 3x3 to 5x5 boards, vs computer (three levels) or a friend, chain-aware computer |
 | **Battleship** | Everyone | place your fleet by hand or randomly, three computer levels (smart targeting on Hard) |
 | **Memory Match** | Kids | themes, three sizes, 1–2 players |

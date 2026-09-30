@@ -1,3 +1,5 @@
+import * as p2p from "../../assets/p2p.js";
+
 // ---------- rules: Dame (Ghanaian draughts, 8x8) ----------
 // board: 64 cells, index = row * 8 + col. null | "l" | "L" | "d" | "D" (capital = king)
 // Light ("l") starts at the bottom and moves up; dark ("d") starts at the top and moves down.
@@ -204,8 +206,9 @@ const store = {
   },
 };
 const SETTINGS_KEY = "zone210_dame_settings_v2";
-const settings = { mode: "cpu", level: "normal", muted: false, ...store.get(SETTINGS_KEY, {}) };
-if (!["cpu", "two"].includes(settings.mode)) settings.mode = "cpu";
+const settings = { mode: "cpu", level: "normal", side: "l", muted: false, ...store.get(SETTINGS_KEY, {}) };
+if (!["cpu", "two", "online"].includes(settings.mode)) settings.mode = "cpu";
+if (!["l", "d", "r"].includes(settings.side)) settings.side = "l";
 if (!["easy", "normal", "hard"].includes(settings.level)) settings.level = "normal";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -221,7 +224,14 @@ let busy = false;
 let halfMoves = 0;
 let nextId = 1;
 let epoch = 0;
+let flipped = false; // the dark player sees the board from their side
+let moveCount = 0;
 const els = new Map();
+const net = { link: null, role: null, code: null, started: false, opponentAway: false, conn: null, guestToken: null, myColor: "l", rematchMe: false, rematchOpp: false };
+const posOf = (i) => {
+  const [r, c] = rc(i);
+  return { left: (flipped ? 7 - c : c) * 12.5, top: (flipped ? 7 - r : r) * 12.5 };
+};
 
 let audio = null;
 function tone(freq, start, length, type = "sine", gain = 0.08) {
@@ -263,8 +273,11 @@ const setStatus = (t, kind = "") => {
   statusEl.className = "g-status" + (kind ? ` ${kind}` : "");
 };
 const cpu = () => settings.mode === "cpu";
+const online = () => settings.mode === "online";
 const isCpuSide = (s) => cpu() && s === "d";
-const humanTurn = () => !isCpuSide(turn);
+const humanTurn = () => (online() ? net.started && !net.opponentAway && turn === net.myColor : !isCpuSide(turn));
+const youSide = () => (cpu() ? "l" : online() ? net.myColor : null);
+const otherSide = (s) => (s === "l" ? "d" : "l");
 const sqName = (i) => "abcdefgh"[i % 8] + (8 - Math.floor(i / 8));
 const setLast = (t) => {
   $("lastMove").textContent = t;
@@ -277,7 +290,7 @@ function describe(mv, mover) {
   }
   return `${who} moved ${sqName(mv.from)} → ${sqName(mv.to)}.`;
 }
-const nameOf = (s) => (cpu() ? (s === "l" ? "You" : "The computer") : s === "l" ? "Light" : "Dark");
+const nameOf = (s) => (cpu() ? (s === "l" ? "You" : "The computer") : online() ? (s === net.myColor ? "You" : "Your opponent") : s === "l" ? "Light" : "Dark");
 
 // moves the current player may make
 // Captures are optional in Dame: any capture or ordinary move is allowed, and nothing is taken for skipping one.
@@ -287,7 +300,8 @@ function allowedMoves(b, s) {
 
 function buildSquares() {
   squaresEl.innerHTML = "";
-  for (let i = 0; i < 64; i += 1) {
+  for (let v = 0; v < 64; v += 1) {
+    const i = flipped ? 63 - v : v;
     const [r, c] = rc(i);
     const b = document.createElement("button");
     b.type = "button";
@@ -310,7 +324,8 @@ function render() {
     byFrom.get(m.from).push(m);
   });
   const targets = selected >= 0 && byFrom.has(selected) ? byFrom.get(selected) : [];
-  [...squaresEl.children].forEach((sq, i) => {
+  [...squaresEl.children].forEach((sq) => {
+    const i = Number(sq.dataset.i);
     const [r, c] = rc(i);
     if (!isDark(r, c)) return;
     let cls = "sq d";
@@ -336,10 +351,10 @@ function render() {
       piecesEl.appendChild(el);
       els.set(id, el);
     }
-    const [r, c] = rc(i);
+    const pos = posOf(i);
     el.className = `pc ${sideOf(p)}${isKing(p) ? " king" : ""}${i === selected ? " pick" : ""}`;
-    el.style.left = `${c * 12.5}%`;
-    el.style.top = `${r * 12.5}%`;
+    el.style.left = `${pos.left}%`;
+    el.style.top = `${pos.top}%`;
   });
   els.forEach((el, id) => {
     if (!present.has(id)) {
@@ -349,13 +364,16 @@ function render() {
     }
   });
   const count = (s) => board.filter((p) => p && sideOf(p) === s).length;
-  const bar = (el, who, taken, color, name) => {
-    el.className = "pbar" + (turn === who && !over ? " turn" : "");
-    el.style.setProperty("--c", who === "l" ? "#f1e6cc" : "#1f120b");
-    el.innerHTML = `<span class="who"><span class="dot"></span>${name}<small>${count(who)} left</small></span><span class="taken" style="--c:${color}">${"<i></i>".repeat(taken)}</span>`;
+  const colorOf = (s) => (s === "l" ? "#f1e6cc" : "#1f120b");
+  const label = (s) => (cpu() ? (s === "l" ? "You" : "Computer") : online() ? (s === net.myColor ? "You" : "Opponent") : s === "l" ? "Light" : "Dark");
+  const bar = (el, who) => {
+    el.className = "pbar" + (turn === who && !over && (!online() || net.started) ? " turn" : "");
+    el.style.setProperty("--c", colorOf(who));
+    el.innerHTML = `<span class="who"><span class="dot"></span>${label(who)}<small>${count(who)} left</small></span><span class="taken" style="--c:${colorOf(otherSide(who))}">${"<i></i>".repeat(12 - count(otherSide(who)))}</span>`;
   };
-  bar($("topBar"), "d", 12 - count("l"), "#f1e6cc", cpu() ? "Computer" : "Dark");
-  bar($("bottomBar"), "l", 12 - count("d"), "#1f120b", cpu() ? "You" : "Light");
+  const bottom = flipped ? "d" : "l";
+  bar($("topBar"), otherSide(bottom));
+  bar($("bottomBar"), bottom);
 }
 
 function newGame() {
@@ -373,6 +391,7 @@ function newGame() {
   over = false;
   busy = false;
   halfMoves = 0;
+  moveCount = 0;
   setLast("");
   $("end").classList.remove("show");
   render();
@@ -381,6 +400,11 @@ function newGame() {
 
 function announce() {
   if (over) return;
+  if (online()) {
+    if (!net.started) return setStatus(net.role ? "Waiting for your opponent to join…" : "Create a room, or join a friend's room with their code.");
+    if (net.opponentAway) return setStatus("Your opponent disconnected. Waiting for them to come back…", "bad");
+    return setStatus(turn === net.myColor ? "Your move." : "Your opponent is thinking…");
+  }
   if (!humanTurn()) return setStatus("The computer is thinking…");
   const who = cpu() ? "Your" : turn === "l" ? "Light's" : "Dark's";
   setStatus(`${who} move.`);
@@ -408,7 +432,7 @@ function snapshot() {
   history.push({ board: board.slice(), ids: ids.slice(), turn, last, halfMoves });
 }
 
-async function play(mv) {
+async function play(mv, remote = false) {
   const my = epoch;
   busy = true;
   hintMove = null;
@@ -419,9 +443,9 @@ async function play(mv) {
   const piece = board[mv.from];
   if (mv.caps.length) {
     for (let s = 0; s < mv.path.length; s += 1) {
-      const [r, c] = rc(mv.path[s]);
-      el.style.left = `${c * 12.5}%`;
-      el.style.top = `${r * 12.5}%`;
+      const pos = posOf(mv.path[s]);
+      el.style.left = `${pos.left}%`;
+      el.style.top = `${pos.top}%`;
       sfx.capture();
       await sleep(160);
       if (my !== epoch) return;
@@ -446,8 +470,11 @@ async function play(mv) {
   setLast(describe(mv, mover) + (mv.promote ? " Crowned a king!" : ""));
   turn = mover === "l" ? "d" : "l";
   busy = false;
+  const sentIndex = moveCount;
+  moveCount += 1;
   render();
-
+  if (online() && !remote) netSend({ t: "move", n: sentIndex, from: mv.from, to: mv.to, path: mv.path, caps: mv.caps, promote: mv.promote });
+  saveRoom();
   proceed();
 }
 
@@ -455,36 +482,46 @@ function proceed(keepStatus = false) {
   if (checkEnd()) return;
   render();
   if (!keepStatus) announce();
-  if (!humanTurn()) cpuMove();
+  if (cpu() && isCpuSide(turn)) cpuMove();
+  pumpInbox();
 }
 
-function checkEnd() {
-  const moves = allowedMoves(board, turn);
-  let title = "";
-  let text = "";
-  let emoji = "🏆";
-  const c = cpu();
-  if (!moves.length) {
-    const winner = turn === "l" ? "d" : "l";
-    title = c ? (winner === "l" ? "You win!" : "The computer wins") : `${winner === "l" ? "Light" : "Dark"} wins!`;
-    const remaining = board.filter((p) => p && sideOf(p) === turn).length;
-    text = remaining ? `${turn === "l" ? "Light" : "Dark"} has no legal moves.` : `${turn === "l" ? "Light" : "Dark"} has no pieces left.`;
-    if (c && winner === "d") emoji = "🤖";
-    c && winner === "d" ? sfx.lose() : sfx.win();
-  } else if (halfMoves >= 60) {
-    title = "It's a draw";
-    text = "Thirty moves each without a capture or a man moving.";
-    emoji = "🤝";
-  } else return false;
+function endGame(title, text, emoji, sound) {
   over = true;
   render();
   setStatus(title, "good");
   $("endEmoji").textContent = emoji;
   $("endTitle").textContent = title;
   $("endText").textContent = text;
+  if (sound === "win") sfx.win();
+  else if (sound === "lose") sfx.lose();
+  updateOnlineButtons();
   const e = epoch;
   setTimeout(() => e === epoch && $("end").classList.add("show"), 650);
-  return true;
+}
+
+function winTitle(winner) {
+  const me = youSide();
+  if (me) return winner === me ? "You win!" : cpu() ? "The computer wins" : "Your opponent wins";
+  return `${winner === "l" ? "Light" : "Dark"} wins!`;
+}
+
+function checkEnd() {
+  if (online() && !net.started) return false;
+  const moves = allowedMoves(board, turn);
+  if (!moves.length) {
+    const winner = otherSide(turn);
+    const remaining = board.filter((p) => p && sideOf(p) === turn).length;
+    const loser = turn === "l" ? "Light" : "Dark";
+    const me = youSide();
+    endGame(winTitle(winner), remaining ? `${loser} has no legal moves.` : `${loser} has no pieces left.`, cpu() && winner === "d" ? "🤖" : "🏆", me ? (winner === me ? "win" : "lose") : "win");
+    return true;
+  }
+  if (halfMoves >= 60) {
+    endGame("It's a draw", "Thirty moves each without a capture or a man moving.", "🤝", "win");
+    return true;
+  }
+  return false;
 }
 
 function cpuMove() {
@@ -501,7 +538,7 @@ function cpuMove() {
 }
 
 function undo() {
-  if (busy || !history.length) return;
+  if (busy || !history.length || online()) return;
   const steps = cpu() && turn === "l" && history.length > 1 ? 2 : 1;
   let prev = null;
   for (let k = 0; k < steps && history.length; k += 1) prev = history.pop();
@@ -524,7 +561,7 @@ function undo() {
 }
 
 function showHint() {
-  if (over || busy || !humanTurn()) return;
+  if (over || busy || !humanTurn() || online()) return;
   const mv = chooseMove(board, turn, "normal");
   if (!mv) return;
   hintMove = mv;
@@ -537,20 +574,41 @@ function showHint() {
 function syncChips() {
   document.querySelectorAll("#mode .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.mode)));
   document.querySelectorAll("#level .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.level)));
+  document.querySelectorAll("#side .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.side)));
   $("levelRow").hidden = settings.mode !== "cpu";
+  $("sideRow").hidden = !(online() && !net.role);
+  $("onlinePanel").hidden = !online();
+  $("newGame").hidden = online();
+  $("undo").hidden = $("hint").hidden = online();
+  updateOnlineButtons();
 }
-document.querySelectorAll("#mode .g-chip, #level .g-chip").forEach((b) =>
+function setMode(mode) {
+  if (settings.mode === "online" && mode !== "online") leaveRoom(true);
+  settings.mode = mode;
+  store.set(SETTINGS_KEY, settings);
+  flipped = false;
+  buildSquares();
+  syncChips();
+  newGame();
+}
+document.querySelectorAll("#mode .g-chip").forEach((b) =>
+  b.addEventListener("click", () => {
+    if (settings.mode === b.dataset.value) return;
+    setMode(b.dataset.value);
+  })
+);
+document.querySelectorAll("#level .g-chip, #side .g-chip").forEach((b) =>
   b.addEventListener("click", () => {
     const group = b.parentElement.id;
     if (settings[group] === b.dataset.value) return;
     settings[group] = b.dataset.value;
     store.set(SETTINGS_KEY, settings);
     syncChips();
-    newGame();
+    if (group === "level") newGame();
   })
 );
 $("newGame").addEventListener("click", newGame);
-$("again").addEventListener("click", newGame);
+$("again").addEventListener("click", () => (online() ? requestRematch() : newGame()));
 $("endView").addEventListener("click", () => $("end").classList.remove("show"));
 $("undo").addEventListener("click", undo);
 $("hint").addEventListener("click", showHint);
@@ -565,13 +623,429 @@ mute.addEventListener("click", () => {
   syncMute();
 });
 
+// ---------- online play (peer to peer, no game server) ----------
+const PREFIX = "zone210-dame-";
+const ROOM_KEY = "zone210_dame_room"; // sessionStorage: lets a reload rejoin the same game
+const REACTS = ["👏", "😮", "😂", "🔥", "🤝", "😅", "🤔", "❤️"];
+let inbox = [];
+let reconnecting = false;
+
+const snap = () => ({ board: board.slice(), turn, halfMoves, n: moveCount, last, over });
+function applySnap(s) {
+  epoch += 1;
+  board = s.board.slice();
+  ids = board.map((p) => (p ? nextId++ : null));
+  els.forEach((el) => el.remove());
+  els.clear();
+  piecesEl.innerHTML = "";
+  turn = s.turn;
+  halfMoves = s.halfMoves;
+  moveCount = s.n;
+  last = s.last || null;
+  over = !!s.over;
+  busy = false;
+  selected = -1;
+  inbox = [];
+  render();
+  announce();
+}
+
+function tokenId() {
+  let t = null;
+  try {
+    t = sessionStorage.getItem("zone210_dame_token");
+    if (!t) {
+      t = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      sessionStorage.setItem("zone210_dame_token", t);
+    }
+  } catch (err) {
+    t = t || "anon";
+  }
+  return t;
+}
+function netSend(msg) {
+  if (!net.link) return;
+  if (net.role === "host") net.link.broadcast(msg);
+  else net.link.send(msg);
+}
+function saveRoom() {
+  if (!online() || net.role !== "host" || !net.code) return;
+  try {
+    sessionStorage.setItem(ROOM_KEY, JSON.stringify({ role: "host", code: net.code, myColor: net.myColor, started: net.started, snap: snap() }));
+  } catch (err) {
+    /* private mode */
+  }
+}
+function forgetRoom() {
+  try {
+    sessionStorage.removeItem(ROOM_KEY);
+  } catch (err) {
+    /* private mode */
+  }
+}
+const showError = (t) => {
+  $("onlineError").textContent = t || "";
+};
+function showLobby(which) {
+  $("lobbyStart").hidden = which !== "start";
+  $("lobbyWait").hidden = which !== "wait";
+  $("lobbyLive").hidden = which !== "live";
+  $("sideRow").hidden = !(online() && !net.role);
+}
+function updateOnlineButtons() {
+  const live = online() && net.started;
+  $("drawBtn").hidden = !live;
+  $("resignBtn").hidden = !live;
+  $("drawBtn").disabled = !live || over || net.opponentAway;
+  $("resignBtn").disabled = !live || over;
+  $("reactRow").hidden = !live;
+  $("again").textContent = online() ? (net.rematchMe ? "Waiting for your opponent…" : "Rematch") : "Play again";
+  $("again").disabled = online() && net.rematchMe;
+  if (live) {
+    const pill = $("livePill");
+    pill.textContent = `Online · Room ${net.code}`;
+    pill.classList.toggle("off", net.opponentAway);
+    $("liveMsg").textContent = net.opponentAway ? "Opponent disconnected" : `You are ${net.myColor === "l" ? "Light (first)" : "Dark"}`;
+  }
+}
+
+function freshBoard(myColor) {
+  epoch += 1;
+  net.myColor = myColor;
+  flipped = myColor === "d";
+  net.rematchMe = false;
+  net.rematchOpp = false;
+  $("offerBar").hidden = true;
+  buildSquares();
+  newGame();
+}
+
+function leaveRoom(quiet = false) {
+  try {
+    net.link?.close();
+  } catch (err) {
+    /* already closed */
+  }
+  Object.assign(net, { link: null, role: null, code: null, started: false, opponentAway: false, conn: null, guestToken: null, rematchMe: false, rematchOpp: false });
+  reconnecting = false;
+  inbox = [];
+  forgetRoom();
+  showError("");
+  $("offerBar").hidden = true;
+  if (online() && !quiet) {
+    flipped = false;
+    buildSquares();
+    newGame();
+    showLobby("start");
+    syncChips();
+  }
+}
+
+async function createRoom(rehost = null) {
+  showError("");
+  $("createRoom").disabled = true;
+  try {
+    net.link = await p2p.hostRoom({ onConnect: () => {}, onData: hostOnData, onClose: hostOnClose }, { prefix: PREFIX, code: rehost ? rehost.code : null });
+    net.role = "host";
+    net.code = net.link.code;
+    $("roomCode").textContent = net.code;
+    if (rehost) {
+      freshBoard(rehost.myColor);
+      applySnap(rehost.snap);
+      net.started = false; // wait for the guest to reconnect
+      $("lobbyMsg").textContent = "Waiting for your opponent to reconnect…";
+    } else {
+      const pick = settings.side === "r" ? (Math.random() < 0.5 ? "l" : "d") : settings.side;
+      freshBoard(pick);
+      $("lobbyMsg").textContent = `Waiting for your friend… You play ${pick === "l" ? "Light (first)" : "Dark"}.`;
+    }
+    showLobby("wait");
+    syncChips();
+    announce();
+    saveRoom();
+  } catch (err) {
+    showError(err && err.message ? err.message : "Could not create a room. Try again.");
+    net.link = null;
+  } finally {
+    $("createRoom").disabled = false;
+  }
+}
+
+function hostOnData(conn, msg) {
+  if (!msg || typeof msg !== "object") return;
+  if (msg.t === "hello") {
+    const token = String(msg.token || "");
+    if (net.guestToken && token !== net.guestToken) {
+      net.link.sendTo(conn, { t: "reject", reason: "This room already has two players." });
+      return;
+    }
+    net.guestToken = token;
+    net.conn = conn;
+    net.started = true;
+    net.opponentAway = false;
+    net.link.sendTo(conn, { t: "welcome", color: otherSide(net.myColor), snap: snap() });
+    showLobby("live");
+    syncChips();
+    announce();
+    render();
+    saveRoom();
+    return;
+  }
+  if (conn !== net.conn) return;
+  handlePeer(msg);
+}
+function hostOnClose(conn) {
+  if (conn !== net.conn) return;
+  net.opponentAway = true;
+  updateOnlineButtons();
+  announce();
+  render();
+}
+
+async function joinRoom(code, { silent = false } = {}) {
+  const clean = p2p.normalizeCode(code);
+  if (clean.length !== 5) {
+    if (!silent) showError("Room codes have 5 letters and numbers.");
+    return false;
+  }
+  showError("");
+  $("joinForm").querySelector("button").disabled = true;
+  try {
+    net.link?.close();
+    net.link = await p2p.joinRoom(clean, { onData: guestOnData, onClose: guestOnClose }, { prefix: PREFIX });
+    net.role = "guest";
+    net.code = clean;
+    net.link.send({ t: "hello", token: tokenId() });
+    try {
+      sessionStorage.setItem(ROOM_KEY, JSON.stringify({ role: "guest", code: clean }));
+    } catch (err) {
+      /* private mode */
+    }
+    return true;
+  } catch (err) {
+    net.link = null;
+    net.role = null;
+    if (!silent) showError(err && err.message ? err.message : "Could not join that room.");
+    return false;
+  } finally {
+    $("joinForm").querySelector("button").disabled = false;
+  }
+}
+
+function guestOnData(msg) {
+  if (!msg || typeof msg !== "object") return;
+  if (msg.t === "reject") {
+    showError(msg.reason || "Could not join that room.");
+    leaveRoom(true);
+    showLobby("start");
+    syncChips();
+    return;
+  }
+  if (msg.t === "welcome") {
+    freshBoard(msg.color);
+    applySnap(msg.snap);
+    net.started = true;
+    net.opponentAway = false;
+    reconnecting = false;
+    showLobby("live");
+    syncChips();
+    announce();
+    render();
+    return;
+  }
+  handlePeer(msg);
+}
+async function guestOnClose() {
+  if (net.role !== "guest" || reconnecting || over) return;
+  net.opponentAway = true;
+  updateOnlineButtons();
+  setStatus("Connection lost. Trying to reconnect…", "bad");
+  reconnecting = true;
+  for (let i = 0; i < 12 && net.role === "guest"; i += 1) {
+    await sleep(3000);
+    if (net.role !== "guest") break;
+    const code = net.code;
+    try {
+      net.link?.close();
+    } catch (err) {
+      /* already closed */
+    }
+    net.link = null;
+    if (await joinRoom(code, { silent: true })) return;
+  }
+  reconnecting = false;
+  if (net.role === "guest") setStatus("Could not reconnect. The host may have left the room.", "bad");
+}
+
+const sameCaps = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
+function pumpInbox() {
+  if (!online() || busy || over || !inbox.length) return;
+  const m = inbox.shift();
+  const mv = turn !== net.myColor && m.n === moveCount ? allowedMoves(board, turn).find((x) => x.from === m.from && x.to === m.to && sameCaps(x.caps, m.caps || [])) : null;
+  if (!mv) {
+    // out of step: the host is the referee
+    if (net.role === "host") netSend({ t: "sync", snap: snap() });
+    else netSend({ t: "sync-req" });
+    return;
+  }
+  play(mv, true);
+}
+
+function handlePeer(msg) {
+  switch (msg.t) {
+    case "move":
+      inbox.push(msg);
+      pumpInbox();
+      break;
+    case "sync-req":
+      if (net.role === "host") netSend({ t: "sync", snap: snap() });
+      break;
+    case "sync":
+      if (net.role === "guest" && msg.snap) applySnap(msg.snap);
+      break;
+    case "resign":
+      if (!over) endGame("You win!", "Your opponent resigned.", "🏆", "win");
+      break;
+    case "draw-offer":
+      if (over) break;
+      $("offerText").textContent = "Your opponent offers a draw.";
+      $("offerBar").hidden = false;
+      break;
+    case "draw-accept":
+      $("offerBar").hidden = true;
+      if (!over) endGame("It's a draw", "Both players agreed to a draw.", "🤝", "win");
+      break;
+    case "draw-decline":
+      setStatus("Your opponent declined the draw.", "bad");
+      break;
+    case "rematch":
+      net.rematchOpp = true;
+      setStatus("Your opponent wants a rematch.", "good");
+      maybeStartRematch();
+      break;
+    case "newgame":
+      startNewGame(msg.color);
+      break;
+    case "react":
+      if (REACTS.includes(msg.k)) toastReact(`${msg.k}  Your opponent`);
+      break;
+    default:
+  }
+}
+
+function requestRematch() {
+  if (!online() || !net.started) return;
+  net.rematchMe = true;
+  netSend({ t: "rematch" });
+  updateOnlineButtons();
+  maybeStartRematch();
+}
+function maybeStartRematch() {
+  if (net.role !== "host" || !net.rematchMe || !net.rematchOpp) return;
+  const mine = otherSide(net.myColor); // colours swap
+  netSend({ t: "newgame", color: otherSide(mine) });
+  startNewGame(mine);
+}
+function startNewGame(color) {
+  freshBoard(color);
+  net.started = true;
+  $("end").classList.remove("show");
+  updateOnlineButtons();
+  render();
+  announce();
+  saveRoom();
+}
+
+function toastReact(text) {
+  const t = document.createElement("div");
+  t.className = "toast-react";
+  t.textContent = text;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+REACTS.forEach((k) => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = k;
+  b.setAttribute("aria-label", `Send ${k}`);
+  b.addEventListener("click", () => {
+    netSend({ t: "react", k });
+    toastReact(`${k}  You`);
+  });
+  $("reactRow").appendChild(b);
+});
+
+// lobby and match buttons
+$("createRoom").addEventListener("click", () => createRoom());
+$("joinForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  joinRoom($("joinCode").value);
+});
+$("joinCode").addEventListener("input", (e) => {
+  e.target.value = p2p.normalizeCode(e.target.value);
+});
+$("copyLink").addEventListener("click", async () => {
+  const url = `${location.origin}${location.pathname}?room=${net.code}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    $("lobbyMsg").textContent = "Invite link copied. Send it to your friend!";
+  } catch (err) {
+    window.prompt("Copy this invite link:", url);
+  }
+});
+$("leaveRoom").addEventListener("click", () => leaveRoom());
+$("leaveLive").addEventListener("click", () => {
+  if (over || window.confirm("Leave this game? Your opponent will see you disconnect.")) leaveRoom();
+});
+$("resignBtn").addEventListener("click", () => {
+  if (over || !net.started || !window.confirm("Resign this game?")) return;
+  netSend({ t: "resign" });
+  endGame("You resigned", "Your opponent wins.", "🏳️", "lose");
+});
+$("drawBtn").addEventListener("click", () => {
+  if (over || !net.started) return;
+  netSend({ t: "draw-offer" });
+  setStatus("Draw offered. Waiting for your opponent…");
+});
+$("offerYes").addEventListener("click", () => {
+  $("offerBar").hidden = true;
+  netSend({ t: "draw-accept" });
+  if (!over) endGame("It's a draw", "Both players agreed to a draw.", "🤝", "win");
+});
+$("offerNo").addEventListener("click", () => {
+  $("offerBar").hidden = true;
+  netSend({ t: "draw-decline" });
+});
+$("endView").addEventListener("click", () => $("end").classList.remove("show"));
+window.addEventListener("pagehide", saveRoom);
+
 buildSquares();
 syncChips();
 syncMute();
 newGame();
+showLobby("start");
+
+// invite links (?room=CODE) and reloads during an online game
+(function boot() {
+  const roomParam = p2p.normalizeCode(new URLSearchParams(location.search).get("room") || "");
+  let saved = null;
+  try {
+    saved = JSON.parse(sessionStorage.getItem(ROOM_KEY) || "null");
+  } catch (err) {
+    saved = null;
+  }
+  if (roomParam.length === 5) {
+    setMode("online");
+    $("joinCode").value = roomParam;
+    joinRoom(roomParam);
+  } else if (saved && settings.mode === "online") {
+    if (saved.role === "host") createRoom(saved);
+    else joinRoom(saved.code, { silent: true });
+  }
+})();
 window.__dame = {
   captureMoves, stepMoves, applyMove, chooseMove, initialBoard, allowedMoves,
-  get board() { return board; }, get turn() { return turn; }, get over() { return over; }, get busy() { return busy; },
+  get board() { return board; }, get turn() { return turn; }, get over() { return over; }, get busy() { return busy; }, get net() { return net; }, get flipped() { return flipped; }, get moveCount() { return moveCount; }, setMode, createRoom, joinRoom,
   setBoard: (b, t = "l") => { epoch += 1; board = b; ids = b.map((p) => (p ? nextId++ : null)); els.forEach((e) => e.remove()); els.clear(); piecesEl.innerHTML = ""; turn = t; over = false; busy = false; history = []; render(); announce(); },
   onSquare, play, settings, proceed,
 };

@@ -28,6 +28,7 @@
           <div class="g-chips" id="mode" role="group" aria-label="Mode">
             <button class="g-chip" data-value="cpu" aria-pressed="true">vs Computer</button>
             <button class="g-chip" data-value="two" aria-pressed="false">2 players</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">Online</button>
           </div></div>
         <div class="opt" id="levelRow"><span class="lbl">Level</span>
           <div class="g-chips" id="level" role="group" aria-label="Difficulty">
@@ -35,6 +36,35 @@
             <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
             <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
           </div></div>
+        <div class="opt" id="sideRow" hidden><span class="lbl">Play as</span>
+          <div class="g-chips" id="side" role="group" aria-label="Your colour">
+            <button class="g-chip" data-value="l" aria-pressed="true">Light (first)</button>
+            <button class="g-chip" data-value="d" aria-pressed="false">Dark</button>
+            <button class="g-chip" data-value="r" aria-pressed="false">Random</button>
+          </div></div>
+      </section>
+
+      <!-- Online lobby -->
+      <section class="g-panel online" id="onlinePanel" aria-label="Online play" hidden>
+        <div id="lobbyStart" class="lobby-row">
+          <button class="g-btn" id="createRoom">Create a room</button>
+          <span class="or">or</span>
+          <form class="join" id="joinForm">
+            <input id="joinCode" maxlength="5" placeholder="ROOM CODE" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Room code" />
+            <button class="g-btn ghost" type="submit">Join</button>
+          </form>
+        </div>
+        <div id="lobbyWait" class="lobby-wait" hidden>
+          <div class="code-box"><span class="lbl">Room code</span><span class="room-code" id="roomCode">-----</span></div>
+          <div class="lobby-msg" id="lobbyMsg">Waiting for your friend…</div>
+          <div class="g-bar"><button class="g-btn ghost" id="copyLink">Copy invite link</button><button class="g-btn ghost" id="leaveRoom">Cancel</button></div>
+        </div>
+        <div id="lobbyLive" class="lobby-live" hidden>
+          <span class="pill" id="livePill">Online</span>
+          <span class="lobby-msg" id="liveMsg"></span>
+          <button class="g-btn ghost" id="leaveLive">Leave</button>
+        </div>
+        <p class="online-error" id="onlineError" role="alert"></p>
       </section>
 
       <div class="bars"><div class="pbar" id="topBar"></div></div>
@@ -46,10 +76,18 @@
       </div>
       <div class="bars"><div class="pbar" id="bottomBar"></div></div>
 
+      <div class="offerbar" id="offerBar" hidden role="alert">
+        <span id="offerText">Your opponent offers a draw.</span>
+        <span class="g-bar"><button class="g-btn ghost" id="offerNo">Decline</button><button class="g-btn" id="offerYes">Accept</button></span>
+      </div>
+
       <div class="tools">
         <button class="g-btn ghost" id="undo">Undo</button>
         <button class="g-btn ghost" id="hint">Hint</button>
+        <button class="g-btn ghost" id="drawBtn" hidden>Offer draw</button>
+        <button class="g-btn ghost" id="resignBtn" hidden>Resign</button>
       </div>
+      <div class="react-row" id="reactRow" aria-label="Quick reactions" hidden></div>
       <p class="g-status" id="status" role="status" aria-live="polite"></p>
       <p class="lastmove" id="lastMove" aria-live="polite"></p>
 
@@ -78,7 +116,7 @@
     </div>
 
     <script src="../../assets/sound.js"></script>
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
     <script src="../../assets/back-link.js"></script>
   </body>
 </html>

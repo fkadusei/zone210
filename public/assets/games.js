@@ -49,9 +49,9 @@ export const GAMES = [
   {
     id: "dame",
     title: "Dame",
-    tagline: "Ghana's draughts on a wooden board. Men capture backwards, kings fly across the board, and a capture is always your choice.",
+    tagline: "Ghana's draughts on a wooden board. Play the computer, a friend on one device, or a friend online.",
     audience: "all",
-    tags: ["Board", "Strategy", "Ghana"],
+    tags: ["Board", "Strategy", "Ghana", "Online"],
     players: "1–2 players",
     emoji: "⚫",
     colors: ["#8a5a37", "#e6c99b"],
