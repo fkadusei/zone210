@@ -4,42 +4,47 @@ const shuffle = (a) => a.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 /* ---------------- Human body ---------------- */
+// hot: ellipses [cx, cy, rx, ry] in the picture's own 1363 x 1212 coordinate system
 const BODY = {
-  brain: { name: "Brain", sys: "Nervous system", text: "The control centre of the body. It processes what you see, hear, feel and think, and sends signals along nerves to your muscles.", fact: "Your brain is about 2% of your body weight but uses around 20% of your energy." },
-  lungs: { name: "Lungs", sys: "Respiratory system", text: "They bring oxygen into the blood and remove carbon dioxide when you breathe out.", fact: "Each lung is full of tiny air sacs called alveoli, hundreds of millions in total." },
-  heart: { name: "Heart", sys: "Circulatory system", text: "A muscular pump that pushes blood around the body, carrying oxygen and nutrients to every cell.", fact: "The heart of an adult beats about 60 to 100 times a minute at rest." },
-  liver: { name: "Liver", sys: "Digestive system", text: "It cleans the blood, stores energy, and makes bile that helps digest fats.", fact: "The liver is the largest organ inside the body, and it can regrow part of itself." },
-  stomach: { name: "Stomach", sys: "Digestive system", text: "A stretchy bag that mixes food with acid and enzymes, turning it into a thick liquid.", fact: "Stomach acid is strong enough to break down food, and a layer of mucus protects the stomach wall." },
-  kidneys: { name: "Kidneys", sys: "Urinary system", text: "They filter waste and extra water out of the blood to make urine, and keep the body's salt and water balanced.", fact: "Most people have two kidneys, but can live healthily with one." },
-  gut: { name: "Intestines", sys: "Digestive system", text: "The small intestine absorbs nutrients into the blood, and the large intestine absorbs water and forms waste.", fact: "The small intestine is about 6 metres long in an adult, folded up inside the belly." },
-  bones: { name: "Skeleton", sys: "Skeletal system", text: "Bones support the body, protect organs and work with muscles to let you move. Bone marrow makes blood cells.", fact: "An adult has 206 bones. Babies are born with about 270 that join together as they grow." },
+  brain: { name: "Brain", sys: "Nervous system", hot: [[690, 175, 135, 78]], text: "The control centre of the body. It processes what you see, hear, feel and think, and sends signals along nerves to your muscles.", fact: "Your brain is about 2% of your body weight but uses around 20% of your energy." },
+  pharynx: { name: "Pharynx (throat)", sys: "Digestive and respiratory systems", hot: [[632, 322, 24, 44]], text: "The passage behind the nose and mouth. Air travels through it to the windpipe, and food travels through it to the oesophagus.", fact: "It is roughly 12 to 15 centimetres long in an adult." },
+  larynx: { name: "Larynx (voice box)", sys: "Respiratory system", hot: [[640, 410, 24, 30]], text: "It sits at the top of the windpipe and holds the vocal cords. Air passing over them makes them vibrate to produce your voice.", fact: "A flap called the epiglottis closes over the larynx when you swallow so food does not go down the wrong way." },
+  lymph: { name: "Lymph nodes", sys: "Lymphatic and immune systems", hot: [[580, 445, 20, 46], [705, 400, 16, 30], [820, 650, 32, 46]], text: "Small bean-shaped filters along the lymph vessels. They trap germs and hold white blood cells that fight infection.", fact: "The body has hundreds of lymph nodes. They can swell when you are fighting an infection." },
+  lungs: { name: "Lungs", sys: "Respiratory system", hot: [[560, 655, 68, 118], [735, 610, 60, 96]], text: "They bring oxygen into the blood and remove carbon dioxide when you breathe out.", fact: "Each lung is full of tiny air sacs called alveoli, hundreds of millions in total." },
+  heart: { name: "Heart", sys: "Circulatory system", hot: [[650, 655, 60, 80]], text: "A muscular pump that pushes blood around the body, carrying oxygen and nutrients to every cell.", fact: "The heart of an adult beats about 60 to 100 times a minute at rest." },
+  arteries: { name: "Arteries", sys: "Circulatory system", hot: [[470, 570, 32, 62], [520, 515, 34, 18]], text: "Strong, elastic blood vessels that carry blood away from the heart. Most carry blood full of oxygen.", fact: "The aorta, the body's largest artery, is about as wide as a garden hose." },
+  veins: { name: "Veins", sys: "Circulatory system", hot: [[925, 890, 40, 60]], text: "Vessels that carry blood back to the heart. Small valves inside them stop the blood flowing backwards.", fact: "Most veins carry blood that has given up its oxygen. The pulmonary veins are the exception." },
+  muscles: { name: "Muscles", sys: "Muscular system", hot: [[440, 590, 62, 62]], text: "Muscles contract to pull on bones and move the body. Some, like the heart and gut muscles, work without you thinking.", fact: "The human body has more than 600 skeletal muscles." },
+  spleen: { name: "Spleen", sys: "Lymphatic and immune systems", hot: [[775, 780, 26, 40]], text: "It filters old red blood cells out of the blood, stores white blood cells and helps fight infection.", fact: "It is about the size of a fist, and people can live without it." },
+  liver: { name: "Liver", sys: "Digestive system", hot: [[565, 770, 70, 55]], text: "It cleans the blood, stores energy, and makes bile that helps digest fats.", fact: "The liver is the largest organ inside the body, and it can regrow part of itself." },
+  gallbladder: { name: "Gallbladder", sys: "Digestive system", hot: [[578, 880, 22, 22]], text: "A small pear-shaped bag under the liver that stores bile and releases it into the gut to help digest fat.", fact: "People can live normally without a gallbladder." },
+  stomach: { name: "Stomach", sys: "Digestive system", hot: [[715, 860, 42, 34]], text: "A stretchy bag that mixes food with acid and enzymes, turning it into a thick liquid.", fact: "Stomach acid is strong enough to break down food, and a layer of mucus protects the stomach wall." },
+  pancreas: { name: "Pancreas", sys: "Digestive and endocrine systems", hot: [[640, 880, 42, 28]], text: "It makes digestive enzymes that flow into the gut, and hormones such as insulin that control blood sugar.", fact: "Insulin from the pancreas lets your cells take up sugar from the blood." },
+  kidneys: { name: "Kidneys", sys: "Urinary system", hot: [[542, 930, 30, 38], [742, 915, 30, 36]], text: "They filter waste and extra water out of the blood to make urine, and keep the body's salt and water balanced.", fact: "Most people have two kidneys, but can live healthily with one." },
+  intestines: { name: "Intestines", sys: "Digestive system", hot: [[575, 1030, 105, 70]], text: "The small intestine absorbs nutrients into the blood, and the large intestine absorbs water and forms waste.", fact: "The small intestine is about 6 metres long in an adult, folded up inside the belly." },
+  bladder: { name: "Urinary bladder", sys: "Urinary system", hot: [[660, 1160, 55, 42]], text: "A stretchy bag that stores urine until you go to the toilet.", fact: "An adult bladder can hold roughly 400 to 600 millilitres." },
+  skeleton: { name: "Skeleton", sys: "Skeletal system", hot: [[378, 905, 40, 52], [880, 640, 30, 40]], text: "Bones support the body, protect organs and work with muscles to let you move.", fact: "An adult has 206 bones. Babies are born with about 270 that join together as they grow." },
+  marrow: { name: "Bone marrow", sys: "Skeletal and circulatory systems", hot: [[896, 705, 20, 46]], text: "Soft tissue inside some bones that makes red blood cells, white blood cells and platelets.", fact: "Bone marrow makes about two million new red blood cells every second." },
 };
 
 export function mountBody(root, ctx) {
   let sel = "heart";
-  const O = (id, inner) => `<g class="org" data-o="${id}">${inner}</g>`;
-  root.innerHTML = `<div class="two"><div class="g-panel"><svg class="cellsvg" id="bsvg" viewBox="0 0 260 420" role="img" aria-label="Human body organs" style="max-width:340px;margin:auto">
-    <g fill="#94a3b822" stroke="#94a3b8" stroke-width="2"><circle cx="130" cy="45" r="30"/><rect x="118" y="72" width="24" height="22"/><rect x="72" y="88" width="116" height="196" rx="42"/><rect x="34" y="94" width="30" height="150" rx="15"/><rect x="196" y="94" width="30" height="150" rx="15"/><rect x="82" y="270" width="44" height="140" rx="18"/><rect x="134" y="270" width="44" height="140" rx="18"/></g>
-    ${O("bones", `<g stroke="#e2e8f0" stroke-width="7" stroke-linecap="round" opacity=".85"><path d="M104 285v110M156 285v110M49 104v130M211 104v130M130 96v56"/></g>`)}
-    ${O("brain", `<ellipse cx="130" cy="38" rx="22" ry="17" fill="#ec4899"/><path d="M116 38q6-8 12 0t12 0" fill="none" stroke="#fff9" stroke-width="2"/>`)}
-    ${O("lungs", `<ellipse cx="103" cy="140" rx="22" ry="38" fill="#38bdf8"/><ellipse cx="157" cy="140" rx="22" ry="38" fill="#38bdf8"/>`)}
-    ${O("heart", `<path d="M132 190c-22-14-26-34-10-37 7-1 10 4 10 7 0-3 3-8 10-7 16 3 12 23-10 37z" fill="#e5484d"/>`)}
-    ${O("liver", `<ellipse cx="106" cy="205" rx="30" ry="14" fill="#b45309"/>`)}
-    ${O("stomach", `<ellipse cx="152" cy="206" rx="17" ry="12" fill="#f59e0b" transform="rotate(20 152 206)"/>`)}
-    ${O("kidneys", `<ellipse cx="92" cy="236" rx="8" ry="12" fill="#a855f7"/><ellipse cx="168" cy="236" rx="8" ry="12" fill="#a855f7"/>`)}
-    ${O("gut", `<rect x="106" y="226" width="48" height="44" rx="14" fill="#fb923c55" stroke="#fb923c" stroke-width="3"/><path d="M114 238h32M114 248h32M114 258h32" stroke="#fb923c" stroke-width="4" stroke-linecap="round"/>`)}
-  </svg><div class="orglist" id="bl"></div></div><div class="g-panel" id="bd"></div></div>`;
+  root.innerHTML = `<div class="two"><div class="g-panel"><div class="anat"><img src="img/internal_organs.svg" alt="Labelled diagram of the human internal organs" width="1363" height="1212" decoding="async">
+    <svg viewBox="0 0 1363 1212" id="bsvg" aria-hidden="true"></svg></div>
+    <p class="hint">Tap an organ in the picture, or pick it from the list. Illustration: "Internal organs" by Mikael Häggström, public domain (CC0), from Wikimedia Commons.</p>
+    <div class="orglist" id="bl"></div></div><div class="g-panel" id="bd"></div></div>`;
   const $ = (id) => root.querySelector("#" + id);
+  $("bsvg").innerHTML = Object.entries(BODY).map(([k, o]) => `<g class="hs" data-o="${k}">${o.hot.map(([x, y, rx, ry]) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}"/>`).join("")}</g>`).join("");
   function detail() {
     const o = BODY[sel];
     $("bd").innerHTML = `<div class="lbl">${esc(o.sys)}</div><h3 style="margin:4px 0 8px;font-size:1.5rem">${esc(o.name)}</h3><p class="sumtext">${esc(o.text)}</p><p class="hint"><b>Did you know?</b> ${esc(o.fact)}</p>`;
-    root.querySelectorAll("#bsvg [data-o]").forEach((n) => n.classList.toggle("sel", n.dataset.o === sel));
+    root.querySelectorAll("#bsvg .hs").forEach((n) => n.classList.toggle("sel", n.dataset.o === sel));
     $("bl").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.o === sel)));
   }
-  const pick1 = (k) => { sel = k; ctx.sfx.pop(); detail(); };
-  $("bl").innerHTML = Object.entries(BODY).map(([k, v]) => `<button class="g-chip" data-o="${k}">${esc(v.name)}</button>`).join("");
-  $("bl").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => pick1(b.dataset.o)));
-  root.querySelectorAll("#bsvg [data-o]").forEach((n) => n.addEventListener("click", () => pick1(n.dataset.o)));
+  const choose = (k) => { sel = k; ctx.sfx.pop(); detail(); };
+  $("bl").innerHTML = Object.entries(BODY).map(([k, v]) => `<button class="g-chip" data-o="${k}">${esc(v.name.replace(/ \(.*\)/, ""))}</button>`).join("");
+  $("bl").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => choose(b.dataset.o)));
+  root.querySelectorAll("#bsvg .hs").forEach((n) => n.addEventListener("click", () => choose(n.dataset.o)));
   detail();
 }
 

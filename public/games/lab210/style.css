@@ -200,3 +200,10 @@
 @keyframes flow { to { stroke-dashoffset: -14; } }
 html[data-saver] .circuit .flow { animation: none; }
 .circuit text { font: 700 12px system-ui; fill: var(--muted); }
+
+.anat { position: relative; max-width: 640px; margin: 0 auto; border-radius: 14px; overflow: hidden; background: #fff; border: 1px solid var(--line); }
+.anat img { display: block; width: 100%; height: auto; }
+.anat svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.anat .hs ellipse { fill: transparent; stroke: transparent; stroke-width: 5; cursor: pointer; transition: fill .15s, stroke .15s; }
+.anat .hs:hover ellipse { fill: rgba(245, 180, 0, 0.22); stroke: rgba(245, 180, 0, 0.7); }
+.anat .hs.sel ellipse { fill: rgba(245, 180, 0, 0.3); stroke: #e08a00; stroke-width: 6; }
