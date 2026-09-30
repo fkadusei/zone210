@@ -1,3 +1,5 @@
+import { createOnline } from "../../assets/online.js";
+
 // ---------- fleet and rules ----------
 const SHIPS = [
   { name: "Carrier", len: 5 },
@@ -126,7 +128,8 @@ const store = {
   },
 };
 const SETTINGS_KEY = "zone210_battleship_settings";
-const settings = { level: "normal", muted: false, ...store.get(SETTINGS_KEY, {}) };
+const settings = { mode: "cpu", level: "normal", muted: false, ...store.get(SETTINGS_KEY, {}) };
+if (!["cpu", "online"].includes(settings.mode)) settings.mode = "cpu";
 if (!["easy", "normal", "hard"].includes(settings.level)) settings.level = "normal";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -181,6 +184,67 @@ let pShots = Array(N * N).fill(0); // player's shots on the enemy
 let aShots = Array(N * N).fill(0); // computer's shots on the player
 let resolved = new Set();
 let busy = false;
+
+// ---------- online (each player keeps their own fleet private and answers the other's shots) ----------
+const online = () => settings.mode === "online";
+const blankFleet = () => ({ ships: SHIPS.map((s, idx) => ({ idx, cells: [], horizontal: true, hits: 0 })), occ: Array(N * N).fill(-1) });
+let myReady = false;
+let theirReady = false;
+let turnMine = false;
+let awaiting = false;
+let pendingShots = [];
+const net = createOnline({
+  container: document.querySelector(".g-page"),
+  before: $("placing"),
+  prefix: "zone210-battleship-",
+  names: ["Fires first", "Fires second"],
+  onStart: ({ role }) => { newGame(); turnMine = role === 0; },
+  onData: (m) => onNet(m),
+  onLeft: () => { awaiting = false; setStatus("Your friend left the game.", "bad"); },
+});
+function onNet(m) {
+  if (!online() || !m) return;
+  if (m.t === "ready") {
+    theirReady = true;
+    if (myReady && phase === "placing") startBattle();
+  } else if (m.t === "shot" && Number.isInteger(m.i)) {
+    if (phase !== "battle") pendingShots.push(m.i);
+    else onShot(m.i);
+  } else if (m.t === "res") onResult(m);
+}
+function onShot(i) {
+  if (turnMine || aShots[i]) return;
+  const res = hitAt(mine, aShots, i);
+  if (res.sunk) mine.ships[res.idx].cells.forEach((c) => resolved.add(c));
+  const over = allSunk(mine);
+  net.send({ t: "res", i, hit: res.hit, sunk: !!res.sunk, idx: res.idx, cells: res.sunk ? mine.ships[res.idx].cells : undefined, over });
+  res.hit ? sfx.hit() : sfx.miss();
+  if (res.sunk) sfx.sunk();
+  renderBattle();
+  if (over) return finish(false);
+  turnMine = true;
+  const msg = res.sunk ? `Your friend sank your ${SHIPS[res.idx].name} (${cellName(i)})!` : res.hit ? `Your friend hit your ship at ${cellName(i)}!` : `Your friend missed at ${cellName(i)}.`;
+  setStatus(`${msg} Your turn.`, res.hit ? "bad" : "");
+}
+function onResult(m) {
+  if (!awaiting || !Number.isInteger(m.i) || pShots[m.i]) return;
+  awaiting = false;
+  pShots[m.i] = m.hit ? 2 : 1;
+  if (m.sunk && Array.isArray(m.cells) && Number.isInteger(m.idx) && enemy.ships[m.idx]) {
+    const s = enemy.ships[m.idx];
+    s.cells = m.cells;
+    s.hits = SHIPS[m.idx].len;
+    s.horizontal = m.cells.length < 2 || m.cells[1] - m.cells[0] === 1;
+    m.cells.forEach((c) => (enemy.occ[c] = m.idx));
+  }
+  m.hit ? sfx.hit() : sfx.miss();
+  if (m.sunk) sfx.sunk();
+  renderBattle();
+  const msg = m.sunk ? `You sank their ${SHIPS[m.idx].name}!` : m.hit ? `${cellName(m.i)}: a hit!` : `${cellName(m.i)}: a miss.`;
+  if (m.over) return finish(true);
+  turnMine = false;
+  setStatus(`${msg} Waiting for your friend's shot…`, m.hit ? "good" : "");
+}
 
 function buildGrid(container, onClick, onHover) {
   container.innerHTML = "";
@@ -262,12 +326,13 @@ function renderPlacing() {
     tray.appendChild(b);
   });
   const done = placed.filter(Boolean).length === SHIPS.length;
-  $("start").disabled = !done;
-  setStatus(done ? "Fleet ready. Press Start battle, or tap a ship to move it." : `Place your ${SHIPS[selectedShip] ? SHIPS[selectedShip].name : "ships"} (${SHIPS[selectedShip] ? SHIPS[selectedShip].len : ""} squares). Use Rotate to turn it.`);
+  $("start").disabled = !done || myReady;
+  if (myReady) return;
+  setStatus(online() && !net.active ? "Create or join a room to start." : done ? "Fleet ready. Press Start battle, or tap a ship to move it." : `Place your ${SHIPS[selectedShip] ? SHIPS[selectedShip].name : "ships"} (${SHIPS[selectedShip] ? SHIPS[selectedShip].len : ""} squares). Use Rotate to turn it.`);
 }
 
 function onPlaceCell(i) {
-  if (phase !== "placing") return;
+  if (phase !== "placing" || myReady) return;
   const f = placingFleet();
   const occupant = f.occ[i];
   // tapping a placed ship picks it up, unless we are already carrying that one
@@ -339,8 +404,16 @@ function renderBattle() {
 
 function startBattle() {
   if (placed.filter(Boolean).length !== SHIPS.length) return;
+  if (online() && !(myReady && theirReady)) {
+    // lock in my fleet and wait for the other player
+    myReady = true;
+    $("start").disabled = true;
+    $("random").disabled = $("clearShips").disabled = $("rotate").disabled = true;
+    net.send({ t: "ready" });
+    if (!theirReady) { setStatus("Fleet locked in. Waiting for your friend to place their ships…"); return; }
+  }
   mine = placingFleet();
-  enemy = randomFleet();
+  enemy = online() ? blankFleet() : randomFleet();
   pShots = Array(N * N).fill(0);
   aShots = Array(N * N).fill(0);
   resolved = new Set();
@@ -352,6 +425,13 @@ function startBattle() {
   buildGrid(myGridEl, () => {});
   [...myGridEl.children].forEach((c) => (c.tabIndex = -1));
   renderBattle();
+  if (online()) {
+    setStatus(turnMine ? "Your shot, Admiral. Tap a square in the enemy waters." : "Your friend fires first…");
+    const queued = pendingShots;
+    pendingShots = [];
+    queued.forEach(onShot);
+    return;
+  }
   setStatus("Your shot, Admiral. Tap a square in the enemy waters.");
 }
 
@@ -368,6 +448,13 @@ function hitAt(fleet, shots, i) {
 }
 
 async function fire(i) {
+  if (online()) {
+    if (phase !== "battle" || !net.active || !turnMine || awaiting || pShots[i]) return;
+    awaiting = true;
+    sfx.fire();
+    net.send({ t: "shot", i });
+    return;
+  }
   if (phase !== "battle" || busy || pShots[i]) return;
   busy = true;
   sfx.fire();
@@ -408,6 +495,8 @@ function finish(won) {
   busy = false;
   renderBattle();
   won ? sfx.win() : sfx.lose();
+  net.setOver(true);
+  $("again").textContent = online() ? "Rematch" : "Play again";
   const shots = pShots.filter(Boolean).length;
   $("endEmoji").textContent = won ? "🏆" : "🌊";
   $("endTitle").textContent = won ? "Victory!" : "Your fleet was sunk";
@@ -424,8 +513,13 @@ function newGame() {
   hoverAt = -1;
   busy = false;
   $("end").classList.remove("show");
-  $("placing").hidden = false;
+  myReady = false; theirReady = false; turnMine = false; awaiting = false; pendingShots = [];
+  net.setOver(false);
+  $("again").textContent = "Play again";
+  $("placing").hidden = online() && !net.active;
   $("battle").hidden = true;
+  $("start").textContent = online() ? "Ready!" : "Start battle";
+  $("random").disabled = $("clearShips").disabled = $("rotate").disabled = false;
   buildGrid(placeGridEl, onPlaceCell, (i) => {
     hoverAt = i;
     renderPlacing();
@@ -444,6 +538,10 @@ function randomPlace() {
 
 // ---------- controls ----------
 function syncChips() {
+  document.querySelectorAll("#mode .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.mode)));
+  $("levelRow").hidden = online();
+  $("newGame").hidden = online();
+  if (online()) net.open(); else net.close();
   document.querySelectorAll("#level .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.level)));
 }
 document.querySelectorAll("#level .g-chip").forEach((b) =>
@@ -451,6 +549,15 @@ document.querySelectorAll("#level .g-chip").forEach((b) =>
     settings.level = b.dataset.value;
     store.set(SETTINGS_KEY, settings);
     syncChips();
+  })
+);
+document.querySelectorAll("#mode .g-chip").forEach((b) =>
+  b.addEventListener("click", () => {
+    if (settings.mode === b.dataset.value) return;
+    settings.mode = b.dataset.value;
+    store.set(SETTINGS_KEY, settings);
+    syncChips();
+    newGame();
   })
 );
 $("rotate").addEventListener("click", rotate);
@@ -462,7 +569,7 @@ $("clearShips").addEventListener("click", () => {
 });
 $("start").addEventListener("click", startBattle);
 $("newGame").addEventListener("click", newGame);
-$("again").addEventListener("click", newGame);
+$("again").addEventListener("click", () => { if (online()) { net.rematch(); $("end").classList.remove("show"); } else newGame(); });
 $("endView").addEventListener("click", () => $("end").classList.remove("show"));
 document.addEventListener("keydown", (e) => {
   if ((e.key === "r" || e.key === "R") && phase === "placing") rotate();
@@ -481,7 +588,14 @@ mute.addEventListener("click", () => {
 syncChips();
 syncMute();
 newGame();
+const invited = net.roomParam();
+if (invited) {
+  settings.mode = "online";
+  syncChips();
+  newGame();
+  net.join(invited);
+}
 window.__bs = {
   randomFleet, aiShoot, hitAt, allSunk, SHIPS, N, randomPlace, startBattle, fire, newGame,
-  get phase() { return phase; }, get enemy() { return enemy; }, get mine() { return mine; }, get busy() { return busy; }, get pShots() { return pShots; },
+  get phase() { return phase; }, get enemy() { return enemy; }, get mine() { return mine; }, get busy() { return busy; }, get pShots() { return pShots; }, get turnMine() { return turnMine; }, get awaiting() { return awaiting; }, get aShots() { return aShots; }, get myReady() { return myReady; },
 };

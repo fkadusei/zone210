@@ -24,7 +24,12 @@
       </div>
 
       <section class="g-panel setup" aria-label="Options">
-        <div class="opt"><span class="lbl">Level</span>
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="cpu" aria-pressed="true">vs Computer</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">🌐 Online</button>
+          </div></div>
+        <div class="opt" id="levelRow"><span class="lbl">Level</span>
           <div class="g-chips" id="level" role="group" aria-label="Difficulty">
             <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
             <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
@@ -74,7 +79,7 @@
       </div>
     </div>
 
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
     <script src="../../assets/sound.js"></script>
     <script src="../../assets/back-link.js"></script>
   </body>

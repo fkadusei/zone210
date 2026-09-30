@@ -74,8 +74,9 @@ export const GAMES = [
   },
   {
     id: "battleship",
+    online: true,
     title: "Battleship",
-    tagline: "Hide your fleet and hunt the enemy's. Place ships your way, then fire away against the computer.",
+    tagline: "Hide your fleet and hunt the enemy's. Place ships your way, then fire away against the computer or a friend online.",
     audience: "all",
     tags: ["Strategy", "Classic", "Naval"],
     players: "1 player",
