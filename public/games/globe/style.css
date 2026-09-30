@@ -139,3 +139,5 @@
 .legend .dot.done { background: #2ed278; }
 .legend .dot.seen { background: rgba(255, 205, 80, 0.85); }
 .legend .dot.none { background: #1a2340; border: 1px solid var(--line-strong); }
+
+.share { margin-top: 8px; font-size: 1.5rem; letter-spacing: 0.06em; }

@@ -12,7 +12,7 @@ saved games stay on the player's own device.
 | **Chess** | Everyone | 3D board (2D option), full rules, computer at three levels, online play by room code, clocks, hints, undo, saved games |
 | **Oware** | Everyone | Ghana's traditional mancala (Abapa rules), vs computer or 2 players |
 | **Quizzz Time** | Everyone | 900+ questions in 16 topics plus endless fresh maths (hand-written plus generated capitals, flags and maths); never repeats until you've seen them all; Kids / Family / Adults levels, timer optional |
-| **World Globe** | Everyone | 3D globe with all 195 countries (UN members plus two observer states); Explore mode with 3,400+ facts, Find it, Name it and 60-second Speed run at three levels, a Passport that tracks the countries you have learned, region filters |
+| **World Globe** | Everyone | 3D globe with all 195 countries (UN members plus two observer states); Explore mode with 3,400+ facts, Find it, Name it and 60-second Speed run at three levels, a Daily Challenge (same 10 countries for everyone each day, streaks, shareable result), a Passport that tracks the countries you have learned, region filters |
 | **Connect Four** | Everyone | minimax computer with three levels, or 2 players |
 | **Math Cross** | Everyone | crossword-style sums, four levels up to an 11x11 grid, hints, undo, keyboard entry, timer and best times |
 | **24 Game** | Everyone | make 24 from four numbers, three levels (some need fractions), hints, answers, 90-second sprint, best times |

@@ -46,7 +46,7 @@ const norm = (s) => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,
 const SETTINGS_KEY = "zone210_globe_settings";
 const BEST_KEY = "zone210_globe_best";
 const settings = { mode: "explore", level: "all", region: "All", muted: false, ...store.get(SETTINGS_KEY, {}) };
-if (!["explore", "find", "name", "speed", "passport"].includes(settings.mode)) settings.mode = "explore";
+if (!["explore", "find", "name", "speed", "passport", "daily"].includes(settings.mode)) settings.mode = "explore";
 if (!["kids", "all", "expert"].includes(settings.level)) settings.level = "all";
 const saveSettings = () => store.set(SETTINGS_KEY, settings);
 
@@ -764,7 +764,9 @@ function setMode(mode, { practice = false } = {}) {
   settings.mode = mode;
   saveSettings();
   document.querySelectorAll("#mode .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === mode)));
-  $("levelRow").hidden = mode === "explore" || mode === "passport";
+  $("levelRow").hidden = mode === "explore" || mode === "passport" || mode === "daily";
+  $("regionRow").hidden = mode === "daily";
+  $("shareBtn").hidden = true;
   resetQuizUi();
   setMarks([]);
   $("end").classList.remove("show");
@@ -778,11 +780,13 @@ function setMode(mode, { practice = false } = {}) {
     $("typeInput").value = "";
   } else if (mode === "passport") showPassport();
   else if (mode === "speed") showSpeedIntro();
+  else if (mode === "daily") showDailyIntro();
   else startQuiz();
 }
 const restartMode = () => {
   if (settings.mode === "passport") showPassport();
   else if (settings.mode === "speed") showSpeedIntro();
+  else if (settings.mode === "daily") showDailyIntro();
   else if (settings.mode !== "explore") startQuiz();
 };
 
@@ -963,6 +967,7 @@ function startQuiz() {
 }
 
 const target = () => game.targets[game.i];
+const qkind = () => (game && game.daily ? game.types[game.i] : settings.mode);
 function nextQuestion() {
   const c = target();
   game.attempts = 0;
@@ -974,17 +979,20 @@ function nextQuestion() {
   applyDimForQuiz();
   answersEl.hidden = true;
   typebox.hidden = true;
-  if (settings.mode === "find") {
-    $("qLabel").textContent = "Find this country";
+  if (qkind() === "find") {
+    $("qLabel").textContent = game.daily ? `Daily · find (${game.i + 1}/${game.targets.length})` : "Find this country";
     $("qText").textContent = c.name;
-    $("qFlag").textContent = settings.level === "expert" ? "" : flagOf(c);
+    $("qFlag").textContent = !game.daily && settings.level === "expert" ? "" : flagOf(c);
+    $("hintline").textContent = "Find the country named above and tap it.";
   } else {
     $("qLabel").textContent = "Name this country";
     $("qText").textContent = "What is it called?";
     $("qFlag").textContent = "";
     setMarks([{ id: c.id, ...MARK.select }]);
     view.focus(c.latlng[0], c.latlng[1], Math.max(c.bbox[2] - c.bbox[0], (c.bbox[3] - c.bbox[1]) * 1.4));
-    if (settings.level === "expert") {
+    if (game.daily) $("qLabel").textContent = `Daily · name it (${game.i + 1}/${game.targets.length})`;
+    $("hintline").textContent = "The country is glowing. Pick its name.";
+    if (!game.daily && settings.level === "expert") {
       typebox.hidden = false;
       $("typeInput").placeholder = "Type the country's name";
       $("typeInput").value = "";
@@ -993,7 +1001,7 @@ function nextQuestion() {
       const pool = levelPool(settings.level);
       const sameCont = shuffle(pool.filter((x) => x.continent === c.continent && x.id !== c.id));
       const rest = shuffle(pool.filter((x) => x.id !== c.id && !sameCont.includes(x)));
-      const options = shuffle([c, ...sameCont.slice(0, 3), ...rest].slice(0, 4));
+      const options = game.daily ? game.opts[game.i].map((id) => byId.get(id)) : shuffle([c, ...sameCont.slice(0, 3), ...rest].slice(0, 4));
       answersEl.innerHTML = "";
       options.forEach((o) => {
         const b = document.createElement("button");
@@ -1011,12 +1019,14 @@ function applyDimForQuiz() {
 }
 
 function award(hintsUsed, attempts) {
+  if (game.daily) return [100, 75, 50][Math.min(2, attempts)];
   const streakBonus = Math.min(50, game.streak * 10);
   return Math.max(20, 100 - attempts * 25 - hintsUsed * 15) + streakBonus;
 }
 async function finishQuestion(correct, note) {
   game.locked = true;
   const c = target();
+  if (game.daily) game.marks.push(correct ? (game.attempts === 0 ? "g" : "y") : "r");
   if (correct) {
     const pts = award(game.hints, game.attempts);
     game.score += pts;
@@ -1058,7 +1068,7 @@ function answerName(country, btn) {
 
 function onPickQuiz(hit) {
   if (game && game.speed && !game.over && settings.mode === "speed") return speedPick(hit);
-  if (!game || game.speed || game.locked || settings.mode !== "find") return;
+  if (!game || game.speed || game.locked || qkind() !== "find") return;
   if (!hit) return toast("That's the ocean. Try a country.", "", 1400);
   if (hit.other) return toast(`${hit.other.name} isn't one of the 195 countries in this game.`, "", 2200);
   const c = hit.country;
@@ -1122,6 +1132,7 @@ $("typeForm").addEventListener("submit", (e) => {
 });
 
 function endQuiz() {
+  if (game.daily) return endDaily();
   const key = `${settings.mode}-${settings.level}`;
   const bests = store.get(BEST_KEY, {});
   const record = game.score > (bests[key] || 0);
@@ -1143,6 +1154,164 @@ function endQuiz() {
   $("skip").hidden = true;
   answersEl.hidden = true;
   typebox.hidden = true;
+}
+
+// ---------- daily challenge ----------
+const DAILY_KEY = "zone210_globe_daily";
+const pad2 = (n) => String(n).padStart(2, "0");
+const dayKey = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const daysStore = () => store.get(DAILY_KEY, {});
+function prng(seedText) {
+  let h = 1779033703 ^ seedText.length;
+  for (let i = 0; i < seedText.length; i += 1) {
+    h = Math.imul(h ^ seedText.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  let s = (h ^ (h >>> 16)) >>> 0;
+  return () => {
+    s = (s + 0x6d2b79f5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const seededShuffle = (arr, rnd) => {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rnd() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+// the same ten countries, in the same order, with the same answer choices, for everyone on a given day
+function dailyPlan(key) {
+  const rnd = prng(`zone210-globe-${key}`);
+  const easy = COUNTRIES.filter((c) => FAMOUS.has(c.id));
+  const medium = COUNTRIES.filter((c) => !FAMOUS.has(c.id) && (c.pop > 8e6 || c.area > 300000));
+  const hard = COUNTRIES.filter((c) => !FAMOUS.has(c.id) && !(c.pop > 8e6 || c.area > 300000));
+  const picked = [...seededShuffle(easy, rnd).slice(0, 4), ...seededShuffle(medium, rnd).slice(0, 4), ...seededShuffle(hard, rnd).slice(0, 2)];
+  // never two countries from the same continent back to back if it can be avoided
+  const targets = [];
+  const left = picked.slice();
+  let lastCont = "";
+  while (left.length) {
+    const tierEnd = Math.min(left.length, 3);
+    let idx = left.slice(0, tierEnd).findIndex((c) => c.continent !== lastCont);
+    if (idx < 0) idx = 0;
+    const [c] = left.splice(idx, 1);
+    targets.push(c);
+    lastCont = c.continent;
+  }
+  const types = targets.map((_, i) => (i % 2 === 0 ? "find" : "name"));
+  const opts = targets.map((c) => {
+    const same = seededShuffle(COUNTRIES.filter((x) => x.continent === c.continent && x.id !== c.id), rnd).slice(0, 3);
+    const fill = seededShuffle(COUNTRIES.filter((x) => x.id !== c.id && !same.includes(x)), rnd);
+    return seededShuffle([c, ...same, ...fill].slice(0, 4), rnd).map((x) => x.id);
+  });
+  return { targets, types, opts };
+}
+function dailyStreaks() {
+  const days = daysStore();
+  const keys = Object.keys(days).sort();
+  let best = 0;
+  let run = 0;
+  let prev = null;
+  keys.forEach((k) => {
+    const d = new Date(`${k}T12:00:00`);
+    if (prev && Math.round((d - prev) / 86400000) === 1) run += 1;
+    else run = 1;
+    best = Math.max(best, run);
+    prev = d;
+  });
+  // the current streak counts back from today if it was played, otherwise from yesterday
+  let cur = 0;
+  const day = new Date();
+  if (!days[dayKey(day)]) day.setDate(day.getDate() - 1);
+  while (days[dayKey(day)]) {
+    cur += 1;
+    day.setDate(day.getDate() - 1);
+  }
+  return { cur, best, played: keys.length };
+}
+const dailyShare = (key, r) => `🌍 Zone 210 World Globe · Daily ${key}\n${r.c}/10 · ${r.s} points\n${r.m.map((x) => ({ g: "🟩", y: "🟨", r: "🟥" })[x]).join("")}\nhttps://zone210.com/games/globe/`;
+async function shareDaily(key, r) {
+  const text = dailyShare(key, r);
+  try {
+    if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+      await navigator.share({ text });
+      return;
+    }
+    await navigator.clipboard.writeText(text);
+    toast("Result copied. Paste it to challenge a friend!", "good", 2400);
+  } catch (err) {
+    window.prompt("Copy your result:", text);
+  }
+}
+
+function showDailyIntro() {
+  resetQuizUi();
+  setMarks([]);
+  setDim(null);
+  typebox.hidden = true;
+  const key = dayKey();
+  const r = daysStore()[key];
+  const st = dailyStreaks();
+  const pretty = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  $("hintline").textContent = "Ten countries, the same for everyone today. Find five, name five.";
+  card.innerHTML = `
+    <div class="head"><span class="flagbig" aria-hidden="true">📅</span><div><h2>Daily challenge</h2><p class="sub">${esc(pretty)}</p></div></div>
+    <div class="stats"><div class="stat"><span>🔥 Current streak</span><b>${st.cur} ${st.cur === 1 ? "day" : "days"}</b></div><div class="stat"><span>Best streak</span><b>${st.best} ${st.best === 1 ? "day" : "days"}</b></div></div>
+    ${
+      r
+        ? `<div class="fact"><small>Today's result</small>${r.c} of 10 right · ${r.s} points<div class="share">${r.m.map((x) => ({ g: "🟩", y: "🟨", r: "🟥" })[x]).join("")}</div></div>
+    <div class="cardbar"><button class="g-btn sm2" id="shareDaily">📋 Share my result</button><button class="g-btn ghost sm2" id="dailyPractice">Play it again for fun</button></div>
+    <p class="sub">A new challenge arrives at midnight. Replays don't change today's score.</p>`
+        : `<div class="fact"><small>How it works</small>Ten countries that start easy and get harder. First try scores 100, second 75, third 50. You take turns: tap one on the globe, then name the next from four choices. You get one scored attempt a day.</div>
+    <div class="cardbar"><button class="g-btn" id="startDaily">▶ Start today's challenge</button></div>
+    <p class="sub">${st.played ? `You have played ${st.played} ${st.played === 1 ? "day" : "days"} so far.` : "Come back every day to build a streak."}</p>`
+    }`;
+  $("startDaily")?.addEventListener("click", () => startDaily(false));
+  $("dailyPractice")?.addEventListener("click", () => startDaily(true));
+  $("shareDaily")?.addEventListener("click", () => shareDaily(key, r));
+}
+function startDaily(practice) {
+  const key = dayKey();
+  const plan = dailyPlan(key);
+  game = { daily: true, practice, key, targets: plan.targets, types: plan.types, opts: plan.opts, i: 0, score: 0, streak: 0, attempts: 0, hints: 0, missed: [], marks: [], correct: 0, locked: false };
+  $("quizbar").hidden = false;
+  $("hint").hidden = true;
+  $("skip").hidden = false;
+  $("end").classList.remove("show");
+  card.innerHTML = `<p class="empty">${practice ? "Practice run. " : ""}Facts about each country appear here after you answer.</p>`;
+  nextQuestion();
+}
+function endDaily() {
+  const g = game;
+  const days = daysStore();
+  const saved = !g.practice && !days[g.key];
+  if (saved) {
+    days[g.key] = { s: g.score, c: g.correct, m: g.marks };
+    store.set(DAILY_KEY, days);
+  }
+  const r = days[g.key] || { s: g.score, c: g.correct, m: g.marks };
+  const st = dailyStreaks();
+  sfx.done();
+  $("endEmoji").textContent = g.correct === 10 ? "🏆" : g.correct >= 7 ? "🌍" : "🧭";
+  $("endTitle").textContent = g.practice ? "Practice complete" : g.correct === 10 ? "Perfect day!" : "Daily complete";
+  $("endText").textContent = g.practice ? `${g.correct} of 10 right · ${g.score} points (today's saved score is ${r.s})` : `${g.correct} of 10 right · ${g.score} points · 🔥 ${st.cur}-day streak`;
+  const missed = $("missed");
+  missed.hidden = false;
+  missed.innerHTML = `<b>Your day</b><span style="font-size:1.2rem;background:none;border:0">${g.marks.map((x) => ({ g: "🟩", y: "🟨", r: "🟥" })[x]).join("")}</span>${g.missed.length ? `<b>Worth another look</b>${g.missed.map((c) => `<span>${esc(flagOf(c))} ${esc(c.name)}</span>`).join("")}` : ""}`;
+  const share = $("shareBtn");
+  share.hidden = false;
+  share.onclick = () => shareDaily(g.key, r);
+  $("end").classList.add("show");
+  $("quizbar").hidden = true;
+  $("skip").hidden = true;
+  answersEl.hidden = true;
+  typebox.hidden = true;
+  game = { daily: true, over: true };
 }
 
 // ---------- start-up ----------
@@ -1199,11 +1368,17 @@ function boot() {
   $("hint").addEventListener("click", useHint);
   $("skip").addEventListener("click", () => {
     if (game && game.speed && !game.over) return speedSkip();
-    if (game && !game.locked) finishQuestion(false, `It was ${target().name}.`);
+    if (game && game.over) return;
+    if (game && !game.locked) {
+      if (game.daily) game.attempts = 3;
+      finishQuestion(false, `It was ${target().name}.`);
+    }
   });
   $("again").addEventListener("click", () => {
+    $("shareBtn").hidden = true;
     $("end").classList.remove("show");
     if (settings.mode === "speed") startSpeed();
+    else if (settings.mode === "daily") showDailyIntro();
     else startQuiz();
   });
   $("endExplore").addEventListener("click", () => {
@@ -1225,6 +1400,6 @@ function boot() {
   drawOverlay();
   setMode(settings.mode);
   if (settings.region !== "All") applyRegion(true);
-  window.__globe = { COUNTRIES, OTHERS, byId, factsFor, WRITTEN, derivedFacts, pickAt, selectCountry, setMode, get game() { return game; }, get view() { return view; }, get settings() { return settings; }, matchesName, levelPool, target: () => game && target(), finishQuestion, onPickQuiz, startQuiz, flagsSupported: FLAGS, pass: () => pass, stamp, passStats, startSpeed, speedPick, endSpeed, speedSkip, showPassport };
+  window.__globe = { COUNTRIES, OTHERS, byId, factsFor, WRITTEN, derivedFacts, pickAt, selectCountry, setMode, get game() { return game; }, get view() { return view; }, get settings() { return settings; }, matchesName, levelPool, target: () => game && target(), finishQuestion, onPickQuiz, startQuiz, flagsSupported: FLAGS, pass: () => pass, stamp, passStats, startSpeed, startDaily, dailyPlan, dayKey, dailyStreaks, endDaily, showDailyIntro, speedPick, endSpeed, speedSkip, showPassport };
 }
 boot();

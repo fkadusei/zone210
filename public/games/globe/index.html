@@ -37,6 +37,7 @@
             <button class="g-chip" data-value="find" aria-pressed="false">🎯 Find it</button>
             <button class="g-chip" data-value="name" aria-pressed="false">✍️ Name it</button>
             <button class="g-chip" data-value="speed" aria-pressed="false">⏱️ Speed run</button>
+            <button class="g-chip" data-value="daily" aria-pressed="false">📅 Daily</button>
             <button class="g-chip" data-value="passport" aria-pressed="false">🛂 Passport</button>
           </div></div>
         <div class="opt" id="levelRow" hidden><span class="lbl">Level</span>
@@ -45,7 +46,7 @@
             <button class="g-chip" data-value="all" aria-pressed="true">👨‍👩‍👧 Everyone</button>
             <button class="g-chip" data-value="expert" aria-pressed="false">🧑‍🎓 Expert</button>
           </div></div>
-        <div class="opt"><span class="lbl">Region</span>
+        <div class="opt" id="regionRow"><span class="lbl">Region</span>
           <div class="g-chips" id="region" role="group" aria-label="Region"></div></div>
       </section>
 
@@ -90,6 +91,7 @@
         <p id="endText"></p>
         <div class="missed" id="missed" hidden></div>
         <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="shareBtn" hidden>📋 Share</button>
           <button class="g-btn ghost" id="endExplore">Explore</button>
           <button class="g-btn" id="again">Play again</button>
         </div>
