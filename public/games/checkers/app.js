@@ -1,3 +1,5 @@
+import { createOnline } from "../../assets/online.js";
+
 // ---------- rules (English / American checkers) ----------
 // board: 64 cells, index = row * 8 + col. null | "r" | "R" | "w" | "W" (capital = king)
 // red starts at the bottom and moves up; white starts at the top and moves down
@@ -153,7 +155,7 @@ const store = {
 };
 const SETTINGS_KEY = "zone210_checkers_settings";
 const settings = { mode: "cpu", level: "normal", muted: false, ...store.get(SETTINGS_KEY, {}) };
-if (!["cpu", "two"].includes(settings.mode)) settings.mode = "cpu";
+if (!["cpu", "two", "online"].includes(settings.mode)) settings.mode = "cpu";
 if (!["easy", "normal", "hard"].includes(settings.level)) settings.level = "normal";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -211,7 +213,25 @@ const setStatus = (t, kind = "") => {
   statusEl.className = "g-status" + (kind ? ` ${kind}` : "");
 };
 
-const humanTurn = () => settings.mode === "two" || turn === "r";
+const online = () => settings.mode === "online";
+let myColor = "r"; // online: red (role 0) moves first from the bottom
+const inbox = [];
+const net = createOnline({
+  container: document.querySelector(".g-page"),
+  before: document.querySelector(".bars"),
+  prefix: "zone210-checkers-",
+  names: ["Red", "White"],
+  onStart: ({ role }) => { myColor = role === 0 ? "r" : "w"; inbox.length = 0; newGame(); },
+  onData: (m) => { if (online() && m && Number.isInteger(m.from)) { inbox.push(m); drain(); } },
+  onLeft: () => { inbox.length = 0; busy = false; render(); setStatus("Your friend left the game."); },
+});
+function drain() {
+  if (!online() || busy || over || !net.active || turn === myColor || !inbox.length) return;
+  const m = inbox.shift();
+  const mv = legalMoves(board, turn).find((x) => x.from === m.from && x.to === m.to && JSON.stringify(x.caps) === JSON.stringify(m.caps || []));
+  if (mv) play(mv);
+}
+const humanTurn = () => (online() ? net.active && turn === myColor : settings.mode === "two" || turn === "r");
 const sqName = (i) => "abcdefgh"[i % 8] + (8 - Math.floor(i / 8));
 
 function buildSquares() {
@@ -290,8 +310,9 @@ function render() {
     el.innerHTML = `<span class="who"><span class="dot"></span>${name}<small>${count(who)} left</small></span><span class="taken" style="--c:${takenColor}">${"<i></i>".repeat(taken)}</span>`;
   };
   const cpu = settings.mode === "cpu";
-  bar($("topBar"), "w", lostR, "#e5484d", cpu ? "Computer" : "White");
-  bar($("bottomBar"), "r", lostW, "#f4efe4", cpu ? "You" : "Red");
+  const nm = (who, plain) => (cpu ? (who === "r" ? "You" : "Computer") : online() ? (who === myColor ? "You" : "Friend") : plain);
+  bar($("topBar"), "w", lostR, "#e5484d", nm("w", "White"));
+  bar($("bottomBar"), "r", lostW, "#f4efe4", nm("r", "Red"));
 }
 
 function newGame() {
@@ -309,12 +330,19 @@ function newGame() {
   busy = false;
   halfMoves = 0;
   $("end").classList.remove("show");
+  net.setOver(false);
+  $("again").textContent = online() ? "Rematch" : "Play again";
   render();
   announce();
 }
 
 function announce() {
   if (over) return;
+  if (online()) {
+    const must = legalMoves(board, turn).some((m) => m.caps.length);
+    setStatus(!net.active ? "Create or join a room to start." : turn === myColor ? `Your move${must ? ". You must capture!" : "."}` : "Your friend's move…", turn === myColor && must ? "bad" : "");
+    return;
+  }
   const mustJump = legalMoves(board, turn).some((m) => m.caps.length);
   const who = settings.mode === "cpu" ? (turn === "r" ? "Your" : "Computer's") : turn === "r" ? "Red's" : "White's";
   if (!humanTurn()) setStatus("The computer is thinking…");
@@ -327,7 +355,13 @@ function onSquare(i) {
   const byFrom = movesByFrom();
   if (selected >= 0 && byFrom.has(selected)) {
     const mv = byFrom.get(selected).find((m) => m.to === i);
-    if (mv) return play(mv);
+    if (mv) {
+      if (online()) {
+        if (!net.active) return undefined;
+        net.send({ from: mv.from, to: mv.to, caps: mv.caps });
+      }
+      return play(mv);
+    }
   }
   if (byFrom.has(i)) {
     selected = i;
@@ -381,7 +415,8 @@ async function play(mv) {
   render();
   if (checkEnd()) return;
   announce();
-  if (!humanTurn()) cpuMove();
+  if (settings.mode === "cpu" && !humanTurn()) cpuMove();
+  drain();
 }
 
 function checkEnd() {
@@ -392,7 +427,7 @@ function checkEnd() {
   if (!moves.length) {
     const winner = turn === "r" ? "w" : "r";
     const cpu = settings.mode === "cpu";
-    title = cpu ? (winner === "r" ? "You win!" : "The computer wins") : `${winner === "r" ? "Red" : "White"} wins!`;
+    title = cpu ? (winner === "r" ? "You win!" : "The computer wins") : online() ? (winner === myColor ? "You win!" : "Your friend wins.") : `${winner === "r" ? "Red" : "White"} wins!`;
     text = `${turn === "r" ? "Red" : "White"} has no moves left.`;
     if (cpu && winner === "w") emoji = "🤖";
     cpu && winner === "w" ? sfx.lose() : sfx.win();
@@ -404,6 +439,7 @@ function checkEnd() {
   over = true;
   render();
   setStatus(title, "good");
+  net.setOver(true);
   $("endEmoji").textContent = emoji;
   $("endTitle").textContent = title;
   $("endText").textContent = text;
@@ -442,7 +478,7 @@ function undo() {
 }
 
 function showHint() {
-  if (over || busy || !humanTurn()) return;
+  if (over || busy || !humanTurn() || online()) return;
   const mv = chooseMove(board, turn, "normal");
   if (!mv) return;
   hintMove = mv;
@@ -456,6 +492,8 @@ function syncChips() {
   document.querySelectorAll("#mode .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.mode)));
   document.querySelectorAll("#level .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.level)));
   $("levelRow").hidden = settings.mode !== "cpu";
+  $("undo").hidden = $("hint").hidden = $("newGame").hidden = online();
+  if (online()) net.open(); else net.close();
 }
 document.querySelectorAll("#mode .g-chip, #level .g-chip").forEach((b) =>
   b.addEventListener("click", () => {
@@ -468,7 +506,7 @@ document.querySelectorAll("#mode .g-chip, #level .g-chip").forEach((b) =>
   })
 );
 $("newGame").addEventListener("click", newGame);
-$("again").addEventListener("click", newGame);
+$("again").addEventListener("click", () => { if (online()) { net.rematch(); $("end").classList.remove("show"); } else newGame(); });
 $("endView").addEventListener("click", () => $("end").classList.remove("show"));
 $("undo").addEventListener("click", undo);
 $("hint").addEventListener("click", showHint);
@@ -487,9 +525,16 @@ buildSquares();
 syncChips();
 syncMute();
 newGame();
+const invited = net.roomParam();
+if (invited) {
+  settings.mode = "online";
+  syncChips();
+  newGame();
+  net.join(invited);
+}
 window.__ck = {
   legalMoves, applyMove, chooseMove, initialBoard,
-  get board() { return board; }, get turn() { return turn; }, get over() { return over; }, get busy() { return busy; },
+  get board() { return board; }, get turn() { return turn; }, get over() { return over; }, get busy() { return busy; }, get myColor() { return myColor; },
   setBoard: (b, t = "r") => { board = b; ids = b.map((p) => (p ? nextId++ : null)); els.forEach((e) => e.remove()); els.clear(); piecesEl.innerHTML = ""; turn = t; over = false; busy = false; history = []; render(); announce(); },
   onSquare, play,
 };

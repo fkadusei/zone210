@@ -41,6 +41,7 @@ export const GAMES = [
   },
   {
     id: "checkers",
+    online: true,
     title: "Checkers",
     tagline: "Jump, capture and crown kings. Compulsory captures, three computer levels, hints and undo.",
     audience: "all",
