@@ -87,6 +87,16 @@ export const GAMES = [
     colors: ["#c98b4a", "#f0c987"],
   },
   {
+    id: "lab210",
+    title: "Lab 210",
+    tagline: "Physics, chemistry and biology in one lab: explore the periodic table, launch projectiles, swing a pendulum, tour plant and animal cells, pair DNA and take the Lab quiz.",
+    audience: "all",
+    tags: ["Science", "Learning", "Offline"],
+    players: "1 player",
+    emoji: "🧪",
+    colors: ["#0f9d8a", "#7c5cff"],
+  },
+  {
     id: "globe",
     title: "World Globe",
     tagline: "Spin a 3D globe of all 195 countries: learn facts, play Find it, Name it, a Speed run and a new Daily Challenge, and fill in your Passport.",

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Lab 210 · Zone 210</title>
+    <meta name="theme-color" content="#eef0f5" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page wide">
+      <div class="g-head">
+        <div>
+          <h1>Lab 210</h1>
+          <p>Physics, chemistry and biology: explore, experiment and test what you know.</p>
+        </div>
+        <div class="g-bar"><button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button></div>
+      </div>
+
+      <nav class="labs" id="labs" aria-label="Choose a lab">
+        <button class="lab-btn" data-lab="chem" aria-pressed="true"><span class="ic">🧪</span><b>Chemistry</b><small>Periodic table, elements</small></button>
+        <button class="lab-btn" data-lab="phys" aria-pressed="false"><span class="ic">⚛️</span><b>Physics</b><small>Launch, swing, experiment</small></button>
+        <button class="lab-btn" data-lab="bio" aria-pressed="false"><span class="ic">🧬</span><b>Biology</b><small>Cells and DNA</small></button>
+        <button class="lab-btn" data-lab="quiz" aria-pressed="false"><span class="ic">❓</span><b>Lab quiz</b><small>Test all three sciences</small></button>
+      </nav>
+      <div class="g-chips tabs" id="tabs" role="group" aria-label="Activity"></div>
+
+      <section class="lab-body" id="body" aria-live="polite"></section>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <p class="note">Periodic table data: <a href="https://github.com/Bowserinator/Periodic-Table-JSON" target="_blank" rel="noopener">Periodic-Table-JSON</a> by Bowserinator, shared under <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a> (element summaries come from Wikipedia). Simulations are simplified to help you explore.</p>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card-end card">
+        <div class="bigemoji" id="endEmoji" aria-hidden="true">🔬</div>
+        <h2 id="endTitle">Round complete</h2>
+        <p id="endText"></p>
+        <div class="missed" id="missed" hidden></div>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endClose">Close</button>
+          <button class="g-btn" id="endAgain">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../assets/sound.js"></script>
+    <script type="module" src="app.js"></script>
+    <script src="../../assets/back-link.js"></script>
+  </body>
+</html>
