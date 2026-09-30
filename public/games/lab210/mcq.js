@@ -139,3 +139,35 @@ export function runMCQ(root, options) {
   });
   return handle;
 }
+
+/**
+ * Runs a round in its own panel and shows the shared end overlay.
+ * opts: { questions | make(), title, bestKey, speedSeconds }. `back()` is called when the player closes the overlay.
+ * Returns { cancel() }.
+ */
+export function playMCQ(root, ctx, opts, back) {
+  const handle = { run: null, holder: null, cancel() { this.run && this.run.cancel(); } };
+  const go = () => {
+    const holder = document.createElement("div");
+    holder.className = "g-panel";
+    root.appendChild(holder);
+    handle.holder = holder;
+    const questions = opts.make ? opts.make() : opts.questions;
+    handle.run = runMCQ(holder, { ctx, ...opts, questions });
+    handle.run.done.then((r) => {
+      if (!r) return;
+      const pct = r.total ? Math.round((r.correct / r.total) * 100) : 0;
+      const short = (q) => `${(q.q || q.big || "").length > 60 ? (q.q || q.big).slice(0, 57) + "…" : q.q || q.big} → ${q.opts[q.a]}`;
+      ctx.showEnd({
+        emoji: pct >= 90 ? "🏆" : pct >= 60 ? "🎉" : "💪",
+        title: r.record ? "New best!" : `${r.correct} of ${r.total} right`,
+        text: `${r.score} points · ${pct}% correct${r.record || !r.best ? "" : ` · best ${r.best}`}`,
+        missed: r.missed.map(short),
+        again: () => { holder.remove(); go(); },
+        close: () => { holder.remove(); back && back(); },
+      });
+    });
+  };
+  go();
+  return handle;
+}

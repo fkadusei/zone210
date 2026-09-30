@@ -89,7 +89,7 @@ export const GAMES = [
   {
     id: "lab210",
     title: "Lab 210",
-    tagline: "Physics, chemistry and biology in one lab: explore the periodic table, launch projectiles, swing a pendulum, tour plant and animal cells, pair DNA and take the Lab quiz.",
+    tagline: "Physics, chemistry and biology in one lab: periodic table, equation balancer, projectiles, circuits, cells, the human body, genetics, food chains, a quiz and a daily experiment.",
     audience: "all",
     tags: ["Science", "Learning", "Offline"],
     players: "1 player",

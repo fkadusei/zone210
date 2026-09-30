@@ -86,9 +86,9 @@ const ctx = { $, store, sfx, toast, showEnd, elements: null, saverOn: () => !!(w
 
 // ---------- labs and their activities ----------
 const LABS = {
-  chem: { tabs: [["table", "🔎 Periodic table", "chem", "mountTable"], ["challenge", "🎯 Element challenges", "chem", "mountChallenge"]] },
-  phys: { tabs: [["launch", "🚀 Launch lab", "physics", "mountLaunch"], ["pendulum", "🕰️ Pendulum lab", "physics", "mountPendulum"]] },
-  bio: { tabs: [["cell", "🔬 Cell explorer", "bio", "mountCell"], ["dna", "🧬 DNA pairing", "bio", "mountDNA"]] },
+  chem: { tabs: [["table", "🔎 Periodic table", "chem", "mountTable"], ["challenge", "🎯 Element challenges", "chem", "mountChallenge"], ["balance", "⚖️ Balance equations", "chem2", "mountBalance"]] },
+  phys: { tabs: [["launch", "🚀 Launch lab", "physics", "mountLaunch"], ["pendulum", "🕰️ Pendulum lab", "physics", "mountPendulum"], ["circuit", "💡 Circuit lab", "circuits", "mountCircuit"], ["ohm", "🔌 Circuit challenge", "circuits", "mountOhm"]] },
+  bio: { tabs: [["cell", "🔬 Cell explorer", "bio", "mountCell"], ["dna", "🧬 DNA pairing", "bio", "mountDNA"], ["body", "🫀 Human body", "bio2", "mountBody"], ["punnett", "🌱 Genetics", "bio2", "mountPunnett"], ["food", "🦊 Food chains", "bio2", "mountFood"], ["animals", "🦁 Animal groups", "bio2", "mountClassify"]] },
   quiz: { tabs: [["quiz", "❓ Lab quiz", "quiz", "mountQuiz"]] },
   daily: { tabs: [["daily", "📅 Daily experiment", "daily", "mountDaily"]] },
 };

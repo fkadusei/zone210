@@ -165,3 +165,38 @@
 .dstats div { padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); text-align: center; }
 .dstats small { display: block; color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: .06em; }
 .dstats b { font-size: 1.3rem; }
+
+/* ---- more activities ---- */
+.chips-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.chain { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 12px 0; min-height: 84px; }
+.fcard { display: grid; justify-items: center; gap: 2px; min-width: 84px; padding: 10px 8px; border: 2px solid var(--line-strong); border-radius: 14px; background: var(--surface-2); font: 700 0.85rem var(--font); color: var(--ink); cursor: pointer; }
+.fcard span { font-size: 2rem; line-height: 1.1; }
+.fcard.placed { border-color: var(--green); background: color-mix(in srgb, var(--green) 18%, var(--surface-2)); cursor: default; }
+.fcard.shake { animation: shake .3s; border-color: var(--red); }
+@keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.slots { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin: 8px 0; }
+.slot { width: 84px; height: 84px; border: 2px dashed var(--line-strong); border-radius: 14px; display: grid; place-items: center; color: var(--muted); font-weight: 700; font-size: 0.75rem; text-align: center; }
+.slot.filled { border-style: solid; border-color: var(--green); color: var(--ink); }
+.arrow { color: var(--muted); font-weight: 800; }
+.punn { display: grid; grid-template-columns: auto 1fr 1fr; gap: 6px; max-width: 360px; margin: 12px auto; }
+.punn div { display: grid; place-items: center; min-height: 64px; border-radius: 12px; font: 800 1.2rem var(--font); }
+.punn .h { color: var(--muted); background: transparent; min-height: 40px; }
+.punn .c { border: 2px solid var(--line-strong); background: var(--surface-2); }
+.dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.eq { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; font: 700 1.4rem var(--font); margin: 14px 0; }
+.mol { display: grid; justify-items: center; gap: 4px; }
+.mol .step { display: flex; align-items: center; gap: 4px; }
+.mol button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink); font: 800 1rem var(--font); cursor: pointer; }
+.mol .co { min-width: 26px; text-align: center; color: var(--gold); }
+.mol .f { font-size: 1.5rem; }
+.mol .f sub { font-size: .65em; }
+.counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 8px; margin: 10px 0; }
+.counts div { padding: 8px; border-radius: 10px; border: 2px solid var(--line); text-align: center; font-weight: 700; font-size: .85rem; }
+.counts div.ok { border-color: var(--green); }
+.counts div.no { border-color: var(--red); }
+.circuit { width: 100%; height: auto; display: block; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); }
+.circuit .wire { fill: none; stroke: var(--muted); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.circuit .flow { fill: none; stroke: var(--gold); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 1 13; animation: flow var(--dur, 1s) linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -14; } }
+html[data-saver] .circuit .flow { animation: none; }
+.circuit text { font: 700 12px system-ui; fill: var(--muted); }
