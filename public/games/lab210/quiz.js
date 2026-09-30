@@ -159,3 +159,28 @@ export function mountQuiz(root, ctx) {
   render();
   return () => run && run.cancel();
 }
+
+// Ten questions that are the same for everyone on a given day (seeded by the date key).
+export function dailyQuestions(ctx, key) {
+  let h = 2166136261;
+  for (const ch of key) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  let a = h >>> 0;
+  const rand = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const real = Math.random;
+  Math.random = rand;
+  try {
+    const out = [];
+    for (const sci of ["Chemistry", "Physics", "Biology"]) {
+      for (const lv of [1, 2, 3]) {
+        const list = BANK.filter((b) => b[0] === sci && b[1] === lv);
+        const b = list[Math.floor(rand() * list.length)];
+        out.push({ tag: b[0], q: b[2], opts: [b[3], b[4], b[5], b[6]], a: 0, why: b[7], id: b[2] });
+      }
+    }
+    const gen = generated(ctx, 2).filter((g) => g.tag === "Chemistry");
+    out.push(gen[Math.floor(rand() * gen.length)]);
+    return shuffle(out);
+  } finally {
+    Math.random = real;
+  }
+}

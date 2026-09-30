@@ -50,13 +50,13 @@
   --c-nonmetal: #8b5cf6; --c-noble: #d946a8; --c-lanth: #5865e8; --c-actin: #9a4fe0; --c-unknown: #64748b;
 }
 .pt-wrap { overflow-x: auto; padding-bottom: 6px; }
-.pt-grid { display: grid; grid-template-columns: repeat(18, minmax(0, 1fr)); gap: 3px; min-width: 690px; }
+.pt-grid { display: grid; grid-template-columns: repeat(18, minmax(0, 1fr)); gap: 3px; min-width: 610px; }
 .el {
   position: relative;
   aspect-ratio: 1 / 1.05;
-  padding: 2px 3px;
+  padding: 2px 3px 3px;
   display: grid;
-  align-content: center;
+  align-content: space-between;
   justify-items: center;
   text-align: center;
   color: #fff;
@@ -67,9 +67,9 @@
   cursor: pointer;
   transition: transform 0.1s ease, opacity 0.2s ease, filter 0.2s ease;
 }
-.el .n { position: absolute; left: 4px; top: 2px; font-size: 0.55rem; opacity: 0.9; font-weight: 700; }
+.el .n { justify-self: start; font-size: 0.56rem; line-height: 1.2; padding: 0 3px; border-radius: 4px; background: rgba(0, 0, 0, 0.42); color: #fff; font-weight: 800; }
 .el .s { font-size: 1.05rem; font-weight: 800; line-height: 1; }
-.el .nm { font-size: 0.5rem; font-weight: 600; opacity: 0.95; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.el .nm { display: none; font-size: 0.5rem; font-weight: 600; opacity: 0.95; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .el:hover { transform: scale(1.14); z-index: 3; }
 .el.dim { opacity: 0.18; filter: grayscale(0.6); }
 .el.sel { outline: 3px solid var(--gold); outline-offset: 1px; z-index: 4; transform: scale(1.14); }
@@ -159,3 +159,8 @@
 .pad .base:active { transform: scale(.94); }
 .strand .base { width: clamp(24px, calc((100vw - 80px) / 10 - 6px), 46px); height: clamp(38px, 12vw, 58px); font-size: clamp(1rem, 4vw, 1.4rem); }
 .quizsetup { display: grid; gap: 14px; }
+
+.dstats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+.dstats div { padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); text-align: center; }
+.dstats small { display: block; color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: .06em; }
+.dstats b { font-size: 1.3rem; }
