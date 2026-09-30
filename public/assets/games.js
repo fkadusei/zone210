@@ -44,7 +44,7 @@ export const GAMES = [
     id: "checkers",
     online: true,
     title: "Checkers",
-    tagline: "Jump, capture and crown kings. Compulsory captures, three computer levels, hints and undo.",
+    tagline: "Jump, capture and crown kings. Compulsory captures, three computer levels, hints and undo, or play a friend online.",
     audience: "all",
     tags: ["Board", "Strategy", "Classic"],
     players: "1–2 players",
