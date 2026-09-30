@@ -106,3 +106,6 @@
   .tile { width: 46px; height: 52px; font-size: 1.3rem; }
   .garden { gap: 4px; }
 }
+
+.g-btn.talking { animation: talk 0.7s ease-in-out infinite; }
+@keyframes talk { 50% { transform: scale(1.06); } }

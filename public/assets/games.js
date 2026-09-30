@@ -89,7 +89,7 @@ export const GAMES = [
   {
     id: "globe",
     title: "World Globe",
-    tagline: "Spin a 3D globe and tap any of the 195 countries for facts, or test yourself: find it on the map, or name it.",
+    tagline: "Spin a 3D globe of all 195 countries: learn facts, play Find it, Name it and a 60-second Speed run, and fill in your Passport.",
     audience: "all",
     tags: ["Geography", "Learning", "3D"],
     players: "1 player",

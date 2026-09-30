@@ -96,31 +96,67 @@ const sfx = {
 };
 
 // ---------- speech ----------
+// Browsers are fussy about speech: a cancel() straight before speak() can drop the word, online voices can fail silently,
+// and Chrome sometimes gets stuck "paused". So: prefer voices stored on the device, wait a moment after cancelling,
+// resume if stuck, and retry once with the plain default voice if nothing starts.
+const synth = "speechSynthesis" in window ? window.speechSynthesis : null;
 let voice = null;
 function pickVoice() {
-  if (!("speechSynthesis" in window)) return;
-  const voices = speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang));
+  if (!synth) return;
+  const en = synth.getVoices().filter((v) => /^en/i.test(v.lang));
   const score = (v) =>
-    (/^en-(US|GB|AU)/i.test(v.lang) ? 2 : 0) + (/natural|premium|enhanced|samantha|daniel|karen|google/i.test(v.name) ? 3 : 0) + (v.localService ? 0 : 1);
-  voice = voices.sort((a, b) => score(b) - score(a))[0] || null;
+    (v.localService ? 6 : 0) + (/^en-(US|GB|AU)/i.test(v.lang) ? 2 : 0) + (/natural|premium|enhanced|samantha|daniel|karen|moira|serena/i.test(v.name) ? 2 : 0) - (/google|microsoft.*online|eloquence|novelty|whisper|bad|zarvox|bells|trinoids|cellos/i.test(v.name) ? 5 : 0);
+  voice = en.sort((a, b) => score(b) - score(a))[0] || null;
 }
-if ("speechSynthesis" in window) {
+if (synth) {
   pickVoice();
-  speechSynthesis.addEventListener?.("voiceschanged", pickVoice);
+  synth.addEventListener?.("voiceschanged", pickVoice);
 }
+let speakToken = 0;
 function say(text, rate = 0.9) {
-  if (!("speechSynthesis" in window)) {
+  if (!synth) {
     setMessage("This browser can't speak. Use the picture and the clue.");
     return;
   }
-  const u = new SpeechSynthesisUtterance(text);
-  if (voice) {
-    u.voice = voice;
-    u.lang = voice.lang;
-  } else u.lang = "en-US";
-  u.rate = rate;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+  const token = (speakToken += 1);
+  try {
+    synth.resume();
+    synth.cancel();
+  } catch (err) {
+    /* ignore */
+  }
+  el.hear.classList.add("talking");
+  const attempt = (useVoice, last) => {
+    if (token !== speakToken) return;
+    const u = new SpeechSynthesisUtterance(text);
+    if (useVoice && voice) {
+      u.voice = voice;
+      u.lang = voice.lang;
+    } else u.lang = "en-US";
+    u.rate = rate;
+    u.pitch = 1;
+    u.volume = 1;
+    let started = false;
+    const done = () => token === speakToken && el.hear.classList.remove("talking");
+    u.onstart = () => (started = true);
+    u.onend = done;
+    u.onerror = () => {
+      done();
+      if (!started && !last) attempt(false, true);
+    };
+    synth.speak(u);
+    // if the browser accepted the word but never began speaking, try once more with the default voice
+    setTimeout(() => {
+      if (token !== speakToken || started || synth.speaking) return;
+      synth.cancel();
+      if (!last) attempt(false, true);
+      else {
+        done();
+        setMessage("The voice didn't play. Check the volume and the silent switch, then tap Hear word again.", "bad");
+      }
+    }, 1800);
+  };
+  setTimeout(() => attempt(true, false), 90);
 }
 
 // ---------- helpers ----------

@@ -126,3 +126,16 @@
 
 .g-btn.sm2 { padding: 7px 14px; font-size: 0.85rem; }
 .sublabel { align-self: center; margin-left: 6px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+.track { position: relative; height: 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+.track.big { height: 16px; }
+.track i { position: absolute; left: 0; top: 0; bottom: 0; }
+.track .seen { background: rgba(255, 205, 80, 0.75); }
+.track .done { background: #2ed278; }
+.pbar .pl { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; margin-bottom: 3px; }
+.pbar { margin: 2px 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+.legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.legend .dot.done { background: #2ed278; }
+.legend .dot.seen { background: rgba(255, 205, 80, 0.85); }
+.legend .dot.none { background: #1a2340; border: 1px solid var(--line-strong); }

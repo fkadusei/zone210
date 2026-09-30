@@ -46,9 +46,30 @@ const norm = (s) => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,
 const SETTINGS_KEY = "zone210_globe_settings";
 const BEST_KEY = "zone210_globe_best";
 const settings = { mode: "explore", level: "all", region: "All", muted: false, ...store.get(SETTINGS_KEY, {}) };
-if (!["explore", "find", "name"].includes(settings.mode)) settings.mode = "explore";
+if (!["explore", "find", "name", "speed", "passport"].includes(settings.mode)) settings.mode = "explore";
 if (!["kids", "all", "expert"].includes(settings.level)) settings.level = "all";
 const saveSettings = () => store.set(SETTINGS_KEY, settings);
+
+// ---------- passport: what you have seen and what you have got right ----------
+const PASS_KEY = "zone210_globe_passport";
+let pass = store.get(PASS_KEY, {});
+const isMastered = (id) => !!(pass[id] && pass[id].r > 0);
+const isVisited = (id) => !!(pass[id] && (pass[id].s || pass[id].r));
+function stamp(id, kind) {
+  const p = pass[id] || (pass[id] = { s: 0, r: 0 });
+  const wasMastered = p.r > 0;
+  if (kind === "right") p.r += 1;
+  else p.s += 1;
+  store.set(PASS_KEY, pass);
+  if (!wasMastered && p.r > 0) toast(`🛂 Stamped: ${byId.get(id).name}`, "good", 1400);
+}
+const passStats = () => {
+  const total = COUNTRIES.length;
+  const mastered = COUNTRIES.filter((c) => isMastered(c.id)).length;
+  const visited = COUNTRIES.filter((c) => isVisited(c.id)).length;
+  return { total, mastered, visited };
+};
+const passRank = (m) => (m >= 195 ? ["🏆", "World Citizen"] : m >= 100 ? ["🎖️", "Ambassador"] : m >= 50 ? ["🧭", "Globetrotter"] : m >= 20 ? ["🎒", "Traveller"] : m >= 5 ? ["🗺️", "Explorer"] : ["🌱", "New Tourist"]);
 
 // ---------- sound ----------
 let audio = null;
@@ -329,7 +350,7 @@ overlay.height = OV_W / 2;
 const octx = overlay.getContext("2d");
 let overlayTex = null;
 let requestDraw = () => {};
-const layers = { dim: null, marks: [] }; // marks: [{ id, fill, stroke }]
+const layers = { dim: null, passport: false, marks: [] }; // marks: [{ id, fill, stroke }]
 function drawOverlay() {
   const W = OV_W;
   const H = W / 2;
@@ -340,6 +361,21 @@ function drawOverlay() {
       if (layers.dim.has(c.id)) return;
       tracePolys(octx, c.polys, W, H);
       octx.fill("evenodd");
+    });
+  }
+  if (layers.passport) {
+    COUNTRIES.forEach((c) => {
+      tracePolys(octx, c.polys, W, H);
+      octx.fillStyle = isMastered(c.id) ? "rgba(46, 210, 120, 0.62)" : isVisited(c.id) ? "rgba(255, 205, 80, 0.4)" : "rgba(4, 10, 30, 0.7)";
+      octx.fill("evenodd");
+      if (isTiny(c) && isMastered(c.id)) {
+        const [lat, lon] = c.latlng;
+        octx.beginPath();
+        octx.arc(((lon + 180) / 360) * W, ((90 - lat) / 180) * H, 11, 0, Math.PI * 2);
+        octx.strokeStyle = "#2ed278";
+        octx.lineWidth = 4;
+        octx.stroke();
+      }
     });
   }
   layers.marks.forEach((m) => {
@@ -666,6 +702,13 @@ function showCountry(c, { fresh = true, compact = false } = {}) {
 function selectCountry(c, focus = false) {
   setMarks([{ id: c.id, ...MARK.select }]);
   showCountry(c);
+  stamp(c.id, "seen");
+  if (settings.mode === "passport") {
+    card.insertAdjacentHTML("afterbegin", '<div class="cardbar"><button class="g-btn ghost sm2" id="backPass">← Back to my passport</button></div>');
+    $("backPass").addEventListener("click", showPassport);
+    layers.passport = true;
+    drawOverlay();
+  }
   sfx.pick();
   if (focus) view.focus(c.latlng[0], c.latlng[1], Math.max(c.bbox[2] - c.bbox[0], (c.bbox[3] - c.bbox[1]) * 1.4));
 }
@@ -704,7 +747,9 @@ function applyRegion(focusIt = true) {
 }
 
 function resetQuizUi() {
+  if (game && game.timer) clearInterval(game.timer);
   game = null;
+  layers.passport = false;
   $("quizbar").hidden = true;
   $("hint").hidden = true;
   $("skip").hidden = true;
@@ -713,30 +758,197 @@ function resetQuizUi() {
   answersEl.innerHTML = "";
 }
 
-function setMode(mode) {
+let practiceOnly = false;
+function setMode(mode, { practice = false } = {}) {
+  practiceOnly = practice;
   settings.mode = mode;
   saveSettings();
   document.querySelectorAll("#mode .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === mode)));
-  $("levelRow").hidden = mode === "explore";
+  $("levelRow").hidden = mode === "explore" || mode === "passport";
   resetQuizUi();
   setMarks([]);
+  $("end").classList.remove("show");
   if (mode === "explore") {
+    setDim(regionSet());
     $("hintline").textContent = "Drag to spin, scroll or pinch to zoom, tap a country.";
     card.innerHTML = `<p class="empty">Tap any country on the globe to see its facts, or press the button for a surprise.</p><div class="cardbar"><button class="g-btn sm2" id="randomStart">🎲 Random country</button></div>`;
     $("randomStart").addEventListener("click", () => selectCountry(shuffle(COUNTRIES.filter((x) => inRegion(x, settings.region)))[0], true));
     typebox.hidden = false;
     $("typeInput").placeholder = "Jump to a country…";
     $("typeInput").value = "";
-  } else {
-    startQuiz();
+  } else if (mode === "passport") showPassport();
+  else if (mode === "speed") showSpeedIntro();
+  else startQuiz();
+}
+const restartMode = () => {
+  if (settings.mode === "passport") showPassport();
+  else if (settings.mode === "speed") showSpeedIntro();
+  else if (settings.mode !== "explore") startQuiz();
+};
+
+// ---------- passport screen ----------
+function showPassport() {
+  resetQuizUi();
+  layers.passport = true;
+  layers.dim = null;
+  setMarks([]);
+  typebox.hidden = true;
+  const s = passStats();
+  const [icon, title] = passRank(s.mastered);
+  $("hintline").textContent = "Green countries are stamped (you got them right), yellow ones you have seen, dark ones are still waiting.";
+  const bars = CONTINENTS.map((ct) => {
+    const list = COUNTRIES.filter((c) => c.continent === ct);
+    const m = list.filter((c) => isMastered(c.id)).length;
+    const v = list.filter((c) => isVisited(c.id)).length;
+    return `<div class="pbar"><div class="pl"><span>${esc(ct)}</span><b>${m} / ${list.length}</b></div><div class="track"><i class="seen" style="width:${(v / list.length) * 100}%"></i><i class="done" style="width:${(m / list.length) * 100}%"></i></div></div>`;
+  }).join("");
+  const next = COUNTRIES.filter((c) => !isMastered(c.id) && inRegion(c, settings.region)).length;
+  card.innerHTML = `
+    <div class="head"><span class="flagbig" aria-hidden="true">${icon}</span><div><h2>${esc(title)}</h2><p class="sub">${s.mastered} of ${s.total} stamped · ${s.visited} seen</p></div></div>
+    <div class="track big"><i class="seen" style="width:${(s.visited / s.total) * 100}%"></i><i class="done" style="width:${(s.mastered / s.total) * 100}%"></i></div>
+    <div class="legend"><span><i class="dot done"></i>Stamped (answered right)</span><span><i class="dot seen"></i>Seen</span><span><i class="dot none"></i>Not yet</span></div>
+    ${bars}
+    <div class="cardbar">
+      <button class="g-btn sm2" id="pracBtn" ${next ? "" : "disabled"}>🎯 Practise the ones I haven't stamped (${next})</button>
+      <button class="g-btn ghost sm2" id="unseenBtn">🎲 Visit a new country</button>
+      <button class="g-btn ghost sm2" id="resetPass">Reset passport</button>
+    </div>
+    <p class="sub">Your passport is saved on this device only. Tap any country on the globe to visit it.</p>`;
+  $("pracBtn").addEventListener("click", () => setMode("find", { practice: true }));
+  $("unseenBtn").addEventListener("click", () => {
+    const pool = COUNTRIES.filter((c) => !isVisited(c.id) && inRegion(c, settings.region));
+    const c = shuffle(pool.length ? pool : COUNTRIES.filter((x) => inRegion(x, settings.region)))[0];
+    selectCountry(c, true);
+  });
+  $("resetPass").addEventListener("click", () => {
+    if (!window.confirm("Clear your whole passport? This can't be undone.")) return;
+    pass = {};
+    store.set(PASS_KEY, pass);
+    showPassport();
+  });
+  drawOverlay();
+}
+
+// ---------- speed run ----------
+const SPEED_SECONDS = 60;
+const SPEED_PENALTY = 3;
+function showSpeedIntro() {
+  resetQuizUi();
+  setMarks([]);
+  setDim(regionSet());
+  typebox.hidden = true;
+  const best = store.get(BEST_KEY, {})[`speed-${settings.level}`] || 0;
+  $("hintline").textContent = "Press Start, then tap the countries as fast as you can.";
+  card.innerHTML = `
+    <div class="head"><span class="flagbig" aria-hidden="true">⏱️</span><div><h2>Speed run</h2><p class="sub">${SPEED_SECONDS} seconds · one country at a time</p></div></div>
+    <div class="fact"><small>How it works</small>The game names a country and you tap it on the globe. A right answer moves straight to the next one. A wrong tap or a skip costs ${SPEED_PENALTY} seconds. Find as many as you can.</div>
+    <div class="cardbar"><button class="g-btn" id="startSpeed">▶ Start</button></div>
+    <p class="sub">${best ? `Your best on ${settings.level === "kids" ? "Kids" : settings.level === "all" ? "Everyone" : "Expert"}: ${best} countries` : "Pick a level and region above first."}</p>`;
+  $("startSpeed").addEventListener("click", startSpeed);
+}
+function startSpeed() {
+  const pool = levelPool(settings.level).filter((c) => inRegion(c, settings.region));
+  if (pool.length < 3) {
+    toast("That region is too small for this level. Try a bigger region or level.", "bad", 3200);
+    return;
   }
+  resetQuizUi();
+  setMarks([]);
+  setDim(regionSet());
+  game = { speed: true, targets: shuffle(pool), i: 0, found: 0, streak: 0, missed: [], endAt: performance.now() + SPEED_SECONDS * 1000, pool };
+  game.timer = setInterval(speedTick, 100);
+  $("quizbar").hidden = false;
+  $("skip").hidden = false;
+  $("hint").hidden = true;
+  card.innerHTML = `<p class="empty">Go go go! Facts appear again when the time is up.</p>`;
+  $("hintline").textContent = "Tap the named country. Wrong tap or skip = -3 seconds.";
+  speedShow();
+  speedTick();
+}
+function speedShow() {
+  if (game.i >= game.targets.length) {
+    game.targets = game.targets.concat(shuffle(game.pool));
+  }
+  const c = game.targets[game.i];
+  $("qLabel").textContent = "Speed run · find";
+  $("qText").textContent = c.name;
+  $("qFlag").textContent = settings.level === "expert" ? "" : flagOf(c);
+  $("qScore").textContent = game.found;
+}
+function speedTick() {
+  if (!game || !game.speed) return;
+  const left = (game.endAt - performance.now()) / 1000;
+  $("qRound").textContent = `${Math.max(0, Math.ceil(left))}s`;
+  if (left <= 0) endSpeed();
+}
+function speedPick(hit) {
+  if (!hit) return;
+  if (hit.other) return toast(`${hit.other.name} isn't one of the 195.`, "", 900);
+  const c = hit.country;
+  const t = game.targets[game.i];
+  if (c.id === t.id) {
+    game.found += 1;
+    game.streak += 1;
+    stamp(t.id, "right");
+    sfx.right();
+    setMarks([{ id: t.id, ...MARK.good }]);
+  } else {
+    game.streak = 0;
+    game.endAt -= SPEED_PENALTY * 1000;
+    stamp(c.id, "seen");
+    sfx.wrong();
+    setMarks([{ id: c.id, ...MARK.bad }]);
+    toast(`-${SPEED_PENALTY}s · that was ${c.name}`, "bad", 900);
+    setTimeout(() => game && game.speed && setMarks([]), 350);
+    speedTick();
+    return;
+  }
+  game.i += 1;
+  setTimeout(() => game && game.speed && setMarks([]), 260);
+  speedShow();
+}
+function speedSkip() {
+  const t = game.targets[game.i];
+  game.missed.push(t);
+  game.streak = 0;
+  game.endAt -= SPEED_PENALTY * 1000;
+  game.i += 1;
+  toast(`Skipped ${t.name} (-${SPEED_PENALTY}s)`, "", 900);
+  speedShow();
+  speedTick();
+}
+function endSpeed() {
+  const g = game;
+  if (!g || !g.speed) return;
+  clearInterval(g.timer);
+  g.timer = null;
+  const key = `speed-${settings.level}`;
+  const bests = store.get(BEST_KEY, {});
+  const record = g.found > (bests[key] || 0);
+  if (record && g.found > 0) {
+    bests[key] = g.found;
+    store.set(BEST_KEY, bests);
+  }
+  sfx.done();
+  $("endEmoji").textContent = g.found >= 25 ? "🏆" : g.found >= 12 ? "🚀" : "⏱️";
+  $("endTitle").textContent = "Time's up!";
+  $("endText").textContent = `${g.found} ${g.found === 1 ? "country" : "countries"} in ${SPEED_SECONDS} seconds${record && g.found > 0 ? " · New best!" : bests[key] ? ` · Best ${bests[key]}` : ""}`;
+  const skipped = g.missed;
+  const missed = $("missed");
+  missed.hidden = skipped.length === 0;
+  missed.innerHTML = skipped.length ? `<b>Skipped</b>${skipped.map((c) => `<span>${esc(flagOf(c))} ${esc(c.name)}</span>`).join("")}` : "";
+  $("end").classList.add("show");
+  $("quizbar").hidden = true;
+  $("skip").hidden = true;
+  game = { speed: true, over: true, timer: null };
+  card.innerHTML = `<p class="empty">Nice run! Pick Explore to read about any country you missed.</p>`;
 }
 
 function startQuiz() {
-  const pool = levelPool(settings.level).filter((c) => inRegion(c, settings.region));
+  const pool = levelPool(settings.level).filter((c) => inRegion(c, settings.region) && (!practiceOnly || !isMastered(c.id)));
   const need = Math.min(ROUND, pool.length);
   if (need < 3) {
-    toast("That region is too small for this level. Try a bigger region or level.", "bad", 3200);
+    toast(practiceOnly ? "You have stamped everything here. Try another level or region." : "That region is too small for this level. Try a bigger region or level.", "bad", 3200);
     card.innerHTML = `<p class="empty">Pick a bigger region or a harder level to play here.</p>`;
     return;
   }
@@ -810,11 +1022,13 @@ async function finishQuestion(correct, note) {
     game.score += pts;
     game.streak += 1;
     game.correct += 1;
+    stamp(c.id, "right");
     sfx.right();
     toast(`${c.name}! +${pts}${game.streak > 1 ? ` (streak ${game.streak})` : ""}`, "good");
   } else {
     game.streak = 0;
     game.missed.push(c);
+    stamp(c.id, "seen");
     sfx.wrong();
     toast(note || `It was ${c.name}.`, "bad", 2600);
   }
@@ -843,7 +1057,8 @@ function answerName(country, btn) {
 }
 
 function onPickQuiz(hit) {
-  if (!game || game.locked || settings.mode !== "find") return;
+  if (game && game.speed && !game.over && settings.mode === "speed") return speedPick(hit);
+  if (!game || game.speed || game.locked || settings.mode !== "find") return;
   if (!hit) return toast("That's the ocean. Try a country.", "", 1400);
   if (hit.other) return toast(`${hit.other.name} isn't one of the 195 countries in this game.`, "", 2200);
   const c = hit.country;
@@ -950,7 +1165,7 @@ function buildRegionChips() {
       saveSettings();
       buildRegionChips();
       applyRegion(true);
-      if (settings.mode !== "explore") startQuiz();
+      if (settings.mode !== "explore") restartMode();
       else if (settings.region !== "All") toast(`${settings.region === "All" ? "World" : settings.region}: ${COUNTRIES.filter((c) => inRegion(c, settings.region)).length} countries`, "", 1600);
     })
   );
@@ -959,7 +1174,7 @@ function buildRegionChips() {
 function boot() {
   view = hasWebGL() ? makeGlobe() : makeFlat();
   pickHandler = (hit) => {
-    if (settings.mode === "explore") {
+    if (settings.mode === "explore" || settings.mode === "passport") {
       if (!hit) return;
       if (hit.other) return toast(`${hit.other.name} isn't one of the 195 countries in this game.`, "", 2200);
       selectCountry(hit.country, false);
@@ -974,20 +1189,22 @@ function boot() {
       settings.level = b.dataset.value;
       saveSettings();
       document.querySelectorAll("#level .g-chip").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
-      if (settings.mode !== "explore") startQuiz();
+      restartMode();
     });
   });
   $("reset").addEventListener("click", () => {
     view.reset();
-    if (settings.mode === "explore") {
-      setMarks([]);
-    }
+    if (settings.mode === "explore" || settings.mode === "passport") setMarks([]);
   });
   $("hint").addEventListener("click", useHint);
-  $("skip").addEventListener("click", () => game && !game.locked && finishQuestion(false, `It was ${target().name}.`));
+  $("skip").addEventListener("click", () => {
+    if (game && game.speed && !game.over) return speedSkip();
+    if (game && !game.locked) finishQuestion(false, `It was ${target().name}.`);
+  });
   $("again").addEventListener("click", () => {
     $("end").classList.remove("show");
-    startQuiz();
+    if (settings.mode === "speed") startSpeed();
+    else startQuiz();
   });
   $("endExplore").addEventListener("click", () => {
     $("end").classList.remove("show");
@@ -1008,6 +1225,6 @@ function boot() {
   drawOverlay();
   setMode(settings.mode);
   if (settings.region !== "All") applyRegion(true);
-  window.__globe = { COUNTRIES, OTHERS, byId, factsFor, WRITTEN, derivedFacts, pickAt, selectCountry, setMode, get game() { return game; }, get view() { return view; }, get settings() { return settings; }, matchesName, levelPool, target: () => game && target(), finishQuestion, onPickQuiz, startQuiz, flagsSupported: FLAGS };
+  window.__globe = { COUNTRIES, OTHERS, byId, factsFor, WRITTEN, derivedFacts, pickAt, selectCountry, setMode, get game() { return game; }, get view() { return view; }, get settings() { return settings; }, matchesName, levelPool, target: () => game && target(), finishQuestion, onPickQuiz, startQuiz, flagsSupported: FLAGS, pass: () => pass, stamp, passStats, startSpeed, speedPick, endSpeed, speedSkip, showPassport };
 }
 boot();
