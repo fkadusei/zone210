@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>World Globe · Zone 210</title>
+    <meta name="theme-color" content="#eef0f5" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page wide">
+      <div class="g-head">
+        <div>
+          <h1>World Globe</h1>
+          <p>Spin the globe. Tap any of the 195 countries to learn about it, or test how well you know the world.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="explore" aria-pressed="true">🔎 Explore</button>
+            <button class="g-chip" data-value="find" aria-pressed="false">🎯 Find it</button>
+            <button class="g-chip" data-value="name" aria-pressed="false">✍️ Name it</button>
+          </div></div>
+        <div class="opt" id="levelRow" hidden><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+            <button class="g-chip" data-value="kids" aria-pressed="false">🧒 Kids</button>
+            <button class="g-chip" data-value="all" aria-pressed="true">👨‍👩‍👧 Everyone</button>
+            <button class="g-chip" data-value="expert" aria-pressed="false">🧑‍🎓 Expert</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Region</span>
+          <div class="g-chips" id="region" role="group" aria-label="Region"></div></div>
+      </section>
+
+      <div class="layout">
+        <div class="stage-wrap">
+          <div class="stage" id="stage" aria-label="Interactive globe">
+            <div class="stage-loading" id="loading">Loading the world…</div>
+            <div class="quizbar" id="quizbar" hidden>
+              <div class="q-main"><span class="q-flag" id="qFlag" aria-hidden="true"></span><div><div class="q-label" id="qLabel"></div><div class="q-text" id="qText"></div></div></div>
+              <div class="q-stats"><b id="qRound">1/10</b><b id="qScore">0</b></div>
+            </div>
+            <div class="toast" id="toast" role="status" aria-live="polite"></div>
+            <div class="stage-tools">
+              <button class="g-btn ghost sm" id="reset">Reset view</button>
+              <button class="g-btn ghost sm" id="hint" hidden>Hint</button>
+              <button class="g-btn ghost sm" id="skip" hidden>Skip</button>
+            </div>
+          </div>
+          <p class="hintline" id="hintline">Drag to spin, scroll or pinch to zoom, tap a country.</p>
+        </div>
+
+        <aside class="side" aria-label="Country information">
+          <section class="g-panel card" id="card" aria-live="polite"></section>
+          <section class="g-panel answers" id="answers" hidden></section>
+          <section class="g-panel typebox" id="typebox" hidden>
+            <form id="typeForm" autocomplete="off">
+              <input id="typeInput" list="names" placeholder="Type the country's name" aria-label="Country name" />
+              <datalist id="names"></datalist>
+              <button class="g-btn" type="submit">Check</button>
+            </form>
+          </section>
+        </aside>
+      </div>
+
+      <p class="note">The 195 countries are the 193 United Nations member states plus the Holy See (Vatican City) and the State of Palestine, which are UN observer states. Borders come from Natural Earth and some are disputed; the game takes no position on them. Population figures are rounded estimates from 2019 data.</p>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card-end card">
+        <div class="bigemoji" id="endEmoji" aria-hidden="true">🌍</div>
+        <h2 id="endTitle">Round complete</h2>
+        <p id="endText"></p>
+        <div class="missed" id="missed" hidden></div>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endExplore">Explore</button>
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../assets/sound.js"></script>
+    <script type="module" src="app.js"></script>
+    <script src="../../assets/back-link.js"></script>
+  </body>
+</html>

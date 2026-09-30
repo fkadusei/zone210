@@ -87,6 +87,16 @@ export const GAMES = [
     colors: ["#c98b4a", "#f0c987"],
   },
   {
+    id: "globe",
+    title: "World Globe",
+    tagline: "Spin a 3D globe and tap any of the 195 countries for facts, or test yourself: find it on the map, or name it.",
+    audience: "all",
+    tags: ["Geography", "Learning", "3D"],
+    players: "1 player",
+    emoji: "🌍",
+    colors: ["#2b6cb0", "#7fc4f0"],
+  },
+  {
     id: "quiz",
     title: "Quizzz Time",
     tagline: "Ten questions a round from 900+ across 16 topics, plus fresh maths every time, from Ghana and Africa to science, space, sports and more.",
