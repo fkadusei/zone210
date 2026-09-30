@@ -2,11 +2,13 @@
  * The catalog. To add a game: put it in games/<id>/ (with an index.html), add a screenshot at
  * assets/thumbs/<id>.jpg (optional; the emoji + colors below are the fallback), and add an entry here.
  *
+ * online: true when the game can be played with a friend over the internet (shows a badge on the card)
  * audience: "kids" | "adults" | "all"   (all = fun for everyone)
  */
 export const GAMES = [
   {
     id: "ludo",
+    online: true,
     title: "Ghana Ludo",
     tagline: "Race your pawns home on a beautiful board. Play friends online, or take on the computer.",
     audience: "all",
@@ -18,6 +20,7 @@ export const GAMES = [
   },
   {
     id: "chess",
+    online: true,
     title: "Chess",
     tagline: "Play the computer at three levels, a friend on one device, or a friend online.",
     audience: "all",
@@ -48,6 +51,7 @@ export const GAMES = [
   },
   {
     id: "dame",
+    online: true,
     title: "Dame",
     tagline: "Ghana's draughts on a wooden board. Play the computer, a friend on one device, or a friend online.",
     audience: "all",

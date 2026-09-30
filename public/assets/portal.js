@@ -17,7 +17,7 @@ function matches(game) {
   // "kids" shows kids + everyone games; "adults" shows adults + everyone games
   if (state.audience !== "all" && game.audience !== "all" && game.audience !== state.audience) return false;
   const q = state.query.trim().toLowerCase();
-  if (q && !`${game.title} ${game.tagline} ${game.tags.join(" ")}`.toLowerCase().includes(q)) return false;
+  if (q && !`${game.title} ${game.tagline} ${game.tags.join(" ")} ${game.online ? "online" : ""}`.toLowerCase().includes(q)) return false;
   return true;
 }
 
@@ -78,6 +78,13 @@ function card(game, index) {
   players.textContent = game.players;
   meta.append(aud, players);
   body.append(row, p, meta);
+
+  if (game.online) {
+    const on = document.createElement("span");
+    on.className = "flag online";
+    on.textContent = "🌐 Play online";
+    art.appendChild(on);
+  }
 
   a.append(art, body);
   li.appendChild(a);
