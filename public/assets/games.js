@@ -167,6 +167,7 @@ export const GAMES = [
   },
   {
     id: "memory-match",
+    online: true,
     title: "Memory Match",
     tagline: "Flip cards and find the pairs. Pick a theme and a size, or take turns with a friend.",
     audience: "kids",

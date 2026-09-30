@@ -1,3 +1,5 @@
+import { createOnline } from "../../assets/online.js";
+
 const THEMES = {
   Animals: ["🐶", "🐱", "🐭", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷"],
   Fruits: ["🍎", "🍌", "🍇", "🍓", "🍉", "🍑", "🍍", "🥝", "🍒", "🍋", "🥭", "🍐"],
@@ -13,6 +15,31 @@ const statusEl = $("status");
 const winEl = $("win");
 
 const opts = { theme: "Animals", size: "medium", players: 1 };
+const online = () => opts.players === "online";
+const two = () => opts.players === 2 || online();
+let myIdx = 0; // online: which player I am (0 goes first)
+const inbox = [];
+let rng = Math.random;
+const seeded = (seed) => { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+const net = createOnline({
+  container: document.querySelector(".g-page"),
+  before: document.getElementById("stats"),
+  prefix: "zone210-memory-",
+  names: ["Goes first", "Goes second"],
+  startInfo: () => ({ theme: opts.theme, size: opts.size }),
+  onStart: ({ role, seed, info }) => {
+    myIdx = role;
+    if (info && THEMES[info.theme] && SIZES[info.size]) { opts.theme = info.theme; opts.size = info.size; syncChips(); }
+    inbox.length = 0;
+    newGame(seed);
+  },
+  onData: (m) => { if (online() && m && Number.isInteger(m.f)) { inbox.push(m.f); drain(); } },
+  onLeft: () => { inbox.length = 0; statusEl.textContent = "Your friend left the game."; },
+});
+function drain() {
+  while (online() && !busy && net.active && turn !== myIdx && inbox.length) flip(inbox.shift(), true);
+}
+const who = (p) => (online() ? (p === myIdx ? "You" : "Friend") : `Player ${p + 1}`);
 let tiles = [];
 let open = [];
 let busy = false;
@@ -65,12 +92,20 @@ function buildChips(container, entries, key, format = (v) => v) {
 }
 buildChips($("theme"), Object.keys(THEMES), "theme", (t) => `${THEMES[t][0]} ${t}`);
 
+function syncChips() {
+  [["theme", "theme"], ["size", "size"], ["players", "players"]].forEach(([id, key]) => {
+    $(id).querySelectorAll(".g-chip").forEach((c) => c.setAttribute("aria-pressed", String(String(opts[key]) === c.dataset.value)));
+  });
+  $("restart").hidden = online();
+  if (online()) net.open(); else net.close();
+}
 function wireChips(container, key, numeric = false) {
   container.addEventListener("click", (e) => {
     const chip = e.target.closest(".g-chip");
     if (!chip) return;
-    container.querySelectorAll(".g-chip").forEach((c) => c.setAttribute("aria-pressed", String(c === chip)));
-    opts[key] = numeric ? Number(chip.dataset.value) : chip.dataset.value;
+    if (online() && net.active && key !== "players") return; // the host's choices apply once a game is under way
+    opts[key] = numeric && chip.dataset.value !== "online" ? Number(chip.dataset.value) : chip.dataset.value;
+    syncChips();
     newGame();
   });
 }
@@ -81,14 +116,17 @@ wireChips($("players"), "players", true);
 /* ---------- game flow ---------- */
 const shuffle = (a) => {
   for (let i = a.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rng() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
 };
 
-function newGame() {
+function newGame(seed) {
+  rng = typeof seed === "number" ? seeded(seed) : Math.random;
   clearInterval(timer);
+  net.setOver(false);
+  $("again").textContent = online() ? "Rematch" : "Play again";
   winEl.classList.remove("show");
   const { pairs, cols } = SIZES[opts.size];
   const symbols = shuffle([...THEMES[opts.theme]]).slice(0, pairs);
@@ -113,26 +151,30 @@ function newGame() {
     t.el = b;
   });
   renderStats();
-  statusEl.textContent = opts.players === 2 ? "Player 1, pick a card." : "Pick a card to start.";
+  statusEl.textContent = online() ? (net.active ? (myIdx === 0 ? "Your turn. Pick a card." : "Your friend goes first…") : "Create or join a room to start.") : opts.players === 2 ? "Player 1, pick a card." : "Pick a card to start.";
 }
 
 function renderStats() {
   const secs = startedAt ? Math.floor((Date.now() - startedAt) / 1000) : 0;
   const time = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`;
-  if (opts.players === 1) {
+  if (!two()) {
     statsEl.innerHTML = `<div class="g-stat"><b>${moves}</b><span>Moves</span></div>
       <div class="g-stat"><b>${time}</b><span>Time</span></div>
       <div class="g-stat"><b>${matched}/${SIZES[opts.size].pairs}</b><span>Pairs</span></div>`;
   } else {
     statsEl.innerHTML = [0, 1]
-      .map((p) => `<div class="turn${turn === p ? " on" : ""}">Player ${p + 1}: ${scores[p]}</div>`)
+      .map((p) => `<div class="turn${turn === p ? " on" : ""}">${who(p)}: ${scores[p]}</div>`)
       .join("") + `<div class="g-stat"><b>${matched}/${SIZES[opts.size].pairs}</b><span>Pairs</span></div>`;
   }
 }
 
-function flip(i) {
+function flip(i, remote = false) {
   const t = tiles[i];
   if (busy || t.el.classList.contains("open") || t.el.classList.contains("done")) return;
+  if (online()) {
+    if (!net.active || (!remote && turn !== myIdx) || (remote && turn === myIdx)) return;
+    if (!remote) net.send({ f: i });
+  }
   if (!startedAt) {
     startedAt = Date.now();
     timer = setInterval(renderStats, 1000);
@@ -159,7 +201,8 @@ function flip(i) {
       busy = false;
       renderStats();
       if (matched === SIZES[opts.size].pairs) win();
-      else statusEl.textContent = opts.players === 2 ? `Nice! Player ${turn + 1} goes again.` : "A match!";
+      else statusEl.textContent = two() ? `Nice! ${online() ? (turn === myIdx ? "You go" : "Your friend goes") : `Player ${turn + 1} goes`} again.` : "A match!";
+      drain();
     }, 450);
   } else {
     setTimeout(() => {
@@ -173,13 +216,14 @@ function flip(i) {
       });
       open = [];
       busy = false;
-      if (opts.players === 2) {
+      if (two()) {
         turn = 1 - turn;
-        statusEl.textContent = `Player ${turn + 1}, your turn.`;
+        statusEl.textContent = online() ? (turn === myIdx ? "Your turn." : "Your friend's turn…") : `Player ${turn + 1}, your turn.`;
       } else {
         statusEl.textContent = "Not a match. Try again!";
       }
       renderStats();
+      drain();
     }, 1000);
   }
   renderStats();
@@ -190,7 +234,8 @@ function win() {
   sWin();
   const secs = Math.floor((Date.now() - startedAt) / 1000);
   const pairs = SIZES[opts.size].pairs;
-  if (opts.players === 1) {
+  net.setOver(true);
+  if (!two()) {
     const stars = moves <= pairs + 2 ? 3 : moves <= pairs * 2 ? 2 : 1;
     $("winEmoji").textContent = "⭐".repeat(stars);
     $("winTitle").textContent = stars === 3 ? "Amazing memory!" : stars === 2 ? "Great job!" : "You did it!";
@@ -198,14 +243,14 @@ function win() {
   } else {
     const [s1, s2] = scores;
     $("winEmoji").textContent = s1 === s2 ? "🤝" : "🏆";
-    $("winTitle").textContent = s1 === s2 ? "It's a tie!" : `Player ${s1 > s2 ? 1 : 2} wins!`;
+    $("winTitle").textContent = s1 === s2 ? "It's a tie!" : online() ? ((s1 > s2 ? 0 : 1) === myIdx ? "You win!" : "Your friend wins.") : `Player ${s1 > s2 ? 1 : 2} wins!`;
     $("winText").textContent = `Final score: ${s1} to ${s2}.`;
   }
   setTimeout(() => winEl.classList.add("show"), 600);
 }
 
-$("restart").addEventListener("click", newGame);
-$("again").addEventListener("click", newGame);
+$("restart").addEventListener("click", () => newGame());
+$("again").addEventListener("click", () => { if (online()) { net.rematch(); winEl.classList.remove("show"); } else newGame(); });
 $("mute").addEventListener("click", (e) => {
   muted = !muted;
   e.currentTarget.textContent = muted ? "Sound Off" : "Sound On";
@@ -213,3 +258,11 @@ $("mute").addEventListener("click", (e) => {
 });
 
 newGame();
+const invited = net.roomParam();
+if (invited) {
+  opts.players = "online";
+  syncChips();
+  newGame();
+  net.join(invited);
+}
+window.__mm = { get tiles() { return tiles; }, get turn() { return turn; }, get scores() { return scores; }, get myIdx() { return myIdx; }, get busy() { return busy; }, get matched() { return matched; }, flip };
