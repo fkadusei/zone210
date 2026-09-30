@@ -62,6 +62,7 @@ export const GAMES = [
   },
   {
     id: "dots-boxes",
+    online: true,
     title: "Dots & Boxes",
     tagline: "Draw lines, close boxes and go again. A pencil-and-paper classic with a clever computer opponent.",
     audience: "all",

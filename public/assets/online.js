@@ -8,7 +8,8 @@
  *     container,               // element the lobby panel is added to
  *     prefix: "zone210-c4-",   // namespaces room codes per game
  *     names: ["Red", "Yellow"],// side 0 moves first
- *     onStart({ role, seed, n }) {},  // a game begins (and again for each rematch). role = 0 or 1, seed is shared
+ *     startInfo() {},          // optional, host only: extra settings (e.g. board size) sent to the guest with each start
+ *     onStart({ role, seed, n, info }) {},  // a game begins (and again for each rematch). role = 0 or 1, seed is shared
  *     onData(msg) {},          // a move from the other player
  *     onLeft() {},             // the other player left or dropped
  *   });
@@ -110,9 +111,10 @@ export function createOnline(o) {
     st.n += 1;
     st.role = hostRole;
     st.started = true; st.over = false; st.meWants = false; st.theyWant = false; st.peerGone = false; st.view = "playing";
-    st.link.broadcast({ z: "start", role: 1 - hostRole, seed, n: st.n });
+    const info = o.startInfo ? o.startInfo() : undefined;
+    st.link.broadcast({ z: "start", role: 1 - hostRole, seed, n: st.n, info });
     render();
-    o.onStart({ role: hostRole, seed, n: st.n });
+    o.onStart({ role: hostRole, seed, n: st.n, info });
   }
 
   function handle(msg) {
@@ -120,7 +122,7 @@ export function createOnline(o) {
     if (msg.z === "start") {
       st.role = msg.role; st.n = msg.n; st.started = true; st.over = false; st.meWants = false; st.theyWant = false; st.peerGone = false; st.view = "playing";
       render();
-      o.onStart({ role: msg.role, seed: msg.seed, n: msg.n });
+      o.onStart({ role: msg.role, seed: msg.seed, n: msg.n, info: msg.info });
     } else if (msg.z === "g") {
       if (st.started) o.onData(msg.d);
     } else if (msg.z === "rm") {

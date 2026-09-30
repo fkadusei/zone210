@@ -1,3 +1,5 @@
+import { createOnline } from "../../assets/online.js";
+
 // ---------- rules ----------
 // h[r][c]: horizontal edge on dot-row r (0..n), between dot columns c and c+1
 // v[r][c]: vertical edge on box-row r (0..n-1), on dot-column c (0..n)
@@ -119,7 +121,7 @@ const store = {
 };
 const SETTINGS_KEY = "zone210_dots_settings";
 const settings = { mode: "cpu", level: "normal", size: 4, muted: false, ...store.get(SETTINGS_KEY, {}) };
-if (!["cpu", "two"].includes(settings.mode)) settings.mode = "cpu";
+if (!["cpu", "two", "online"].includes(settings.mode)) settings.mode = "cpu";
 if (![3, 4, 5].includes(settings.size)) settings.size = 4;
 if (!["easy", "normal", "hard"].includes(settings.level)) settings.level = "normal";
 
@@ -170,8 +172,25 @@ const setStatus = (t, kind = "") => {
   statusEl.className = "g-status" + (kind ? ` ${kind}` : "");
 };
 const cpu = () => settings.mode === "cpu";
+const online = () => settings.mode === "online";
+let myP = 1; // online: 1 = Blue (moves first), 2 = Orange
+const net = createOnline({
+  container: document.querySelector(".g-page"),
+  before: $("scores"),
+  prefix: "zone210-dots-",
+  names: ["Blue", "Orange"],
+  startInfo: () => ({ size: settings.size }),
+  onStart: ({ role, info }) => {
+    myP = role + 1;
+    if (info && [3, 4, 5].includes(info.size)) settings.size = info.size;
+    syncChips();
+    newGame();
+  },
+  onData: (m) => { if (online() && m && m.e && !over && turn === 3 - myP && isFree(st, m.e)) move(m.e); },
+  onLeft: () => { busy = false; setStatus("Your friend left the game."); },
+});
 const isCpuTurn = () => cpu() && turn === 2;
-const nameOf = (p) => (cpu() ? (p === 1 ? "You" : "Computer") : p === 1 ? "Blue" : "Orange");
+const nameOf = (p) => (cpu() ? (p === 1 ? "You" : "Computer") : online() ? (p === myP ? "You" : "Friend") : p === 1 ? "Blue" : "Orange");
 const el = (name, attrs = {}) => {
   const e = document.createElementNS("http://www.w3.org/2000/svg", name);
   Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
@@ -233,7 +252,7 @@ function paintBox(r, c, who, fresh) {
   b.setAttribute("fill", COLORS[who]);
   if (fresh) b.classList.add("pop");
   const t = svg.querySelector(`#t${r}-${c}`);
-  t.textContent = cpu() ? (who === 1 ? "Y" : "C") : who === 1 ? "B" : "O";
+  t.textContent = cpu() ? (who === 1 ? "Y" : "C") : online() ? (who === myP ? "Y" : "F") : who === 1 ? "B" : "O";
 }
 
 function renderScores() {
@@ -257,17 +276,27 @@ function newGame() {
   hint = null;
   lastEdge = null;
   $("end").classList.remove("show");
+  net.setOver(false);
+  $("again").textContent = online() ? "Rematch" : "Play again";
   buildBoard();
   renderScores();
   announce();
 }
 function announce() {
   if (over) return;
+  if (online()) {
+    setStatus(!net.active ? "Create or join a room to start." : turn === myP ? "Your turn. Draw a line between two dots." : "Your friend's turn…");
+    return;
+  }
   setStatus(isCpuTurn() ? "The computer is thinking…" : `${nameOf(turn) === "You" ? "Your" : `${nameOf(turn)}'s`} turn. Draw a line between two dots.`);
 }
 
 async function onEdge(e) {
   if (over || busy || isCpuTurn() || !isFree(st, e)) return;
+  if (online()) {
+    if (!net.active || turn !== myP) return;
+    net.send({ e });
+  }
   await move(e);
 }
 
@@ -307,7 +336,7 @@ function finish() {
     sfx.win();
   } else {
     const w = a > b ? 1 : 2;
-    title = cpu() ? (w === 1 ? "You win!" : "The computer wins") : `${nameOf(w)} wins!`;
+    title = cpu() ? (w === 1 ? "You win!" : "The computer wins") : online() ? (w === myP ? "You win!" : "Your friend wins.") : `${nameOf(w)} wins!`;
     if (cpu() && w === 2) emoji = "🤖";
     cpu() && w === 2 ? sfx.lose() : sfx.win();
   }
@@ -315,6 +344,7 @@ function finish() {
   $("endTitle").textContent = title;
   $("endText").textContent = `${nameOf(1)} ${a} · ${nameOf(2)} ${b}`;
   setStatus(title, "good");
+  net.setOver(true);
   setTimeout(() => $("end").classList.add("show"), 600);
 }
 
@@ -323,7 +353,7 @@ function clearHint() {
   hint = null;
 }
 function showHint() {
-  if (over || busy || isCpuTurn()) return;
+  if (over || busy || isCpuTurn() || online()) return;
   clearHint();
   hint = aiMove(st, "hard");
   svg.querySelector(`#e-${hint.t}${hint.r}-${hint.c}`).classList.add("hint");
@@ -336,6 +366,9 @@ function syncChips() {
   document.querySelectorAll("#level .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.level)));
   document.querySelectorAll("#size .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.value) === settings.size)));
   $("levelRow").hidden = !cpu();
+  $("hint").hidden = online();
+  $("newGame").hidden = online();
+  if (online()) net.open(); else net.close();
 }
 document.querySelectorAll("#mode .g-chip, #level .g-chip, #size .g-chip").forEach((b) =>
   b.addEventListener("click", () => {
@@ -349,7 +382,7 @@ document.querySelectorAll("#mode .g-chip, #level .g-chip, #size .g-chip").forEac
   })
 );
 $("newGame").addEventListener("click", newGame);
-$("again").addEventListener("click", newGame);
+$("again").addEventListener("click", () => { if (online()) { net.rematch(); $("end").classList.remove("show"); } else newGame(); });
 $("endView").addEventListener("click", () => $("end").classList.remove("show"));
 $("hint").addEventListener("click", showHint);
 const mute = $("mute");
@@ -366,4 +399,11 @@ mute.addEventListener("click", () => {
 syncChips();
 syncMute();
 newGame();
-window.__db = { makeState, drawEdge, aiMove, freeEdges, completes, given, get st() { return st; }, get scores() { return scores; }, get over() { return over; }, get busy() { return busy; }, onEdge, move };
+const invited = net.roomParam();
+if (invited) {
+  settings.mode = "online";
+  syncChips();
+  newGame();
+  net.join(invited);
+}
+window.__db = { makeState, drawEdge, aiMove, freeEdges, completes, given, get st() { return st; }, get scores() { return scores; }, get over() { return over; }, get busy() { return busy; }, get myP() { return myP; }, get turn() { return turn; }, onEdge, move };
