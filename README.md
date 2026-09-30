@@ -10,26 +10,30 @@ saved games stay on the player's own device.
 |---|---|---|
 | **Ghana Ludo** | Everyone | three.js board, online rooms (peer-to-peer), computer players, Easy/Normal/Hard |
 | **Chess** | Everyone | 3D board (2D option), full rules, computer at three levels, online play by room code, clocks, hints, undo, saved games |
-| **Oware** | Everyone | Ghana's traditional mancala (Abapa rules), vs computer or 2 players |
+| **Oware** | Everyone | Ghana's traditional mancala (Abapa rules), vs computer, 2 players, or online with a friend |
 | **Quizzz Time** | Everyone | 900+ questions in 16 topics plus endless fresh maths (hand-written plus generated capitals, flags and maths); never repeats until you've seen them all; Kids / Family / Adults levels, timer optional |
 | **Lab 210** | Everyone | Science lab: Chemistry (periodic table of 118 elements with Bohr models, element challenges, equation balancer), Physics (projectile Launch lab on four worlds, Pendulum lab, Circuit lab with series/parallel bulbs, Ohm's law challenge), Biology (cell explorer, DNA pairing, human body, Punnett-square genetics, food chains, animal groups), a Lab quiz at three levels and a Daily experiment with streaks. Element data from Periodic-Table-JSON (CC BY-SA 3.0) |
 | **World Globe** | Everyone | 3D globe with all 195 countries (UN members plus two observer states); Explore mode with 3,400+ facts, Find it, Name it and 60-second Speed run at three levels, a Daily Challenge (same 10 countries for everyone each day, streaks, shareable result), a Passport that tracks the countries you have learned, region filters |
-| **Connect Four** | Everyone | minimax computer with three levels, or 2 players |
+| **Connect Four** | Everyone | minimax computer with three levels, 2 players, or online with a friend |
 | **Math Cross** | Everyone | crossword-style sums, four levels up to an 11x11 grid, hints, undo, keyboard entry, timer and best times |
 | **24 Game** | Everyone | make 24 from four numbers, three levels (some need fractions), hints, answers, 90-second sprint, best times |
 | **Tetris** | Everyone | 7-bag pieces, wall kicks, hold, ghost piece, lock delay, Marathon / 40 Lines / 2-Min Blitz, touch controls, best scores |
-| **Snakes & Ladders** | Kids | classic 100-square board, 1-4 players or vs computer, animated dice, optional bonus roll on a 6 |
-| **Checkers** | Everyone | compulsory captures, multi-jumps, kings, three computer levels, hints and undo |
+| **Snakes & Ladders** | Kids | classic 100-square board, 1-4 players, vs computer, or online with a friend, animated dice, optional bonus roll on a 6 |
+| **Checkers** | Everyone | compulsory captures, multi-jumps, kings, three computer levels, hints and undo, or online with a friend |
 | **Dame** | Everyone | Ghanaian draughts on a wooden board: men capture backwards, flying kings, optional captures (you may skip one), three computer levels, hints and undo, and online play by room code (peer to peer, same as Chess) |
-| **Dots & Boxes** | Everyone | 3x3 to 5x5 boards, vs computer (three levels) or a friend, chain-aware computer |
-| **Battleship** | Everyone | place your fleet by hand or randomly, three computer levels (smart targeting on Hard) |
-| **Memory Match** | Kids | themes, three sizes, 1–2 players |
+| **Dots & Boxes** | Everyone | 3x3 to 5x5 boards, vs computer (three levels), a friend, or online with a friend, chain-aware computer |
+| **Battleship** | Everyone | place your fleet by hand or randomly, three computer levels (smart targeting on Hard), or online with a friend |
+| **Memory Match** | Kids | themes, three sizes, 1–2 players or online with a friend |
 | **Doodle & Color** | Kids | rainbow brush, stamps, colouring pages with a paint bucket, save as PNG |
 | **Spell Sprout** | Kids | 800 picture words, 12 themed packs and three levels, spoken aloud, hints, stars and a garden that grows (fully offline) |
 | **Word Guess** | Adults | daily word + practice, stats, shareable result |
 | **Sudoku** | Adults | generated puzzles with exactly one solution, notes, hints, auto-save |
 | **Tile Merge** | Adults | 2048-style, swipe or arrow keys, undo |
 | **Minesweeper** | Adults | three sizes, flags, chording, touch long-press, best times |
+
+## Online play
+
+Every two-player game has an Online mode (peer to peer via `assets/p2p.js`, no game server). `assets/online.js` is the shared room lobby: create a room and share the 5-letter code or invite link (`?room=CODE`), choose who goes first, rematch, and leave. Games with online play carry `online: true` in `assets/games.js`, which shows a "Play online" badge on their card.
 
 ## Structure
 

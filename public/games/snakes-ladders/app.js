@@ -1,3 +1,5 @@
+import { createOnline } from "../../assets/online.js";
+
 // ---------- board data ----------
 const LADDERS = { 1: 38, 4: 14, 9: 31, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 100 };
 const SNAKES = { 16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 98: 78 };
@@ -26,7 +28,7 @@ const store = {
 };
 const SETTINGS_KEY = "zone210_snakes_settings";
 const settings = { mode: "cpu", bonus: "on", muted: false, ...store.get(SETTINGS_KEY, {}) };
-if (!["cpu", "2", "3", "4"].includes(settings.mode)) settings.mode = "cpu";
+if (!["cpu", "2", "3", "4", "online"].includes(settings.mode)) settings.mode = "cpu";
 
 const SPEED = new URLSearchParams(location.search).has("fast") ? 25 : 1; // ?fast is for testing
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms / SPEED));
@@ -254,6 +256,31 @@ let epoch = 0; // bumps on every new game so a roll from the old game can never 
 
 const statusEl = $("status");
 const rollBtn = $("roll");
+
+// ---------- online: the roller shares each dice value so both screens play the identical roll ----------
+const online = () => settings.mode === "online";
+let myIdx = 0;
+const inbox = [];
+const net = createOnline({
+  container: document.querySelector(".g-page"),
+  before: $("players"),
+  prefix: "zone210-snakes-",
+  names: ["Red", "Blue"],
+  startInfo: () => ({ bonus: settings.bonus }),
+  onStart: ({ role, info }) => {
+    myIdx = role;
+    if (info && ["on", "off"].includes(info.bonus)) settings.bonus = info.bonus;
+    inbox.length = 0;
+    syncChips();
+    newGame();
+  },
+  onData: (m) => { if (online() && m && Number.isInteger(m.v) && m.v >= 1 && m.v <= 6) { inbox.push(m.v); drain(); } },
+  onLeft: () => { inbox.length = 0; busy = false; rollBtn.disabled = true; setStatus("Your friend left the game.", "bad"); },
+});
+function drain() {
+  if (!online() || busy || over || !net.active || turn === myIdx || !inbox.length) return;
+  roll(inbox.shift(), true);
+}
 const setStatus = (t, kind = "") => {
   statusEl.textContent = t;
   statusEl.className = "g-status" + (kind ? ` ${kind}` : "");
@@ -273,9 +300,9 @@ function renderPlayers() {
 
 function newGame() {
   epoch += 1;
-  const count = settings.mode === "cpu" ? 2 : Number(settings.mode);
+  const count = settings.mode === "cpu" || online() ? 2 : Number(settings.mode);
   players = Array.from({ length: count }, (_, i) => ({
-    name: settings.mode === "cpu" ? (i === 0 ? "You" : "Computer") : NAMES[i],
+    name: settings.mode === "cpu" ? (i === 0 ? "You" : "Computer") : online() ? (i === myIdx ? "You" : "Friend") : NAMES[i],
     color: COLORS[i],
     cpu: settings.mode === "cpu" && i === 1,
     pos: 0,
@@ -284,6 +311,8 @@ function newGame() {
   busy = false;
   over = false;
   $("end").classList.remove("show");
+  net.setOver(false);
+  $("again").textContent = online() ? "Rematch" : "Play again";
   view.setPlayers(players);
   renderPlayers();
   beginTurn();
@@ -294,6 +323,15 @@ function beginTurn() {
   view.setTurn(over ? -1 : turn);
   const p = players[turn];
   if (over) return;
+  if (online()) {
+    const mine = net.active && turn === myIdx;
+    rollBtn.disabled = !mine;
+    view.setDiceEnabled(mine);
+    rollBtn.textContent = mine ? "Roll the dice" : "Your friend's turn…";
+    setStatus(!net.active ? "Create or join a room to start." : mine ? "Your turn. Roll the dice!" : "Your friend is rolling…");
+    drain();
+    return;
+  }
   rollBtn.disabled = p.cpu;
   view.setDiceEnabled(!p.cpu);
   rollBtn.textContent = p.cpu ? "Computer's turn…" : players.length > 1 && settings.mode !== "cpu" ? `${p.name}: roll the dice` : "Roll the dice";
@@ -302,8 +340,9 @@ function beginTurn() {
   if (p.cpu) setTimeout(() => e === epoch && roll(), 900 / SPEED);
 }
 
-async function roll() {
+async function roll(forced, remote = false) {
   if (busy || over) return;
+  if (online() && !remote && (!net.active || turn !== myIdx)) return;
   busy = true;
   const my = epoch;
   const stale = () => my !== epoch;
@@ -312,7 +351,8 @@ async function roll() {
   const p = players[turn];
   const idx = turn;
   const who = p.name === "You" ? "You" : p.name;
-  const value = 1 + Math.floor(Math.random() * 6);
+  const value = Number.isInteger(forced) ? forced : 1 + Math.floor(Math.random() * 6);
+  if (online() && !remote) net.send({ v: value });
   sfx.roll();
   await view.rollDice(value);
   if (stale()) return;
@@ -371,7 +411,8 @@ function win(p, idx) {
   renderPlayers();
   sfx.win();
   const you = settings.mode === "cpu";
-  $("endTitle").textContent = you ? (p.cpu ? "The computer wins" : "You win!") : `${p.name} wins!`;
+  net.setOver(true);
+  $("endTitle").textContent = you ? (p.cpu ? "The computer wins" : "You win!") : online() ? (idx === myIdx ? "You win!" : "Your friend wins.") : `${p.name} wins!`;
   $("endText").textContent = you && p.cpu ? "Better luck next time. Every game is a fresh roll." : "First to square 100. Well played!";
   setStatus(`${p.name} reached 100!`, "good");
   const e = epoch;
@@ -410,20 +451,23 @@ async function mountView() {
 function syncChips() {
   document.querySelectorAll("#mode .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.mode)));
   document.querySelectorAll("#bonus .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === settings.bonus)));
+  $("newGame").hidden = online();
+  if (online()) net.open(); else net.close();
 }
 document.querySelectorAll("#mode .g-chip, #bonus .g-chip").forEach((b) =>
   b.addEventListener("click", () => {
     const group = b.parentElement.id;
     if (settings[group] === b.dataset.value) return;
+    if (online() && net.active && group === "bonus") return; // the host's rule applies once a game is under way
     settings[group] = b.dataset.value;
     store.set(SETTINGS_KEY, settings);
     syncChips();
     newGame();
   })
 );
-rollBtn.addEventListener("click", roll);
+rollBtn.addEventListener("click", () => roll());
 $("newGame").addEventListener("click", newGame);
-$("again").addEventListener("click", newGame);
+$("again").addEventListener("click", () => { if (online()) { net.rematch(); $("end").classList.remove("show"); } else newGame(); });
 $("endView").addEventListener("click", () => $("end").classList.remove("show"));
 $("resetView").addEventListener("click", () => view && view.resetView());
 const mute = $("mute");
@@ -447,5 +491,12 @@ syncChips();
 syncMute();
 mountView().then(() => {
   newGame();
-  window.__sl = { get players() { return players; }, roll, newGame, JUMPS, get busy() { return busy; }, get over() { return over; }, get turn() { return turn; }, get view() { return view; } };
+  const invited = net.roomParam();
+  if (invited) {
+    settings.mode = "online";
+    syncChips();
+    newGame();
+    net.join(invited);
+  }
+  window.__sl = { get players() { return players; }, roll, newGame, JUMPS, get busy() { return busy; }, get over() { return over; }, get turn() { return turn; }, get view() { return view; }, get myIdx() { return myIdx; } };
 });
