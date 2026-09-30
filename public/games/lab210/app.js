@@ -89,7 +89,8 @@ const LABS = {
   chem: { tabs: [["table", "🔎 Periodic table", "chem", "mountTable"], ["challenge", "🎯 Element challenges", "chem", "mountChallenge"]] },
   phys: { tabs: [["launch", "🚀 Launch lab", "physics", "mountLaunch"], ["pendulum", "🕰️ Pendulum lab", "physics", "mountPendulum"]] },
   bio: { tabs: [["cell", "🔬 Cell explorer", "bio", "mountCell"], ["dna", "🧬 DNA pairing", "bio", "mountDNA"]] },
-  quiz: { tabs: [["quiz", "❓ Lab quiz", "quiz", "mountQuiz"], ["daily", "📅 Daily experiment", "daily", "mountDaily"]] },
+  quiz: { tabs: [["quiz", "❓ Lab quiz", "quiz", "mountQuiz"]] },
+  daily: { tabs: [["daily", "📅 Daily experiment", "daily", "mountDaily"]] },
 };
 let dispose = () => {};
 async function open(lab, tab) {
