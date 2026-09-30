@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Reversi · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Reversi</h1>
+          <p>Trap your opponent's discs between yours to flip them. Most discs wins.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn" id="newGame">New Game</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="cpu" aria-pressed="true">vs Computer</button>
+            <button class="g-chip" data-value="two" aria-pressed="false">2 players</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">🌐 Online</button>
+          </div></div>
+        <div class="opt" id="levelRow"><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+            <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
+            <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+          </div></div>
+        <div class="opt" id="colorRow"><span class="lbl">I play</span>
+          <div class="g-chips" id="first" role="group" aria-label="My colour">
+            <button class="g-chip" data-value="me" aria-pressed="true">Black (first)</button>
+            <button class="g-chip" data-value="cpu" aria-pressed="false">White</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Hints</span>
+          <div class="g-chips" id="hints" role="group" aria-label="Show legal moves">
+            <button class="g-chip" data-value="on" aria-pressed="true">Show legal moves</button>
+            <button class="g-chip" data-value="off" aria-pressed="false">Off</button>
+          </div></div>
+      </section>
+
+      <div class="scores" id="scores"></div>
+      <div class="board-wrap"><div class="board" id="board" role="grid" aria-label="Reversi board"></div></div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+      <div class="tools"><button class="g-btn ghost" id="undo">Undo</button><button class="g-btn ghost" id="hint">Hint</button></div>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="bigemoji" id="endEmoji" aria-hidden="true">🏆</div>
+        <h2 id="endTitle">Game over</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endView">View board</button>
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+.setup { display: grid; gap: 10px; margin-bottom: 14px; }
+.opt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.lbl { width: 60px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+.pbars { display: grid; gap: 8px; max-width: 880px; margin: 0 auto 8px; }
+.pbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 8px 14px; border-radius: 12px; background: var(--surface); border: 2px solid var(--line); box-shadow: var(--shadow); font-weight: 700; font-size: 0.9rem; }
+.pbar.turn { border-color: var(--gold); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 26%, transparent), var(--shadow); }
+.pbar .chip { width: 20px; height: 20px; border-radius: 50%; flex: none; box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4); }
+.pbar .chip.w { background: radial-gradient(circle at 35% 30%, #fff, #cfc8b8 75%); }
+.pbar .chip.b { background: radial-gradient(circle at 35% 30%, #5b6072, #12141d 70%); }
+.pbar small { color: var(--muted); font-weight: 600; margin-left: auto; }
+
+.bg-wrap { max-width: 880px; margin: 0 auto; }
+#bg { width: 100%; height: auto; display: block; border-radius: 14px; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); touch-action: manipulation; }
+#bg .hit { fill: transparent; cursor: pointer; }
+#bg .hit.dead { cursor: default; }
+#bg text { font-family: var(--font); user-select: none; pointer-events: none; }
+#bg .pulse { animation: bgpulse 1s ease-in-out infinite; }
+@keyframes bgpulse { 50% { opacity: 0.45; } }
+html[data-saver] #bg .pulse { animation: none; }
+
+.dice-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
+.rules { margin: 18px auto 0; max-width: 880px; }
+.rules summary { cursor: pointer; font-weight: 800; }
+.rules ul { margin: 10px 0 0; padding-left: 20px; color: var(--muted); line-height: 1.6; }

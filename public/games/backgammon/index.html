@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Backgammon · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Backgammon</h1>
+          <p>Roll the dice, race your checkers home and bear them off before your opponent does.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn" id="newGame">New Game</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="cpu" aria-pressed="true">vs Computer</button>
+            <button class="g-chip" data-value="two" aria-pressed="false">2 players</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">🌐 Online</button>
+          </div></div>
+        <div class="opt" id="levelRow"><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+            <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
+            <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+          </div></div>
+        <div class="opt" id="colorRow"><span class="lbl">I play</span>
+          <div class="g-chips" id="first" role="group" aria-label="My colour">
+            <button class="g-chip" data-value="me" aria-pressed="true">White (first)</button>
+            <button class="g-chip" data-value="cpu" aria-pressed="false">Black</button>
+          </div></div>
+      </section>
+
+      <div class="pbars"><div class="pbar" id="barTop"></div><div class="pbar" id="barBottom"></div></div>
+      <div class="bg-wrap"><svg id="bg" viewBox="0 0 800 540" role="group" aria-label="Backgammon board"></svg></div>
+      <div class="dice-row">
+        <button class="g-btn" id="roll">🎲 Roll dice</button>
+        <button class="g-btn ghost" id="undo">Undo</button>
+        <button class="g-btn ghost" id="hint">Hint</button>
+      </div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+
+      <details class="g-panel rules">
+        <summary>How to play</summary>
+        <ul>
+          <li>White moves counter-clockwise from the top right to the bottom right; Black travels the opposite way. Each side has 15 checkers.</li>
+          <li>Roll two dice and move checkers that many points, using each die separately. Doubles give you four moves.</li>
+          <li>You can land on an empty point, your own point, or a point with a single enemy checker, which you "hit" and send to the bar.</li>
+          <li>Checkers on the bar must re-enter in the opponent's home board before you can move anything else.</li>
+          <li>When all 15 checkers are in your home board you can bear them off. The first to bear off all 15 wins. Winning before the loser has borne off any checker is a gammon (2 points).</li>
+          <li>You must play as many dice as you can, and the larger die if only one can be played.</li>
+        </ul>
+      </details>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="bigemoji" id="endEmoji" aria-hidden="true">🏆</div>
+        <h2 id="endTitle">Game over</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endView">View board</button>
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

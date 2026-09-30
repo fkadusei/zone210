@@ -1,0 +1,61 @@
+.setup { display: grid; gap: 10px; margin-bottom: 14px; }
+.opt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.lbl { width: 60px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+.scores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.score { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; background: var(--surface); border: 2px solid var(--line); box-shadow: var(--shadow); }
+.score.turn { border-color: var(--gold); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 28%, transparent), var(--shadow); }
+.score .chip { width: 26px; height: 26px; border-radius: 50%; flex: none; box-shadow: inset 0 -3px 5px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4); }
+.score .chip.b { background: radial-gradient(circle at 35% 30%, #5b6072, #0b0d14 70%); }
+.score .chip.w { background: radial-gradient(circle at 35% 30%, #fff, #c9ccd8 75%); }
+.score .nm { font-weight: 700; font-size: 0.9rem; }
+.score .nm small { display: block; font-size: 0.68rem; font-weight: 600; color: var(--muted); }
+.score b { margin-left: auto; font-size: 1.7rem; font-variant-numeric: tabular-nums; }
+
+.board-wrap { display: grid; place-items: center; }
+.board {
+  --cell: min(calc((100vw - 56px) / 8), 68px);
+  display: grid;
+  grid-template-columns: repeat(8, var(--cell));
+  grid-template-rows: repeat(8, var(--cell));
+  gap: 2px;
+  padding: 10px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #5b3a1c, #3a2410);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.cell {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  background: radial-gradient(circle at 30% 25%, #2f9a5f, #1d7a48 70%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+  perspective: 300px;
+  touch-action: manipulation;
+}
+.cell:disabled { cursor: default; }
+.cell.last::after { content: ""; position: absolute; inset: 3px; border-radius: 4px; box-shadow: inset 0 0 0 3px rgba(255, 214, 90, 0.95); pointer-events: none; }
+.cell.hint::before { content: ""; position: absolute; left: 50%; top: 50%; width: 26%; height: 26%; transform: translate(-50%, -50%); border-radius: 50%; background: rgba(255, 255, 255, 0.5); animation: pulse 1.3s ease-in-out infinite; }
+.cell.best::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; box-shadow: 0 0 0 3px #ffd65a; animation: pulse 0.9s ease-in-out infinite; }
+.cell.playable:hover::before { background: rgba(255, 255, 255, 0.85); }
+@keyframes pulse { 50% { opacity: 0.45; } }
+
+.disc {
+  position: absolute;
+  inset: 9%;
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.3, 0.6, 0.3, 1);
+  animation: drop 0.25s ease-out;
+}
+.disc[data-c="2"] { transform: rotateY(180deg); }
+.disc .f { position: absolute; inset: 0; border-radius: 50%; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 3px 5px rgba(0, 0, 0, 0.45), inset 0 -4px 6px rgba(0, 0, 0, 0.25), inset 0 3px 5px rgba(255, 255, 255, 0.25); }
+.disc .b { background: radial-gradient(circle at 35% 30%, #5b6072, #0b0d14 70%); }
+.disc .w { background: radial-gradient(circle at 35% 30%, #ffffff, #c5c9d6 78%); transform: rotateY(180deg); }
+@keyframes drop { from { transform: scale(0.3); opacity: 0; } }
+.disc[data-c="2"] { animation-name: drop2; }
+@keyframes drop2 { from { transform: rotateY(180deg) scale(0.3); opacity: 0; } }
+html[data-saver] .disc, html[data-saver] .cell::before, html[data-saver] .cell::after { animation: none; transition: none; }
+
+.tools { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
