@@ -1,3 +1,4 @@
+import { createOnline } from "../../assets/online.js";
 import { ROWS, COLS, emptyBoard, dropRow, winLine, legalCols, isFull, chooseMove } from "./logic.js";
 
 const $ = (id) => document.getElementById(id);
@@ -13,7 +14,18 @@ let turn = 1; // 1 = red (you), 2 = yellow
 let over = false;
 let thinking = false;
 
-const names = () => (opts.mode === "cpu" ? { 1: "You", 2: "Computer" } : { 1: "Player 1", 2: "Player 2" });
+const online = () => opts.mode === "online";
+let myP = 1; // which colour I play online
+const net = createOnline({
+  container: document.querySelector(".g-page"),
+  before: $("stats"),
+  prefix: "zone210-c4-",
+  names: ["Red", "Yellow"],
+  onStart: ({ role }) => { myP = role + 1; newGame(); },
+  onData: (m) => { if (online() && !over && turn === 3 - myP && Number.isInteger(m.c)) place(m.c); },
+  onLeft: () => { over = true; setColumnsEnabled(false); statusEl.textContent = "Your friend left the game."; },
+});
+const names = () => (opts.mode === "cpu" ? { 1: "You", 2: "Computer" } : online() ? { [myP]: "You", [3 - myP]: "Friend" } : { 1: "Player 1", 2: "Player 2" });
 
 /* ---------- setup ---------- */
 function wire(id, key) {
@@ -26,6 +38,8 @@ function wire(id, key) {
     if (key === "mode") {
       $("levelRow").hidden = opts.mode !== "cpu";
       $("startRow").hidden = opts.mode !== "cpu";
+      $("restart").hidden = online();
+      if (online()) net.open(); else net.close();
     }
     newGame();
   });
@@ -72,6 +86,7 @@ function newGame() {
   thinking = false;
   discsEl.innerHTML = "";
   turn = opts.mode === "cpu" && opts.first === "cpu" ? 2 : 1;
+  net.setOver(false);
   renderStats();
   statusEl.textContent = "";
   update();
@@ -79,6 +94,12 @@ function newGame() {
 
 function update() {
   const cpuTurn = opts.mode === "cpu" && turn === 2 && !over;
+  if (online()) {
+    const mine = net.active && turn === myP;
+    setColumnsEnabled(!over && mine);
+    if (!over) statusEl.innerHTML = !net.active ? "Create or join a room to start." : `<span class="dot p${turn}"></span>${mine ? "Your turn" : "Your friend's turn"}`;
+    return;
+  }
   setColumnsEnabled(!over && !cpuTurn);
   if (!over) {
     const n = names();
@@ -97,6 +118,10 @@ function update() {
 
 function humanMove(c) {
   if (over || thinking || (opts.mode === "cpu" && turn === 2)) return;
+  if (online()) {
+    if (!net.active || turn !== myP || dropRow(board, c) < 0) return;
+    net.send({ c });
+  }
   place(c);
 }
 
@@ -126,15 +151,13 @@ function finish(line) {
   if (line) {
     line.forEach(([r, c]) => discsEl.querySelector(`[data-rc="${r},${c}"]`)?.classList.add("win"));
     wins[turn] += 1;
-    statusEl.innerHTML = `<span class="dot p${turn}"></span>${opts.mode === "cpu" ? (turn === 1 ? "You win! 🎉" : "The computer wins.") : `${n[turn]} wins! 🎉`} <button class="g-btn" id="again" style="margin-left:8px">Play again</button>`;
+    statusEl.innerHTML = `<span class="dot p${turn}"></span>${opts.mode === "cpu" ? (turn === 1 ? "You win! 🎉" : "The computer wins.") : online() ? (turn === myP ? "You win! 🎉" : "Your friend wins.") : `${n[turn]} wins! 🎉`}${online() ? "" : ' <button class="g-btn" id="again" style="margin-left:8px">Play again</button>'}`;
   } else {
     wins.draws += 1;
-    statusEl.innerHTML = `It's a draw. <button class="g-btn" id="again" style="margin-left:8px">Play again</button>`;
+    statusEl.innerHTML = `It's a draw.${online() ? "" : ' <button class="g-btn" id="again" style="margin-left:8px">Play again</button>'}`;
   }
-  $("again").addEventListener("click", () => {
-    // loser (or player 1 on a draw) opens the next game
-    newGame();
-  });
+  if (online()) net.setOver(true);
+  else $("again").addEventListener("click", () => newGame());
   renderStats();
 }
 
@@ -146,3 +169,12 @@ document.addEventListener("keydown", (e) => {
 $("restart").addEventListener("click", newGame);
 buildColumns();
 newGame();
+
+// invite link (?room=CODE): jump straight into online mode and join
+const invited = net.roomParam();
+if (invited) {
+  $("mode").querySelector('[data-value="online"]').click();
+  net.join(invited);
+}
+
+window.__c4 = { get board() { return board; }, get turn() { return turn; }, get myP() { return myP; }, get over() { return over; } };

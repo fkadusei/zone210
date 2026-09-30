@@ -1,3 +1,4 @@
+import { createOnline } from "../../assets/online.js";
 import { newState, legalMoves, applyMove, status, chooseMove, owner, seedsOn } from "./logic.js";
 
 const $ = (id) => document.getElementById(id);
@@ -7,6 +8,23 @@ const statusEl = $("status");
 const winEl = $("win");
 
 const opts = { mode: "cpu", level: "normal", first: "me" };
+const online = () => opts.mode === "online";
+let myP = 0; // online: 0 = bottom row (moves first), 1 = top row
+const inbox = [];
+const net = createOnline({
+  container: document.querySelector(".g-page"),
+  before: document.querySelector(".scores"),
+  prefix: "zone210-oware-",
+  names: ["Bottom row", "Top row"],
+  onStart: ({ role }) => { myP = role; inbox.length = 0; newGame(); },
+  onData: (m) => { if (online() && Number.isInteger(m.i)) { inbox.push(m.i); drain(); } },
+  onLeft: () => { inbox.length = 0; markPlayable(); say("Your friend left the game."); },
+});
+function drain() {
+  if (!online() || busy || !net.active || status(state).over || state.turn !== 1 - myP || !inbox.length) return;
+  const i = inbox.shift();
+  if (legalMoves(state).includes(i)) play(i);
+}
 let state = newState();
 let shown = state.pits.slice(); // what the board is currently displaying (updates step by step while sowing)
 let shownStore = [0, 0];
@@ -96,12 +114,12 @@ function paint() {
   $("storeN").textContent = shownStore[1];
 }
 
-const names = () => (opts.mode === "cpu" ? ["You", "Computer"] : ["Player 1 (bottom)", "Player 2 (top)"]);
+const names = () => (opts.mode === "cpu" ? ["You", "Computer"] : online() ? (myP === 0 ? ["You (bottom)", "Friend (top)"] : ["Friend (bottom)", "You (top)"]) : ["Player 1 (bottom)", "Player 2 (top)"]);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function markPlayable() {
   const moves = busy || status(state).over ? [] : legalMoves(state);
-  const human = (p) => opts.mode === "two" || p === 0;
+  const human = (p) => (online() ? net.active && p === myP : opts.mode === "two" || p === 0);
   pitEls.forEach((el, i) => {
     const on = moves.includes(i) && human(state.turn);
     el.classList.toggle("playable", on);
@@ -123,6 +141,8 @@ function newGame() {
   winEl.classList.remove("show");
   state = newState();
   state.turn = opts.mode === "cpu" && opts.first === "cpu" ? 1 : 0;
+  net.setOver(false);
+  $("again").textContent = "Play again";
   shown = state.pits.slice();
   shownStore = [0, 0];
   busy = false;
@@ -133,6 +153,11 @@ function newGame() {
 
 function promptTurn() {
   const n = names();
+  if (online()) {
+    if (!net.active) say("Create or join a room to start.");
+    else say(state.turn === myP ? "Your turn. Pick a pit on your side." : "Your friend's turn…");
+    return;
+  }
   if (opts.mode === "cpu" && state.turn === 1) {
     say("Computer is thinking…");
     busy = true;
@@ -152,6 +177,10 @@ function humanMove(i) {
   if (busy) return;
   if (!legalMoves(state).includes(i)) return;
   if (opts.mode === "cpu" && state.turn !== 0) return;
+  if (online()) {
+    if (!net.active || state.turn !== myP) return;
+    net.send({ i });
+  }
   play(i);
 }
 
@@ -200,6 +229,7 @@ async function play(from) {
   if (st.over) return finish(st);
   markPlayable();
   promptTurn();
+  drain();
   return undefined;
 }
 
@@ -217,10 +247,12 @@ function finish(st) {
     $("winTitle").textContent = "It's a draw!";
   } else {
     $("winEmoji").textContent = opts.mode === "cpu" && st.winner === 1 ? "🤖" : "🏆";
-    $("winTitle").textContent = opts.mode === "cpu" ? (st.winner === 0 ? "You win!" : "The computer wins.") : `${n[st.winner]} wins!`;
+    $("winTitle").textContent = opts.mode === "cpu" ? (st.winner === 0 ? "You win!" : "The computer wins.") : online() ? (st.winner === myP ? "You win!" : "Your friend wins.") : `${n[st.winner]} wins!`;
   }
   $("winText").textContent = `Final score: ${a} to ${b}.`;
   say(`Game over: ${a} to ${b}.`);
+  net.setOver(true);
+  $("again").textContent = online() ? "Rematch" : "Play again";
   setTimeout(() => winEl.classList.add("show"), 700);
 }
 
@@ -235,6 +267,8 @@ function wire(id, key) {
     if (key === "mode") {
       $("levelRow").hidden = opts.mode !== "cpu";
       $("startRow").hidden = opts.mode !== "cpu";
+      $("restart").hidden = online();
+      if (online()) net.open(); else net.close();
     }
     newGame();
   });
@@ -243,7 +277,7 @@ wire("mode", "mode");
 wire("level", "level");
 wire("first", "first");
 $("restart").addEventListener("click", newGame);
-$("again").addEventListener("click", newGame);
+$("again").addEventListener("click", () => (online() ? net.rematch() : newGame()));
 $("mute").addEventListener("click", (e) => {
   muted = !muted;
   e.currentTarget.textContent = muted ? "Sound Off" : "Sound On";
@@ -253,4 +287,11 @@ $("mute").addEventListener("click", (e) => {
 build();
 newGame();
 // exposed for automated checks
-window.__oware = { get state() { return state; }, seedsOn };
+window.__oware = { get state() { return state; }, seedsOn, get myP() { return myP; }, get busy() { return busy; } };
+
+// invite link (?room=CODE)
+const invited = net.roomParam();
+if (invited) {
+  $("mode").querySelector('[data-value="online"]').click();
+  net.join(invited);
+}

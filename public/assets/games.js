@@ -82,6 +82,7 @@ export const GAMES = [
   },
   {
     id: "oware",
+    online: true,
     title: "Oware",
     tagline: "The classic seed-sowing game of Ghana and West Africa. Out-plan the computer or a friend.",
     audience: "all",
@@ -122,8 +123,9 @@ export const GAMES = [
   },
   {
     id: "connect-four",
+    online: true,
     title: "Connect Four",
-    tagline: "Drop discs and line up four in a row. Play a friend or a computer that gets smarter on Hard.",
+    tagline: "Drop discs and line up four in a row. Play a friend online or on one device, or a computer that gets smarter on Hard.",
     audience: "all",
     tags: ["Board", "Strategy"],
     players: "1–2 players",
