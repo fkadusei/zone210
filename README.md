@@ -11,7 +11,7 @@ saved games stay on the player's own device.
 | **Ghana Ludo** | Everyone | three.js board, online rooms (peer-to-peer), computer players, Easy/Normal/Hard |
 | **Chess** | Everyone | 3D board (2D option), full rules, computer at three levels, online play by room code, clocks, hints, undo, saved games |
 | **Oware** | Everyone | Ghana's traditional mancala (Abapa rules), vs computer or 2 players |
-| **Quizzz Time** | Everyone | 76 questions; Kids / Family / Adults levels, timer optional |
+| **Quizzz Time** | Everyone | 900+ questions in 16 topics plus endless fresh maths (hand-written plus generated capitals, flags and maths); never repeats until you've seen them all; Kids / Family / Adults levels, timer optional |
 | **Connect Four** | Everyone | minimax computer with three levels, or 2 players |
 | **Math Cross** | Everyone | crossword-style sums, four levels up to an 11x11 grid, hints, undo, keyboard entry, timer and best times |
 | **24 Game** | Everyone | make 24 from four numbers, three levels (some need fractions), hints, answers, 90-second sprint, best times |

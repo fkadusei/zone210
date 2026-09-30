@@ -1,4 +1,29 @@
-import { QUESTIONS } from "./questions.js";
+import { QUESTIONS as CORE } from "./questions.js";
+import { MORE_QUESTIONS, TOPICS } from "./more-questions.js";
+import { countryQuestions, mathQuestions } from "./generated.js";
+
+// hand-written questions plus generated ones (capitals, flags, continents, fresh arithmetic each round)
+const dedupe = (list) => {
+  const seen = new Set();
+  return list.filter((q) => (seen.has(q.q) ? false : seen.add(q.q)));
+};
+let QUESTIONS = dedupe([...CORE, ...MORE_QUESTIONS, ...countryQuestions(), ...mathQuestions(90)]);
+const TOPIC_ICON = { Ghana: "🇬🇭", Africa: "🌍", World: "🌐", Science: "🔬", Nature: "🦁", Space: "🚀", History: "🏛️", Geography: "🗺️", Sports: "⚽", Music: "🎵", "Movies & TV": "🎬", Food: "🍲", Technology: "💻", Maths: "➗", "Art & Books": "📚", Words: "🔤" };
+const SEEN_KEY = "zone210_quiz_seen";
+const readSeen = () => {
+  try {
+    return JSON.parse(localStorage.getItem(SEEN_KEY) || "{}");
+  } catch (err) {
+    return {};
+  }
+};
+const writeSeen = (v) => {
+  try {
+    localStorage.setItem(SEEN_KEY, JSON.stringify(v));
+  } catch (err) {
+    /* storage unavailable */
+  }
+};
 
 const $ = (id) => document.getElementById(id);
 const ROUND = 10;
@@ -31,9 +56,29 @@ function levelMatches(l) {
 }
 
 function pool() {
-  let p = QUESTIONS.filter((q) => levelMatches(q.l) && (opts.topic === "All" || q.c === opts.topic));
-  if (p.length < 5) p = QUESTIONS.filter((q) => levelMatches(q.l)); // thin topic: fall back to all topics
+  const level = QUESTIONS.filter((q) => levelMatches(q.l));
+  let p = level.filter((q) => opts.topic === "All" || q.c === opts.topic);
+  // a thin topic is topped up with other topics so a round is always full
+  if (p.length < ROUND * 2) p = p.concat(shuffle(level.filter((q) => !p.includes(q))).slice(0, ROUND * 2 - p.length));
   return p;
+}
+
+// questions you have not seen yet come first, so a round never repeats what you just played
+function pick() {
+  const all = pool();
+  const seenAll = readSeen();
+  const key = `${opts.aud}|${opts.topic}`;
+  const seen = new Set(seenAll[key] || []);
+  let fresh = all.filter((q) => !seen.has(q.q));
+  if (fresh.length < ROUND) {
+    seen.clear(); // everything has been played: start a new cycle
+    fresh = all;
+  }
+  const chosen = shuffle(fresh).slice(0, ROUND);
+  chosen.forEach((q) => seen.add(q.q));
+  seenAll[key] = [...seen];
+  writeSeen(seenAll);
+  return chosen;
 }
 
 function wire(id, key) {
@@ -45,18 +90,20 @@ function wire(id, key) {
     showBest();
   });
 }
+$("topic").innerHTML = ["All", ...TOPICS].map((t) => `<button class="g-chip" data-value="${t}" aria-pressed="${t === "All"}">${t === "All" ? "🎲 All topics" : `${TOPIC_ICON[t] || ""} ${t}`}</button>`).join("");
 wire("aud", "aud");
 wire("topic", "topic");
 wire("timer", "timer");
 
 function showBest() {
   const best = Number(localStorage.getItem(bestKey(opts.aud)) || 0);
-  const n = Math.min(ROUND, pool().length);
-  $("best").textContent = `${n} questions${best ? ` · Your best (${opts.aud}): ${best} points` : ""}`;
+  const n = pool().length;
+  $("best").textContent = `${ROUND} questions per round from ${n} in this mix${best ? ` · Your best (${opts.aud}): ${best} points` : ""}`;
 }
 
 function start() {
-  round = shuffle(pool()).slice(0, ROUND);
+  QUESTIONS = dedupe([...QUESTIONS.filter((q) => !(q.gen && q.c === "Maths")), ...mathQuestions(90)]);
+  round = pick();
   idx = 0;
   score = 0;
   streak = 0;
@@ -76,7 +123,7 @@ function show() {
   $("qn").textContent = `${idx + 1}/${round.length}`;
   $("score").textContent = score;
   $("streak").textContent = streak;
-  $("qtopic").textContent = q.c === "Ghana" ? "🇬🇭 Ghana" : q.c === "Africa" ? "🌍 Africa" : "🌐 World";
+  $("qtopic").textContent = `${TOPIC_ICON[q.c] || "❓"} ${q.c}`;
   $("qtext").textContent = q.q;
   $("why").textContent = "";
   $("next").hidden = true;

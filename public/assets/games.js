@@ -89,7 +89,7 @@ export const GAMES = [
   {
     id: "quiz",
     title: "Quizzz Time",
-    tagline: "Ten questions about Ghana, Africa and the world, with levels for kids, families and adults.",
+    tagline: "Ten questions a round from 900+ across 16 topics, plus fresh maths every time, from Ghana and Africa to science, space, sports and more.",
     audience: "all",
     tags: ["Trivia", "Learning", "Offline"],
     players: "1 player",
