@@ -21,6 +21,9 @@ saved games stay on the player's own device.
 | **Snakes & Ladders** | Kids | classic 100-square board, 1-4 players, vs computer, or online with a friend, animated dice, optional bonus roll on a 6 |
 | **Checkers** | Everyone | compulsory captures, multi-jumps, kings, three computer levels, hints and undo, or online with a friend |
 | **Dame** | Everyone | Ghanaian draughts on a wooden board: men capture backwards, flying kings, optional captures (you may skip one), three computer levels, hints and undo, and online play by room code (peer to peer, same as Chess) |
+| **Reversi** | Everyone | 8x8 flipping board, three computer levels (alpha-beta with corner and mobility play, exact endgame on Hard), hints, undo, vs computer, 2 players, or online with a friend |
+| **Backgammon** | Everyone | full rules (bar, hitting, bearing off, must-play-maximum-dice, gammons), three computer levels (risk-aware, one-roll lookahead on Hard), hints, undo, vs computer, 2 players, or online with a friend |
+| **Dominoes** | Everyone | double-six draw game, single round or first to 100, three computer levels (Hard tracks the numbers you are out of), hot-seat hand-over screen, vs computer, 2 players, or online with a friend |
 | **Dots & Boxes** | Everyone | 3x3 to 5x5 boards, vs computer (three levels), a friend, or online with a friend, chain-aware computer |
 | **Battleship** | Everyone | place your fleet by hand or randomly, three computer levels (smart targeting on Hard), or online with a friend |
 | **Memory Match** | Kids | themes, three sizes, 1–2 players or online with a friend |
