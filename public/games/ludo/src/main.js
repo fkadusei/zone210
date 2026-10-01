@@ -674,6 +674,7 @@ function buildSnapshot(withPending = false) {
 function finishAction() {
   ui.actionSeq += 1;
   if (!online.active) return;
+  if (online.role === "client" && allDone()) clearGuest();
   if (online.role === "host") online.link.broadcast({ t: "state", snap: buildSnapshot() });
   else reconcile();
 }
@@ -1209,15 +1210,44 @@ async function joinRoom(code) {
   }
 }
 
+// A guest remembers the room in this tab (the host keeps the game, the token in sessionStorage returns the seat),
+// so a reload or a dropped connection rejoins automatically. The home page reads this key for its Resume banner.
+const GUEST_KEY = "z210_online_ludo";
+const readGuest = () => { try { return JSON.parse(sessionStorage.getItem(GUEST_KEY)); } catch (err) { return null; } };
+const saveGuest = () => { try { sessionStorage.setItem(GUEST_KEY, JSON.stringify({ path: window.location.pathname, code: online.code, name: online.name })); } catch (err) { /* private mode */ } };
+const clearGuest = () => { try { sessionStorage.removeItem(GUEST_KEY); } catch (err) { /* ignore */ } };
+let rejoining = false;
+async function autoRejoin(rec) {
+  if (rejoining) return;
+  rejoining = true;
+  setStatus("Reconnecting to your game…");
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    online.welcomed = false;
+    el.onlineName.value = rec.name || loadName() || "Player";
+    await joinRoom(rec.code);
+    for (let t = 0; t < 40 && !online.welcomed; t += 1) await new Promise((r) => setTimeout(r, 300));
+    if (online.welcomed) { rejoining = false; return; }
+    try { online.link?.close(); } catch (err) { /* ignore */ }
+    await new Promise((r) => setTimeout(r, 2500));
+  }
+  rejoining = false;
+  clearGuest();
+  online.active = false;
+  setStatus("Could not get back into the room. It may have closed.");
+  openOnlineModal();
+}
+
 function clientOnData(msg) {
   if (!msg || typeof msg !== "object") return;
   switch (msg.t) {
     case "welcome":
       clearTimeout(online.pendingJoin);
+      online.welcomed = true;
       online.mySeat = msg.seat;
       online.seats = msg.seats;
       online.phase = msg.phase;
       enterOnline("client", online.code);
+      saveGuest();
       online.phase = msg.phase;
       renderLobby();
       scene.setViewSeat(online.mySeat);
@@ -1229,6 +1259,7 @@ function clientOnData(msg) {
       break;
     case "reject":
       clearTimeout(online.pendingJoin);
+      if (online.role === "client") clearGuest();
       showOnlineError(msg.reason || "Could not join.");
       if (online.active) {
         setStatus(msg.reason || "Removed from the room.");
@@ -1275,6 +1306,15 @@ function clientOnData(msg) {
 function clientOnClose() {
   if (!online.active) {
     showOnlineError("Lost connection to the room.");
+    return;
+  }
+  const rec = readGuest();
+  if (rec && online.role === "client" && !rejoining && !allDone()) {
+    online.ended = true;
+    updateBadge();
+    scene.setSelectable([]);
+    refreshControls();
+    autoRejoin(rec);
     return;
   }
   online.ended = true;
@@ -1445,6 +1485,7 @@ function startSolo(color, opponents, level) {
 }
 
 function leaveRoom() {
+  clearGuest();
   if (online.solo) clearSoloSaved(); // leaving on purpose ends the saved solo game
   try {
     online.link?.close();
@@ -1632,6 +1673,10 @@ if (!roomParam && tryRestoreSolo()) {
 }
 el.loading.classList.add("done");
 scene.intro();
+{
+  const rec = readGuest();
+  if (rec && !roomParam && !online.active && /^[A-Z0-9]{5}$/.test(rec.code || "")) autoRejoin(rec);
+}
 
 // Handle for automated checks in the browser console.
 window.__ludo = { game, ui, scene, online, handleTokenClick, requestRoll, audio };
