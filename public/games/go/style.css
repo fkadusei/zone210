@@ -1,0 +1,7 @@
+#mb { background: linear-gradient(145deg, #e0b878, #c4934f); }
+#mb .pt { cursor: pointer; fill: transparent; }
+#mb .pt.dead { cursor: default; }
+#mb .gp { cursor: pointer; }
+.scorebox { margin: 12px auto 0; max-width: 560px; text-align: center; }
+.scorebox p { margin: 0 0 10px; line-height: 1.5; }
+.pbar .cp { color: var(--muted); font-weight: 600; }
