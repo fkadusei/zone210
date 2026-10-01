@@ -1,0 +1,66 @@
+.tabs { margin-bottom: 14px; }
+.panel { padding: 16px 18px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); margin-bottom: 14px; }
+.panel h2 { margin: 0 0 10px; font-size: 1.15rem; }
+.lbl { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; display: block; }
+.muted { color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.row.between { justify-content: space-between; }
+.row.center { justify-content: center; }
+.den-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.den-chips .g-chip { min-width: 44px; justify-content: center; }
+
+/* fraction notation */
+.frac { display: inline-grid; justify-items: center; line-height: 1.1; font-weight: 900; font-variant-numeric: tabular-nums; vertical-align: middle; margin: 0 4px; }
+.frac b { padding: 0 6px; }
+.frac i { display: block; width: 100%; height: 3px; border-radius: 2px; background: currentColor; margin: 2px 0; }
+.frac.big { font-size: 2.6rem; }
+.frac.mid { font-size: 1.7rem; }
+.fa { color: var(--fa, #e64980); }
+.fb2 { color: var(--fb, #228be6); }
+
+/* shapes */
+.shape { display: grid; justify-items: center; gap: 8px; }
+.pie { width: min(100%, 260px); height: auto; }
+.bar { width: 100%; height: auto; display: block; }
+.seg { fill: var(--surface-2); stroke: var(--surface); stroke-width: 3; transition: fill 0.15s; }
+.seg.on { fill: var(--c, #e64980); }
+.tap .seg { cursor: pointer; }
+.tap .seg:hover { filter: brightness(1.12); }
+.seg:focus-visible { outline: none; stroke: var(--focus); stroke-width: 4; }
+.outline { fill: none; stroke: var(--line-strong); stroke-width: 2; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 14px; align-items: center; }
+@media (max-width: 560px) { .two { grid-template-columns: minmax(0, 1fr); justify-items: center; } .two .shape { width: 100%; } }
+.op { font-size: 2.2rem; font-weight: 900; color: var(--muted); }
+
+.explore { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: center; }
+@media (max-width: 680px) { .explore { grid-template-columns: minmax(0, 1fr); } }
+.facts { display: grid; gap: 8px; }
+.facts .line { padding: 8px 12px; border-radius: 12px; background: var(--surface-2); font-weight: 700; }
+.facts .line b { color: var(--blue); }
+.nl { width: 100%; height: auto; margin-top: 12px; }
+.nl text { fill: var(--muted); font-size: 12px; font-weight: 700; text-anchor: middle; }
+.nl .axis { stroke: var(--line-strong); stroke-width: 3; stroke-linecap: round; }
+.nl .tick { stroke: var(--line-strong); stroke-width: 2; }
+.nl .mk { fill: var(--c, #e64980); stroke: var(--surface); stroke-width: 2; }
+.nl .ans { fill: var(--green); stroke: var(--surface); stroke-width: 2; }
+
+/* quiz */
+.qa { min-height: 150px; display: grid; gap: 14px; justify-items: center; align-content: center; padding: 6px 0; text-align: center; }
+.prompt { font-size: 1.15rem; font-weight: 800; }
+.choices { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.choices button, .btnbig { font: inherit; font-size: 2rem; font-weight: 900; min-width: 76px; padding: 10px 18px; border-radius: 16px; border: 2px solid var(--line-strong); background: var(--surface-2); color: var(--ink); cursor: pointer; }
+.choices button:hover, .choices button:focus-visible { border-color: var(--gold); outline: none; }
+.choices button.right { background: color-mix(in srgb, var(--green) 30%, transparent); border-color: var(--green); }
+.choices button.wrong { background: color-mix(in srgb, var(--red) 28%, transparent); border-color: var(--red); }
+.fbk { min-height: 1.5em; margin: 10px 0 4px; font-weight: 800; text-align: center; line-height: 1.5; }
+.fbk.good { color: var(--green); }
+.fbk.bad { color: var(--red); }
+.fbk small { display: block; font-weight: 500; color: var(--muted); font-size: 0.88rem; }
+.stepper { display: inline-grid; justify-items: center; gap: 4px; }
+.stepper input { width: 4.2em; font: inherit; font-size: 1.6rem; font-weight: 900; text-align: center; padding: 6px; border-radius: 12px; border: 2px solid var(--line-strong); background: var(--surface-2); color: var(--ink); }
+.stepper input:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+.stepper hr { width: 100%; border: 0; height: 3px; border-radius: 2px; background: var(--ink); margin: 2px 0; }
+.eqrow { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.sum { text-align: center; }
+.sum .big { font-size: 2.6rem; font-weight: 900; margin: 4px 0; }
+.score { font-weight: 800; }

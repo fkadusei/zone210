@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Times Tables Trainer · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Times Tables Trainer</h1>
+          <p>Learn the tables, practise the ones you find tricky, and race the clock.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+        </div>
+      </div>
+
+      <div class="g-chips tabs" id="tabs" role="tablist" aria-label="Activities">
+        <button class="g-chip" role="tab" data-tab="learn" aria-pressed="true">📖 Learn</button>
+        <button class="g-chip" role="tab" data-tab="practice" aria-pressed="false">✏️ Practice</button>
+        <button class="g-chip" role="tab" data-tab="speed" aria-pressed="false">⚡ Speed round</button>
+        <button class="g-chip" role="tab" data-tab="progress" aria-pressed="false">🗺️ My progress</button>
+      </div>
+
+      <section id="view" aria-live="polite"></section>
+    </main>
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
