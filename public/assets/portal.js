@@ -177,3 +177,41 @@ filtersEl.addEventListener("click", (e) => {
 });
 
 render();
+
+// unfinished online games in this tab (saved by assets/online.js): offer to jump back in
+function drawResume() {
+  const box = $("resume");
+  const found = [];
+  try {
+    for (let i = 0; i < sessionStorage.length; i += 1) {
+      const key = sessionStorage.key(i);
+      if (!key.startsWith("z210_online_")) continue;
+      const rec = JSON.parse(sessionStorage.getItem(key));
+      const id = rec && rec.path && (rec.path.match(/\/games\/([^/]+)\//) || [])[1];
+      const game = GAMES.find((g) => g.id === id);
+      if (game) found.push({ key, rec, game });
+    }
+  } catch (err) { /* storage unavailable */ }
+  box.hidden = !found.length;
+  box.innerHTML = "";
+  found.forEach(({ key, rec, game }) => {
+    const row = document.createElement("div");
+    row.className = "resume-row";
+    const text = document.createElement("span");
+    text.innerHTML = `<b>🌐 ${game.title}</b> · online game in progress · room ${rec.code}`;
+    const go = document.createElement("a");
+    go.className = "resume-go";
+    go.href = `games/${game.id}/`;
+    go.textContent = "Resume game";
+    const drop = document.createElement("button");
+    drop.type = "button";
+    drop.className = "resume-drop";
+    drop.textContent = "Forget";
+    drop.title = "Stop waiting for this game";
+    drop.addEventListener("click", () => { try { sessionStorage.removeItem(key); } catch (err) { /* ignore */ } drawResume(); });
+    row.append(text, go, drop);
+    box.appendChild(row);
+  });
+}
+drawResume();
+window.addEventListener("pageshow", drawResume);

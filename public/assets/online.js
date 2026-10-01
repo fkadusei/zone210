@@ -78,7 +78,7 @@ export function createOnline(o) {
     if (!canResume || !st.started || !st.code) return;
     let state;
     try { state = o.getState(); } catch (e) { return; }
-    mem.write({ code: st.code, host: st.isHost, role: st.role, seed: st.seed, n: st.n, info: st.info, over: st.over, side: st.side, seq: st.seq, state });
+    mem.write({ path: location.pathname, code: st.code, host: st.isHost, role: st.role, seed: st.seed, n: st.n, info: st.info, over: st.over, side: st.side, seq: st.seq, state });
   }
   let persistTimer = 0;
   const persistSoon = () => { if (!canResume) return; clearTimeout(persistTimer); persistTimer = setTimeout(persist, 250); };
