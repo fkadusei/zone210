@@ -7,7 +7,11 @@ const searchEl = $("search");
 const countEl = $("count");
 
 const AUDIENCE_LABEL = { kids: "Kids", adults: "Adults", all: "Everyone" };
-const state = { audience: "all", query: "" };
+const state = { audience: "all", query: "", filter: "all" };
+const NEW_DAYS = 10;
+const isNew = (g) => !!g.added && (Date.now() - new Date(g.added + "T00:00:00").getTime()) / 864e5 <= NEW_DAYS;
+const CATS = { strategy: "♟️ Strategy", family: "🎲 Family", puzzles: "🧩 Puzzles", learn: "🔬 Learn", fun: "🎨 Arcade & art" };
+const FILTERS = [["all", "All"], ["online", "🌐 Play online"], ["new", "✨ New"], ...Object.entries(CATS)];
 
 // Restore the audience tab from the URL hash, e.g. #kids or #adults
 const hash = window.location.hash.replace("#", "");
@@ -16,6 +20,9 @@ if (["kids", "adults"].includes(hash)) state.audience = hash;
 function matches(game) {
   // "kids" shows kids + everyone games; "adults" shows adults + everyone games
   if (state.audience !== "all" && game.audience !== "all" && game.audience !== state.audience) return false;
+  if (state.filter === "online" && !game.online) return false;
+  if (state.filter === "new" && !isNew(game)) return false;
+  if (CATS[state.filter] && game.cat !== state.filter) return false;
   const q = state.query.trim().toLowerCase();
   if (q && !`${game.title} ${game.tagline} ${game.tags.join(" ")} ${game.online ? "online" : ""}`.toLowerCase().includes(q)) return false;
   return true;
@@ -79,6 +86,12 @@ function card(game, index) {
   meta.append(aud, players);
   body.append(row, p, meta);
 
+  if (isNew(game)) {
+    const nw = document.createElement("span");
+    nw.className = "flag fresh";
+    nw.textContent = "✨ New";
+    art.appendChild(nw);
+  }
   if (game.online) {
     const on = document.createElement("span");
     on.className = "flag online";
@@ -116,6 +129,7 @@ function render() {
   grid.innerHTML = "";
   list.forEach((g, i) => grid.appendChild(card(g, i)));
   emptyEl.hidden = list.length > 0;
+  drawFilters();
   countEl.textContent = `${list.length} ${list.length === 1 ? "game" : "games"}`;
 }
 
@@ -135,9 +149,31 @@ searchEl.addEventListener("input", () => {
 });
 
 $("surprise").addEventListener("click", () => {
-  const pool = GAMES.filter((g) => state.audience === "all" || g.audience === "all" || g.audience === state.audience);
+  const pool = GAMES.filter(matches);
+  if (!pool.length) return;
   const pick = pool[Math.floor(Math.random() * pool.length)];
   window.location.href = `games/${pick.id}/`;
+});
+
+const filtersEl = $("filters");
+function matchesWith(g, k) {
+  const old = state.filter;
+  state.filter = k;
+  const r = matches(g);
+  state.filter = old;
+  return r;
+}
+function drawFilters() {
+  const n = (k) => GAMES.filter((g) => matchesWith(g, k)).length;
+  filtersEl.innerHTML = FILTERS.filter(([k]) => k !== "new" || n("new") > 0)
+    .map(([k, label]) => `<button class="fchip" type="button" data-f="${k}" aria-pressed="${k === state.filter}">${label}<span>${n(k)}</span></button>`)
+    .join("");
+}
+filtersEl.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-f]");
+  if (!b) return;
+  state.filter = b.dataset.f;
+  render();
 });
 
 render();
