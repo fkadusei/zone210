@@ -8,10 +8,16 @@ const countEl = $("count");
 
 const AUDIENCE_LABEL = { kids: "Kids", adults: "Adults", all: "Everyone" };
 const state = { audience: "all", query: "", filter: "all" };
+// favorites live on this device only
+const FAV_KEY = "zone210_favorites";
+let favs = new Set();
+try { favs = new Set(JSON.parse(localStorage.getItem(FAV_KEY)) || []); } catch (err) { /* storage unavailable */ }
+const saveFavs = () => { try { localStorage.setItem(FAV_KEY, JSON.stringify([...favs])); } catch (err) { /* private mode */ } };
+const STAR = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 2.8l2.8 6 6.5.7-4.9 4.4 1.4 6.4L12 17l-5.8 3.3 1.4-6.4L2.7 9.5l6.5-.7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
 const NEW_DAYS = 10;
 const isNew = (g) => !!g.added && (Date.now() - new Date(g.added + "T00:00:00").getTime()) / 864e5 <= NEW_DAYS;
 const CATS = { strategy: "♟️ Strategy", family: "🎲 Family", puzzles: "🧩 Puzzles", learn: "🔬 Learn", fun: "🎨 Arcade & art" };
-const FILTERS = [["all", "All"], ["online", "🌐 Play online"], ["new", "✨ New"], ...Object.entries(CATS)];
+const FILTERS = [["all", "All"], ["fav", "⭐ Favorites"], ["online", "🌐 Play online"], ["new", "✨ New"], ...Object.entries(CATS)];
 
 // Restore the audience tab from the URL hash, e.g. #kids or #adults
 const hash = window.location.hash.replace("#", "");
@@ -21,6 +27,7 @@ function matches(game) {
   // "kids" shows kids + everyone games; "adults" shows adults + everyone games
   if (state.audience !== "all" && game.audience !== "all" && game.audience !== state.audience) return false;
   if (state.filter === "online" && !game.online) return false;
+  if (state.filter === "fav" && !favs.has(game.id)) return false;
   if (state.filter === "new" && !isNew(game)) return false;
   if (CATS[state.filter] && game.cat !== state.filter) return false;
   const q = state.query.trim().toLowerCase();
@@ -101,6 +108,25 @@ function card(game, index) {
 
   a.append(art, body);
   li.appendChild(a);
+  const star = document.createElement("button");
+  star.type = "button";
+  star.className = "fav-btn";
+  star.innerHTML = STAR;
+  const on = favs.has(game.id);
+  star.setAttribute("aria-pressed", String(on));
+  star.setAttribute("aria-label", `${on ? "Remove" : "Add"} ${game.title} ${on ? "from" : "to"} favorites`);
+  star.title = on ? "Remove from favorites" : "Add to favorites";
+  star.addEventListener("click", () => {
+    if (favs.has(game.id)) favs.delete(game.id); else favs.add(game.id);
+    saveFavs();
+    const y = window.scrollY;
+    render();
+    window.scrollTo(0, y);
+    const again = grid.querySelector(`.fav-btn[data-id="${game.id}"]`);
+    if (again) again.focus({ preventScroll: true });
+  });
+  star.dataset.id = game.id;
+  li.appendChild(star);
 
   // gentle 3D tilt that follows the pointer (mouse only)
   if (window.matchMedia("(hover: hover) and (pointer: fine)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -125,9 +151,17 @@ function card(game, index) {
 }
 
 function render() {
+  if (state.filter === "fav" && !favs.size) state.filter = "all"; // last favorite removed while filtering by favorites
   const list = GAMES.filter(matches);
   grid.innerHTML = "";
-  list.forEach((g, i) => grid.appendChild(card(g, i)));
+  const top = list.filter((g) => favs.has(g.id));
+  const rest = list.filter((g) => !favs.has(g.id));
+  const heading = (text) => { const h = document.createElement("li"); h.className = "group"; h.textContent = text; grid.appendChild(h); };
+  let i = 0;
+  if (top.length && state.filter !== "fav") heading("⭐ Your favorites");
+  top.forEach((g) => grid.appendChild(card(g, i++)));
+  if (top.length && rest.length && state.filter !== "fav") heading("All games");
+  rest.forEach((g) => grid.appendChild(card(g, i++)));
   emptyEl.hidden = list.length > 0;
   drawFilters();
   countEl.textContent = `${list.length} ${list.length === 1 ? "game" : "games"}`;
@@ -165,7 +199,8 @@ function matchesWith(g, k) {
 }
 function drawFilters() {
   const n = (k) => GAMES.filter((g) => matchesWith(g, k)).length;
-  filtersEl.innerHTML = FILTERS.filter(([k]) => k !== "new" || n("new") > 0)
+  if (state.filter === "fav" && !favs.size) state.filter = "all";
+  filtersEl.innerHTML = FILTERS.filter(([k]) => (k !== "new" || n("new") > 0) && (k !== "fav" || favs.size > 0))
     .map(([k, label]) => `<button class="fchip" type="button" data-f="${k}" aria-pressed="${k === state.filter}">${label}<span>${n(k)}</span></button>`)
     .join("");
 }

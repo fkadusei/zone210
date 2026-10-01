@@ -291,3 +291,14 @@ body { overflow-x: hidden; }
 .resume-go:focus-visible, .resume-drop:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .resume-drop { font: inherit; font-weight: 700; font-size: 0.85rem; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 6px 8px; }
 .resume-drop:hover { color: var(--ink); }
+
+/* favorites */
+.grid > li { position: relative; }
+.grid > li.group { grid-column: 1 / -1; list-style: none; font-weight: 800; font-size: 1.05rem; letter-spacing: -0.01em; margin: 10px 0 -2px; color: var(--ink); }
+.fav-btn { position: absolute; z-index: 3; top: 46px; right: 12px; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border-radius: 50%; cursor: pointer; color: #fff; background: rgba(15, 18, 30, 0.55); border: 1.5px solid rgba(255, 255, 255, 0.6); backdrop-filter: none; transition: transform 0.12s, background 0.12s, color 0.12s; }
+.fav-btn:hover { transform: scale(1.1); background: rgba(15, 18, 30, 0.75); }
+.fav-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.fav-btn svg { fill: none; }
+.fav-btn[aria-pressed="true"] { color: #2b1f00; background: linear-gradient(180deg, #ffd15a, var(--gold)); border-color: #fff; }
+.fav-btn[aria-pressed="true"] svg { fill: currentColor; }
+html[data-saver] .fav-btn { transition: none; }
