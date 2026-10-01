@@ -52,6 +52,8 @@ saved games stay on the player's own device.
 
 Every two-player game has an Online mode (peer to peer via `assets/p2p.js`, no game server). `assets/online.js` is the shared room lobby: create a room and share the 5-letter code or invite link (`?room=CODE`), choose who goes first, rematch, and leave. Games with online play carry `online: true` in `assets/games.js`, which shows a "Play online" badge on their card.
 
+A page reload (or a dropped connection) no longer ends an online game: while playing, `online.js` keeps the room and position in `sessionStorage`, and the host reopens the room and the guest reconnects. A game opts in with `getState()` / `setState()` (see the header of `assets/online.js`); the two sides swap positions on reconnect and the one that has seen fewer moves takes the other's. Games with hidden information (Battleship, Mastermind) set `privateState` so secrets are never sent. Chess, Dame and Ghana Ludo have their own rejoin logic.
+
 ## Structure
 
 ```

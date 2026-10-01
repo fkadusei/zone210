@@ -51,6 +51,14 @@ const net = createOnline({
   onStart: ({ role }) => { myP = role === 0 ? 1 : 2; inbox.length = 0; newGame(); },
   onData: (m) => { inbox.push(m); drain(); },
   onLeft: () => { inbox.length = 0; draw(); setStatus("Your friend left the game."); },
+  getState: () => ({ s, over, last, reps: [...reps], noCap, rmMode, endOut, inbox: [...inbox] }),
+  setState: (st) => {
+    s = st.s; last = st.last; reps = new Map(st.reps); noCap = st.noCap; rmMode = st.rmMode; endOut = st.endOut;
+    sel = null; busy = false; hist = []; hintOpt = null; over = false;
+    inbox.length = 0; inbox.push(...st.inbox);
+    draw(); announce(); drain();
+    if (st.over && endOut) finish(endOut);
+  },
 });
 
 let s = initial();
@@ -58,6 +66,7 @@ let sel = null;
 let rmMode = false;
 let over = false;
 let busy = false;
+let endOut = null;
 let last = null;
 let hist = [];
 let reps = new Map();
@@ -231,6 +240,7 @@ async function cpuTurn() {
   }
 }
 function finish(out) {
+  endOut = out;
   over = true; busy = false;
   draw();
   const w = out.winner;

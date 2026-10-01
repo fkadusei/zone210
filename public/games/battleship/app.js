@@ -201,7 +201,37 @@ const net = createOnline({
   onStart: ({ role }) => { newGame(); turnMine = role === 0; },
   onData: (m) => onNet(m),
   onLeft: () => { awaiting = false; setStatus("Your friend left the game.", "bad"); },
+  // fleets are secret, so this is only saved on this device (never sent) and the two sides just resend what the reload lost
+  privateState: true,
+  onReconnect: () => {
+    if (phase === "placing" && myReady) net.send({ t: "ready" });
+    if (phase === "battle" && awaiting && lastShot >= 0) net.send({ t: "shot", i: lastShot });
+    renderBattleIfAny();
+  },
+  getState: () => ({ phase, placed, selectedShip, horizontal, mine, enemy, pShots, aShots, resolved: [...resolved], myReady, theirReady, turnMine, awaiting, lastShot, pendingShots, won: lastWon }),
+  setState: (g) => {
+    phase = g.phase; placed = g.placed; selectedShip = g.selectedShip; horizontal = g.horizontal; mine = g.mine; enemy = g.enemy;
+    pShots = g.pShots; aShots = g.aShots; resolved = new Set(g.resolved); myReady = g.myReady; theirReady = g.theirReady;
+    turnMine = g.turnMine; awaiting = g.awaiting; lastShot = g.lastShot; pendingShots = g.pendingShots; lastWon = g.won; busy = false;
+    $("end").classList.remove("show");
+    if (phase === "placing") {
+      $("placing").hidden = false; $("battle").hidden = true;
+      renderPlacing();
+      if (myReady) { $("start").disabled = true; $("random").disabled = $("clearShips").disabled = $("rotate").disabled = true; setStatus("Fleet locked in. Waiting for your friend to place their ships…"); }
+      return;
+    }
+    $("placing").hidden = true; $("battle").hidden = false;
+    buildGrid(enemyGridEl, fire);
+    buildGrid(myGridEl, () => {});
+    [...myGridEl.children].forEach((c) => (c.tabIndex = -1));
+    renderBattle();
+    if (phase === "over") { finish(lastWon); return; }
+    setStatus(turnMine ? "Your shot, Admiral. Tap a square in the enemy waters." : "Your friend fires…");
+  },
 });
+let lastShot = -1; // my shot waiting for its result
+let lastWon = false;
+const renderBattleIfAny = () => { if (phase === "battle" || phase === "over") renderBattle(); };
 function onNet(m) {
   if (!online() || !m) return;
   if (m.t === "ready") {
@@ -213,7 +243,14 @@ function onNet(m) {
   } else if (m.t === "res") onResult(m);
 }
 function onShot(i) {
-  if (turnMine || aShots[i]) return;
+  if (aShots[i]) {
+    // a shot I already answered (the friend reloaded and asked again): send the same answer
+    const idx = mine.occ[i];
+    const sunkNow = idx >= 0 && mine.ships[idx].hits >= SHIPS[idx].len;
+    net.send({ t: "res", i, hit: aShots[i] === 2, sunk: sunkNow, idx: idx >= 0 ? idx : undefined, cells: sunkNow ? mine.ships[idx].cells : undefined, over: allSunk(mine) });
+    return;
+  }
+  if (turnMine) return;
   const res = hitAt(mine, aShots, i);
   if (res.sunk) mine.ships[res.idx].cells.forEach((c) => resolved.add(c));
   const over = allSunk(mine);
@@ -450,7 +487,7 @@ function hitAt(fleet, shots, i) {
 async function fire(i) {
   if (online()) {
     if (phase !== "battle" || !net.active || !turnMine || awaiting || pShots[i]) return;
-    awaiting = true;
+    awaiting = true; lastShot = i;
     sfx.fire();
     net.send({ t: "shot", i });
     return;
@@ -491,6 +528,7 @@ async function enemyTurn() {
 }
 
 function finish(won) {
+  lastWon = won;
   phase = "over";
   busy = false;
   renderBattle();

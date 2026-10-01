@@ -59,6 +59,16 @@ const net = createOnline({
   },
   onData: (m) => { inbox.push(m); drain(); },
   onLeft: () => { inbox.length = 0; draw(); setStatus("Your friend left the game."); },
+  getState: () => ({ s: { ...s, b: [...s.b], seen: [...s.seen] }, phase, over, dead: [...dead], acc, lastCaps, endArgs, inbox: [...inbox] }),
+  setState: (st) => {
+    s = { ...st.s, b: Int8Array.from(st.s.b), seen: new Set(st.s.seen) };
+    phase = st.phase; dead = new Set(st.dead); acc = st.acc; lastCaps = st.lastCaps; endArgs = st.endArgs;
+    busy = false; hist = []; hintMove = -2; hover = -1; over = false;
+    $("end").classList.remove("show");
+    inbox.length = 0; inbox.push(...st.inbox);
+    draw(); announce(); drain();
+    if (st.over && endArgs) { over = true; endGame(...endArgs); }
+  },
 });
 function drain() {
   while (online() && net.active && inbox.length && !over && !busy) {
@@ -78,6 +88,7 @@ let s = null;
 let phase = "play"; // play | score | over
 let over = false;
 let busy = false;
+let endArgs = null;
 let hist = [];
 let dead = new Set();
 let acc = [false, false, false];
@@ -239,6 +250,7 @@ function finishResign(w) {
   endGame(w, `${cname(other(w))} resigned.`);
 }
 function endGame(w, text) {
+  endArgs = [w, text];
   draw();
   const you = cpu() ? w === humanC() : online() ? w === myC : true;
   const title = cpu() ? (you ? "You win!" : "The computer wins") : online() ? (you ? "You win!" : "Your friend wins.") : `${cname(w)} wins!`;

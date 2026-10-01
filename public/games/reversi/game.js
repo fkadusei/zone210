@@ -65,6 +65,14 @@ const net = createOnline({
   onStart: ({ role }) => { myColor = role === 0 ? 1 : 2; inbox.length = 0; newGame(); },
   onData: (m) => { if (online() && m && Number.isInteger(m.i)) { inbox.push(m.i); drain(); } },
   onLeft: () => { inbox.length = 0; render(); setStatus("Your friend left the game."); },
+  getState: () => ({ board, turn, over, last, passNote, inbox: [...inbox] }),
+  setState: (s) => {
+    board = s.board.slice(); turn = s.turn; over = s.over; last = s.last; passNote = s.passNote || "";
+    busy = false; hist = []; hintCell = -1;
+    inbox.length = 0; inbox.push(...s.inbox);
+    render(); announce(); drain();
+    if (over) { const n = count(board); const w = n.black === n.white ? 0 : n.black > n.white ? 1 : 2; setStatus(w === 0 ? "It's a draw!" : w === myColor ? "You win!" : "Your friend wins.", "good"); }
+  },
 });
 const inbox = [];
 function drain() {

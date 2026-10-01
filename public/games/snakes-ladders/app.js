@@ -275,8 +275,24 @@ const net = createOnline({
     newGame();
   },
   onData: (m) => { if (online() && m && Number.isInteger(m.v) && m.v >= 1 && m.v <= 6) { inbox.push(m.v); drain(); } },
-  onLeft: () => { inbox.length = 0; busy = false; rollBtn.disabled = true; setStatus("Your friend left the game.", "bad"); },
+  onLeft: () => { inbox.length = 0; busy = false; rollBtn.disabled = true; setStatus("Your friend left the game."); },
+  // a roll that is still animating is saved as "about to happen" (pawn back on its starting square), so a reload replays it
+  getState: () => ({ players: players.map((p, i) => ({ ...p, pos: pend && pend.idx === i ? pend.start : p.pos })), turn, over, pendV: pend ? pend.v : null, inbox: [...inbox] }),
+  setState: (g) => {
+    epoch += 1;
+    players = g.players.map((p, i) => ({ ...p, name: i === myIdx ? "You" : "Friend" }));
+    turn = g.turn; over = false; busy = false; pend = null;
+    $("end").classList.remove("show");
+    inbox.length = 0; inbox.push(...g.inbox);
+    view.setPlayers(players);
+    players.forEach((p, i) => view.setPos(i, p.pos));
+    renderPlayers();
+    if (g.over) { const w = players.findIndex((p) => p.pos === 100); win(players[w], w); return; }
+    if (g.pendV) { view.setTurn(turn); roll(g.pendV, true); return; }
+    beginTurn();
+  },
 });
+let pend = null; // the roll being animated { v, start, idx }
 function drain() {
   if (!online() || busy || over || !net.active || turn === myIdx || !inbox.length) return;
   roll(inbox.shift(), true);
@@ -299,7 +315,7 @@ function renderPlayers() {
 }
 
 function newGame() {
-  epoch += 1;
+  epoch += 1; pend = null;
   const count = settings.mode === "cpu" || online() ? 2 : Number(settings.mode);
   players = Array.from({ length: count }, (_, i) => ({
     name: settings.mode === "cpu" ? (i === 0 ? "You" : "Computer") : online() ? (i === myIdx ? "You" : "Friend") : NAMES[i],
@@ -353,6 +369,7 @@ async function roll(forced, remote = false) {
   const who = p.name === "You" ? "You" : p.name;
   const value = Number.isInteger(forced) ? forced : 1 + Math.floor(Math.random() * 6);
   if (online() && !remote) net.send({ v: value });
+  pend = { v: value, start: p.pos, idx };
   sfx.roll();
   await view.rollDice(value);
   if (stale()) return;
@@ -395,7 +412,7 @@ async function roll(forced, remote = false) {
 }
 
 function endTurn(again) {
-  busy = false;
+  busy = false; pend = null;
   if (!again) turn = (turn + 1) % players.length;
   beginTurn();
   if (again) setStatus(`${players[turn].name === "You" ? "You" : players[turn].name} rolled a 6, so roll again!`, "good");
@@ -403,7 +420,7 @@ function endTurn(again) {
 
 function win(p, idx) {
   over = true;
-  busy = false;
+  busy = false; pend = null;
   rollBtn.disabled = true;
   view.setDiceEnabled(false);
   view.setTurn(-1);

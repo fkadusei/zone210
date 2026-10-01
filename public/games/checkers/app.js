@@ -224,7 +224,24 @@ const net = createOnline({
   onStart: ({ role }) => { myColor = role === 0 ? "r" : "w"; inbox.length = 0; newGame(); },
   onData: (m) => { if (online() && m && Number.isInteger(m.from)) { inbox.push(m); drain(); } },
   onLeft: () => { inbox.length = 0; busy = false; render(); setStatus("Your friend left the game."); },
+  // a move that is still animating is saved as "about to happen", so a reload replays it
+  getState: () => ({ board, turn, halfMoves, last, pendMv, inbox: [...inbox] }),
+  setState: (g) => {
+    board = g.board; turn = g.turn; halfMoves = g.halfMoves; last = g.last; pendMv = null;
+    ids = board.map((p) => (p ? nextId++ : null));
+    els.forEach((el) => el.remove());
+    els.clear();
+    piecesEl.innerHTML = "";
+    history = []; selected = -1; hintMove = null; over = false; busy = false;
+    $("end").classList.remove("show");
+    inbox.length = 0; inbox.push(...g.inbox);
+    render();
+    if (g.pendMv) { play(g.pendMv); return; }
+    if (checkEnd()) return;
+    announce(); drain();
+  },
 });
+let pendMv = null; // the move being animated
 function drain() {
   if (!online() || busy || over || !net.active || turn === myColor || !inbox.length) return;
   const m = inbox.shift();
@@ -375,7 +392,7 @@ function onSquare(i) {
 }
 
 async function play(mv) {
-  busy = true;
+  busy = true; pendMv = mv;
   hintMove = null;
   history.push({ board: board.slice(), ids: ids.slice(), turn, last, halfMoves });
   const id = ids[mv.from];
@@ -405,7 +422,7 @@ async function play(mv) {
   nids[mv.to] = ids[mv.from];
   if (mv.to !== mv.from) nids[mv.from] = null;
   mv.caps.forEach((i) => (nids[i] = null));
-  board = nb;
+  board = nb; pendMv = null;
   ids = nids;
   halfMoves = mv.caps.length || !isKing(mover) ? 0 : halfMoves + 1;
   last = { from: mv.from, to: mv.to };

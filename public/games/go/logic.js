@@ -171,7 +171,7 @@ function playoutScore(b, n, toMove, ko, komi, sc, empties) {
   while (passes < 2 && moves < maxMoves) {
     let played = false;
     for (let tries = 0; tries < 24 && cnt > 0; tries += 1) {
-      const idx = (Math.random() * cnt) | 0;
+      const idx = (rnd() * cnt) | 0;
       const p = empties[idx];
       if (b[p] !== 0 || isOwnEye(b, n, p, color)) continue;
       const r = playOn(b, n, p, color, koP, sc);
@@ -202,7 +202,16 @@ function playoutScore(b, n, toMove, ko, komi, sc, empties) {
 }
 
 /** Which of the stones on the board are probably dead? (a stone is dead when its colour owns that point in under 28% of random games) */
+// playouts draw from rnd; estimateDead swaps in a generator seeded from the position, so both players in an online
+// game get the same dead-stone suggestion
+let rnd = Math.random;
+const seededRnd = (seed) => { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
 export function estimateDead(s, playouts = 0) {
+  const prev = rnd;
+  rnd = seededRnd((s.hash[0] ^ Math.imul(s.hash[1], 31) ^ Math.imul(s.moves + 1, 2654435761)) >>> 0);
+  try { return estimateDeadSeeded(s, playouts); } finally { rnd = prev; }
+}
+function estimateDeadSeeded(s, playouts) {
   const { n } = s;
   if (!playouts) playouts = n === 9 ? 260 : n === 13 ? 150 : 90;
   const sc = makeScratch(n);

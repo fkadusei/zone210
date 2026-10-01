@@ -60,6 +60,15 @@ const net = createOnline({
   },
   onData: (m) => { inbox.push(m); drain(); },
   onLeft: () => { inbox.length = 0; draw(); setStatus("Your friend left the game."); },
+  getState: () => ({ s: { ...s, cell: [...s.cell] }, over, winner, inbox: [...inbox] }),
+  setState: (st) => {
+    s = { ...st.s, cell: Int16Array.from(st.s.cell) }; winner = st.winner; over = false;
+    busy = false; hist = []; sel = null; drag = null; hint = null;
+    $("end").classList.remove("show");
+    inbox.length = 0; inbox.push(...st.inbox);
+    draw(); announce(); drain();
+    if (st.over) finish(winner);
+  },
 });
 function drain() {
   while (online() && net.active && inbox.length && !over && !busy && s.turn !== myP) {

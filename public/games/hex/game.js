@@ -60,6 +60,14 @@ const net = createOnline({
   },
   onData: (m) => { inbox.push(m); drain(); },
   onLeft: () => { inbox.length = 0; draw(); setStatus("Your friend left the game."); },
+  getState: () => ({ n, b, toMove, who, moves, over, last, win, endArgs, inbox: [...inbox] }),
+  setState: (st) => {
+    n = st.n; b = st.b; toMove = st.toMove; who = st.who; moves = st.moves; last = st.last; win = st.win; endArgs = st.endArgs;
+    busy = false; hist = []; over = false;
+    inbox.length = 0; inbox.push(...st.inbox);
+    draw(); announce(); drain();
+    if (st.over && st.endArgs) finish(...st.endArgs);
+  },
 });
 function drain() {
   while (online() && net.active && inbox.length && !over && !busy && who[toMove] !== myP) {
@@ -76,6 +84,7 @@ let who = { 1: 1, 2: 2 }; // which player controls each colour (changes after a 
 let moves = 0;
 let over = false;
 let busy = false;
+let endArgs = null;
 let last = -1;
 let win = null;
 let hist = [];
@@ -192,6 +201,7 @@ async function cpuTurn() {
   return undefined;
 }
 function finish(c) {
+  endArgs = Array.from(arguments);
   over = true; busy = false;
   const p = who[c];
   const you = cpu() ? p === humanP() : online() ? p === myP : true;

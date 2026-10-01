@@ -52,7 +52,20 @@ const net = createOnline({
   onStart: ({ role }) => { mySeat = role; settings.players = "2"; inbox.length = 0; newGame(); },
   onData: (m) => { inbox.push(m); drain(); },
   onLeft: () => { inbox.length = 0; draw(); setStatus("Your friend left the game."); },
+  // a move that is still animating is saved as "about to happen" so a reload replays it
+  getState: () => ({ s, over, winner, last, pendM, inbox: [...inbox] }),
+  setState: (st) => {
+    s = st.s; last = st.last; winner = st.winner; over = false;
+    sel = null; busy = false; hist = []; moving = null; hintMove = null; pendM = null;
+    $("end").classList.remove("show");
+    inbox.length = 0; inbox.push(...st.inbox);
+    if (st.over) { draw(); finish(winner); return; }
+    const r = st.pendM ? reachable(s, st.pendM.from) : null;
+    if (r && r.has(st.pendM.to)) { draw(); doMove({ from: st.pendM.from, to: st.pendM.to, path: r.get(st.pendM.to) }, true); return; }
+    draw(); announce(); drain();
+  },
 });
+let pendM = null; // the move being animated
 function drain() {
   while (online() && net.active && inbox.length && !over && !busy && s.turn !== mySeat) {
     const m = inbox.shift();
@@ -172,7 +185,7 @@ function onHole(i) {
 async function doMove(m, remote) {
   void remote;
   hist.push({ s, last });
-  busy = true; sel = null; hintMove = null;
+  busy = true; sel = null; hintMove = null; pendM = { from: m.from, to: m.to };
   const seat = s.turn;
   for (let k = 1; k < m.path.length; k += 1) {
     moving = { seat, from: m.from, at: m.path[k] };
@@ -182,7 +195,7 @@ async function doMove(m, remote) {
   }
   moving = null;
   last = { path: m.path };
-  s = apply(s, m);
+  s = apply(s, m); pendM = null;
   busy = false;
   if (won(s, seat)) { winner = seat; draw(); return finish(seat); }
   // skip any player who has no legal move

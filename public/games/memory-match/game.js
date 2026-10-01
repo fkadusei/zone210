@@ -35,6 +35,24 @@ const net = createOnline({
   },
   onData: (m) => { if (online() && m && Number.isInteger(m.f)) { inbox.push(m.f); drain(); } },
   onLeft: () => { inbox.length = 0; statusEl.textContent = "Your friend left the game."; },
+  // the board itself comes back from the shared seed; this is which cards are face up or matched
+  getState: () => ({ done: tiles.map((t, i) => (t.el.classList.contains("done") ? i : -1)).filter((i) => i >= 0), open: [...open], moves, matched, turn, scores, inbox: [...inbox] }),
+  setState: (g) => {
+    tiles.forEach((t, i) => {
+      t.el.classList.remove("open", "done", "miss");
+      if (g.done.includes(i)) t.el.classList.add("done");
+      if (g.open.includes(i)) { t.el.classList.add("open"); t.el.setAttribute("aria-label", `Card ${i + 1}, ${t.symbol}`); }
+    });
+    open = [...g.open]; moves = g.moves; matched = g.matched; turn = g.turn; scores = g.scores; busy = false;
+    winEl.classList.remove("show");
+    inbox.length = 0; inbox.push(...g.inbox);
+    if (moves > 0 && !startedAt) startedAt = Date.now();
+    renderStats();
+    if (matched === SIZES[opts.size].pairs) { win(); return; }
+    if (open.length === 2) resolvePair();
+    else statusEl.textContent = turn === myIdx ? "Your turn." : "Your friend's turn…";
+    drain();
+  },
 });
 function drain() {
   while (online() && !busy && net.active && turn !== myIdx && inbox.length) flip(inbox.shift(), true);
@@ -186,6 +204,12 @@ function flip(i, remote = false) {
   if (open.length < 2) return;
 
   moves += 1;
+  resolvePair();
+  renderStats();
+}
+
+// two cards are face up: score a match, or turn them back and pass the turn
+function resolvePair() {
   busy = true;
   const [a, b] = open;
   if (tiles[a].symbol === tiles[b].symbol) {
@@ -226,7 +250,6 @@ function flip(i, remote = false) {
       drain();
     }, 1000);
   }
-  renderStats();
 }
 
 function win() {

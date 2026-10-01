@@ -12,6 +12,11 @@
  *     onStart({ role, seed, n, info }) {},  // a game begins (and again for each rematch). role = 0 or 1, seed is shared
  *     onData(msg) {},          // a move from the other player
  *     onLeft() {},             // the other player left or dropped
+ *     privateState: true,      // optional: the position holds secrets (e.g. Battleship fleets), so it is only saved on this
+ *                              // device and never sent; the game gets onReconnect() instead and must resend what was lost
+ *     onReconnect() {},
+ *     getState() {}, setState(s) {}, // optional: snapshot / restore the whole game position (plain JSON). With these,
+ *                              // a page reload rejoins the same room and carries on (see "Rejoining" below)
  *   });
  *   net.open() / net.close()   // show the lobby (online mode on) or leave and hide it (online mode off)
  *   net.send(msg)              // tell the other player about your move
@@ -21,6 +26,11 @@
  *   net.role                   // 0 or 1
  *   net.roomParam()            // code from ?room=CODE in the address, or ""
  *   net.join(code)
+ *
+ * Rejoining: while a game is under way the lobby keeps {room, role, seed, position} in sessionStorage. After a reload it
+ * reopens the room (host) or reconnects (guest) and the two sides swap "hi" messages; whoever has seen fewer moves adopts
+ * the other's position. getState() must therefore include anything queued but not yet applied (e.g. an inbox of moves),
+ * and setState() must clear timers/animations and redraw. A deliberate Leave (or the friend leaving) forgets the session.
  */
 import * as p2p from "./p2p.js";
 
@@ -57,7 +67,28 @@ export function createOnline(o) {
   root.hidden = true;
   (o.before ? o.before.parentNode.insertBefore(root, o.before) : o.container.appendChild(root));
 
-  const st = { view: "idle", link: null, isHost: false, guestConn: null, code: "", role: 0, n: 0, started: false, over: false, peerGone: false, meWants: false, theyWant: false, side: "random", busy: false, err: "" };
+  const st = { view: "idle", link: null, isHost: false, guestConn: null, code: "", role: 0, n: 0, started: false, over: false, peerGone: false, meWants: false, theyWant: false, side: "random", busy: false, err: "", seed: 0, info: undefined, seq: 0, reconnecting: false, touched: false, gen: 0 };
+  const canResume = !!(o.getState && o.setState);
+  const KEY = "z210_online_" + (o.prefix || "");
+  const mem = {
+    read() { try { return JSON.parse(sessionStorage.getItem(KEY)); } catch (e) { return null; } },
+    write(v) { try { if (v) sessionStorage.setItem(KEY, JSON.stringify(v)); else sessionStorage.removeItem(KEY); } catch (e) { /* private mode */ } },
+  };
+  function persist() {
+    if (!canResume || !st.started || !st.code) return;
+    let state;
+    try { state = o.getState(); } catch (e) { return; }
+    mem.write({ code: st.code, host: st.isHost, role: st.role, seed: st.seed, n: st.n, info: st.info, over: st.over, side: st.side, seq: st.seq, state });
+  }
+  let persistTimer = 0;
+  const persistSoon = () => { if (!canResume) return; clearTimeout(persistTimer); persistTimer = setTimeout(persist, 250); };
+  if (canResume) {
+    addEventListener("pagehide", persist);
+    document.addEventListener("visibilitychange", () => { if (document.hidden) persist(); });
+  }
+  const saved0 = canResume ? mem.read() : null; // read now: the game may call close() while setting up, which forgets it
+  const RECONNECT_MS = 120000;
+  let giveUpTimer = 0;
 
   const raw = (msg) => {
     if (!st.link) return;
@@ -83,68 +114,180 @@ export function createOnline(o) {
     } else {
       const who = names[st.role];
       const gone = st.peerGone;
-      root.innerHTML = `<div class="bar"><span class="pill ${gone ? "warn" : ""}">${gone ? "⚠️ Your friend left" : `🌐 Online · Room ${esc(st.code)} · You are ${esc(who)}`}</span>
+      root.innerHTML = `<div class="bar"><span class="pill ${gone ? "warn" : ""}">${gone ? (st.reconnecting ? "⏳ Reconnecting…" : "⚠️ Your friend left") : `🌐 Online · Room ${esc(st.code)} · You are ${esc(who)}`}</span>
         <span class="row">${gone ? "" : `<button class="g-btn" data-act="rematch" ${st.over && !st.meWants ? "" : "disabled"}>${st.meWants ? "Waiting for friend…" : st.theyWant ? "Accept rematch" : "Rematch"}</button>`}<button class="g-btn ghost" data-act="leave">Leave</button></span></div>${st.theyWant && !st.meWants && !gone ? "<p>Your friend wants a rematch.</p>" : ""}`;
     }
   }
 
   function reset(view = "idle") {
+    clearTimeout(giveUpTimer);
+    st.gen += 1;
+    mem.write(null);
     if (st.link) {
       try { raw({ z: "bye" }); } catch (e) { /* already closed */ }
       try { st.link.close(); } catch (e) { /* already closed */ }
     }
-    Object.assign(st, { view, link: null, isHost: false, guestConn: null, code: "", started: false, over: false, peerGone: false, meWants: false, theyWant: false, busy: false, n: 0 });
+    Object.assign(st, { view, link: null, isHost: false, guestConn: null, code: "", started: false, over: false, peerGone: false, meWants: false, theyWant: false, busy: false, n: 0, seq: 0, reconnecting: false });
   }
 
-  function peerLeft() {
-    if (!st.link || st.peerGone) return;
-    st.peerGone = true;
+  function giveUp() {
+    clearTimeout(giveUpTimer);
+    st.gen += 1;
+    st.reconnecting = false;
     st.started = false;
-    if (st.view === "waiting") { st.guestConn = null; render(); return; }
+    mem.write(null);
     render();
     o.onLeft && o.onLeft();
+  }
+
+  // The friend's connection dropped without saying goodbye (a reload, or a flaky network): wait for them to come back.
+  function peerLeft(graceful) {
+    if (!st.link || st.peerGone) return;
+    st.peerGone = true;
+    if (st.view === "waiting") { st.started = false; st.guestConn = null; render(); return; }
+    if (canResume && st.started && !graceful) {
+      st.reconnecting = true;
+      st.guestConn = null;
+      persist();
+      render();
+      clearTimeout(giveUpTimer);
+      giveUpTimer = setTimeout(giveUp, RECONNECT_MS);
+      if (!st.isHost) reconnectGuest();
+      return;
+    }
+    st.started = false;
+    mem.write(null);
+    render();
+    o.onLeft && o.onLeft();
+  }
+
+  function hello() {
+    if (!st.started || o.privateState) return;
+    let state;
+    try { state = o.getState(); } catch (e) { return; }
+    raw({ z: "hi", n: st.n, seq: st.seq, over: st.over, role: st.role, seed: st.seed, info: st.info, state });
+  }
+
+  // The friend is back: swap positions, and whoever has seen fewer moves takes the other's.
+  function welcomeBack() {
+    clearTimeout(giveUpTimer);
+    st.peerGone = false; st.reconnecting = false;
+    render();
+    if (o.privateState) { if (o.onReconnect) o.onReconnect(); return; }
+    try { o.setState(JSON.parse(JSON.stringify(o.getState()))); } catch (e) { /* redraw so the status shows the friend is back */ }
+    hello();
+  }
+
+  function adopt(msg) {
+    const fresh = !st.started || msg.n !== st.n;
+    st.role = 1 - msg.role; st.n = msg.n; st.seed = msg.seed; st.info = msg.info; st.started = true; st.view = "playing";
+    st.meWants = false; st.theyWant = false;
+    if (fresh) o.onStart({ role: st.role, seed: msg.seed, n: msg.n, info: msg.info });
+    o.setState(msg.state);
+    st.seq = msg.seq; st.over = !!msg.over;
+    render();
+    persistSoon();
+  }
+
+  async function reconnectGuest() {
+    const deadline = Date.now() + RECONNECT_MS;
+    const gen = (st.gen += 1);
+    while (Date.now() < deadline && st.gen === gen && st.reconnecting) {
+      try {
+        const link = await p2p.joinRoom(st.code, { onData: handle, onClose: () => peerLeft(false) }, { prefix: o.prefix });
+        if (st.gen !== gen || !st.reconnecting) { link.close(); return; }
+        if (st.link) { try { st.link.close(); } catch (e) { /* already closed */ } }
+        st.link = link;
+        welcomeBack();
+        return;
+      } catch (err) {
+        await new Promise((r) => setTimeout(r, 2500));
+      }
+    }
+  }
+
+  // Page was reloaded mid-game: put the board back and reconnect.
+  async function resume(saved) {
+    st.touched = true;
+    Object.assign(st, { isHost: !!saved.host, code: saved.code, role: saved.role, seed: saved.seed, n: saved.n, info: saved.info, side: saved.side, seq: saved.seq, started: true, over: !!saved.over, view: "playing", peerGone: true, reconnecting: true });
+    // the game remembers its mode on some pages and not on others: make sure it is in Online mode
+    const chip = document.querySelector('.g-chip[data-value="online"]');
+    if (chip && chip.getAttribute("aria-pressed") !== "true") chip.click();
+    root.hidden = false;
+    // some pages finish loading later (3D scenes): keep trying for a few seconds
+    let restored = false;
+    for (let i = 0; i < 40 && !restored; i += 1) {
+      try { o.onStart({ role: saved.role, seed: saved.seed, n: saved.n, info: saved.info }); o.setState(saved.state); restored = true; } catch (e) { await new Promise((r) => setTimeout(r, 300)); }
+    }
+    if (!restored) { mem.write(null); st.started = false; st.reconnecting = false; st.peerGone = false; render(); return; }
+    render();
+    giveUpTimer = setTimeout(giveUp, RECONNECT_MS);
+    if (!st.isHost) { st.link = { send() {}, close() {} }; reconnectGuest(); return; }
+    try {
+      st.link = await p2p.hostRoom(hostHandlers(), { prefix: o.prefix, code: saved.code });
+    } catch (err) {
+      giveUp();
+    }
   }
 
   function startGame(first) {
     const hostRole = first ? (st.side === "random" ? Math.floor(Math.random() * 2) : Number(st.side)) : 1 - st.role;
     const seed = rand32();
     st.n += 1;
+    st.seq = 0; st.seed = seed;
     st.role = hostRole;
     st.started = true; st.over = false; st.meWants = false; st.theyWant = false; st.peerGone = false; st.view = "playing";
     const info = o.startInfo ? o.startInfo() : undefined;
+    st.info = info;
     st.link.broadcast({ z: "start", role: 1 - hostRole, seed, n: st.n, info });
     render();
     o.onStart({ role: hostRole, seed, n: st.n, info });
+    persistSoon();
   }
 
   function handle(msg) {
     if (!msg || typeof msg !== "object") return;
     if (msg.z === "start") {
-      st.role = msg.role; st.n = msg.n; st.started = true; st.over = false; st.meWants = false; st.theyWant = false; st.peerGone = false; st.view = "playing";
+      st.role = msg.role; st.n = msg.n; st.seq = 0; st.seed = msg.seed; st.info = msg.info; st.started = true; st.over = false; st.meWants = false; st.theyWant = false; st.peerGone = false; st.view = "playing";
       render();
       o.onStart({ role: msg.role, seed: msg.seed, n: msg.n, info: msg.info });
+      persistSoon();
+    } else if (msg.z === "hi") {
+      if (canResume && msg.state && (!st.started || msg.n > st.n || (msg.n === st.n && msg.seq > st.seq))) adopt(msg);
     } else if (msg.z === "g") {
-      if (st.started) o.onData(msg.d);
+      if (st.started) { st.seq += 1; o.onData(msg.d); persistSoon(); }
     } else if (msg.z === "rm") {
       st.theyWant = true;
       if (st.isHost && st.meWants) startGame(false); else render();
     } else if (msg.z === "bye") {
-      peerLeft();
+      peerLeft(true);
     }
   }
 
+  function hostHandlers() {
+    return {
+      onConnect: (conn) => {
+        if (st.started && canResume) {
+          // the same friend coming back (a reload): swap positions instead of starting over
+          if (st.guestConn && st.guestConn !== conn) { const old = st.guestConn; st.guestConn = null; try { old.close(); } catch (e) { /* ignore */ } }
+          st.guestConn = conn;
+          welcomeBack();
+          return;
+        }
+        if (st.guestConn) { try { conn.close(); } catch (e) { /* ignore */ } return; }
+        st.guestConn = conn;
+        startGame(true);
+      },
+      onData: (conn, msg) => handle(msg),
+      onClose: (conn) => { if (conn === st.guestConn) peerLeft(false); },
+    };
+  }
+
   async function create() {
+    st.touched = true;
     st.busy = true; st.err = ""; render();
     try {
-      const link = await p2p.hostRoom({
-        onConnect: (conn) => {
-          if (st.guestConn) { try { conn.close(); } catch (e) { /* ignore */ } return; }
-          st.guestConn = conn;
-          startGame(true);
-        },
-        onData: (conn, msg) => handle(msg),
-        onClose: (conn) => { if (conn === st.guestConn) peerLeft(); },
-      }, { prefix: o.prefix });
+      const link = await p2p.hostRoom(hostHandlers(), { prefix: o.prefix });
       st.link = link; st.isHost = true; st.code = link.code; st.view = "waiting";
     } catch (err) {
       st.err = err.message || "Could not create a room.";
@@ -153,11 +296,12 @@ export function createOnline(o) {
   }
 
   async function join(code) {
+    st.touched = true;
     const clean = p2p.normalizeCode(code);
     if (clean.length < 5) { st.err = "Enter the 5-letter room code."; render(); return; }
     st.busy = true; st.err = ""; st.view = "idle"; render();
     try {
-      st.link = await p2p.joinRoom(clean, { onData: handle, onClose: () => peerLeft() }, { prefix: o.prefix });
+      st.link = await p2p.joinRoom(clean, { onData: handle, onClose: () => peerLeft(false) }, { prefix: o.prefix });
       st.isHost = false; st.code = clean; st.view = "joined";
     } catch (err) {
       st.err = err.message || "Could not join that room.";
@@ -190,14 +334,25 @@ export function createOnline(o) {
 
   render();
 
+  // After a reload: put the game back. Deferred so the game's own module has finished setting up.
+  if (canResume) {
+    setTimeout(() => {
+      const saved = saved0;
+      if (!saved || st.touched) return;
+      const invited = p2p.normalizeCode(new URLSearchParams(location.search).get("room") || "");
+      if (invited && invited !== saved.code) { mem.write(null); return; }
+      resume(saved);
+    }, 0);
+  }
+
   return {
     get active() { return st.started && !st.peerGone; },
     get role() { return st.role; },
     get code() { return st.code; },
     open() { root.hidden = false; render(); },
     close() { reset("idle"); root.hidden = true; },
-    send(msg) { if (st.link && st.started) raw({ z: "g", d: msg }); },
-    setOver(v) { if (st.over !== v) { st.over = v; if (st.view === "playing") render(); } },
+    send(msg) { if (st.link && st.started) { st.seq += 1; raw({ z: "g", d: msg }); persistSoon(); } },
+    setOver(v) { if (st.over !== v) { st.over = v; persistSoon(); if (st.view === "playing") render(); } },
     roomParam() { return p2p.normalizeCode(new URLSearchParams(location.search).get("room") || ""); },
     rematch: requestRematch,
     join,

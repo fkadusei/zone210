@@ -84,7 +84,25 @@ const net = createOnline({
   },
   onData: (m) => { inbox.push(m); drain(); },
   onLeft: () => { inbox.length = 0; setStatus("Your friend left the game."); render(); },
+  getState: () => ({
+    S: S && { ...S, voids: S.voids.map((v) => [...v]) },
+    scores, roundNo, roomSeed, nextMe, nextThem, lastMover, roundStart, endWinner, inbox: [...inbox],
+  }),
+  setState: (g) => {
+    S = g.S && { ...g.S, voids: g.S.voids.map((v) => new Set(v)) };
+    scores = g.scores; roundNo = g.roundNo; roomSeed = g.roomSeed; nextMe = g.nextMe; nextThem = g.nextThem;
+    lastMover = g.lastMover; roundStart = g.roundStart; endWinner = g.endWinner;
+    pending = null; busy = false; covered = false;
+    $("end").classList.remove("show");
+    $("cover").classList.remove("show");
+    inbox.length = 0; inbox.push(...g.inbox);
+    if (!S) { render(); return; }
+    if (S.over) { S.over = false; scores = [...roundStart]; endRound(endWinner); drain(); return; }
+    render(); afterMove();
+  },
 });
+let roundStart = [0, 0]; // scores when this round began (so a finished round can be shown again without scoring twice)
+let endWinner = null;
 function drain() {
   while (online() && net.active && inbox.length) {
     const m = inbox[0];
@@ -235,6 +253,7 @@ function render() {
 // ---------- round flow ----------
 function newRound() {
   roundNo += 1;
+  roundStart = [...scores];
   const seed = online() ? (roomSeed + roundNo * 7919) >>> 0 : (Math.random() * 4294967296) >>> 0;
   const d = deal(seed);
   S = { hands: d.hands, yard: d.yard, chain: [], turn: 0, over: false, lastIdx: -1, voids: [new Set(), new Set()], passes: 0 };
@@ -358,6 +377,7 @@ function drawTile(p, remote) {
 }
 
 function endRound(winner) {
+  endWinner = winner;
   S.over = true;
   busy = false;
   covered = false;

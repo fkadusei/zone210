@@ -51,6 +51,14 @@ const net = createOnline({
   onStart: ({ role }) => { myP = role === 0 ? 1 : 2; inbox.length = 0; newGame(); },
   onData: (m) => { inbox.push(m); drain(); },
   onLeft: () => { inbox.length = 0; draw(); setStatus("Your friend left the game."); },
+  getState: () => ({ s: { ...s, b: [...s.b] }, over, endArgs, inbox: [...inbox] }),
+  setState: (st) => {
+    s = { ...st.s, b: Int8Array.from(st.s.b) }; endArgs = st.endArgs;
+    sel = []; busy = false; hist = []; hint = null; over = false;
+    inbox.length = 0; inbox.push(...st.inbox);
+    draw(); announce(); drain();
+    if (st.over && st.endArgs) finish(...st.endArgs);
+  },
 });
 function drain() {
   while (online() && net.active && inbox.length && !over && !busy && s.turn !== myP) {
@@ -66,6 +74,7 @@ let s = null;
 let sel = [];
 let over = false;
 let busy = false;
+let endArgs = null;
 let hist = [];
 let hint = null;
 const humanP = () => (cpu() ? (settings.first === "me" ? 1 : 2) : null);
@@ -208,6 +217,7 @@ async function cpuTurn() {
   if (m && !over) doMove(m, true);
 }
 function finish(w, limit = false) {
+  endArgs = Array.from(arguments);
   over = true; busy = false;
   let title, emoji = "🏆", you = null;
   if (w === 0) { title = "It's a draw!"; emoji = "🤝"; }

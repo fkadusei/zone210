@@ -59,6 +59,14 @@ const net = createOnline({
   },
   onData: (m) => { inbox.push(m); drain(); },
   onLeft: () => { inbox.length = 0; draw(); setStatus("Your friend left the game."); },
+  getState: () => ({ s, chainFrom, last, reps: [...reps], idle, result, over, endArgs, inbox: [...inbox] }),
+  setState: (st) => {
+    s = st.s; chainFrom = st.chainFrom; last = st.last; reps = new Map(st.reps); idle = st.idle; result = st.result; endArgs = st.endArgs;
+    sel = null; busy = false; hist = []; hintTurn = null; over = false;
+    inbox.length = 0; inbox.push(...st.inbox);
+    draw(); announce(); drain();
+    if (st.over && st.endArgs) finish(...st.endArgs);
+  },
 });
 function drain() {
   while (online() && net.active && inbox.length && !over && !busy && s.turn !== myP) {
@@ -75,6 +83,7 @@ let sel = null;
 let chainFrom = null; // fox mid-way through a chain of jumps
 let over = false;
 let busy = false;
+let endArgs = null;
 let last = null;
 let hist = [];
 let reps = new Map();
@@ -240,6 +249,7 @@ async function cpuTurn() {
   if (chainFrom !== null && !over) stopChain(true);
 }
 function finish(out) {
+  endArgs = Array.from(arguments);
   over = true; busy = false;
   const w = out.winner;
   let title, emoji = "🏆", you = null;

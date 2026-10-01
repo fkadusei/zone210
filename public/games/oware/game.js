@@ -19,7 +19,20 @@ const net = createOnline({
   onStart: ({ role }) => { myP = role; inbox.length = 0; newGame(); },
   onData: (m) => { if (online() && Number.isInteger(m.i)) { inbox.push(m.i); drain(); } },
   onLeft: () => { inbox.length = 0; markPlayable(); say("Your friend left the game."); },
+  // a move that is still being sown is saved as "about to happen", so a reload replays it
+  getState: () => ({ state, pendI, inbox: [...inbox] }),
+  setState: (g) => {
+    state = g.state; shown = state.pits.slice(); shownStore = state.store.slice(); busy = false; pendI = null;
+    winEl.classList.remove("show");
+    inbox.length = 0; inbox.push(...g.inbox);
+    paint();
+    if (g.pendI !== null && g.pendI !== undefined && legalMoves(state).includes(g.pendI)) { play(g.pendI); return; }
+    const st = status(state);
+    if (st.over) { finish(st); return; }
+    markPlayable(); promptTurn(); drain();
+  },
 });
+let pendI = null; // the pit being sown
 function drain() {
   if (!online() || busy || !net.active || status(state).over || state.turn !== 1 - myP || !inbox.length) return;
   const i = inbox.shift();
@@ -185,7 +198,7 @@ function humanMove(i) {
 }
 
 async function play(from) {
-  busy = true;
+  busy = true; pendI = from;
   markPlayable();
   const before = state;
   const result = applyMove(state, from);
@@ -219,7 +232,7 @@ async function play(from) {
     await sleep(500);
   }
 
-  state = result.state;
+  state = result.state; pendI = null;
   shown = state.pits.slice();
   shownStore = state.store.slice();
   paint();

@@ -82,7 +82,33 @@ const net = createOnline({
   onStart: ({ role }) => { myIdx = role; settings.players = "2"; inbox.length = 0; newGame(); },
   onData: (m) => { inbox.push(m); drain(); },
   onLeft: () => { inbox.length = 0; draw(); setStatus("Your friend left the game."); },
+  // a throw or a move that is still animating is saved as "about to happen", so a reload replays it
+  getState: () => ({ s, phase: pendMv !== null ? "move" : rollK !== null ? "throw" : phase, cur, over, rollK, pendMv, inbox: [...inbox] }),
+  setState: (st) => {
+    s = st.s; cur = st.cur; phase = st.phase; over = false;
+    busy = false; rolling = false; anim = null; sel = null; rollK = null; pendMv = null; moves = [];
+    $("end").classList.remove("show");
+    inbox.length = 0; inbox.push(...st.inbox);
+    if (st.over) { finish(s.turn); return; }
+    if (st.rollK !== null && st.rollK !== undefined) { phase = "throw"; draw(); doThrow(st.rollK, true); return; }
+    if (phase === "move" && cur) {
+      moves = legalMoves(s, seatOf(s), cur);
+      const mv = st.pendMv !== null && st.pendMv !== undefined ? moves.find((x) => x.piece === st.pendMv) : null;
+      if (mv) { draw(); doMove(mv, true); return; }
+      if (!moves.length) { if (cur.grace) startTurn(true); else endTurn(); return; }
+      draw();
+      if (myTurn() || !online()) {
+        if (moves.length === 1) { doMove(moves[0], false); return; }
+        setStatus(`You threw ${cur.v}. Tap a piece to choose it, then tap again to move it.`);
+      } else setStatus(`Your friend threw ${cur.v}…`);
+      drain();
+      return;
+    }
+    startTurn();
+  },
 });
+let rollK = null; // the throw being animated
+let pendMv = null; // the move being animated
 
 let s = null;
 let phase = "idle"; // idle | throw | move | over
@@ -230,13 +256,13 @@ async function doThrow(forcedK, remote = false) {
   if (online() && !remote && (!net.active || s.turn !== myIdx)) return;
   const k = Number.isInteger(forcedK) ? forcedK : throwShells().k;
   if (online() && !remote) net.send({ t: "throw", k });
-  rolling = true; busy = true;
+  rolling = true; busy = true; rollK = k;
   sfx.shells();
   const t0 = Date.now();
   while (Date.now() - t0 < 700 / SPEED) { shellsNow = shellsNow.map(() => Math.random() < 0.5); draw(); await sleep(110); }
   const up = Array.from({ length: 6 }, (_, i) => i < k);
   for (let i = up.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [up[i], up[j]] = [up[j], up[i]]; }
-  shellsNow = up; rolling = false; busy = false;
+  shellsNow = up; rolling = false; busy = false; rollK = null;
   cur = throwFromK(k);
   const seat = seatOf(s);
   moves = legalMoves(s, seat, cur);
@@ -274,7 +300,7 @@ async function doMove(mv, remote, local) {
   if (phase !== "move") return;
   void local;
   if (!remote && online()) net.send({ t: "mv", piece: mv.piece });
-  busy = true; sel = null;
+  busy = true; sel = null; pendMv = mv.piece;
   const seat = seatOf(s);
   const t = cur;
   phase = "idle";
@@ -292,7 +318,7 @@ async function doMove(mv, remote, local) {
     anim = null;
   }
   const r = apply(s, seat, mv, t);
-  s = r.s;
+  s = r.s; pendMv = null;
   if (mv.capture) { sfx.capture(); } else if (mv.to === CENTRE) sfx.home();
   busy = false;
   draw();

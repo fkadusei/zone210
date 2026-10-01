@@ -188,6 +188,20 @@ const net = createOnline({
   },
   onData: (m) => { if (online() && m && m.e && !over && turn === 3 - myP && isFree(st, m.e)) move(m.e); },
   onLeft: () => { busy = false; setStatus("Your friend left the game."); },
+  getState: () => ({ st, turn, scores, over }),
+  setState: (g) => {
+    st = g.st; turn = g.turn; scores = g.scores; over = false; busy = false; hint = null; lastEdge = null;
+    settings.size = st.n;
+    syncChips();
+    $("end").classList.remove("show");
+    buildBoard();
+    st.h.forEach((row, r) => row.forEach((who, c) => who && paintEdge({ t: "h", r, c }, who)));
+    st.v.forEach((row, r) => row.forEach((who, c) => who && paintEdge({ t: "v", r, c }, who)));
+    st.box.forEach((row, r) => row.forEach((who, c) => who && paintBox(r, c, who, false)));
+    renderScores();
+    if (g.over) { finish(); return; }
+    announce();
+  },
 });
 const isCpuTurn = () => cpu() && turn === 2;
 const nameOf = (p) => (cpu() ? (p === 1 ? "You" : "Computer") : online() ? (p === myP ? "You" : "Friend") : p === 1 ? "Blue" : "Orange");

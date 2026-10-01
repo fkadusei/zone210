@@ -24,6 +24,18 @@ const net = createOnline({
   onStart: ({ role }) => { myP = role + 1; newGame(); },
   onData: (m) => { if (online() && !over && turn === 3 - myP && Number.isInteger(m.c)) place(m.c); },
   onLeft: () => { over = true; setColumnsEnabled(false); statusEl.textContent = "Your friend left the game."; },
+  getState: () => ({ board, turn, over }),
+  setState: (s) => {
+    board = s.board; turn = s.turn; over = s.over; thinking = false;
+    discsEl.innerHTML = "";
+    let line = null;
+    board.forEach((row, r) => row.forEach((p, c) => { if (p) { addDisc(r, c, p); line = line || winLine(board, r, c); } }));
+    if (over) {
+      if (line) { line.forEach(([r, c]) => discsEl.querySelector(`[data-rc="${r},${c}"]`)?.classList.add("win")); statusEl.textContent = board[line[0][0]][line[0][1]] === myP ? "You win! 🎉" : "Your friend wins."; }
+      else statusEl.textContent = "It's a draw.";
+      setColumnsEnabled(false);
+    } else update();
+  },
 });
 const names = () => (opts.mode === "cpu" ? { 1: "You", 2: "Computer" } : online() ? { [myP]: "You", [3 - myP]: "Friend" } : { 1: "Player 1", 2: "Player 2" });
 
@@ -125,16 +137,20 @@ function humanMove(c) {
   place(c);
 }
 
-function place(c) {
-  const r = dropRow(board, c);
-  if (r < 0) return;
-  board[r][c] = turn;
+function addDisc(r, c, p) {
   const d = document.createElement("div");
-  d.className = `disc p${turn}`;
+  d.className = `disc p${p}`;
   d.style.setProperty("--r", r);
   d.style.setProperty("--c", c);
   d.dataset.rc = `${r},${c}`;
   discsEl.appendChild(d);
+}
+
+function place(c) {
+  const r = dropRow(board, c);
+  if (r < 0) return;
+  board[r][c] = turn;
+  addDisc(r, c, turn);
 
   const line = winLine(board, r, c);
   if (line) return finish(line);

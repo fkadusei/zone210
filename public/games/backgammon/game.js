@@ -68,6 +68,22 @@ const net = createOnline({
   onStart: ({ role }) => { myP = role; inbox.length = 0; newGame(); },
   onData: (m) => { inbox.push(m); drain(); },
   onLeft: () => { inbox.length = 0; draw(); setStatus("Your friend left the game."); },
+  getState: () => ({ st, turn, dice, left, phase, last, wins: [...wins], inbox: [...inbox] }),
+  setState: (g) => {
+    st = g.st; turn = g.turn; dice = g.dice; left = g.left; phase = g.phase; last = g.last;
+    wins[0] = g.wins[0]; wins[1] = g.wins[1];
+    sel = null; busy = false; undoStack = []; hintStep = null;
+    $("end").classList.remove("show");
+    inbox.length = 0; inbox.push(...g.inbox);
+    if (phase === "over") { wins[turn] -= winValue(st, turn); finish(turn); return; }
+    if (phase === "roll") { startTurn(); return; }
+    // mid-turn: if the turn was just ending (no dice or no legal move left), finish it
+    if (!left.length || !legalSteps(st, turn, left).length) { endTurn(); return; }
+    draw();
+    if (mine()) { if (st.bar[turn]) sel = BAR; setStatus(`Your turn. ${st.bar[turn] ? "Enter your checker from the bar." : "Tap a checker to move it."}`); draw(); } else setStatus("Your friend's turn…");
+    $("roll").disabled = true;
+    drain();
+  },
 });
 function drain() {
   while (online() && net.active && inbox.length && turn !== myP) {

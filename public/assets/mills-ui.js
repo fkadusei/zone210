@@ -52,6 +52,14 @@ export function startMills({ variant, storeKey, prefix, palette }) {
     onStart: ({ role }) => { myP = role === 0 ? 1 : 2; inbox.length = 0; newGame(); },
     onData: (m) => { inbox.push(m); drain(); },
     onLeft: () => { inbox.length = 0; draw(); setStatus("Your friend left the game."); },
+    getState: () => ({ s, last, reps: [...reps], noCap, rmMode, over, endArgs, inbox: [...inbox] }),
+    setState: (st) => {
+      s = st.s; last = st.last; reps = new Map(st.reps); noCap = st.noCap; rmMode = st.rmMode; endArgs = st.endArgs;
+      sel = null; busy = false; hist = []; hintOpt = null; over = false;
+      inbox.length = 0; inbox.push(...st.inbox);
+      draw(); announce(); drain();
+      if (st.over && st.endArgs) finish(...st.endArgs);
+    },
   });
 
   let s = initial(variant);
@@ -59,6 +67,7 @@ export function startMills({ variant, storeKey, prefix, palette }) {
   let rmMode = false; // the player to move must remove a piece
   let over = false;
   let busy = false;
+  let endArgs = null;
   let last = null; // { from, to, removed }
   let hist = [];
   let reps = new Map();
@@ -256,6 +265,7 @@ export function startMills({ variant, storeKey, prefix, palette }) {
   }
 
   function finish(out) {
+    endArgs = Array.from(arguments);
     over = true;
     busy = false;
     draw();

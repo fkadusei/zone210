@@ -50,6 +50,14 @@ const net = createOnline({
   onStart: ({ role }) => { myP = role === 0 ? 1 : 2; inbox.length = 0; newGame(); },
   onData: (m) => { inbox.push(m); drain(); },
   onLeft: () => { inbox.length = 0; render(); setStatus("Your friend left the game."); },
+  getState: () => ({ s, over, endOut, inbox: [...inbox] }),
+  setState: (st) => {
+    s = st.s; endOut = st.endOut;
+    busy = false; hist = []; hintMove = -1; result = null; over = false;
+    inbox.length = 0; inbox.push(...st.inbox);
+    render(); announce(); drain();
+    if (st.over && endOut) finish(endOut);
+  },
 });
 function drain() {
   while (online() && net.active && inbox.length && !over && !busy && s.turn !== myP) {
@@ -61,6 +69,7 @@ function drain() {
 let s = initial();
 let over = false;
 let busy = false;
+let endOut = null;
 let hist = [];
 let hintMove = -1;
 let result = null;
@@ -170,6 +179,7 @@ async function cpuTurn() {
   if (m >= 0 && !over) play(m, true);
 }
 function finish(out) {
+  endOut = out;
   over = true; busy = false;
   const w = out.winner;
   let title, emoji = "🏆", you = null;

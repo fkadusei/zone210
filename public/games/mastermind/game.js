@@ -56,7 +56,26 @@ const net = createOnline({
   },
   onData: (m) => onNet(m),
   onLeft: () => { setStatus("Your friend left the game."); },
+  // the code is secret, so this is only saved on this device (never sent) and each side resends what a reload lost
+  privateState: true,
+  onReconnect: () => {
+    const last = rows[rows.length - 1];
+    if (!iMaker && last && !last.fb) net.send({ t: "g", g: last.g, n: rows.length - 1 });
+    if (iMaker && phase === "watch" && !rows.length) net.send({ t: "ready" });
+    if (iMaker && phase === "over") net.send({ t: "reveal", secret });
+  },
+  getState: () => ({ secret, rows, cur, phase, iMaker, solved: lastSolved }),
+  setState: (g) => {
+    iMaker = g.iMaker; secret = g.secret; rows = g.rows; cur = g.cur; cands = []; runId += 1; lastSolved = g.solved;
+    cfg = LEVELS[settings.level];
+    $("end").classList.remove("show");
+    phase = g.phase === "over" ? "guess" : g.phase;
+    drawBoard(); drawPalette(); refresh();
+    if (g.phase === "over") { finish(!!g.solved); return; }
+    announce();
+  },
 });
+let lastSolved = false;
 
 let secret = null;
 let rows = []; // { g: [..], fb: {b,w}|null }
@@ -197,7 +216,7 @@ async function submit() {
     phase = "watch"; net.send({ t: "ready" }); drawBoard(); refresh(); return announce();
   }
   const g = cur.slice(); cur = [];
-  if (online()) { rows.push({ g, fb: null }); net.send({ t: "g", g }); drawBoard(); refresh(); setStatus("Waiting for the clues…"); return; }
+  if (online()) { rows.push({ g, fb: null }); net.send({ t: "g", g, n: rows.length - 1 }); drawBoard(); refresh(); setStatus("Waiting for the clues…"); return; }
   const fb = feedback(secret, g);
   rows.push({ g, fb });
   drawBoard(); refresh();
@@ -229,7 +248,11 @@ async function runSolver() {
 function onNet(m) {
   if (!online() || !m) return;
   if (m.t === "ready" && !iMaker && phase === "wait") { phase = "guess"; drawBoard(); refresh(); announce(); }
-  else if (m.t === "g" && iMaker && phase === "watch" && Array.isArray(m.g) && m.g.length === cfg.len) {
+  else if (m.t === "g" && iMaker && Number.isInteger(m.n) && m.n < rows.length) {
+    // a guess I already answered (the friend reloaded and asked again): repeat the answer
+    if (m.n === rows.length - 1) net.send({ t: "fb", b: rows[m.n].fb.b, w: rows[m.n].fb.w });
+    if (phase === "over") net.send({ t: "reveal", secret });
+  } else if (m.t === "g" && iMaker && phase === "watch" && Array.isArray(m.g) && m.g.length === cfg.len) {
     const fb = feedback(secret, m.g);
     rows.push({ g: m.g, fb });
     net.send({ t: "fb", b: fb.b, w: fb.w });
@@ -250,6 +273,7 @@ function onNet(m) {
 
 function finish(solved) {
   if (phase === "over") return;
+  lastSolved = solved;
   phase = "over";
   drawBoard(); refresh();
   const n = rows.length;

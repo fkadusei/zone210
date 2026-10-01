@@ -49,6 +49,14 @@ const net = createOnline({
   onStart: ({ role }) => { myP = role === 0 ? 1 : 2; inbox.length = 0; newGame(); },
   onData: (m) => { inbox.push(m); drain(); },
   onLeft: () => { inbox.length = 0; draw(); setStatus("Your friend left the game."); },
+  getState: () => ({ s, over, last, win, reps: [...reps], endOut, inbox: [...inbox] }),
+  setState: (st) => {
+    s = st.s; last = st.last; win = st.win; reps = new Map(st.reps); endOut = st.endOut;
+    sel = null; busy = false; hist = []; hintA = null; over = false;
+    inbox.length = 0; inbox.push(...st.inbox);
+    draw(); announce(); drain();
+    if (st.over && endOut) finish(endOut);
+  },
 });
 function drain() {
   while (online() && net.active && inbox.length && !over && !busy && s.turn !== myP) {
@@ -64,6 +72,7 @@ let s = null;
 let sel = null;
 let over = false;
 let busy = false;
+let endOut = null;
 let win = null;
 let last = null;
 let hist = [];
@@ -174,6 +183,7 @@ async function cpuTurn() {
   if (a && !over) doAction(a, true);
 }
 function finish(out) {
+  endOut = out;
   over = true; busy = false;
   win = out.line;
   draw();
