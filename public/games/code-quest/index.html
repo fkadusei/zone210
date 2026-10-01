@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Code Quest · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page wide">
+      <div class="g-head">
+        <div>
+          <h1>Code Quest</h1>
+          <p>Program Zippy the robot to reach the star. Learn sequences, loops and decisions, one puzzle at a time.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+        </div>
+      </div>
+      <section id="menu"></section>
+      <section id="play" hidden>
+        <div class="topbar">
+          <button class="g-btn ghost" id="back">← All levels</button>
+          <h2 id="title"></h2>
+          <span class="stars" id="stars" aria-label="Stars earned"></span>
+        </div>
+        <p class="concept" id="concept"></p>
+        <div class="cq">
+          <div class="left">
+            <div class="board-wrap"><svg id="board" role="img" aria-label="The maze"></svg></div>
+            <div class="controls">
+              <button class="g-btn" id="run">▶ Run</button>
+              <button class="g-btn ghost" id="step">Step</button>
+              <button class="g-btn ghost" id="reset">Reset</button>
+              <div class="g-chips" id="speed" role="group" aria-label="Speed"><button class="g-chip" data-v="650" aria-pressed="false">Slow</button><button class="g-chip" data-v="320" aria-pressed="true">Normal</button><button class="g-chip" data-v="110" aria-pressed="false">Fast</button></div>
+            </div>
+            <p class="g-status" id="status" role="status" aria-live="polite"></p>
+            <div class="controls"><button class="g-btn ghost" id="hint">💡 Hint</button><button class="g-btn ghost" id="solution" hidden>Show me a solution</button></div>
+          </div>
+          <div class="right">
+            <div class="panel"><span class="lbl">Blocks (tap or drag)</span><div class="palette" id="palette"></div></div>
+            <div class="panel"><div class="row between"><span class="lbl" style="margin:0">Your program</span><span class="count" id="count"></span></div>
+              <p class="adding" id="adding"></p>
+              <div class="prog" id="prog" aria-label="Your program"></div>
+              <div class="row" style="margin-top:8px"><button class="g-btn ghost sm2" id="clear">Clear all</button></div></div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <div class="g-overlay" id="win" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+      <div class="card">
+        <div class="bigemoji" id="winEmoji" aria-hidden="true">🎉</div>
+        <h2 id="winTitle">Level complete!</h2>
+        <p id="winStars" style="font-size:2rem;margin:0"></p>
+        <p id="winText"></p>
+        <div class="g-bar" style="justify-content:center"><button class="g-btn ghost" id="winAgain">Try again</button><button class="g-btn" id="winNext">Next level</button></div>
+      </div>
+    </div>
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
