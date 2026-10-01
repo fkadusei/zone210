@@ -1,0 +1,8 @@
+#mb { background: radial-gradient(circle at 50% 40%, #6b4a2a, #3c2712); }
+#mb .hc { cursor: pointer; fill: transparent; }
+#mb .hc.dead { cursor: default; }
+.offs { display: flex; gap: 3px; margin-top: 3px; }
+.offs i { width: 11px; height: 11px; border-radius: 50%; box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.3); }
+.offs i.b { background: radial-gradient(circle at 35% 30%, #5b6072, #0b0d14 70%); }
+.offs i.w { background: radial-gradient(circle at 35% 30%, #fff, #c9ccd8 75%); }
+.offs i.o { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(150, 150, 160, 0.5); }
