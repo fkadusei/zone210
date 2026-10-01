@@ -1,0 +1,25 @@
+/* Whot: shape cards. The shapes are drawn with CSS so they look the same on every device. */
+.shp { display: inline-block; width: 1em; height: 1em; background: currentColor; }
+.shp.s0 { border-radius: 50%; }
+.shp.s1 { clip-path: polygon(50% 6%, 96% 92%, 4% 92%); }
+.shp.s2 { clip-path: polygon(34% 4%, 66% 4%, 66% 34%, 96% 34%, 96% 66%, 66% 66%, 66% 96%, 34% 96%, 34% 66%, 4% 66%, 4% 34%, 34% 34%); }
+.shp.s3 { border-radius: 14%; }
+.shp.s4 { clip-path: polygon(50% 3%, 61% 36%, 97% 37%, 68% 58%, 79% 93%, 50% 72%, 21% 93%, 32% 58%, 3% 37%, 39% 36%); }
+.s0 { color: #e0393f; } .s1 { color: #1f9d61; } .s2 { color: #8a4fe0; } .s3 { color: #2f6fe0; } .s4 { color: #e89a12; }
+
+.pcard .rk { position: absolute; left: 6px; top: 3px; font-weight: 900; font-size: calc(var(--cw) * 0.3); line-height: 1; }
+.pcard .rk.r2 { left: auto; right: 6px; top: auto; bottom: 3px; transform: rotate(180deg); }
+.pcard .sm { position: absolute; left: 7px; top: calc(var(--cw) * 0.36); font-size: calc(var(--cw) * 0.17); }
+.pcard .big { position: absolute; left: 56%; top: 47%; font-size: calc(var(--cw) * 0.44); transform: translate(-50%, -50%); }
+.pcard .cap { position: absolute; left: 0; right: 0; bottom: calc(var(--cw) * 0.33); text-align: center; font-size: calc(var(--cw) * 0.12); font-weight: 900; letter-spacing: 0.05em; color: #444; }
+.pcard.whot { background: linear-gradient(160deg, #2b1760, #5b2a9a 60%, #8a3fc4); border-color: #ffd65a; color: #fff; }
+.pcard.whot .wt { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 900; font-size: calc(var(--cw) * 0.3); letter-spacing: 0.04em; color: #ffd65a; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5); transform: rotate(-12deg); }
+.pcard.whot .rk { color: #fff; }
+.ct { --felt: radial-gradient(ellipse at 50% 35%, #7a3a8a, #3f1d5c 78%); }
+.ct-choice .shape { display: inline-flex; align-items: center; gap: 8px; }
+.ct-choice .shape::before { content: ""; width: 1em; height: 1em; background: currentColor; }
+.ct-choice .shape.s0::before { border-radius: 50%; }
+.ct-choice .shape.s1::before { clip-path: polygon(50% 6%, 96% 92%, 4% 92%); }
+.ct-choice .shape.s2::before { clip-path: polygon(34% 4%, 66% 4%, 66% 34%, 96% 34%, 96% 66%, 66% 66%, 66% 96%, 34% 96%, 34% 66%, 4% 66%, 4% 34%, 34% 34%); }
+.ct-choice .shape.s4::before { clip-path: polygon(50% 3%, 61% 36%, 97% 37%, 68% 58%, 79% 93%, 50% 72%, 21% 93%, 32% 58%, 3% 37%, 39% 36%); }
+.ct-choice .shape.s3::before { border-radius: 14%; }

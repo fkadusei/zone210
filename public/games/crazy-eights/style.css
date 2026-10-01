@@ -1,0 +1,10 @@
+/* Crazy Eights: classic playing-card faces */
+.pcard .rk { position: absolute; left: 6px; top: 3px; font-weight: 800; font-size: calc(var(--cw) * 0.3); line-height: 1; }
+.pcard .st { position: absolute; left: 6px; top: calc(var(--cw) * 0.34); font-size: calc(var(--cw) * 0.26); line-height: 1; }
+.pcard .mid { position: absolute; inset: 0; display: grid; place-items: center; font-size: calc(var(--cw) * 0.68); line-height: 1; opacity: 0.92; }
+.pcard .rk.r2 { left: auto; right: 6px; top: auto; bottom: 3px; transform: rotate(180deg); }
+.pcard .st.s2 { left: auto; right: 6px; top: auto; bottom: calc(var(--cw) * 0.34); transform: rotate(180deg); }
+.pcard.red { color: #c8202a; }
+.pcard.blk { color: #16181f; }
+.pcard.wild { background: linear-gradient(165deg, #fffefa, #f6e7b8); border-color: #c9a227; }
+.ct-choice .red { color: #c8202a; }

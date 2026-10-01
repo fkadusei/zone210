@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Whot · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="../../assets/cards.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Whot</h1>
+          <p>The West African card game: match the shape or the number, and use the special cards to catch your opponents out.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn" id="newGame">New Game</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="cpu" aria-pressed="true">vs Computer</button>
+            <button class="g-chip" data-value="two" aria-pressed="false">Pass &amp; play</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">🌐 Online</button>
+          </div></div>
+        <div class="opt" id="levelRow"><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+            <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
+            <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+          </div></div>
+        <div class="opt" id="countRow"><span class="lbl" id="countLabel">Opponents</span>
+          <div class="g-chips" id="count" role="group" aria-label="How many players">
+            <button class="g-chip" data-value="1" aria-pressed="true">1 opponent</button>
+            <button class="g-chip" data-value="2" aria-pressed="false">2 opponents</button>
+            <button class="g-chip" data-value="3" aria-pressed="false">3 opponents</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Match</span>
+          <div class="g-chips" id="target" role="group" aria-label="Match length">
+            <button class="g-chip" data-value="0" aria-pressed="false">Single round</button>
+            <button class="g-chip" data-value="100" aria-pressed="true">First to 100</button>
+          </div></div>
+      </section>
+
+      <div class="scores" id="scores"></div>
+      <div id="table" aria-label="Card table"></div>
+      <div class="ct-choice" id="choice" hidden></div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+
+      <details class="g-panel rules">
+        <summary>How to play</summary>
+        <ul>
+          <li>Everyone gets 6 cards (5 with three or four players). Play a card that matches the top card's <b>shape</b> or its <b>number</b>.</li>
+          <li><b>1 Hold on:</b> play again. <b>2 Pick two:</b> the next player picks up two cards, unless they answer with another 2 (then it grows to four). <b>5 Pick three:</b> the same, answered with another 5.</li>
+          <li><b>8 Suspension:</b> the next player misses a turn. <b>14 General market:</b> every other player picks up one card.</li>
+          <li><b>Whot (20):</b> wild. Play it on anything and call the shape that comes next.</li>
+          <li>Nothing to play? Go to market and pick up one card, and your turn ends.</li>
+          <li>The first player to empty their hand wins the round and scores the numbers left in the others' hands (a Whot card counts 20). If the market runs out, the lowest hand wins. In a match, the first to 100 points wins.</li>
+        </ul>
+      </details>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="bigemoji" id="endEmoji" aria-hidden="true">🏆</div>
+        <h2 id="endTitle">Round over</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endView">View table</button>
+          <button class="g-btn" id="again">Next round</button>
+        </div>
+      </div>
+    </div>
+    <div class="g-overlay" id="cover" role="dialog" aria-modal="true" aria-label="Pass the device">
+      <div class="card">
+        <div class="bigemoji" aria-hidden="true">🙈</div>
+        <h2 id="coverTitle">Pass the device</h2>
+        <p>Hand it over so nobody else sees your cards.</p>
+        <button class="g-btn" id="coverGo">I'm ready</button>
+      </div>
+    </div>
+
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

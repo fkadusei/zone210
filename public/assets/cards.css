@@ -1,0 +1,75 @@
+/* Card table shared by Whot and Crazy Eights (see cards-kit.js). Games set --felt and style their own card faces. */
+.setup { display: grid; gap: 10px; margin-bottom: 14px; }
+.opt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.lbl { width: 78px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+.scores { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.scores:empty { display: none; }
+.score { display: flex; align-items: center; gap: 10px; padding: 7px 14px; border-radius: 14px; background: var(--surface); border: 2px solid var(--line); box-shadow: var(--shadow); flex: 1 1 120px; }
+.score.turn { border-color: var(--gold); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 28%, transparent), var(--shadow); }
+.score .nm { font-weight: 700; font-size: 0.88rem; }
+.score b { margin-left: auto; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+
+.ct { --cw: 66px; --felt: radial-gradient(ellipse at 50% 35%, #2d8a5c, #1d6b45 78%); display: grid; gap: 14px; padding: 14px 12px 16px; border-radius: 20px; background: var(--felt); box-shadow: inset 0 0 0 6px #4a2e17, inset 0 0 36px rgba(0, 0, 0, 0.4), 0 14px 30px rgba(0, 0, 0, 0.4); color: #fff; }
+
+.ct-opps { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 18px; min-height: 64px; }
+.ct-opp { display: grid; justify-items: center; gap: 4px; padding: 8px 12px 6px; border-radius: 14px; border: 2px solid transparent; transition: border-color 0.2s, background 0.2s; min-width: 110px; }
+.ct-opp.on { border-color: #ffd65a; background: rgba(255, 214, 90, 0.14); }
+.ct-opp .nm { font-weight: 800; font-size: 0.85rem; }
+.ct-opp .backs { display: flex; height: calc(var(--cw) * 0.62); align-items: flex-end; padding-left: 14px; }
+.ct-opp .backs i { width: calc(var(--cw) * 0.42); height: calc(var(--cw) * 0.6); margin-left: -14px; border-radius: 6px; background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.18) 0 3px, transparent 3px 6px), linear-gradient(160deg, #3a4a8a, #263063); border: 1.5px solid #fff; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35); }
+.ct-opp .meta { font-size: 0.75rem; opacity: 0.9; }
+.ct-opp .meta em { font-style: normal; font-weight: 800; color: #ffd65a; }
+
+.ct-center { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 18px 26px; min-height: calc(var(--cw) * 1.5 + 12px); }
+.ct-draw { position: relative; font: inherit; color: #fff; background: none; border: 0; padding: 0; cursor: pointer; display: grid; justify-items: center; gap: 6px; }
+.ct-draw:disabled { cursor: default; }
+.ct-draw .stack { position: relative; width: var(--cw); height: calc(var(--cw) * 1.45); }
+.ct-draw .stack i { position: absolute; inset: 0; border-radius: 9px; border: 2px solid #fff; background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.16) 0 4px, transparent 4px 8px), linear-gradient(160deg, #3a4a8a, #263063); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); }
+.ct-draw .stack i:nth-child(1) { transform: translate(-4px, -4px); }
+.ct-draw .stack i:nth-child(2) { transform: translate(-2px, -2px); }
+.ct-draw.empty .stack i { opacity: 0.25; }
+.ct-draw .lab { font-weight: 800; font-size: 0.85rem; text-align: center; }
+.ct-draw .lab small { display: block; font-weight: 600; font-size: 0.7rem; opacity: 0.8; }
+.ct-draw:disabled .stack { opacity: 0.7; }
+.ct-draw.hint .stack { animation: bob 1.1s ease-in-out infinite; filter: drop-shadow(0 0 8px #ffd65a); }
+.ct-draw:focus-visible { outline: 3px solid #fff; outline-offset: 4px; border-radius: 12px; }
+@keyframes bob { 50% { transform: translateY(-5px); } }
+
+.ct-disc { position: relative; width: calc(var(--cw) + 28px); height: calc(var(--cw) * 1.45 + 6px); }
+.ct-disc .under .pcard { position: absolute; top: 0; left: 0; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35); }
+.ct-disc .under .u0 { transform: translateX(-12px) rotate(-9deg); }
+.ct-disc .under .u1 { transform: translateX(10px) rotate(8deg); }
+.ct-disc .top { position: absolute; top: 0; left: 14px; }
+.ct-badges { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.ct-badge { padding: 6px 12px; border-radius: 999px; font-weight: 800; font-size: 0.82rem; background: rgba(0, 0, 0, 0.35); border: 1.5px solid rgba(255, 255, 255, 0.55); }
+.ct-badge.warn { background: #b4232a; border-color: #ffb3b6; }
+
+/* cards: game stylesheets draw the faces inside .pcard */
+.pcard { position: relative; flex: none; width: var(--cw); height: calc(var(--cw) * 1.45); border-radius: 9px; background: linear-gradient(165deg, #fffefa, #efe8d6); border: 1.5px solid #b7ab8d; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35); color: #111; font: inherit; padding: 0; display: block; overflow: hidden; }
+button.pcard { cursor: default; }
+.pcard.land { animation: land 0.32s ease-out; }
+@keyframes land { from { transform: translateY(-26px) scale(1.18); opacity: 0.35; } }
+html[data-saver] .pcard.land, html[data-saver] .ct-draw.hint .stack { animation: none; }
+
+.ct-hand { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding-top: 6px; min-height: calc(var(--cw) * 1.45 + 14px); }
+.ct-hand .pcard { transition: transform 0.12s, box-shadow 0.12s, opacity 0.12s; }
+.ct-hand .pcard.ok { cursor: pointer; box-shadow: 0 0 0 3px rgba(255, 214, 90, 0.9), 0 5px 10px rgba(0, 0, 0, 0.4); }
+.ct-hand .pcard.ok:hover, .ct-hand .pcard.ok:focus-visible { transform: translateY(-9px); outline: none; }
+.ct-hand .pcard.dim { opacity: 0.62; filter: saturate(0.7); }
+
+.ct-choice { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin: 10px 0 0; }
+.ct-choice[hidden] { display: none; }
+.ct-choice .say { font-weight: 800; }
+.ct-choice button { min-width: 64px; }
+
+.rules { margin: 18px 0 0; }
+.rules summary { cursor: pointer; font-weight: 800; }
+.rules ul { margin: 10px 0 0; padding-left: 20px; color: var(--muted); line-height: 1.6; }
+
+@media (max-width: 560px) {
+  .ct { --cw: 54px; padding: 10px 8px 12px; gap: 10px; }
+  .ct-hand { gap: 6px; }
+  .ct-center { gap: 12px 16px; }
+  .ct-opp { min-width: 92px; padding: 6px 8px 4px; }
+}
