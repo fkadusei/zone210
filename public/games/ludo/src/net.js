@@ -88,21 +88,24 @@ async function openPeer(id) {
 
 /**
  * Host a room. handlers: { onConnect(conn), onData(conn, msg), onClose(conn) }.
+ * Pass { code } to re-open a specific room (after the host's page was reloaded); the broker can take a few
+ * seconds to free the old id, so this retries.
  * Resolves to { code, broadcast(msg), sendTo(conn, msg), close() }.
  */
-export async function hostRoom(handlers) {
+export async function hostRoom(handlers, { code: fixed = null } = {}) {
   await loadPeerJS();
   let peer = null;
-  let code = null;
-  for (let attempt = 0; attempt < 6 && !peer; attempt += 1) {
-    code = randomCode();
+  let code = fixed;
+  for (let attempt = 0; attempt < (fixed ? 10 : 6) && !peer; attempt += 1) {
+    if (!fixed) code = randomCode();
     try {
       peer = await openPeer(ID_PREFIX + code);
     } catch (err) {
       if (err && err.type !== "unavailable-id") throw err;
+      if (fixed) await new Promise((r) => setTimeout(r, 1500));
     }
   }
-  if (!peer) throw new Error("Could not create a room. Try again.");
+  if (!peer) throw new Error(fixed ? "Could not re-open your room." : "Could not create a room. Try again.");
 
   const conns = new Set();
   peer.on("connection", (conn) => {

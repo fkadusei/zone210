@@ -674,7 +674,7 @@ function buildSnapshot(withPending = false) {
 function finishAction() {
   ui.actionSeq += 1;
   if (!online.active) return;
-  if (online.role === "client" && allDone()) clearGuest();
+  if (allDone()) clearGuest();
   if (online.role === "host") online.link.broadcast({ t: "state", snap: buildSnapshot() });
   else reconcile();
 }
@@ -1203,6 +1203,7 @@ async function joinRoom(code) {
         }
       }
     }, 8000);
+    return true;
   } catch (err) {
     showOnlineError(err.message || "Could not join the room.");
   } finally {
@@ -1217,6 +1218,58 @@ const readGuest = () => { try { return JSON.parse(sessionStorage.getItem(GUEST_K
 const saveGuest = () => { try { sessionStorage.setItem(GUEST_KEY, JSON.stringify({ path: window.location.pathname, code: online.code, name: online.name })); } catch (err) { /* private mode */ } };
 const clearGuest = () => { try { sessionStorage.removeItem(GUEST_KEY); } catch (err) { /* ignore */ } };
 let rejoining = false;
+let leaving = false;
+
+// The host keeps the whole game, so it saves it (seats, tokens, snapshot) about once a second; after a reload it
+// reopens the same room code and guests, who retry for a while, get their seats back by token.
+function persistHost() {
+  if (leaving || !(online.active && online.role === "host" && !online.solo && online.seats) || allDone()) return;
+  try {
+    sessionStorage.setItem(GUEST_KEY, JSON.stringify({
+      path: window.location.pathname, code: online.code, name: online.name, host: true, phase: online.phase,
+      seats: Object.fromEntries(SEATS.map((c) => [c, { kind: online.seats[c].kind, name: online.seats[c].name, token: online.seats[c].token, away: !!online.seats[c].away }])),
+      snap: online.phase === "playing" && ui.gameStarted ? buildSnapshot(true) : null,
+    }));
+  } catch (err) { /* private mode */ }
+}
+setInterval(persistHost, 1000);
+window.addEventListener("pagehide", persistHost);
+
+async function resumeHost(rec) {
+  setStatus("Reopening your room…");
+  let link;
+  try {
+    link = await net.hostRoom({ onConnect: () => {}, onData: hostOnData, onClose: hostOnClose }, { code: rec.code });
+  } catch (err) {
+    clearGuest();
+    setStatus("Could not reopen your room. Start a new one from Play Online.");
+    return;
+  }
+  online.link = link;
+  online.name = rec.name || "Player";
+  online.mySeat = "blue";
+  online.seats = Object.fromEntries(SEATS.map((c) => {
+    const s = rec.seats[c] || { kind: "open", name: "" };
+    if (s.kind === "host") return [c, { kind: "host", name: s.name, token: sessionToken }];
+    // players who were connected are covered by the computer until they rejoin with their token
+    if (s.kind === "peer") return [c, rec.phase === "playing" ? { kind: "bot", name: s.name, token: s.token, away: true } : { kind: "open", name: "", token: s.token }];
+    return [c, { kind: s.kind, name: s.name, token: s.token, away: !!s.away }];
+  }));
+  enterOnline("host", rec.code);
+  online.phase = rec.phase;
+  if (rec.phase === "playing" && rec.snap) {
+    setModal(el.onlineModal, false);
+    setModal(el.playersModal, false);
+    scene.setViewSeat("blue");
+    applySnapshot(rec.snap);
+    setStatus("Your room is back. Friends rejoin automatically.");
+  } else {
+    openOnlineModal();
+  }
+  renderLobby();
+  updateBadge();
+}
+
 async function autoRejoin(rec) {
   if (rejoining) return;
   rejoining = true;
@@ -1224,8 +1277,8 @@ async function autoRejoin(rec) {
   for (let attempt = 0; attempt < 6; attempt += 1) {
     online.welcomed = false;
     el.onlineName.value = rec.name || loadName() || "Player";
-    await joinRoom(rec.code);
-    for (let t = 0; t < 40 && !online.welcomed; t += 1) await new Promise((r) => setTimeout(r, 300));
+    const connected = await joinRoom(rec.code);
+    for (let t = 0; connected && t < 40 && !online.welcomed; t += 1) await new Promise((r) => setTimeout(r, 300));
     if (online.welcomed) { rejoining = false; return; }
     try { online.link?.close(); } catch (err) { /* ignore */ }
     await new Promise((r) => setTimeout(r, 2500));
@@ -1309,7 +1362,7 @@ function clientOnClose() {
     return;
   }
   const rec = readGuest();
-  if (rec && online.role === "client" && !rejoining && !allDone()) {
+  if (rec && !rec.host && online.role === "client" && !rejoining && !allDone()) {
     online.ended = true;
     updateBadge();
     scene.setSelectable([]);
@@ -1485,6 +1538,7 @@ function startSolo(color, opponents, level) {
 }
 
 function leaveRoom() {
+  leaving = true;
   clearGuest();
   if (online.solo) clearSoloSaved(); // leaving on purpose ends the saved solo game
   try {
@@ -1675,7 +1729,10 @@ el.loading.classList.add("done");
 scene.intro();
 {
   const rec = readGuest();
-  if (rec && !roomParam && !online.active && /^[A-Z0-9]{5}$/.test(rec.code || "")) autoRejoin(rec);
+  if (rec && !roomParam && !online.active && /^[A-Z0-9]{5}$/.test(rec.code || "")) {
+    if (rec.host) resumeHost(rec);
+    else autoRejoin(rec);
+  }
 }
 
 // Handle for automated checks in the browser console.
