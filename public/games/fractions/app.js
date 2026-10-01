@@ -125,6 +125,7 @@ function session(act) {
   function next() {
     if (n >= TOTAL) return finish();
     q = act.gen(level);
+    window.__fq = q; // handy for automated checks
     answered = false;
     n += 1;
     view.innerHTML = `<div class="panel"><div class="row between" style="margin-bottom:10px">${chips()}<span class="score">Question ${n} of ${TOTAL} · ⭐ ${correct}</span></div>
@@ -195,9 +196,9 @@ ACT.compare = {
 ACT.equal = {
   id: "equal",
   gen(level) {
-    if (level === 2) { const d = ri(2, 5), k = ri(2, 4); let n = ri(1, d - 1); [n] = simp(n, d).length ? [n] : [n]; return { n: n * k, d: d * k, to: d, k, reverse: true }; }
+    if (level === 2) { const d = ri(2, 5), k = ri(2, 4); const n = ri(1, d - 1); return { n: n * k, d: d * k, to: d, k, reverse: true }; }
     const d = ri(2, level === 0 ? 4 : 6), k = ri(2, level === 0 ? 3 : 5);
-    let n = ri(1, d - 1);
+    const n = ri(1, d - 1);
     return { n, d, to: d * k, k, reverse: false };
   },
   draw(q, box, done) {
