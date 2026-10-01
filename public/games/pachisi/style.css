@@ -1,0 +1,13 @@
+.pbars.cc { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.board-wrap.pach { max-width: 600px; }
+#mb { background: linear-gradient(145deg, #7a4a24, #4f2f14); }
+.throwbox { display: grid; justify-items: center; gap: 10px; margin: 14px auto 0; max-width: 600px; padding: 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.shells { display: flex; gap: 10px; }
+.shell { width: 34px; height: 48px; border-radius: 50% / 45%; position: relative; background: radial-gradient(circle at 35% 30%, #fffaf0, #d9c9a3 80%); box-shadow: 0 3px 5px rgba(0, 0, 0, 0.35), inset 0 -3px 5px rgba(120, 90, 40, 0.35); transition: transform 0.12s; }
+.shell.up::after { content: ""; position: absolute; left: 50%; top: 14%; bottom: 14%; width: 8px; transform: translateX(-50%); border-radius: 6px; background: linear-gradient(#5d3b16, #2a1706); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6); }
+.shell.down { background: radial-gradient(circle at 35% 30%, #e8dcc0, #b4a07a 80%); transform: scaleX(0.92); }
+.shell.rolling { animation: shellroll 0.16s linear infinite; }
+@keyframes shellroll { 50% { transform: translateY(-6px) rotate(14deg); } }
+html[data-saver] .shell.rolling { animation: none; }
+.tinfo { min-height: 1.5em; font-weight: 700; text-align: center; }
+.tinfo .grace { color: var(--gold); }

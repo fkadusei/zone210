@@ -32,6 +32,8 @@ saved games stay on the player's own device.
 | **Ultimate Tic-Tac-Toe** | Everyone | nine boards in one with the "sent to the matching board" rule, three computer levels (alpha-beta, up to 7 plies on Hard), hints, undo, vs computer, 2 players, or online with a friend |
 | **Hex** | Everyone | 7x7, 9x9 or 11x11 rhombus board, optional swap (pie) rule, no draws, Monte Carlo tree search computer (three levels), undo, vs computer, 2 players, or online with a friend |
 | **Fox & Geese** | Everyone | 33-point cross board, play either the fox (multi-jump captures) or the geese, 13, 15 or 17 geese, three computer levels, hints, undo, vs computer, 2 players, or online with a friend |
+| **Pachisi** | Everyone | the cross-and-cowrie race game: six-shell throws (12, 10, 2, 3, 4, 25, 6), graces to enter and throw again, castle squares, captures and blocks, exact finish; 2 to 4 players, three computer levels, pass and play, or online with a friend (2 players) |
+| **Chinese Checkers** | Everyone | 121-hole star board for 2, 3, 4 or 6 players, step and chained hops with animation, board turns so your corner is at the bottom, three computer levels (Hard looks a move ahead for hop ladders), hints, undo, pass and play, or online with a friend (2 players) |
 | **Dots & Boxes** | Everyone | 3x3 to 5x5 boards, vs computer (three levels), a friend, or online with a friend, chain-aware computer |
 | **Battleship** | Everyone | place your fleet by hand or randomly, three computer levels (smart targeting on Hard), or online with a friend |
 | **Memory Match** | Kids | themes, three sizes, 1–2 players or online with a friend |

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Pachisi · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="../../assets/mills.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Pachisi</h1>
+          <p>The royal game of India: throw the cowrie shells, race your four pieces round the cross, and bring them home to the centre.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn" id="newGame">New Game</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="cpu" aria-pressed="true">vs Computer</button>
+            <button class="g-chip" data-value="two" aria-pressed="false">Pass &amp; play</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">🌐 Online</button>
+          </div></div>
+        <div class="opt" id="playersRow"><span class="lbl">Players</span>
+          <div class="g-chips" id="players" role="group" aria-label="Number of players">
+            <button class="g-chip" data-value="2" aria-pressed="true">2</button>
+            <button class="g-chip" data-value="3" aria-pressed="false">3</button>
+            <button class="g-chip" data-value="4" aria-pressed="false">4</button>
+          </div></div>
+        <div class="opt" id="levelRow"><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+            <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
+            <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+          </div></div>
+      </section>
+
+      <div class="pbars cc" id="pbars"></div>
+      <div class="board-wrap pach"><svg id="mb" viewBox="0 0 570 570" role="group" aria-label="Pachisi board"></svg></div>
+      <div class="throwbox"><div class="shells" id="shells" aria-hidden="true"></div><div class="tinfo" id="tinfo">Throw the cowrie shells to begin.</div><button class="g-btn" id="throw">🐚 Throw the shells</button></div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+      
+
+      <details class="g-panel rules">
+        <summary>How to play</summary>
+        <ul><li>Each player has four pieces waiting in their yard. Everyone travels clockwise round the cross, then up their own coloured column to the centre.</li>
+          <li><b>Throwing:</b> six cowrie shells are thrown. The number landing mouth-up sets your move: 0 up = 12, 1 up = 10, 2 up = 2, 3 up = 3, 4 up = 4, 5 up = 25, 6 up = 6.</li>
+          <li><b>Graces:</b> throws of 12, 10, 25 and 6 are graces. A grace lets you bring a piece out of the yard onto your start square (the tip of your arm), and gives you another throw.</li>
+          <li><b>Capturing:</b> land on a single opposing piece to send it back to its yard, and throw again. Squares marked with a star are castles: pieces there can't be captured.</li>
+          <li><b>Blocks:</b> two of your pieces on one square form a block that opponents cannot land on or pass.</li>
+          <li><b>Going home:</b> reach the centre with an exact throw (the last square before it counts as the centre). Bringing all four pieces home wins.</li></ul>
+      </details>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="bigemoji" id="endEmoji" aria-hidden="true">🏆</div>
+        <h2 id="endTitle">Game over</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endView">View board</button>
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
