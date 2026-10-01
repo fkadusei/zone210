@@ -1289,7 +1289,8 @@ function startOnlineGame() {
   if (online.role !== "host" || online.phase !== "lobby") return;
   const enabled = SEATS.filter((c) => ["host", "peer", "bot"].includes(online.seats[c].kind));
   if (enabled.length < 2) return;
-  const starter = game.players.find((p) => p.color === enabled[Math.floor(Math.random() * enabled.length)]).idx;
+  const starterColor = enabled[Math.floor(Math.random() * enabled.length)]; // pick once (a fresh pick per player made Start fail about a third of the time)
+  const starter = game.players.find((p) => p.color === starterColor).idx;
   SEATS.forEach((c) => {
     if (!enabled.includes(c)) online.seats[c] = { kind: "closed", name: "" };
   });
@@ -1438,7 +1439,8 @@ function startSolo(color, opponents, level) {
   setModal(el.playersModal, false);
 
   const enabled = SEATS.filter((c) => online.seats[c].kind !== "closed");
-  const starter = game.players.find((p) => p.color === enabled[Math.floor(Math.random() * enabled.length)]).idx;
+  const starterColor = enabled[Math.floor(Math.random() * enabled.length)];
+  const starter = game.players.find((p) => p.color === starterColor).idx;
   handleStart(enabled, starter);
 }
 
