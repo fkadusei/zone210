@@ -1,0 +1,8 @@
+#mb .cellhex { cursor: pointer; transition: fill 0.1s; }
+#mb .cellhex.empty { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.5; }
+#mb .cellhex.empty:hover { fill: color-mix(in srgb, var(--gold) 35%, var(--surface-2)); }
+#mb .cellhex.dead { cursor: default; }
+#mb .cellhex.r { fill: #e5484d; stroke: #8c1f23; stroke-width: 1.5; }
+#mb .cellhex.b { fill: #3b82f6; stroke: #1d4695; stroke-width: 1.5; }
+#mb .cellhex.win { stroke: #fff; stroke-width: 3; }
+.board-wrap #mb { background: var(--surface); box-shadow: var(--shadow); border: 1px solid var(--line); }
