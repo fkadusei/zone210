@@ -1,0 +1,4 @@
+.pbars.cc { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.pbars.cc .pbar .nm small { white-space: nowrap; }
+#mb { background: radial-gradient(circle at 50% 40%, #c79a62, #9a6a38); }
+#mb .hit { cursor: default; }
