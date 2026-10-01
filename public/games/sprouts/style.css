@@ -1,0 +1,6 @@
+#mb { background: #fbf6e6; touch-action: none; cursor: crosshair; }
+#mb .sp { pointer-events: none; }
+.legend { text-align: center; color: var(--muted); font-size: 0.85rem; margin: 8px 0 0; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #333; vertical-align: -2px; margin: 0 2px 0 6px; }
+.legend .d3 { background: #fff; } .legend .d2 { background: #fff1b3; } .legend .d1 { background: #ffc24d; } .legend .d0 { background: #9aa0a6; }
+.pbar .ln { color: var(--muted); font-weight: 600; }
