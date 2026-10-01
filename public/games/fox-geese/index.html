@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Fox and Geese · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="../../assets/mills.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Fox &amp; Geese</h1>
+          <p>One clever fox against a flock of geese. Trap the fox, or capture the geese.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn" id="newGame">New Game</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="cpu" aria-pressed="true">vs Computer</button>
+            <button class="g-chip" data-value="two" aria-pressed="false">2 players</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">🌐 Online</button>
+          </div></div>
+        <div class="opt" id="levelRow"><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+            <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
+            <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+          </div></div>
+        <div class="opt" id="firstRow"><span class="lbl">I play</span>
+          <div class="g-chips" id="first" role="group" aria-label="Who starts">
+            <button class="g-chip" data-value="me" aria-pressed="true">Fox (moves first)</button>
+            <button class="g-chip" data-value="cpu" aria-pressed="false">Geese</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Geese</span>
+          <div class="g-chips" id="geese" role="group" aria-label="Number of geese">
+            <button class="g-chip" data-value="13" aria-pressed="true">13 (classic)</button>
+            <button class="g-chip" data-value="15" aria-pressed="false">15 (easier for geese)</button>
+            <button class="g-chip" data-value="17" aria-pressed="false">17 (much easier)</button>
+          </div></div>
+      </section>
+
+      <div class="pbars" id="pbars"></div>
+      <div class="board-wrap"><svg id="mb" viewBox="0 0 340 340" role="group" aria-label="Fox &amp; Geese board"></svg></div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+      <div class="tools"><button class="g-btn" id="stopJump" hidden>Stop jumping</button><button class="g-btn ghost" id="undo">Undo</button><button class="g-btn ghost" id="hint">Hint</button></div>
+
+      <details class="g-panel rules">
+        <summary>How to play</summary>
+        <ul><li>The board is a cross of 33 points. The Fox starts in the middle, and the geese fill the bottom three rows. The Fox moves first.</li>
+          <li><b>The Fox</b> moves one step up, down, left or right to an empty point, or jumps over a goose next to it onto the empty point right behind it, capturing that goose. It may keep jumping in the same turn, and can stop whenever it likes. Captures are optional.</li>
+          <li><b>The Geese</b> move one goose one step forward (up) or sideways to an empty point. They can never move backward and they can't capture. Stay close together: a goose with another goose or the edge behind it can't be jumped.</li>
+          <li>The Geese win by surrounding the Fox so it can't move. The Fox wins by capturing so many geese that fewer than six are left, or if the geese run out of moves.</li>
+          <li>If nobody makes progress for a long time (no goose steps forward and nobody is captured), or the same position comes up three times, it's a draw.</li></ul>
+      </details>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="bigemoji" id="endEmoji" aria-hidden="true">🏆</div>
+        <h2 id="endTitle">Game over</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endView">View board</button>
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

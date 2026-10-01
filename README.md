@@ -30,6 +30,8 @@ saved games stay on the player's own device.
 | **Mastermind** | Everyone | break or make a colour code: three sizes (up to 5 pegs, 8 colours), the computer can break your code with a real solver, 2 players on one device, or online where the code stays on the maker's device and roles swap on rematch |
 | **Yote** | Everyone | West African capture game on a 5x6 board: place from hand, slide or jump, every capture takes a bonus piece, three computer levels, hints, undo, vs computer, 2 players, or online with a friend |
 | **Ultimate Tic-Tac-Toe** | Everyone | nine boards in one with the "sent to the matching board" rule, three computer levels (alpha-beta, up to 7 plies on Hard), hints, undo, vs computer, 2 players, or online with a friend |
+| **Hex** | Everyone | 7x7, 9x9 or 11x11 rhombus board, optional swap (pie) rule, no draws, Monte Carlo tree search computer (three levels), undo, vs computer, 2 players, or online with a friend |
+| **Fox & Geese** | Everyone | 33-point cross board, play either the fox (multi-jump captures) or the geese, 13, 15 or 17 geese, three computer levels, hints, undo, vs computer, 2 players, or online with a friend |
 | **Dots & Boxes** | Everyone | 3x3 to 5x5 boards, vs computer (three levels), a friend, or online with a friend, chain-aware computer |
 | **Battleship** | Everyone | place your fleet by hand or randomly, three computer levels (smart targeting on Hard), or online with a friend |
 | **Memory Match** | Kids | themes, three sizes, 1–2 players or online with a friend |
