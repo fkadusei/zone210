@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Yahtzee · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Yahtzee</h1>
+          <p>Roll five dice up to three times a turn and fill your scorecard.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn" id="newGame">New Game</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="solo" aria-pressed="false">Solo</button>
+            <button class="g-chip" data-value="cpu" aria-pressed="true">vs Computer</button>
+            <button class="g-chip" data-value="two" aria-pressed="false">2 players</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">🌐 Online</button>
+          </div></div>
+        <div class="opt" id="levelRow"><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+            <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
+            <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+          </div></div>
+      </section>
+
+      <div class="yz">
+        <section class="tray" aria-label="Dice">
+          <div class="dice" id="dice" role="group" aria-label="Your dice"></div>
+          <div class="tray-actions">
+            <button class="g-btn" id="roll">Roll dice</button>
+            <span class="left" id="left"></span>
+          </div>
+          <p class="g-status" id="status" role="status" aria-live="polite"></p>
+        </section>
+        <section class="card-wrap" aria-label="Scorecard">
+          <table class="sheet" id="sheet"></table>
+        </section>
+      </div>
+
+      <details class="g-panel rules">
+        <summary>How to play</summary>
+        <ul>
+          <li>On your turn, roll the five dice. Tap the dice you want to <b>keep</b>, then roll the rest again. You get up to three rolls.</li>
+          <li>Then pick a box on the scorecard to score your dice in. Every box can be used once, and a box you can't fill scores 0.</li>
+          <li><b>Top section:</b> add up only the dice that show that number. Score 63 or more there and you get a <b>35 point bonus</b>.</li>
+          <li><b>Bottom section:</b> three or four of a kind score all the dice; a full house (3 + 2) scores 25; a small straight (four in a row) scores 30; a large straight (five in a row) scores 40; five of a kind is a <b>YAHTZEE</b> worth 50; chance scores all the dice.</li>
+          <li>Roll another Yahtzee after scoring 50 in the Yahtzee box and you earn a <b>100 point bonus</b>, and the dice can fill any open box (a full house or straight scores in full).</li>
+          <li>After 13 turns the highest total wins. Playing solo? Try to beat your best score.</li>
+        </ul>
+      </details>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="bigemoji" id="endEmoji" aria-hidden="true">🏆</div>
+        <h2 id="endTitle">Game over</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endView">View scorecard</button>
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+    <div class="g-overlay" id="cover" role="dialog" aria-modal="true" aria-label="Pass the device">
+      <div class="card">
+        <div class="bigemoji" aria-hidden="true">🎲</div>
+        <h2 id="coverTitle">Pass the device</h2>
+        <p>It's the next player's turn.</p>
+        <button class="g-btn" id="coverGo">I'm ready</button>
+      </div>
+    </div>
+
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
