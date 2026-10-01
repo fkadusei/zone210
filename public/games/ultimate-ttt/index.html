@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Ultimate Tic-Tac-Toe · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page narrow">
+      <div class="g-head">
+        <div>
+          <h1>Ultimate Tic-Tac-Toe</h1>
+          <p>Win three small boards in a row. Where you play decides which board your opponent must play next.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="false">Sound On</button>
+          <button class="g-btn" id="newGame">New Game</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="cpu" aria-pressed="true">vs Computer</button>
+            <button class="g-chip" data-value="two" aria-pressed="false">2 players</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">🌐 Online</button>
+          </div></div>
+        <div class="opt" id="levelRow"><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Difficulty">
+            <button class="g-chip" data-value="easy" aria-pressed="false">Easy</button>
+            <button class="g-chip" data-value="normal" aria-pressed="true">Normal</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+          </div></div>
+        <div class="opt" id="firstRow"><span class="lbl">I play</span>
+          <div class="g-chips" id="first" role="group" aria-label="Who starts">
+            <button class="g-chip" data-value="me" aria-pressed="true">X (first)</button>
+            <button class="g-chip" data-value="cpu" aria-pressed="false">O</button>
+          </div></div>
+      </section>
+
+      <div class="pbars" id="pbars"></div>
+      <div class="ub" id="ub" role="grid" aria-label="Ultimate Tic-Tac-Toe board"></div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+      <div class="tools"><button class="g-btn ghost" id="undo">Undo</button><button class="g-btn ghost" id="hint">Hint</button></div>
+
+      <details class="g-panel rules">
+        <summary>How to play</summary>
+        <ul><li>The big board is made of nine small boards. Win a small board by getting three in a row inside it, and it becomes yours.</li>
+          <li>The cell you pick inside a small board decides which small board your opponent must play in next. Play in the top-right cell and they must play in the top-right board.</li>
+          <li>If you are sent to a board that is already won or full, you may play in any open board.</li>
+          <li>Win the game by claiming three small boards in a row on the big board. If every board is decided without a line, the player with more boards wins.</li></ul>
+      </details>
+    </main>
+
+    <div class="g-overlay" id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <div class="card">
+        <div class="bigemoji" id="endEmoji" aria-hidden="true">🏆</div>
+        <h2 id="endTitle">Game over</h2>
+        <p id="endText"></p>
+        <div class="g-bar" style="justify-content:center">
+          <button class="g-btn ghost" id="endView">View board</button>
+          <button class="g-btn" id="again">Play again</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
