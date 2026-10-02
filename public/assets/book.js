@@ -227,7 +227,6 @@ export function createBook(host, api) {
         <p class="c-count">${n()} games &amp; adventures</p>
       </div>
       <button type="button" class="c-open" data-act="next">Open the book</button>
-      <i class="c-kente" aria-hidden="true"></i>
     </div>`;
 
   const tocList = () => `<ol class="toc">${chapters

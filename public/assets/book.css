@@ -293,14 +293,14 @@ html[data-saver="on"] .bk-ribbon { animation: none; }
 .end-actions .bk-play { flex: none; }
 
 /* ---------- the cover ---------- */
-.cover { position: absolute; inset: 0; padding: 7% 8% 11%; display: flex; flex-direction: column; font-family: var(--serif); color: #f4dca0; text-align: center; overflow: hidden; z-index: 1; }
+.cover { position: absolute; inset: 0; padding: 7% 8% 15%; display: flex; flex-direction: column; font-family: var(--serif); color: #f4dca0; text-align: center; overflow: hidden; z-index: 1; }
 .cover::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 80% at 30% 0%, rgba(255, 255, 255, 0.12), transparent 55%); }
 .c-frame { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5em; margin: 1.1em; padding: 1em; border: 0.14em solid rgba(240, 200, 110, 0.75); border-radius: 0.3em; box-shadow: 0 0 0 0.35em rgba(0, 0, 0, 0), inset 0 0 0 0.35em transparent, inset 0 0 0 0.45em rgba(240, 200, 110, 0.25); }
 .c-corner { position: absolute; width: 2.6em; height: 2.6em; border: 0.14em solid #e9c36a; z-index: 2; }
 .c-corner.tl { top: 0.55em; left: 0.55em; border-right: 0; border-bottom: 0; border-radius: 0.8em 0 0 0; }
 .c-corner.tr { top: 0.55em; right: 0.55em; border-left: 0; border-bottom: 0; border-radius: 0 0.8em 0 0; }
-.c-corner.bl { bottom: 4.1em; left: 0.55em; border-right: 0; border-top: 0; border-radius: 0 0 0 0.8em; }
-.c-corner.br { bottom: 4.1em; right: 0.55em; border-left: 0; border-top: 0; border-radius: 0 0 0.8em 0; }
+.c-corner.bl { bottom: 0.55em; left: 0.55em; border-right: 0; border-top: 0; border-radius: 0 0 0 0.8em; }
+.c-corner.br { bottom: 0.55em; right: 0.55em; border-left: 0; border-top: 0; border-radius: 0 0 0.8em 0; }
 .c-pre { margin: 0; font: 700 0.85em var(--font); letter-spacing: 0.4em; text-transform: uppercase; color: #e9c36a; }
 .c-title { margin: 0.2em 0; display: grid; gap: 0.05em; font-size: 3.6em; font-weight: 900; line-height: 0.95; letter-spacing: -0.01em; }
 .c-title span { background: var(--foil); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0.04em 0.02em rgba(0, 0, 0, 0.6)); animation: bkfoil 6s ease-in-out infinite; }
@@ -311,11 +311,10 @@ html[data-saver="on"] .c-title span { animation: none; }
 .c-orn i { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #e9c36a, transparent); }
 .c-icons { display: flex; gap: 0.5em; font-size: 1.7em; filter: drop-shadow(0 0.05em 0.05em rgba(0, 0, 0, 0.55)); }
 .c-count { margin: 0.2em 0 0; font: italic 600 1.05em var(--serif); color: #f4dca0; }
-.c-open { position: absolute; left: 50%; bottom: 3.1em; transform: translateX(-50%); z-index: 3; font: 800 0.95em var(--font); letter-spacing: 0.04em; padding: 0.7em 1.5em; color: #3b1a05; background: var(--foil); border: 0; border-radius: 999px; cursor: pointer; box-shadow: 0 0.2em 0 #8c5a0a, 0 0.7em 1.2em rgba(0, 0, 0, 0.45); white-space: nowrap; touch-action: manipulation; animation: bkpulse 2.4s ease-in-out infinite; }
+.c-open { position: absolute; left: 50%; bottom: 2.1em; transform: translateX(-50%); z-index: 3; font: 800 0.95em var(--font); letter-spacing: 0.04em; padding: 0.7em 1.5em; color: #3b1a05; background: var(--foil); border: 0; border-radius: 999px; cursor: pointer; box-shadow: 0 0.2em 0 #8c5a0a, 0 0.7em 1.2em rgba(0, 0, 0, 0.45); white-space: nowrap; touch-action: manipulation; animation: bkpulse 2.4s ease-in-out infinite; }
 @keyframes bkpulse { 50% { transform: translateX(-50%) scale(1.05); } }
 html[data-saver="on"] .c-open { animation: none; }
-.c-kente { position: absolute; left: 0; right: 0; bottom: 0; height: 1.9em; background: repeating-linear-gradient(90deg, #006b3f 0 1.4em, #fcd116 1.4em 2.6em, #ce1126 2.6em 4em, #111 4em 4.6em, #fcd116 4.6em 5.2em); box-shadow: 0 -0.15em 0 rgba(0, 0, 0, 0.35), inset 0 0.1em 0.2em rgba(255, 255, 255, 0.25); z-index: 2; }
-.bk[data-mode="single"] .cover { padding-bottom: 10%; }
+.bk[data-mode="single"] .cover { padding-bottom: 17%; }
 .bk[data-mode="single"] .c-title { font-size: 3.1em; }
 
 /* ---------- phone: one page at a time ---------- */
