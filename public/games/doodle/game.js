@@ -1,3 +1,5 @@
+import { makePages } from "./pages2.js";
+
 const $ = (id) => document.getElementById(id);
 const paint = $("paint");
 const lines = $("lines");
@@ -34,6 +36,17 @@ function stroke(fn, width = 6) {
   lctx.stroke();
 }
 const circle = (x, y, r) => (c) => c.arc(x, y, r, 0, Math.PI * 2);
+const ell = (x, y, rx, ry, rot = 0) => (c) => c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
+// clears any lines under the shape, then outlines it, so a piece can sit in front of another
+function solid(fn, width = 6) {
+  lctx.save();
+  lctx.globalCompositeOperation = "destination-out";
+  lctx.beginPath();
+  fn(lctx);
+  lctx.fill();
+  lctx.restore();
+  stroke(fn, width);
+}
 const poly = (pts) => (c) => {
   c.moveTo(...pts[0]);
   pts.slice(1).forEach((p) => c.lineTo(...p));
@@ -41,8 +54,9 @@ const poly = (pts) => (c) => {
 };
 
 const PAGES = {
-  blank: { label: "Blank", draw() {} },
+  blank: { label: "Blank", cat: "blank", draw() {} },
   house: {
+    cat: "scenes",
     label: "🏠 House",
     draw() {
       stroke(poly([[0, 470], [800, 470], [800, 600], [0, 600]])); // ground
@@ -69,6 +83,7 @@ const PAGES = {
     },
   },
   fish: {
+    cat: "animals",
     label: "🐟 Fish",
     draw() {
       stroke((c) => c.ellipse(390, 300, 200, 120, 0, 0, Math.PI * 2)); // body
@@ -85,6 +100,7 @@ const PAGES = {
     },
   },
   flower: {
+    cat: "nature",
     label: "🌸 Flower",
     draw() {
       for (let i = 0; i < 8; i += 1) {
@@ -101,6 +117,7 @@ const PAGES = {
     },
   },
   rocket: {
+    cat: "vehicles",
     label: "🚀 Rocket",
     draw() {
       stroke((c) => { c.moveTo(400, 60); c.bezierCurveTo(500, 150, 520, 300, 500, 420); c.lineTo(300, 420); c.bezierCurveTo(280, 300, 300, 150, 400, 60); c.closePath(); }); // body
@@ -119,8 +136,20 @@ const PAGES = {
   },
 };
 
+function clipped(shape, draw) {
+  lctx.save();
+  lctx.beginPath();
+  shape(lctx);
+  lctx.clip();
+  draw();
+  lctx.restore();
+}
+Object.assign(PAGES, makePages({ stroke, solid, circle, poly, ell, clipped }));
+
 function loadPage(id) {
   state.page = id;
+  const tip = document.getElementById("photoTip");
+  if (tip) tip.hidden = true;
   lctx.clearRect(0, 0, W, H);
   PAGES[id].draw();
   pctx.fillStyle = "#ffffff";
@@ -339,16 +368,110 @@ $("sizes").addEventListener("click", (e) => {
   pressed($("sizes"), chip);
 });
 
-Object.entries(PAGES).forEach(([id, p]) => {
+const CATS = [["animals", "🐾 Animals"], ["vehicles", "🚀 Vehicles"], ["scenes", "🏡 Scenes"], ["things", "🎨 Things"], ["patterns", "🔯 Patterns"]];
+const catOf = (p) => (p.cat === "nature" ? "scenes" : p.cat);
+let shownCat = "animals";
+function pageButton(id, label) {
   const b = document.createElement("button");
   b.className = "g-chip";
-  b.textContent = p.label;
+  b.textContent = label;
+  b.dataset.page = id;
   b.setAttribute("aria-pressed", String(id === state.page));
-  b.addEventListener("click", () => {
-    pressed($("pages"), b);
+  b.addEventListener("click", () => { pressed($("pages"), b); loadPage(id); });
+  return b;
+}
+function renderPages() {
+  const box = $("pages");
+  box.innerHTML = "";
+  box.appendChild(pageButton("blank", "⬜ Blank"));
+  Object.entries(PAGES).filter(([, p]) => catOf(p) === shownCat).forEach(([id, p]) => box.appendChild(pageButton(id, p.label)));
+  const more = document.createElement("button");
+  more.className = "g-chip";
+  more.textContent = "🎲 Surprise me";
+  more.addEventListener("click", () => {
+    const ids = Object.keys(PAGES).filter((k) => k !== "blank" && k !== state.page);
+    const id = ids[Math.floor(Math.random() * ids.length)];
+    shownCat = catOf(PAGES[id]);
+    renderCats();
+    renderPages();
     loadPage(id);
   });
-  $("pages").appendChild(b);
+  box.appendChild(more);
+  const mine = document.createElement("button");
+  mine.className = "g-chip";
+  mine.textContent = "📷 My own picture";
+  mine.addEventListener("click", () => $("photo").click());
+  box.appendChild(mine);
+}
+function renderCats() {
+  $("cats").innerHTML = CATS.map(([id, label]) => `<button class="g-chip" data-cat="${id}" aria-pressed="${id === shownCat}">${label}</button>`).join("");
+}
+$("cats").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-cat]");
+  if (!b) return;
+  shownCat = b.dataset.cat;
+  renderCats();
+  renderPages();
+});
+renderCats();
+renderPages();
+
+/* ---------- turn any picture into a colouring page: find its edges and draw them as outlines ---------- */
+$("photo").addEventListener("change", async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  let bmp;
+  try { bmp = await createImageBitmap(file); } catch (err) { alert("Sorry, that picture could not be opened. Try a JPG or PNG."); return; }
+  const tmp = document.createElement("canvas");
+  tmp.width = W; tmp.height = H;
+  const t = tmp.getContext("2d", { willReadFrequently: true });
+  t.fillStyle = "#fff";
+  t.fillRect(0, 0, W, H);
+  const k = Math.min(W / bmp.width, H / bmp.height);
+  const dw = bmp.width * k, dh = bmp.height * k;
+  t.drawImage(bmp, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  const src = t.getImageData(0, 0, W, H).data;
+  const gray = new Float32Array(W * H);
+  for (let i = 0; i < W * H; i += 1) gray[i] = 0.299 * src[i * 4] + 0.587 * src[i * 4 + 1] + 0.114 * src[i * 4 + 2];
+  // a light blur so tiny speckles do not become lines
+  const blur = new Float32Array(W * H);
+  for (let y = 1; y < H - 1; y += 1) for (let x = 1; x < W - 1; x += 1) {
+    const i = y * W + x;
+    blur[i] = (gray[i - W - 1] + gray[i - W] * 2 + gray[i - W + 1] + gray[i - 1] * 2 + gray[i] * 4 + gray[i + 1] * 2 + gray[i + W - 1] + gray[i + W] * 2 + gray[i + W + 1]) / 16;
+  }
+  const mag = new Float32Array(W * H);
+  let sum = 0, sum2 = 0;
+  for (let y = 1; y < H - 1; y += 1) for (let x = 1; x < W - 1; x += 1) {
+    const i = y * W + x;
+    const gx = -blur[i - W - 1] - 2 * blur[i - 1] - blur[i + W - 1] + blur[i - W + 1] + 2 * blur[i + 1] + blur[i + W + 1];
+    const gy = -blur[i - W - 1] - 2 * blur[i - W] - blur[i - W + 1] + blur[i + W - 1] + 2 * blur[i + W] + blur[i + W + 1];
+    const m = Math.hypot(gx, gy);
+    mag[i] = m; sum += m; sum2 += m * m;
+  }
+  const n = W * H;
+  const mean = sum / n;
+  const sd = Math.sqrt(Math.max(0, sum2 / n - mean * mean));
+  const thr = Math.max(40, mean + 1.1 * sd);
+  const edge = new Uint8Array(W * H);
+  for (let i = 0; i < n; i += 1) if (mag[i] > thr) edge[i] = 1;
+  // thicken by one pixel so the paint bucket cannot leak through gaps
+  const out = lctx.createImageData(W, H);
+  const ink = [0x2a, 0x1b, 0x13];
+  for (let y = 1; y < H - 1; y += 1) for (let x = 1; x < W - 1; x += 1) {
+    const i = y * W + x;
+    if (edge[i] || edge[i - 1] || edge[i + 1] || edge[i - W] || edge[i + W]) { const k4 = i * 4; out.data[k4] = ink[0]; out.data[k4 + 1] = ink[1]; out.data[k4 + 2] = ink[2]; out.data[k4 + 3] = 255; }
+  }
+  state.page = "photo";
+  lctx.clearRect(0, 0, W, H);
+  lctx.putImageData(out, 0, 0);
+  pctx.fillStyle = "#ffffff";
+  pctx.fillRect(0, 0, W, H);
+  snapshot();
+  refreshButtons();
+  document.querySelectorAll("#pages .g-chip").forEach((c) => c.setAttribute("aria-pressed", "false"));
+  $("photoTip").hidden = false;
+  selectTool("fill");
 });
 
 $("undo").addEventListener("click", undo);

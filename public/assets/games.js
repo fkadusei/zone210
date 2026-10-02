@@ -534,7 +534,7 @@ export const GAMES = [
   {
     id: "doodle",
     title: "Doodle & Color",
-    tagline: "Draw with a rainbow brush, stamp stickers, or fill colouring pages. Save your picture.",
+    tagline: "Draw with a rainbow brush, stamp stickers, and colour in 20 pages of animals, vehicles, scenes and patterns. Or turn your own picture into a colouring page. Save your art.",
     audience: "kids",
     cat: "fun",
     tags: ["Creative", "Drawing", "Offline"],
