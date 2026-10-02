@@ -27,7 +27,7 @@ snow|❄️|Cold, white and fluffy flakes.
 apple|🍎|A crunchy red or green fruit.
 bear|🐻|A big furry animal that loves honey.
 lion|🦁|The king of the jungle.
-hand|✋|You have five fingers on it.
+hand|✋🏿|You have five fingers on it.
 shoe|👟|You wear it on your foot.
 sock|🧦|It keeps your foot warm inside a shoe.
 key|🔑|You use it to open a lock.
@@ -152,8 +152,8 @@ potato|🥔|A vegetable you can turn into chips.
 cupcake|🧁|A small cake with icing on top.
 magnet|🧲|It sticks to metal.
 anchor|⚓|A heavy hook that keeps a ship still.
-wizard|🧙|A magic person with a pointy hat.
-fairy|🧚|A tiny magical creature with wings.
+wizard|🧙🏾|A magic person with a pointy hat.
+fairy|🧚🏾|A tiny magical creature with wings.
 robot|🤖|A machine that can move and do jobs.
 ghost|👻|A spooky, floaty pretend spirit.
 pepper|🌶️|A spicy red vegetable.
@@ -201,7 +201,7 @@ comet|☄️|A ball of ice with a glowing tail.
 galaxy|🌌|A giant group of stars.
 tractor|🚜|A farm vehicle with big wheels.
 truck|🚚|A large vehicle that carries loads.
-police|👮|They keep people safe.
+police|👮🏾|They keep people safe.
 hammer|🔨|You bang nails with it.
 wrench|🔧|A tool for turning bolts.
 ladder|🪜|You climb it to reach high places.
@@ -216,7 +216,7 @@ ticket|🎫|You need one to get into a show.
 trophy|🏆|A prize for the winner.
 medal|🏅|A prize you wear around your neck.
 circus|🎪|A show with clowns and acrobats.
-mermaid|🧜|A story creature with a fish tail.
+mermaid|🧜🏾|A story creature with a fish tail.
 unicorn|🦄|A magical horse with one horn.
 genie|🧞|A wish-granting spirit from a lamp.
 statue|🗽|A big figure carved from stone or metal.`,
@@ -262,7 +262,7 @@ volleyball|🏐|A game where you hit a ball over a net.
 basketball|🏀|A game where you throw a ball through a hoop.
 champion|🏆|The winner of a contest.
 spaceship|🛸|A craft that travels through space.
-astronaut|👩‍🚀|A person who travels in space.
+astronaut|👩🏾‍🚀|A person who travels in space.
 lightning|⚡|A bright flash in a storm.
 tornado|🌪️|A spinning funnel of wind.
 hedgehog|🦔|A small spiky animal that curls into a ball.
@@ -312,15 +312,15 @@ restaurant|🍽️|A place where you eat a meal that others cook.
 bakery|🥖|A shop that sells bread and cakes.
 stadium|🏟️|A huge place for watching sports.
 airport|🛫|Planes take off and land here.
-firefighter|🧑‍🚒|A hero who puts out fires.
-scientist|🧑‍🔬|A person who does experiments.
+firefighter|🧑🏾‍🚒|A hero who puts out fires.
+scientist|🧑🏾‍🔬|A person who does experiments.
 detective|🕵️|Someone who searches for clues.
-gymnastics|🤸|A sport with flips and cartwheels.
+gymnastics|🤸🏾|A sport with flips and cartwheels.
 swimming|🏊|Moving through water using your arms and legs.
 football|🏈|A game with an oval ball and touchdowns.
 baseball|⚾|A game with a bat, a ball and bases.
 tennis|🎾|A game played with rackets and a net.
-surfing|🏄|Riding waves on a board.
+surfing|🏄🏾|Riding waves on a board.
 bowling|🎳|You roll a ball to knock down pins.
 archery|🏹|A sport where you shoot arrows at a target.
 saxophone|🎷|A curved, shiny wind instrument.
@@ -453,14 +453,14 @@ capsule|🚀|The small part of a rocket where astronauts sit.
 booster|🚀|It gives a rocket an extra push.
 thruster|🚀|A small engine that steers a spacecraft.
 cockpit|🚀|Where the pilot sits and steers.
-cadet|🧑‍🚀|A trainee astronaut.
+cadet|🧑🏾‍🚀|A trainee astronaut.
 mission|🎯|An important job, like flying to the moon.
-crew|🧑‍🚀|The team who work on a spaceship.
-commander|🧑‍🚀|The astronaut in charge.
+crew|🧑🏾‍🚀|The team who work on a spaceship.
+commander|🧑🏾‍🚀|The astronaut in charge.
 float|🎈|What astronauts do without gravity.
-weightless|🧑‍🚀|Feeling as if you weigh nothing.
+weightless|🧑🏾‍🚀|Feeling as if you weigh nothing.
 moonbeam|🌙|A ray of light from the moon.
-moonwalk|🧑‍🚀|Walking on the surface of the moon.
+moonwalk|🧑🏾‍🚀|Walking on the surface of the moon.
 milkyway|🌌|Our home galaxy, a swirl of stars.
 telescope|🔭|You look through it to see the stars.
 orbit|🪐|The path a moon takes around a planet.
@@ -485,7 +485,7 @@ countdown|⏱️|Ten, nine, eight... before blast-off.
 constellation|✨|A pattern of stars, like the Big Dipper.
 nebula|🌌|A glowing cloud of gas and dust in space.
 supernova|💥|A giant exploding star.
-spacesuit|🧑‍🚀|What an astronaut wears outside the ship.
+spacesuit|🧑🏾‍🚀|What an astronaut wears outside the ship.
 blastoff|🚀|The start of a rocket's journey.
 lunar|🌙|Anything to do with the moon.
 solar|☀️|Anything to do with the sun.
@@ -532,10 +532,10 @@ clam|🦪|A shellfish that opens and closes.
 oyster|🦪|A shellfish that can hold a pearl.
 pearl|🦪|A shiny white gem made in a shell.
 sailor|⚓|A person who works on a ship.
-captain|🧑‍✈️|The leader of a ship.
+captain|🧑🏾‍✈️|The leader of a ship.
 harbor|⚓|A safe place where boats stay.
 sailboat|⛵|A boat pushed by the wind.
-surfboard|🏄|You stand on it to ride waves.
+surfboard|🏄🏾|You stand on it to ride waves.
 snorkel|🤿|A tube for breathing while you swim face-down.
 diving|🤿|Swimming deep underwater.
 tide|🌊|The sea rising and falling each day.
@@ -617,7 +617,7 @@ scarf|🧣|You wrap it around your neck in winter.
 gloves|🧤|They keep your fingers warm.
 boots|🥾|Sturdy shoes for muddy walks.
 desk|🖥️|A table where you do your work.
-teacher|🧑‍🏫|The person who helps you learn at school.
+teacher|🧑🏾‍🏫|The person who helps you learn at school.
 homework|📝|Schoolwork you do at home.
 lesson|📖|A class where you learn something.`,
   sports: `golf|⛳|A game where you hit a small ball into a hole.
@@ -625,22 +625,22 @@ hockey|🏒|A game played with sticks and a puck.
 karate|🥋|A martial art from Japan.
 skiing|⛷️|Gliding down snowy mountains on long boards.
 skating|⛸️|Gliding on ice with blades on your shoes.
-running|🏃|Moving fast on your feet.
+running|🏃🏾|Moving fast on your feet.
 cycling|🚴|Riding a bike as a sport.
-rowing|🚣|Pulling oars to move a boat.
+rowing|🚣🏾|Pulling oars to move a boat.
 fishing|🎣|Trying to catch fish with a rod.
 darts|🎯|Throwing small arrows at a round board.
 chess|♟️|A board game with kings and queens.
 rugby|🏉|A team game with an oval ball and tackling.
 badminton|🏸|A game played with a shuttlecock and racket.
-marathon|🏃|A very long race of 26 miles.
+marathon|🏃🏾|A very long race of 26 miles.
 racket|🎾|You hit a tennis ball with it.
 goalie|🥅|The player who guards the net.
 melody|🎵|The tune of a song.
 rhythm|🎶|The beat in music.
 singer|🎤|A person who sings songs.
 concert|🎤|A live music show.
-dancer|💃|Someone who moves to the music.
+dancer|💃🏾|Someone who moves to the music.
 ballet|🩰|A graceful dance on tiptoe.
 flute|🎶|A thin instrument you blow across.
 drummer|🥁|The one who keeps the band's beat.
@@ -650,22 +650,22 @@ orchestra|🎼|A big group playing many instruments together.
 whistle|🎶|A referee blows it to stop the game.
 medal|🥇|A prize for coming first.
 podium|🥇|The stand where winners stand.
-stretch|🤸|What you do to warm up your muscles.
+stretch|🤸🏾|What you do to warm up your muscles.
 javelin|🏹|A long spear athletes throw.
-sprinter|🏃|A runner who dashes short distances.
+sprinter|🏃🏾|A runner who dashes short distances.
 jumping|🤾|Leaping off the ground.
 teammate|🤝|A person on your side in a game.`,
-  jobs: `doctor|🧑‍⚕️|A person who helps sick people get better.
-nurse|🧑‍⚕️|A person who cares for patients.
-teacher|🧑‍🏫|A person who helps you learn.
-farmer|🧑‍🌾|A person who grows crops and raises animals.
-chef|🧑‍🍳|A person who cooks in a restaurant.
-pilot|🧑‍✈️|A person who flies an aeroplane.
-artist|🧑‍🎨|A person who paints or draws.
+  jobs: `doctor|🧑🏾‍⚕️|A person who helps sick people get better.
+nurse|🧑🏾‍⚕️|A person who cares for patients.
+teacher|🧑🏾‍🏫|A person who helps you learn.
+farmer|🧑🏾‍🌾|A person who grows crops and raises animals.
+chef|🧑🏾‍🍳|A person who cooks in a restaurant.
+pilot|🧑🏾‍✈️|A person who flies an aeroplane.
+artist|🧑🏾‍🎨|A person who paints or draws.
 driver|🚕|A person who steers a bus or taxi.
-builder|👷|A person who builds houses.
+builder|👷🏾|A person who builds houses.
 baker|🥖|A person who bakes bread and cakes.
-mechanic|🧑‍🔧|A person who fixes cars.
+mechanic|🧑🏾‍🔧|A person who fixes cars.
 dentist|🦷|A person who looks after your teeth.
 judge|⚖️|A person who decides cases in a court.
 office|🏢|A room where people do desk work.
@@ -687,9 +687,9 @@ village|🏘️|A small group of houses in the countryside.
 postman|📮|A person who delivers letters.
 plumber|🔧|A person who fixes pipes.
 electrician|💡|A person who fixes wires and lights.
-gardener|🧑‍🌾|A person who looks after plants.
+gardener|🧑🏾‍🌾|A person who looks after plants.
 librarian|📚|A person who works with books.
-captain|🧑‍✈️|The person in charge of a ship or plane.
+captain|🧑🏾‍✈️|The person in charge of a ship or plane.
 soldier|🪖|A person who serves in the army.
 lawyer|⚖️|A person who gives legal advice.
 vet|🐕|An animal doctor.
@@ -698,21 +698,21 @@ cashier|💷|The person who takes your money at the shop.`,
   fantasy: `magic|🪄|Special powers that make impossible things happen.
 spell|✨|Magic words a wizard says.
 potion|🧪|A bubbling magical drink.
-witch|🧙|A magical woman with a broomstick.
-elf|🧝|A pointy-eared magical helper.
+witch|🧙🏾|A magical woman with a broomstick.
+elf|🧝🏾|A pointy-eared magical helper.
 knight|🛡️|A brave soldier in shining armour.
 shield|🛡️|A knight holds it to block attacks.
 kingdom|🏰|A land ruled by a king or queen.
-princess|👸|A king's daughter.
+princess|👸🏾|A king's daughter.
 prince|🤴|A king's son.
 king|🤴|A man who wears a crown and rules a land.
-queen|👸|A woman who rules a kingdom.
+queen|👸🏾|A woman who rules a kingdom.
 monster|👾|A scary creature in stories.
 goblin|👺|A mischievous little green creature.
-vampire|🧛|A spooky character with pointy teeth.
-hero|🦸|Someone who does brave things.
-superhero|🦸|A hero with special powers and a cape.
-villain|🦹|The bad guy in a story.
+vampire|🧛🏾|A spooky character with pointy teeth.
+hero|🦸🏾|Someone who does brave things.
+superhero|🦸🏾|A hero with special powers and a cape.
+villain|🦹🏾|The bad guy in a story.
 mask|🎭|You wear it over your face.
 balloon|🎈|It floats when you fill it with air or helium.
 party|🎉|A fun get-together with cake and games.
@@ -726,7 +726,7 @@ treasure|💎|Riches hidden by pirates.
 adventure|🧭|An exciting journey.
 giant|🧌|A huge person in fairy tales.
 enchanted|✨|Put under a magic spell.
-wizard|🧙|A man with magic powers and a long beard.
+wizard|🧙🏾|A man with magic powers and a long beard.
 cauldron|🧪|A big pot where a witch brews potions.
 lantern|🏮|A lamp you can carry.
 fairytale|📖|A story with magic and happy endings.`,
@@ -781,7 +781,7 @@ signal|🚦|A light that tells cars to stop or go.`,
   school: `math|➕|The subject about numbers and sums.
 science|🔬|The subject where you do experiments.
 reading|📖|Looking at words and understanding them.
-writing|✍️|Putting words on paper.
+writing|✍🏿|Putting words on paper.
 spelling|🔤|Getting the letters of words right.
 history|🏛️|The subject about the past.
 geography|🌍|The subject about places and maps.
@@ -814,7 +814,7 @@ paragraph|📝|A group of sentences about one idea.
 sentence|📝|Words that make a complete thought.
 story|📖|A tale with a beginning, middle and end.
 poem|📜|Words arranged with rhythm and sometimes rhymes.
-author|✍️|The person who writes a book.
+author|✍🏿|The person who writes a book.
 chapter|📖|A section of a book.
 dictionary|📚|A book that tells you what words mean.
 classroom|🏫|The room where your class meets.
@@ -828,7 +828,7 @@ ruler|📏|You draw straight lines with it.
 crayon|🖍️|A waxy colouring stick.
 pencil|✏️|You write and draw with it.
 notebook|📓|You write your notes in it.
-teacher|🧑‍🏫|The person who helps you learn.
+teacher|🧑🏾‍🏫|The person who helps you learn.
 homework|📝|Schoolwork you do at home.`,
   holidays: `christmas|🎄|A December holiday with trees and presents.
 santa|🎅|A jolly man in red who brings gifts.
@@ -869,7 +869,7 @@ pumpkin|🎃|An orange squash carved into a lantern.
 firework|🎆|A rocket that bursts into colour in the sky.
 decoration|🎊|Things you hang up to make a place look festive.
 tradition|🎉|Something families do every year.
-family|👨‍👩‍👧|The people you live with and love.
+family|👨🏾👩🏾👧🏿|The people you live with and love.
 gathering|🍽️|When people come together.
 surprise|🎁|Something you did not expect.
 greeting|💌|A friendly hello or card.

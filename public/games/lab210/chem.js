@@ -191,7 +191,7 @@ export function mountChallenge(root, ctx) {
   const st = { kind: "sym2name", level: "all" };
   let run = null;
   const KINDS = [["sym2name", "Symbol → name"], ["name2sym", "Name → symbol"], ["clue", "Guess the element"], ["speed", "⏱️ 60-second speed round"]];
-  const LEVELS = [["kids", "🧒 Kids"], ["all", "👨‍👩‍👧 Everyone"], ["expert", "🧑‍🎓 Expert"]];
+  const LEVELS = [["kids", "🧒🏿 Kids"], ["all", "👨🏾👩🏾👧🏿 Everyone"], ["expert", "🧑🏾‍🎓 Expert"]];
   function menu() {
     root.innerHTML = `<div class="g-panel picker">
       <div class="row"><span class="lbl">Challenge</span><div class="g-chips" id="chK">${KINDS.map(([v, t]) => `<button class="g-chip" data-v="${v}" aria-pressed="${st.kind === v}">${t}</button>`).join("")}</div></div>

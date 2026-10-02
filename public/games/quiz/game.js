@@ -217,7 +217,7 @@ function finish() {
     }
   }
   const pct = correctCount / round.length;
-  $("endEmoji").textContent = pct === 1 ? "🏆" : pct >= 0.7 ? "🎉" : pct >= 0.4 ? "👍" : "📚";
+  $("endEmoji").textContent = pct === 1 ? "🏆" : pct >= 0.7 ? "🎉" : pct >= 0.4 ? "👍🏿" : "📚";
   $("endTitle").textContent = pct === 1 ? "Perfect score!" : pct >= 0.7 ? "Great job!" : pct >= 0.4 ? "Nice try!" : "Keep learning!";
   $("endText").textContent = `${correctCount} of ${round.length} correct · ${score} points${record ? " · New best!" : ""}`;
   $("end").classList.add("show");

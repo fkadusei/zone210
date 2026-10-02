@@ -14,7 +14,7 @@ const PREFIX = "zone210-chess-";
 const GLYPH = { K: "♚", Q: "♛", R: "♜", B: "♝", N: "♞", P: "♟︎" };
 const VALUE = { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 0 };
 const START_COUNT = { P: 8, N: 2, B: 2, R: 2, Q: 1, K: 1 };
-const REACTIONS = ["👍", "😂", "😮", "😡", "👏", "🔥"];
+const REACTIONS = ["👍🏿", "😂", "😮", "😡", "👏🏿", "🔥"];
 const PHRASES = ["Good game!", "Nice move!", "Oops!", "Your move!"];
 
 const opts = { mode: "cpu", level: "normal", side: "w", time: 0, view: "3d" };

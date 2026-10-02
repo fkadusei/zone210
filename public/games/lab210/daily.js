@@ -44,7 +44,7 @@ export function mountDaily(root, ctx) {
       if (!practice) { st.days[key] = { s: r.score, c: r.correct }; ctx.store.set(KEY, st); }
       const s = streaks(st.days);
       ctx.showEnd({
-        emoji: r.correct >= 9 ? "🏆" : r.correct >= 6 ? "🎉" : "💪",
+        emoji: r.correct >= 9 ? "🏆" : r.correct >= 6 ? "🎉" : "💪🏿",
         title: `${r.correct} of ${r.total} right`,
         text: practice ? `${r.score} points (practice run)` : `${r.score} points · 🔥 ${s.cur}-day streak`,
         missed: r.missed.map((q) => `${q.q.length > 60 ? q.q.slice(0, 57) + "…" : q.q} → ${q.opts[q.a]}`),

@@ -164,7 +164,7 @@ export function mountQuiz(root, ctx) {
       const pct = r.total ? Math.round((r.correct / r.total) * 100) : 0;
       const back = () => { holder.remove(); shell.hidden = false; };
       ctx.showEnd({
-        emoji: pct >= 90 ? "🏆" : pct >= 60 ? "🎉" : "💪",
+        emoji: pct >= 90 ? "🏆" : pct >= 60 ? "🎉" : "💪🏿",
         title: r.record ? "New best!" : `${r.correct} of ${r.total} right`,
         text: `${r.score} points · ${pct}% correct${r.record ? "" : ` · best ${r.best}`}`,
         missed: r.missed.map((q) => `${q.q.length > 60 ? q.q.slice(0, 57) + "…" : q.q} → ${q.opts[q.a]}`),

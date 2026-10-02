@@ -626,7 +626,7 @@ mute.addEventListener("click", () => {
 // ---------- online play (peer to peer, no game server) ----------
 const PREFIX = "zone210-dame-";
 const ROOM_KEY = "zone210_dame_room"; // sessionStorage: lets a reload rejoin the same game
-const REACTS = ["👏", "😮", "😂", "🔥", "🤝", "😅", "🤔", "❤️"];
+const REACTS = ["👏🏿", "😮", "😂", "🔥", "🤝", "😅", "🤔", "❤️"];
 let inbox = [];
 let reconnecting = false;
 
