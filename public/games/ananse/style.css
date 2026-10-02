@@ -48,3 +48,11 @@ html[data-saver] #text p { animation: none; }
 .ends { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 10px 0 14px; }
 .ends span { padding: 4px 11px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; background: var(--surface); border: 1px solid var(--line-strong); }
 .ends span.found { background: color-mix(in srgb, var(--green) 18%, var(--surface)); border-color: var(--green); }
+
+.hint { margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: color-mix(in srgb, var(--red) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--red) 40%, var(--line)); line-height: 1.5; font-size: 0.95rem; }
+.choices button.wrong { border-color: var(--red); background: color-mix(in srgb, var(--red) 14%, var(--surface-2)); opacity: 0.7; }
+.scard .topic { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.voicebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 18px 0 0; padding: 12px 16px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); font-size: 0.9rem; }
+.voicebar[hidden] { display: none; }
+.voicebar select { font: inherit; padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--line-strong); background: var(--surface-2); color: var(--ink); max-width: 14em; }
+.voicebar .muted { flex: 1 1 260px; font-size: 0.82rem; line-height: 1.45; }

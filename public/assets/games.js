@@ -444,7 +444,7 @@ export const GAMES = [
   {
     id: "ananse",
     title: "Ananse Stories",
-    tagline: "Short interactive tales of Kwaku Ananse the spider, from Ghana. You choose what happens next, tap new words to learn them, and hunt for every ending.",
+    tagline: "Eight interactive tales of Kwaku Ananse the spider, from Ghana. You choose what happens next, learn maths, science and riddles along the way, and hunt for all 31 endings.",
     audience: "all",
     cat: "learn",
     added: "2026-10-02",

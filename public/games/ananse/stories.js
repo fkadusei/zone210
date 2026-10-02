@@ -8,10 +8,13 @@
  */
 const C = (t, to, extra = {}) => ({ t, to, ...extra });
 const NEXT = (to, extra) => [C("Continue", to, extra)];
+/** A wrong answer: shows the hint, counts a mistake and lets the reader try again. */
+const W = (t, say) => ({ t, wrong: say });
 
 export const STORIES = [
   {
     id: "stories",
+    topic: "Cleverness",
     title: "How Ananse Won the Stories",
     blurb: "Nyame the Sky God owns every story in the world. Can small, clever Ananse buy them?",
     emoji: "📚", art: "🕷️", ages: "Ages 6+", mins: 8,
@@ -60,6 +63,7 @@ export const STORIES = [
 
   {
     id: "wisdom",
+    topic: "Wisdom",
     title: "Ananse and the Pot of Wisdom",
     blurb: "Ananse collects all the wisdom in the world in one big pot. Where should he keep it?",
     emoji: "🏺", art: "🕷️", ages: "Ages 5+", mins: 6,
@@ -88,6 +92,7 @@ export const STORIES = [
 
   {
     id: "turtle",
+    topic: "Fairness",
     title: "Ananse and the Turtle's Dinner",
     blurb: "Ananse invites Turtle to dinner. Will he share, or will he play a trick?",
     emoji: "🐢", art: "🕷️", ages: "Ages 5+", mins: 7,
@@ -117,6 +122,7 @@ export const STORIES = [
 
   {
     id: "honey",
+    topic: "Maths",
     title: "Ananse and the Honey Tree",
     blurb: "Ananse and his friends find 12 pots of honey. Can they work out a fair share?",
     emoji: "🍯", art: "🕷️", ages: "Ages 6+", mins: 7,
@@ -145,6 +151,135 @@ export const STORIES = [
       h_final: { bg: "forest", art: [["🕷️", 22, 2.6], ["🐒", 50, 2.6], ["🦜", 78, 2.6]], text: ["“Three pots each! 3 + 3 + 3 = 9.”", "The friends sat in the sun and ate their honey, and they shared the very last spoonful with the bees."], route: [{ if: { mistakes: 0 }, to: "end_hero" }, { to: "end_fair" }] },
       end_fair: { bg: "forest", art: [["🕷️", 22, 2.6], ["🐒", 50, 2.6], ["🦜", 78, 2.6], ["🐝", 50, 1.6]], text: ["They tried, and counted again, and got it right in the end. Everyone had an equal share, and the bees were friends too."], end: { id: "fair", title: "A Fair Share", kind: "good", moral: "Sharing fairly takes a little thinking. Keep trying!", think: "What sums did you find tricky? Try them again with sweets or pebbles." } },
       end_hero: { bg: "forest", art: [["🕷️", 22, 2.6], ["🐒", 50, 2.6], ["🦜", 78, 2.6], ["🏅", 50, 1.6]], text: ["Not a single counting mistake! The animals cheered, and the bees buzzed a thank-you song.", "From that day on, whenever anybody in the forest had something to divide, they asked Ananse, because he was now the best sharer in the forest."], end: { id: "hero", title: "Honey Hero", kind: "good", moral: "Counting carefully and sharing fairly makes everyone happy.", think: "How would you share 15 sweets among 5 friends?" } },
+    },
+  },
+
+  {
+    id: "sons",
+    topic: "Teamwork",
+    title: "Ananse and His Six Sons",
+    blurb: "Ananse is in trouble, and only his six clever sons can save him. Who should help at each step?",
+    emoji: "🌕", art: "👨‍👦‍👦", ages: "Ages 6+", mins: 8,
+    colors: ["#6366f1", "#06b6d4"],
+    vocab: {
+      journey: "A long trip from one place to another.",
+      falcon: "A fast bird of prey with sharp claws.",
+      globe: "A round ball. Here it is a ball of shining light.",
+      teamwork: "Working together to reach a goal.",
+      stranded: "Left stuck somewhere, unable to move.",
+    },
+    start: "so1",
+    scenes: {
+      so1: { bg: "village", art: [["🕷️", 50, 3]], text: ["Kwaku Ananse had six sons, and each one had a special gift.", "See Trouble could see danger from a long way away. Road Builder could make a road in a flash. River Drinker could drink a whole river. Game Skinner could skin any animal. Stone Thrower could throw a stone as far as he liked. And Cushion could turn himself as soft as a pillow.", "One morning Ananse decided to go on a long journey."], choices: [C("Take his sons along", "so2"), C("Go alone: “I don't need any help!”", "so2", { set: { alone: true } })] },
+      so2: { bg: "river", art: [["🕷️", 28, 2.6], ["🐟", 74, 4]], text: ["Ananse walked a long, long way. When he came to a wide river, a gigantic fish rose out of the water and, GULP! swallowed him whole.", "It was dark and wet and smelly inside the fish. “Help!” cried Ananse. “Somebody, help me!”"], choices: NEXT("so3") },
+      so3: { bg: "village", art: [["👀", 30, 2.8], ["👨‍👦‍👦", 70, 2.6]], text: ["Back at home, See Trouble was looking at the horizon, when suddenly he cried, “Father is in trouble! A giant fish has swallowed him!”", "The brothers hurried out. But the way to the river was through thick, thick forest."], choices: NEXT("so4") },
+      so4: { bg: "forest", art: [["👦", 30, 2.4], ["🌳", 70, 3.2]], text: ["The trees were so close together that nobody could get through.", "“Which of us should help?” asked See Trouble. “We need a way through the forest.”"], choices: [C("Road Builder", "so5"), W("River Drinker", "River Drinker is brilliant at drinking rivers, but there is no river in the forest. We need a road!"), W("Stone Thrower", "Stone Thrower can throw stones very far, but a stone can't clear a path through thick trees."), W("Game Skinner", "Game Skinner is great with animals, but we need a way through the trees."), W("Cushion", "Cushion is lovely and soft, but being soft won't clear a path through the forest.")] },
+      so5: { bg: "forest", art: [["🛣️", 50, 3.2]], text: ["Road Builder rolled up his sleeves. Whoosh! Swish! In a flash, a smooth road ran straight through the forest, all the way to the river.", "The brothers ran along it, and soon they stood on the riverbank. The giant fish was swimming in the middle, with their father inside."], choices: NEXT("so6") },
+      so6: { bg: "river", art: [["👦", 24, 2.4], ["🐟", 72, 4]], text: ["“The fish is swimming in deep water,” said See Trouble. “How can we get it out of the river?”"], choices: [C("River Drinker", "so7"), W("Road Builder", "Road Builder can build roads, but he can't build one across water this deep and wide."), W("Stone Thrower", "A stone thrown at a big fish would just make it swim away faster."), W("Cushion", "Cushion is soft, but the fish is far out in the deep water. We need to get the water out of the way."), W("See Trouble", "See Trouble can see where the fish is, but he can't pull it out of the water.")] },
+      so7: { bg: "river", art: [["🌊", 30, 3.2], ["🐟", 72, 3.2]], text: ["River Drinker knelt down and drank, and drank, and drank. Glug, glug, glug! The river got lower and lower, until it was dry.", "The fish flopped on the muddy riverbed, stranded."], choices: NEXT("so8") },
+      so8: { bg: "river", art: [["👦", 24, 2.4], ["🐟", 70, 3.6]], text: ["Now Ananse was stuck inside a stranded fish. “How can we get Father out safely?” asked See Trouble."], choices: [C("Game Skinner", "so9"), W("Cushion", "Cushion is soft, but soft won't open a fish!"), W("Road Builder", "Road Builder makes roads. We need someone who is good at skinning."), W("Stone Thrower", "A thrown stone could hurt Father. We need someone skilful and careful."), W("River Drinker", "River Drinker has already done his job, and he's full of water!")] },
+      so9: { bg: "river", art: [["✂️", 30, 3], ["🕷️", 70, 2.6]], text: ["Game Skinner was very careful. With a few skilful moves, he opened the fish, and out hopped Ananse, a bit slimy but quite unhurt.", "“Thank you, my sons!” said Ananse, hugging them. But just then, SWOOP! A huge falcon swept down, grabbed Ananse in its claws and flew high up into the sky."], choices: NEXT("so10") },
+      so10: { bg: "sky", art: [["🦅", 60, 3.4], ["🪨", 24, 2.4]], text: ["“Father!” cried the sons. The falcon was high above the clouds, flying away.", "“Who can stop the falcon?” asked See Trouble."], choices: [C("Stone Thrower", "so11"), W("Cushion", "Cushion can't reach the sky. He's best at being soft, not at stopping a falcon."), W("Road Builder", "A road can't go up into the sky!"), W("Game Skinner", "Game Skinner can't reach the falcon from the ground."), W("River Drinker", "River Drinker is good with water, not birds!")] },
+      so11: { bg: "sky", art: [["🪨", 30, 2.6], ["🦅", 66, 3.2]], text: ["Stone Thrower picked a smooth stone, took aim and let fly. WHIZZ! The stone shot up to the falcon and gave it a surprise tap on the tail.", "The falcon squawked and let go of Ananse. And down, down, down fell Ananse, spinning like a leaf."], choices: NEXT("so12") },
+      so12: { bg: "village", art: [["🕷️", 50, 2.6], ["🛋️", 50, 1.8]], text: ["“Father is falling!” cried See Trouble. “Quick! Who can catch him?”"], choices: [C("Cushion", "so13"), W("Road Builder", "A road is hard. Ananse needs something soft to land on."), W("Stone Thrower", "More stones would not help a falling spider!"), W("River Drinker", "A dry riverbed would be a hard place to land."), W("Game Skinner", "Game Skinner is good with a knife, not with falling fathers.")] },
+      so13: { bg: "village", art: [["🕷️", 40, 2.6], ["🛋️", 62, 3]], text: ["Cushion made himself as soft as the biggest pillow in the world, and flop! Ananse landed safely on him, bouncing a little.", "“Hooray!” cheered all the sons. Ananse got up, brushed himself off, and looked at the six boys who had saved him."], route: [{ if: { alone: true }, to: "so14" }, { to: "so15" }] },
+      so14: { bg: "village", art: [["🕷️", 50, 3]], text: ["Ananse felt a bit red in the face. “I said I didn't need any help,” he said quietly. “But look what you did! I could not have done it alone. Thank you.”"], choices: NEXT("so15") },
+      so15: { bg: "night", art: [["🕷️", 30, 2.4], ["🔮", 70, 3.4]], text: ["Just then something glowed in the dark. Ananse had found a shining globe, a ball of light, lying where he had landed!", "“I will give it to the one who saved me,” said Ananse. “But which one of you did the most?”", "The six brothers all began to speak at once."], choices: [C("“You were all brilliant. Let's share it with everyone!”", "so_share"), C("“I will give it to the one who did the most.”", "end_quarrel")] },
+      so_share: { bg: "sky", art: [["🕷️", 22, 2.4], ["👨‍👦‍👦", 50, 2.4], ["🔮", 78, 3]], text: ["“We were a team,” said See Trouble. “Without Road Builder we couldn't reach the river. Without River Drinker, we couldn't reach the fish. Without Game Skinner and Stone Thrower and Cushion, Father would not be here.”", "“And without See Trouble, nobody would have known!” said all the others. They carried the globe up to Nyame the Sky God and asked him to put it where everybody could enjoy it."], route: [{ if: { mistakes: 0 }, to: "end_perfect" }, { to: "end_moon" }] },
+      end_perfect: { bg: "night", art: [["🌕", 50, 4.6], ["🕷️", 22, 2.2], ["👨‍👦‍👦", 78, 2.2]], text: ["Nyame was delighted. He took the globe, tossed it high into the night sky and it became the Moon, shining on every village and every family.", "And because the brothers had picked exactly the right helper every time, Nyame also gave each of them a star of their own, so they could always be near each other, even in the dark."], end: { id: "perfect", title: "The Perfect Team", kind: "good", moral: "Every person has a talent, and the right talents together can do anything.", think: "What are you really good at? How could you help a team?" } },
+      end_moon: { bg: "night", art: [["🌕", 50, 4.6], ["🕷️", 22, 2.2], ["👨‍👦‍👦", 78, 2.2]], text: ["Nyame took the shining globe, tossed it high into the night sky, and it became the Moon, shining on every village and every family.", "Ananse and his sons looked up together and smiled. They had learned that day that teams are strongest when everyone does what they do best."], end: { id: "moon", title: "Light for Everyone", kind: "good", moral: "Working together, we can do things nobody could do alone.", think: "When did you last work in a team? What did each person do?" } },
+      end_quarrel: { bg: "night", art: [["🕷️", 30, 2.4], ["🔮", 62, 3], ["💢", 80, 2.2]], text: ["“It was me!” said Road Builder. “No, me!” said River Drinker. “ME!” shouted Stone Thrower. Soon all six were shouting and nobody was listening.", "Nyame the Sky God, who had been watching, sighed. He picked up the globe and tossed it high into the sky. “This is for everyone, and nobody should argue over it.” And that is how the Moon came to shine."], end: { id: "quarrel", title: "Who Deserves It?", kind: "ok", moral: "Arguing over who did the most spoils a team. The best prizes are shared.", think: "What could the brothers have said instead of arguing?" } },
+    },
+  },
+
+  {
+    id: "market",
+    topic: "Maths & money",
+    title: "Ananse at the Market",
+    blurb: "Ananse goes shopping in the market and needs to count his cedis carefully.",
+    emoji: "🛒", art: "💰", ages: "Ages 6+", mins: 6,
+    colors: ["#ef4444", "#f59e0b"],
+    vocab: {
+      cedis: "The money used in Ghana. The word for one is “cedi”.",
+      pesewas: "Small coins in Ghana. 100 pesewas make 1 cedi.",
+      change: "The money you get back when you pay with more than the price.",
+      total: "All the amounts added together.",
+      honest: "Telling the truth and doing the right thing, even when no one is looking.",
+    },
+    start: "m1",
+    scenes: {
+      m1: { bg: "market", art: [["🕷️", 28, 3], ["👩", 72, 2.6]], text: ["Kwaku Ananse was planning a big feast, and he went to the busy market with a 20 cedi note in his pocket. (A cedi is the money in Ghana.)", "Auntie Esi, the yam seller, called out: “Fresh yams! Two cedis each! How many would you like?”", "Ananse wanted 3 yams."], choices: NEXT("m2") },
+      m2: { bg: "market", art: [["🍠", 30, 3], ["👩", 72, 2.6]], text: ["“Three yams at 2 cedis each,” said Ananse. “How many cedis is that?”"], choices: [W("5 cedis", "Not quite. 2 + 2 = 4, and then one more 2 makes 6. Try again."), C("6 cedis", "m3"), W("8 cedis", "That would be 4 yams (2 + 2 + 2 + 2). Count only three 2s.")] },
+      m3: { bg: "market", art: [["🕷️", 28, 3], ["🐟", 66, 3], ["🌶️", 86, 2.2]], text: ["Ananse paid 6 cedis for the yams and walked on. Next, at the fish stall, a big fish cost 7 cedis, and a bag of peppers cost 3 cedis.", "“How much do the fish and peppers cost together?” he wondered."], choices: [W("9 cedis", "Close! 7 + 3 is a bit more than 9. Count up from 7: 8, 9, 10."), C("10 cedis", "m4"), W("11 cedis", "Count up from 7 by three: 8, 9, 10. Not 11.")] },
+      m4: { bg: "market", art: [["🕷️", 28, 3], ["💰", 70, 3]], text: ["Ananse had bought yams for 6 cedis, and fish and peppers for 10 cedis. “That is 6 + 10 = 16 cedis in all,” he said.", "He went back to Auntie Esi and paid for everything with his 20 cedi note.", "“How much change should I get back?” he asked himself. He had paid 20 cedis, but only needed to pay 16."], choices: [W("6 cedis", "20 − 16 is not 6. Count up from 16 to 20: 17, 18, 19, 20. That is 4 steps."), C("4 cedis", "m5"), W("14 cedis", "That is 20 − 6, and we need to take away the whole 16. Count up from 16 to 20.")] },
+      m5: { bg: "market", art: [["👩", 30, 2.6], ["💰", 70, 3]], text: ["Auntie Esi was very busy and in a hurry. She counted out the change quickly, and put it in Ananse's hand.", "Ananse looked at the money. “One, two, three... nine cedis,” he counted. “But the change should be 4 cedis. Auntie Esi has given me 5 cedis too many!”"], choices: [C("Keep the extra 5 cedis and hurry home", "m_keep"), C("Tell Auntie Esi and give back the extra", "m_honest")] },
+      m_keep: { bg: "village", art: [["🕷️", 50, 3]], text: ["Ananse hurried home with his basket and his extra 5 cedis. But as he cooked the feast, he did not feel happy. He thought about kind Auntie Esi and her empty money box.", "The yams tasted dull, and the fish felt heavy in his tummy. Early the next morning he went back to the market, and gave the 5 cedis to Auntie Esi."], route: [{ to: "end_keep" }] },
+      end_keep: { bg: "market", art: [["🕷️", 30, 2.6], ["👩", 70, 2.6]], text: ["“I'm sorry,” said Ananse. “I should have told you straight away.” Auntie Esi was surprised, then she smiled. “Thank you for telling me now,” she said. “It is never too late to do the right thing.”"], end: { id: "keep", title: "The Heavy Pocket", kind: "ok", moral: "Money that isn't yours feels heavy. It's never too late to put things right.", think: "How does it feel when you do the right thing?" } },
+      m_honest: { bg: "market", art: [["🕷️", 30, 2.8], ["👩", 70, 2.6]], text: ["“Auntie Esi,” said Ananse, “you've given me too much change. It should be 4 cedis, and you gave me 9.” He held out the extra 5 cedis.", "Auntie Esi gasped, and then she beamed. “You are an honest customer, Kwaku Ananse! Thank you! Please take this sweet mango as a present.”"], route: [{ if: { mistakes: 0 }, to: "end_perfect" }, { to: "end_honest" }] },
+      end_honest: { bg: "village", art: [["🕷️", 40, 3], ["🥭", 66, 2.6]], text: ["Ananse took the mango and walked home with his basket full and a light heart. He cooked the finest feast, and the mango was the sweetest part."], end: { id: "honest", title: "The Honest Shopper", kind: "good", moral: "Being honest feels better than extra money.", think: "Have you ever given something back that wasn't yours?" } },
+      end_perfect: { bg: "village", art: [["🕷️", 30, 3], ["🥭", 56, 2.6], ["🏅", 80, 2.6]], text: ["Ananse had counted every cedi right, and returned the extra money too. Back home, the neighbours heard about it.", "“Ananse is the best shopper in the village,” they said. They asked him to come to the market next week and help count out the change for everyone."], end: { id: "perfect", title: "The Perfect Shopper", kind: "good", moral: "Counting carefully and being honest make a great team.", think: "How could you use adding and taking away when you go shopping?" } },
+    },
+  },
+
+  {
+    id: "rain",
+    topic: "Science",
+    title: "Where Does the Rain Come From?",
+    blurb: "The river is drying up. Ananse shrinks to the size of a raindrop to find out where rain comes from.",
+    emoji: "🌧️", art: "🕷️", ages: "Ages 6+", mins: 7,
+    colors: ["#38bdf8", "#6366f1"],
+    vocab: {
+      vapour: "Water that has turned into a gas, so it floats in the air and you cannot see it.",
+      evaporation: "When the Sun warms water and it rises as vapour.",
+      condensation: "When vapour cools and turns back into tiny drops of water. That is how clouds form.",
+      precipitation: "Water falling from clouds as rain, hail or snow.",
+      drought: "A long time with hardly any rain.",
+      "water cycle": "The never-ending journey of water: from the ground up to the sky, and back down again.",
+    },
+    start: "r1",
+    scenes: {
+      r1: { bg: "village", art: [["🕷️", 30, 3], ["🏜️", 72, 3]], text: ["It had not rained for many weeks. The river was low and the fields were dry. The village had a drought.", "“Where does rain come from?” wondered Ananse. “And why has it gone away?”"], choices: [C("Climb up to Nyame the Sky God and ask", "r2"), C("Do a rain dance, then have a nap", "r1b")] },
+      r1b: { bg: "village", art: [["🕷️", 50, 3], ["💃", 76, 2.4]], text: ["Ananse danced and stamped and spun round and round. He was dizzy and puffed out, and not a single raindrop fell.", "“Dancing didn't work,” he panted. “Perhaps I should ask someone who knows.”"], choices: NEXT("r2") },
+      r2: { bg: "sky", art: [["🕷️", 26, 2.4], ["☀️", 72, 3.4]], text: ["Ananse climbed his silk thread to Nyame's court. “Great Nyame, where does rain come from?”", "Nyame smiled. “Rain is just water on a long journey. I will show you, but you must become very small. Will you try?”"], choices: [C("“Yes! Shrink me!”", "r3"), C("“Oh no, that's scary. I'd rather stay dry!”", "end_dry")] },
+      end_dry: { bg: "village", art: [["🕷️", 50, 3]], text: ["Ananse went home and sat on his porch, and waited for rain. He did not know why it had stopped, so he could not help the village. The dry weather lasted a long time."], end: { id: "dry", title: "Staying Dry", kind: "silly", moral: "Being curious and brave helps us to find out how things work.", think: "What would you like to find out? Who could you ask?" } },
+      r3: { bg: "river", art: [["💧", 50, 2.2], ["☀️", 82, 3]], text: ["Poof! Ananse shrank down, down, down, until he was no bigger than a drop of water. He plopped into the river.", "The Sun was hot and bright. It warmed the river and warmed Ananse the drop.", "“What happens to water when the Sun warms it?” asked Nyame's voice."], choices: [C("It turns into invisible vapour and rises into the air", "r4"), W("It turns into ice", "Ice forms when water gets very COLD. The Sun makes things warmer."), W("It sinks into the mud forever", "Some water does soak into the ground, but the water on top, warmed by the Sun, rises up. Try again.")] },
+      r4: { bg: "sky", art: [["💧", 50, 2.2], ["☁️", 80, 3]], text: ["Up, up, up floated Ananse, as light as air. That is evaporation: the Sun lifts water into the sky as vapour.", "High above the village the air was cool. Millions of other water drops floated up next to him. The cool air made them gather together.", "“What do all these tiny drops make when they gather in the sky?” asked Nyame."], choices: [C("A cloud", "r5"), W("Stars", "Stars are far, far away in space. These drops are much closer."), W("Wind", "Wind is moving air. When the drops gather together, they make something you can see.")] },
+      r5: { bg: "sky", art: [["☁️", 50, 4.4], ["💧", 22, 2]], text: ["The drops bunched together into a big, soft, grey cloud. That is condensation: the vapour cools and turns back into tiny drops.", "More and more drops joined the cloud. Ananse felt heavy and squashed. The cloud was getting very full.", "“What happens when a cloud becomes too heavy?” asked Nyame."], choices: [C("The water falls down as rain", "r6"), W("The cloud pops like a balloon", "A cloud isn't a balloon. It is made of tiny drops. When there are too many to hold, they fall."), W("The cloud flies away to the Moon", "Clouds stay near the Earth. Heavy clouds let go of their water.")] },
+      r6: { bg: "river", art: [["🌧️", 50, 4], ["💧", 30, 2]], text: ["Pitter-patter! The drops fell from the cloud as rain. Ananse the raindrop fell and fell, and landed with a plop in the river again.", "The rain filled the river and soaked the fields. Then the Sun came out and warmed the water, and it began to rise again.", "“This never-ending journey has a name,” said Nyame. “What do we call it?”"], choices: [C("The water cycle", "r7"), W("The rain race", "That's a fun name, but it's not the real one. The water goes round and round in a circle."), W("The cloud parade", "Clouds are part of it, but the whole journey of water has another name. It goes round like a cycle.")] },
+      r7: { bg: "village", art: [["🕷️", 30, 3], ["🌧️", 70, 3], ["👧", 50, 2.2]], text: ["POOF! Ananse was a spider again, back in the middle of the village. And as he looked up, big, fat raindrops began to fall: pitter, patter, splish, splash!", "The villagers danced for joy. The children splashed in puddles. “Ananse!” they cried. “How did you bring the rain?”"], choices: [C("“I didn't. I learned where it comes from, and I'll teach you!”", "r8"), C("“Oh yes, it was me! I brought the rain!”", "end_fib")] },
+      r8: { bg: "village", art: [["🕷️", 30, 3], ["👧", 56, 2.4], ["👦", 80, 2.4]], text: ["Ananse sat under a tree with the children around him. “Rain is water on a journey,” he said. “The Sun lifts it up as vapour, the cold sky turns it into clouds, and the clouds let it fall as rain, back into the rivers. It's called the water cycle.”", "The children listened with wide eyes."], route: [{ if: { mistakes: 0 }, to: "end_expert" }, { to: "end_teacher" }] },
+      end_teacher: { bg: "village", art: [["🕷️", 30, 3], ["🌈", 70, 3.4]], text: ["A rainbow arched over the village, and the children cheered. From that day, whenever it was dry, everyone remembered that rain always comes back round, because water never stops its journey."], end: { id: "teacher", title: "The Rain Teacher", kind: "good", moral: "Understanding how things work helps everybody.", think: "Can you tell someone else the steps of the water cycle?" } },
+      end_expert: { bg: "village", art: [["🕷️", 30, 3], ["🌈", 70, 3.4], ["🏅", 50, 2.2]], text: ["Ananse had answered every one of Nyame's questions right the first time! The Sky God sent a rainbow to say well done.", "The children called him Professor Ananse, and they all promised to learn about the weather together."], end: { id: "expert", title: "Water Cycle Expert", kind: "good", moral: "Careful thinking and curiosity make a great scientist.", think: "Which part of the water cycle surprised you most?" } },
+      end_fib: { bg: "village", art: [["🕷️", 40, 3], ["😬", 70, 2.4]], text: ["“It was me!” said Ananse proudly. The villagers cheered. “Please bring the rain again next month, Ananse!”", "Ananse gulped. He had no idea how to make rain at all! He had to hide under his bed when the dry weather came back."], end: { id: "fib", title: "The Rainmaker Fib", kind: "silly", moral: "Pretending leads to trouble. The truth is better, and more interesting!", think: "What can happen when we say something that isn't true?" } },
+    },
+  },
+
+  {
+    id: "riddles",
+    topic: "Riddles",
+    title: "Ananse and the Riddle Crossing",
+    blurb: "A crocodile guards the only bridge. Three riddles stand between Ananse and the feast.",
+    emoji: "🐊", art: "🧩", ages: "Ages 6+", mins: 5,
+    colors: ["#22c55e", "#0ea5e9"],
+    vocab: {
+      riddle: "A tricky question with a clever answer.",
+      guard: "Someone who watches over a place and decides who may enter.",
+      feast: "A big, special meal with lots of food.",
+      hint: "A little clue to help you.",
+    },
+    start: "q1",
+    scenes: {
+      q1: { bg: "river", art: [["🕷️", 24, 2.6], ["🐊", 72, 3.6]], text: ["Kwaku Ananse was hurrying to a big village feast across the river. The only bridge was a log, and sitting on it was a very large crocodile.", "“Stop!” said the crocodile. “I am the guard of this bridge. Answer three riddles, and you may cross. If you can't, you must go home!”"], choices: [C("“Ask me your riddles!”", "q2"), C("“I'm the chief's cousin! Let me past!”", "q_trick"), C("“No thanks. I'll walk round the long way.”", "end_long")] },
+      q_trick: { bg: "river", art: [["🕷️", 24, 2.6], ["🐊", 72, 3.6]], text: ["“The chief's cousin, eh?” said the crocodile, grinning with a lot of teeth. “I know the chief. He has no cousin who is a spider.”", "Ananse blushed from his head to his toes. “Er... all right. Ask me your riddles.”"], choices: NEXT("q2") },
+      end_long: { bg: "night", art: [["🕷️", 40, 2.6], ["🥾", 62, 2.2]], text: ["Ananse walked round the river. It took three whole days and his feet got very sore. By the time he arrived, the feast was over, and only crumbs were left for him."], end: { id: "long", title: "The Long Way Round", kind: "silly", moral: "Being brave and trying can save a lot of time.", think: "Is there something you didn't try because it looked difficult?" } },
+      q2: { bg: "river", art: [["🕷️", 24, 2.6], ["🐊", 72, 3.6]], text: ["“First riddle,” said the crocodile. “I have hands, but I cannot clap. What am I?”"], choices: [C("A clock", "q3"), W("A crab", "A crab has claws, but it doesn't have hands that go round. Think about something with numbers on it!"), W("A tree", "A tree has branches, but not hands. Think about something that tells the time.")] },
+      q3: { bg: "river", art: [["🕷️", 24, 2.6], ["🐊", 72, 3.6]], text: ["“Hmm, correct,” said the crocodile, surprised. “Second riddle. The more of me you take, the more of me you leave behind. What am I?”"], choices: [W("Money", "If you take money, you have more and leave behind less! Think about something you make as you walk."), C("Footsteps", "q4"), W("Time", "Time passes whether you take it or not. Think about something you leave on the path behind you.")] },
+      q4: { bg: "river", art: [["🕷️", 24, 2.6], ["🐊", 72, 3.6]], text: ["The crocodile scratched his chin. “Not bad, spider. Third and last. I have a mouth but never eat. I run, but never walk. What am I?”", "Ananse looked around. The water was rushing past under the bridge..."], choices: [W("A dog", "A dog has a mouth and runs, but it does eat, and it walks too! Look around you, where are you standing?"), W("A road", "A road goes places, but it doesn't run or have a mouth. Look at what flows under the bridge."), C("A river", "q5")] },
+      q5: { bg: "river", art: [["🕷️", 24, 2.6], ["🐊", 72, 3.6]], text: ["“A river!” said Ananse. “The mouth is where it meets the sea, and it runs but never walks.”", "The crocodile laughed a huge laugh. “You are a clever spider! You may cross.” He moved over to let Ananse past. Then he sighed. “Nobody ever comes to talk to me. It gets rather lonely here.”"], choices: [C("“Come to the feast with me! Everyone is welcome.”", "q6"), C("“Thanks, bye!” and hurry on across the bridge", "end_hurry")] },
+      end_hurry: { bg: "village", art: [["🕷️", 40, 3], ["🍲", 70, 2.6]], text: ["Ananse scurried across the log and arrived at the feast, just in time. The food was delicious. But now and then he thought of the crocodile on the bridge, all alone, listening to the sounds of the party."], end: { id: "hurry", title: "Just in Time", kind: "ok", moral: "A moment of kindness costs nothing.", think: "Is there someone who might feel lonely that you could invite to play?" } },
+      q6: { bg: "village", art: [["🕷️", 24, 2.6], ["🐊", 56, 3.2], ["🍲", 84, 2.4]], text: ["The crocodile blinked. “Me? Really?” He climbed off the bridge, and waddled along behind Ananse.", "At the feast, everyone was a little nervous at first. But when the crocodile asked them his riddles, everyone laughed and guessed, and soon they were all friends."], route: [{ if: { mistakes: 0 }, to: "end_master" }, { to: "end_friend" }] },
+      end_friend: { bg: "village", art: [["🕷️", 24, 2.6], ["🐊", 56, 3.2], ["🍲", 84, 2.4]], text: ["From that day on, the crocodile was never lonely again. He still guarded the bridge, but anyone who crossed it stopped for a chat and a riddle."], end: { id: "friend", title: "A Friend at the Bridge", kind: "good", moral: "Kindness can turn a guard into a friend.", think: "Who could you be kind to today?" } },
+      end_master: { bg: "village", art: [["🕷️", 24, 2.6], ["🐊", 56, 3.2], ["🏅", 84, 2.6]], text: ["Ananse had solved all three riddles first time, AND made a friend! The crocodile gave him a gold medal made from a shiny river pebble: Riddle Master of the Bridge.", "And at the feast, everyone asked Ananse to tell them new riddles."], end: { id: "master", title: "Riddle Master", kind: "good", moral: "Think carefully, and be kind. Both are clever.", think: "Can you make up your own riddle for a friend?" } },
     },
   },
 ];
