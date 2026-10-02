@@ -442,6 +442,18 @@ export const GAMES = [
     colors: ["#2c6e49", "#ffd166"],
   },
   {
+    id: "ananse",
+    title: "Ananse Stories",
+    tagline: "Short interactive tales of Kwaku Ananse the spider, from Ghana. You choose what happens next, tap new words to learn them, and hunt for every ending.",
+    audience: "all",
+    cat: "learn",
+    added: "2026-10-02",
+    tags: ["Stories", "Reading", "Ghana", "Learning", "Offline"],
+    players: "1 player",
+    emoji: "🕷️",
+    colors: ["#f59e0b", "#ef4444"],
+  },
+  {
     id: "lab210",
     title: "Lab 210",
     tagline: "Physics, chemistry and biology in one lab: periodic table, equation balancer, projectiles, circuits, cells, the human body, genetics, food chains, a quiz and a daily experiment.",

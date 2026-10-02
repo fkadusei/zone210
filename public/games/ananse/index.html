@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Ananse Stories · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Ananse Stories</h1>
+          <p>Tales of Kwaku Ananse the spider. You decide what happens next.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="speak" aria-pressed="false" hidden>🔊 Read to me</button>
+          <button class="g-btn ghost" id="size" aria-label="Change the text size">A</button>
+        </div>
+      </div>
+      <section id="library"></section>
+      <section id="reader" hidden>
+        <div class="bar">
+          <button class="g-btn ghost" id="toLib">← Stories</button>
+          <b id="rTitle"></b>
+          <span class="pg" id="rPage"></span>
+        </div>
+        <div id="art"></div>
+        <div class="book" id="book" aria-live="polite">
+          <div id="text"></div>
+          <p class="vdef" id="vdef" hidden></p>
+          <p class="tally" id="tally" hidden></p>
+          <div class="choices" id="choices"></div>
+          <div class="endcard" id="endcard" hidden></div>
+        </div>
+        <div class="row">
+          <button class="g-btn ghost" id="back">↶ Go back</button>
+          <button class="g-btn ghost" id="again">↻ Start again</button>
+          <button class="g-btn ghost" id="say">🔊 Read this page</button>
+        </div>
+      </section>
+    </main>
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
