@@ -9,7 +9,7 @@ const store = {
   set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (err) { /* private mode */ } },
 };
 const KEY = "zone210_ananse";
-const data = { found: {}, resume: {}, size: 1, speak: false, voice: "", ...store.get(KEY, {}) };
+const data = { found: {}, resume: {}, size: 1, speak: false, voice: "", narrator: "bf_emma", ...store.get(KEY, {}) };
 const save = () => store.set(KEY, data);
 
 // ---------- conditions and flags ----------
@@ -24,35 +24,71 @@ const foundOf = (id) => data.found[id] || [];
 const endsOf = (s) => Object.values(s.scenes).filter((x) => x.end).map((x) => x.end);
 
 // ---------- read aloud ----------
+// Narrators: three recorded (generated) voices that sound the same on every device, or the device's own voice.
+const NARRATORS = [["bf_emma", "Emma (British woman)"], ["bm_george", "George (British man)"], ["af_heart", "Heart (American woman)"], ["device", "My device's voice"]];
 const synth = window.speechSynthesis;
+const player = new Audio();
+let clipIndex = null; // which recorded clips exist, from audio/index.json
+let playToken = 0;
 const PREFER = ["en-GH", "en-NG", "en-KE", "en-ZA", "en-GB", "en-AU", "en-IE", "en-US"];
 let voices = [];
 function loadVoices() {
   voices = (synth ? synth.getVoices() : []).filter((v) => /^en/i.test(v.lang));
   voices.sort((x, y) => { const px = PREFER.findIndex((p) => x.lang.replace("_", "-").startsWith(p)); const py = PREFER.findIndex((p) => y.lang.replace("_", "-").startsWith(p)); return (px < 0 ? 99 : px) - (py < 0 ? 99 : py) || x.name.localeCompare(y.name); });
-  const sel = $("voice");
-  if (!sel) return;
+  const sel = $("devvoice");
   sel.innerHTML = voices.map((v) => `<option value="${esc(v.name)}">${esc(v.name)} (${esc(v.lang)})</option>`).join("");
   const chosen = voices.find((v) => v.name === data.voice) || voices[0];
   if (chosen) sel.value = chosen.name;
-  $("voicebar").hidden = !voices.length || !!story;
+  syncVoiceBar();
 }
-function say(text, raw = false) {
+function deviceSay(text) {
   if (!synth) return;
   synth.cancel();
-  const u = new SpeechSynthesisUtterance(raw ? text : forSpeech(text));
+  const u = new SpeechSynthesisUtterance(forSpeech(text));
   const v = voices.find((x) => x.name === data.voice) || voices[0];
   if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en-GB";
   u.rate = 0.9;
   synth.speak(u);
 }
-const stopSay = () => { if (synth) synth.cancel(); };
-if (synth) { $("speak").hidden = false; loadVoices(); synth.addEventListener && synth.addEventListener("voiceschanged", loadVoices); }
-$("voice").addEventListener("change", () => { data.voice = $("voice").value; save(); say("Ananse the spider met Nyame the Sky God."); });
-$("names").addEventListener("click", () => say("Ananse. Kwaku. Nyame. Onini. Osebo. Mmoboro. Mmoatia. Ntikuma. Anansesem."));
+const stopSay = () => { playToken += 1; player.pause(); if (synth) synth.cancel(); };
+async function loadIndex() {
+  if (clipIndex) return clipIndex;
+  try { clipIndex = await (await fetch("audio/index.json")).json(); } catch (err) { clipIndex = {}; }
+  return clipIndex;
+}
+/** Plays recorded clips one after another (keys like "stories/a1"); falls back to the device voice with `text`. */
+async function speak(keys, text) {
+  stopSay();
+  const my = playToken;
+  const idx = await loadIndex();
+  if (my !== playToken) return;
+  const nar = data.narrator;
+  const have = nar !== "device" && keys.every((k) => (idx[nar] || []).includes(k));
+  if (!have) { deviceSay(text); return; }
+  for (const k of keys) {
+    if (my !== playToken) return;
+    player.src = `audio/${nar}/${k}.m4a`;
+    try { await player.play(); } catch (err) { deviceSay(text); return; }
+    await new Promise((r) => { player.onended = r; player.onerror = r; player.onpause = () => { if (my !== playToken) r(); }; });
+  }
+}
+const sceneKeys = () => { const sc = story.scenes[cur.id]; return [`${story.id}/${cur.id}`, ...(sc.end ? [`${story.id}/end-${cur.id}`] : [])]; };
+const sceneSpoken = () => { const sc = story.scenes[cur.id]; return sc.text.join(" ") + (sc.end ? ` The end: ${sc.end.title}. ${sc.end.moral} Think about it: ${sc.end.think}` : ""); };
+function syncVoiceBar() {
+  const sel = $("narrator");
+  sel.innerHTML = NARRATORS.filter(([k]) => k !== "device" || synth).map(([k, label]) => `<option value="${k}">${label}</option>`).join("");
+  sel.value = data.narrator;
+  $("devvoice").hidden = data.narrator !== "device" || !voices.length;
+  $("voicebar").hidden = false;
+}
+if (synth) { $("speak").hidden = false; loadVoices(); synth.addEventListener && synth.addEventListener("voiceschanged", loadVoices); } else { $("speak").hidden = false; }
+$("narrator").addEventListener("change", () => { data.narrator = $("narrator").value; save(); syncVoiceBar(); speak(["names/sample"], "Ananse the spider met Nyame the Sky God."); });
+$("devvoice").addEventListener("change", () => { data.voice = $("devvoice").value; save(); deviceSay("Ananse the spider met Nyame the Sky God."); });
+$("names").addEventListener("click", () => speak(["names/all"], "Ananse. Kwaku. Nyame. Onini. Osebo. Mmoboro. Mmoatia. Ntikuma. Anansesem."));
 const syncSpeak = () => { $("speak").setAttribute("aria-pressed", String(data.speak)); $("speak").textContent = data.speak ? "🔊 Reading aloud" : "🔊 Read to me"; };
-$("speak").addEventListener("click", () => { data.speak = !data.speak; save(); syncSpeak(); if (!data.speak) stopSay(); else if (cur) say(sceneText()); });
+$("speak").addEventListener("click", () => { data.speak = !data.speak; save(); syncSpeak(); if (!data.speak) stopSay(); else if (cur) speak(sceneKeys(), sceneSpoken()); });
 syncSpeak();
+syncVoiceBar();
 const SIZES = [1, 1.2, 1.45];
 const applySize = () => { document.documentElement.style.setProperty("--fs", `${1.12 * SIZES[data.size]}rem`); $("size").textContent = ["A", "A+", "A++"][data.size]; };
 $("size").addEventListener("click", () => { data.size = (data.size + 1) % 3; save(); applySize(); });
@@ -64,7 +100,7 @@ function showLibrary() {
   story = null; cur = null;
   $("reader").hidden = true;
   $("library").hidden = false;
-  $("voicebar").hidden = !voices.length;
+  syncVoiceBar();
   const total = STORIES.reduce((t, s) => t + foundOf(s.id).length, 0);
   const all = STORIES.reduce((t, s) => t + endsOf(s).length, 0);
   $("library").innerHTML = `<p class="intro">Kwaku Ananse the spider is the clever, cheeky hero of many tales told by the Akan people of Ghana. These stories are called <b>Anansesem</b>. In each one you decide what Ananse does next, and different choices lead to different endings. Can you find them all? <b>${total} of ${all} endings found.</b></p>
@@ -85,7 +121,7 @@ function openStory(id, resume) {
   if (resume && data.resume[id]) cur = JSON.parse(JSON.stringify(data.resume[id]));
   else { cur = { id: story.start, flags: {}, trail: [] }; delete data.resume[id]; save(); }
   $("library").hidden = true;
-  $("voicebar").hidden = true;
+  syncVoiceBar();
   $("reader").hidden = false;
   $("rTitle").textContent = story.title;
   window.scrollTo(0, 0);
@@ -110,7 +146,6 @@ function go(to, ch) {
   save();
   render();
 }
-const sceneText = () => story.scenes[cur.id].text.join(" ");
 const defOf = (w) => {
   const p = PRON[w];
   const base = (story.vocab && story.vocab[w]) || (p && p.note) || "";
@@ -163,7 +198,7 @@ function render() {
         b.classList.add("wrong"); b.disabled = true;
         hint.hidden = false;
         hint.textContent = `Not quite. ${c.wrong}`;
-        if (data.speak) say(c.wrong);
+        if (data.speak) speak([`${story.id}/${cur.id}-h${sc.choices.indexOf(c)}`], `Not quite. ${c.wrong}`);
         return;
       }
       go(c.to, c);
@@ -171,7 +206,7 @@ function render() {
     const first = box.querySelector("button");
     if (first) first.focus({ preventScroll: true });
   }
-  if (data.speak) say(sceneText());
+  if (data.speak) speak(sceneKeys(), sceneSpoken());
   document.getElementById("art").scrollIntoView({ block: "start", behavior: "smooth" });
 }
 $("text").addEventListener("click", (e) => {
@@ -195,8 +230,7 @@ $("back").addEventListener("click", () => {
 });
 $("again").addEventListener("click", () => openStory(story.id, false));
 $("toLib").addEventListener("click", showLibrary);
-$("say").addEventListener("click", () => { if (cur) say(sceneText()); else stopSay(); });
-if (!synth) $("say").hidden = true;
+$("say").addEventListener("click", () => { if (cur) speak(sceneKeys(), sceneSpoken()); else stopSay(); });
 
 showLibrary();
 window.__ananse = { STORIES, data, openStory, go: (to, ch) => go(to, ch), get cur() { return cur; }, render };
