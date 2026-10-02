@@ -1,4 +1,5 @@
 import { GAMES } from "./games.js";
+import { createBook } from "./book.js";
 
 const $ = (id) => document.getElementById(id);
 const grid = $("grid");
@@ -7,13 +8,14 @@ const searchEl = $("search");
 const countEl = $("count");
 
 const AUDIENCE_LABEL = { kids: "Kids", adults: "Adults", all: "Everyone" };
-const state = { audience: "all", query: "", filter: "all" };
+const state = { audience: "all", query: "", filter: "all", view: "grid" };
 // favorites live on this device only
 const FAV_KEY = "zone210_favorites";
 let favs = new Set();
 try { favs = new Set(JSON.parse(localStorage.getItem(FAV_KEY)) || []); } catch (err) { /* storage unavailable */ }
 const saveFavs = () => { try { localStorage.setItem(FAV_KEY, JSON.stringify([...favs])); } catch (err) { /* private mode */ } };
 const STAR = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 2.8l2.8 6 6.5.7-4.9 4.4 1.4 6.4L12 17l-5.8 3.3 1.4-6.4L2.7 9.5l6.5-.7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+const toggleFav = (id) => { if (favs.has(id)) favs.delete(id); else favs.add(id); saveFavs(); };
 const NEW_DAYS = 10;
 const isNew = (g) => !!g.added && (Date.now() - new Date(g.added + "T00:00:00").getTime()) / 864e5 <= NEW_DAYS;
 const CATS = { strategy: "♟️ Strategy", family: "🎲 Family", puzzles: "🧩 Puzzles", learn: "🔬 Learn", fun: "🎨 Arcade & art" };
@@ -22,6 +24,13 @@ const FILTERS = [["all", "All"], ["fav", "⭐ Favorites"], ["online", "🌐 Play
 // Restore the audience tab from the URL hash, e.g. #kids or #adults
 const hash = window.location.hash.replace("#", "");
 if (["kids", "adults"].includes(hash)) state.audience = hash;
+// the Book view: #book or #book=<game id | contents | end>; otherwise the last choice on this device
+const VIEW_KEY = "zone210_view";
+const bookKey = (h) => (h === "book" ? "cover" : h.startsWith("book=") ? decodeURIComponent(h.slice(5)) : null);
+try { if (localStorage.getItem(VIEW_KEY) === "book") state.view = "book"; } catch (err) { /* storage unavailable */ }
+if (bookKey(hash) !== null) state.view = "book";
+else if (["kids", "adults"].includes(hash)) state.view = "grid";
+const bookHost = $("bookhost");
 
 function matches(game) {
   // "kids" shows kids + everyone games; "adults" shows adults + everyone games
@@ -117,8 +126,7 @@ function card(game, index) {
   star.setAttribute("aria-label", `${on ? "Remove" : "Add"} ${game.title} ${on ? "from" : "to"} favorites`);
   star.title = on ? "Remove from favorites" : "Add to favorites";
   star.addEventListener("click", () => {
-    if (favs.has(game.id)) favs.delete(game.id); else favs.add(game.id);
-    saveFavs();
+    toggleFav(game.id);
     const y = window.scrollY;
     render();
     window.scrollTo(0, y);
@@ -150,9 +158,26 @@ function card(game, index) {
   return li;
 }
 
+function summary(list) {
+  const who = state.audience === "all" ? "Everyone" : AUDIENCE_LABEL[state.audience];
+  const what = FILTERS.find(([k]) => k === state.filter);
+  return `Showing: ${who}${state.filter !== "all" && what ? ` · ${what[1]}` : ""}${state.query.trim() ? ` · “${state.query.trim()}”` : ""} · ${list.length} ${list.length === 1 ? "game" : "games"}`;
+}
+
 function render() {
   if (state.filter === "fav" && !favs.size) state.filter = "all"; // last favorite removed while filtering by favorites
   const list = GAMES.filter(matches);
+  grid.hidden = state.view === "book";
+  if (state.view === "book") {
+    emptyEl.hidden = list.length > 0;
+    drawFilters();
+    countEl.textContent = `${list.length} ${list.length === 1 ? "game" : "games"} in the book`;
+    bookHost.hidden = !list.length;
+    book.setGames(list, { favs, summary: summary(list), startKey: pendingKey });
+    pendingKey = null;
+    if (list.length) book.show(); else book.hide();
+    return;
+  }
   grid.innerHTML = "";
   const top = list.filter((g) => favs.has(g.id));
   const rest = list.filter((g) => !favs.has(g.id));
@@ -172,7 +197,7 @@ document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     state.audience = tab.dataset.audience;
     document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t === tab)));
-    history.replaceState(null, "", state.audience === "all" ? window.location.pathname : `#${state.audience}`);
+    if (state.view === "grid") history.replaceState(null, "", state.audience === "all" ? window.location.pathname : `#${state.audience}`);
     render();
   });
 });
@@ -183,6 +208,7 @@ searchEl.addEventListener("input", () => {
 });
 
 $("surprise").addEventListener("click", () => {
+  if (state.view === "book") { book.surprise(); return; } // in the Book, flip to a random page
   const pool = GAMES.filter(matches);
   if (!pool.length) return;
   const pick = pool[Math.floor(Math.random() * pool.length)];
@@ -209,6 +235,49 @@ filtersEl.addEventListener("click", (e) => {
   if (!b) return;
   state.filter = b.dataset.f;
   render();
+});
+
+// ---------- the Book view ----------
+let pendingKey = state.view === "book" ? bookKey(hash) : null;
+const book = createBook(bookHost, {
+  cats: CATS,
+  isNew,
+  onFav: (id) => {
+    toggleFav(id);
+    if (state.filter === "fav") render(); else { book.refreshFavs(favs); drawFilters(); }
+  },
+  onSurprise: () => book.surprise(),
+  onGrid: () => setView("grid"),
+  onNavigate: (key) => { if (state.view === "book") history.replaceState(null, "", key === "cover" ? "#book" : `#book=${encodeURIComponent(key)}`); },
+});
+function setView(view, key) {
+  state.view = view;
+  try { localStorage.setItem(VIEW_KEY, view); } catch (err) { /* private mode */ }
+  document.body.classList.toggle("view-book", view === "book");
+  document.querySelectorAll(".vbtn").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === view)));
+  if (view === "book") {
+    pendingKey = key || null;
+    history.replaceState(null, "", "#book");
+    render();
+    const top = bookHost.getBoundingClientRect().top + window.scrollY - 70;
+    if (window.scrollY > top || top - window.scrollY > 40) window.scrollTo(0, Math.max(0, top - 120));
+  } else {
+    book.hide();
+    history.replaceState(null, "", state.audience === "all" ? window.location.pathname : `#${state.audience}`);
+    render();
+  }
+}
+document.querySelectorAll(".vbtn").forEach((b) => b.addEventListener("click", () => { if (b.dataset.view !== state.view) setView(b.dataset.view); }));
+document.body.classList.toggle("view-book", state.view === "book");
+document.querySelectorAll(".vbtn").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === state.view)));
+window.addEventListener("hashchange", () => {
+  const k = bookKey(window.location.hash.replace("#", ""));
+  if (k === null) return;
+  if (state.view !== "book") { setView("book", k); return; }
+  if (k !== book.key) {
+    // a link to a page hidden by the current filters: show everything first
+    if (!GAMES.filter(matches).some((g) => g.id === k) && GAMES.some((g) => g.id === k)) { state.filter = "all"; state.audience = "all"; state.query = ""; searchEl.value = ""; pendingKey = k; render(); } else book.goToKey(k);
+  }
 });
 
 render();

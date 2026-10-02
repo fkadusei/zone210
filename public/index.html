@@ -9,8 +9,10 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%B2%3C/text%3E%3C/svg%3E" />
     <script src="assets/theme.js"></script>
     <script src="assets/saver.js"></script>
+    <script src="assets/sound.js"></script>
     <link rel="stylesheet" href="assets/shell.css" />
     <link rel="stylesheet" href="assets/portal.css" />
+    <link rel="stylesheet" href="assets/book.css" />
   </head>
   <body>
     <header class="nav">
@@ -37,6 +39,10 @@
               <button class="tab" role="tab" data-audience="adults" aria-selected="false">Adults</button>
             </div>
             <div class="tools">
+              <div class="view-toggle" role="group" aria-label="Choose a view">
+                <button type="button" class="vbtn" data-view="grid" aria-pressed="true">▦ Grid</button>
+                <button type="button" class="vbtn" data-view="book" aria-pressed="false">📖 Book</button>
+              </div>
               <label class="search">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
                 <input id="search" type="search" placeholder="Search games" aria-label="Search games" autocomplete="off" />
@@ -52,6 +58,7 @@
         <div id="resume" class="resume" hidden></div>
         <p class="count" id="count" aria-live="polite"></p>
         <ul class="grid" id="grid"></ul>
+        <div id="bookhost" hidden></div>
         <p class="empty" id="empty" hidden>No games match. Try a different search.</p>
       </section>
     </main>

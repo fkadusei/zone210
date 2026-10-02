@@ -71,11 +71,12 @@ A page reload (or a dropped connection) no longer ends an online game: while pla
 wrangler.jsonc        Cloudflare config: static site in ./public + a tiny Worker for /api/*
 src/worker.js         the Worker: GET /api/turn mints relay (TURN) credentials for Ludo's online rooms
 public/               the website itself (everything below is served as static files)
-  index.html          landing page (audience tabs, search, tag filters, "Surprise me")
+  index.html          landing page (audience tabs, search, filters, "Surprise me", Grid / Book view switch)
   _headers            security headers
   assets/
     games.js          the catalog: one entry per game
     portal.js/.css    landing page
+    book.js/.css      the Book of Games view: 3D page-turning book, chapters, deep links (#book=<id>), synthesized page sounds
     shell.css         shared design system: light + dark theme tokens, buttons, panels
     theme.js          light/dark switch (follows the device setting, remembers the choice)
     back-link.js      injects the "← All games" pill into a game page
