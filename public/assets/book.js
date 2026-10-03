@@ -143,7 +143,8 @@ const sound = (() => {
 export function createBook(host, api) {
   const mq = window.matchMedia("(max-width: 820px)");
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const calm = () => reduced.matches || !!(window.z210Saver && window.z210Saver.on);
+  // only the device's own "reduce motion" setting swaps page turns for a fade; Battery saver keeps real, shorter turns
+  const calm = () => reduced.matches;
 
   let items = []; // [{ g, ch }] in book order
   let chapters = [];

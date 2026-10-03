@@ -346,7 +346,7 @@ html[data-saver="on"] .c-open { animation: none; }
 @media (prefers-reduced-motion: reduce), (update: slow) {
   .bk-book, .bk-leaf, .bk-shade { transition: none; }
 }
-html[data-saver="on"] .bk-book, html[data-saver="on"] .bk-leaf, html[data-saver="on"] .bk-shade { transition: none; }
+html[data-saver="on"] .bk { --flip: 520ms; }
 html[data-saver="on"] .bk-leaf.turning .bk-face { box-shadow: none; }
 
 .bk a, .bk img { -webkit-user-drag: none; }
