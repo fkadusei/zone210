@@ -9,6 +9,20 @@
  */
 export const GAMES = [
   {
+    id: "music-lab",
+    online: true,
+    title: "Music Lab",
+    tagline: "Build beats with African and modern drums, play the piano, drum on djembe pads and test your ear. Jam live with a friend online.",
+    audience: "all",
+    cat: "fun",
+    tags: ["Music", "Creative", "Multiplayer"],
+    players: "1–2 players",
+    emoji: "🥁",
+    colors: ["#8a5ce0", "#4ad6c8"],
+    added: "2026-10-02",
+    featured: true,
+  },
+  {
     id: "ludo",
     online: true,
     title: "Ghana Ludo",
@@ -19,7 +33,6 @@ export const GAMES = [
     players: "1–4 players",
     emoji: "🎲",
     colors: ["#ff8a5c", "#ffd166"],
-    featured: true,
   },
   {
     id: "chess",
@@ -633,19 +646,6 @@ export const GAMES = [
     players: "2–6 players",
     emoji: "✏️",
     colors: ["#ec6aa0", "#ffd45e"],
-    added: "2026-10-02",
-  },
-  {
-    id: "music-lab",
-    online: true,
-    title: "Music Lab",
-    tagline: "Build beats with African and modern drums, play the piano, drum on djembe pads and test your ear. Jam live with a friend online.",
-    audience: "all",
-    cat: "fun",
-    tags: ["Music", "Creative", "Multiplayer"],
-    players: "1–2 players",
-    emoji: "🥁",
-    colors: ["#8a5ce0", "#4ad6c8"],
     added: "2026-10-02",
   },
   {
