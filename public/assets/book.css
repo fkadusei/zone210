@@ -54,6 +54,7 @@ body.view-book .controls { margin-top: 14px; }
   transform-style: flat;
   transition: transform var(--flip) cubic-bezier(0.45, 0.05, 0.25, 1);
   touch-action: pan-y;
+  -webkit-touch-callout: none;
   --el: 0px;
   --er: 14px;
 }
@@ -347,3 +348,5 @@ html[data-saver="on"] .c-open { animation: none; }
 }
 html[data-saver="on"] .bk-book, html[data-saver="on"] .bk-leaf, html[data-saver="on"] .bk-shade { transition: none; }
 html[data-saver="on"] .bk-leaf.turning .bk-face { box-shadow: none; }
+
+.bk a, .bk img { -webkit-user-drag: none; }

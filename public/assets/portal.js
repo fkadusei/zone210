@@ -40,6 +40,8 @@ try {
     history.replaceState(null, "", window.location.pathname);
   }
 } catch (err) { /* storage unavailable */ }
+// leaving the page normally (a tap on Play, closing the tab) is not a crash
+window.addEventListener("pagehide", () => { try { localStorage.removeItem(BOOT_KEY); } catch (err) { /* ignore */ } });
 const bookHost = $("bookhost");
 
 function matches(game) {

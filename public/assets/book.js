@@ -160,7 +160,7 @@ export function createBook(host, api) {
   let shown = false;
   let startKey = null;
   let ui = {};
-  let suppressClick = false;
+  let suppressUntil = 0;
 
   const n = () => items.length;
 
@@ -482,7 +482,7 @@ export function createBook(host, api) {
   let drag = null;
   function onDown(e) {
     if (!built || e.button > 0 || calm()) return;
-    if (e.target.closest("a, button, input, [data-act]:not(.bk-hit)")) return;
+    if (e.target.closest("input")) return; // a swipe may start anywhere else, even on the picture or a button
     drag = { x0: e.clientX, y0: e.clientY, id: e.pointerId, on: false, dir: 0, leaf: null, k: -1 };
   }
   function onMove(e) {
@@ -519,8 +519,7 @@ export function createBook(host, api) {
     const d = drag;
     drag = null;
     if (!d.on) return;
-    suppressClick = true;
-    setTimeout(() => { suppressClick = false; }, 0);
+    suppressUntil = Date.now() + 450; // the tap that ends a swipe must not press a link or button
     const { leaf, dir, k } = d;
     leaf.classList.remove("dragging");
     leaf.style.transform = "";
@@ -555,8 +554,9 @@ export function createBook(host, api) {
     ui.snd.textContent = sound.on ? "🔊 Sound on" : "🔇 Sound off";
     ui.snd.title = sound.on ? "Page sounds on (tap to mute)" : "Page sounds off (tap to turn on)";
   };
+  host.addEventListener("dragstart", (e) => e.preventDefault()); // no native link/image dragging while turning pages
   host.addEventListener("click", (e) => {
-    if (suppressClick) return;
+    if (Date.now() < suppressUntil) { e.preventDefault(); e.stopPropagation(); return; }
     const t = e.target.closest("[data-act]");
     if (t && host.contains(t)) act(t.dataset.act, t);
   });
