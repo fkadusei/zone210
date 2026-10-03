@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Zone 210 share card</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+  body { font-family: ui-sans-serif, -apple-system, "SF Pro Display", "Segoe UI", Roboto, Arial, sans-serif; color: #eef1fa; background: linear-gradient(155deg, #0a1030 0%, #14163f 42%, #1b1145 72%, #0b1a33 100%); position: relative; }
+  .glow { position: absolute; width: 700px; height: 700px; border-radius: 50%; filter: blur(110px); opacity: 0.5; }
+  .brand { position: absolute; left: 64px; bottom: 48px; display: flex; align-items: center; gap: 16px; font-weight: 800; font-size: 34px; letter-spacing: -0.01em; }
+  .logo { width: 58px; height: 58px; border-radius: 16px; display: grid; place-items: center; font-weight: 900; font-size: 21px; color: #2b1f00; background: linear-gradient(145deg, #ffd15a, #f5b41f 55%, #e89b0b); box-shadow: 0 8px 20px rgba(207, 148, 16, 0.45); }
+  .url { margin-left: 12px; font-weight: 600; font-size: 26px; color: #98a1bb; }
+  /* game card */
+  .shot { position: absolute; right: 56px; top: 78px; width: 600px; height: 337px; border-radius: 26px; overflow: hidden; transform: rotate(2.4deg); box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.14), 0 40px 70px rgba(0, 0, 0, 0.6); background: linear-gradient(135deg, var(--a), var(--b)); display: grid; place-items: center; font-size: 160px; }
+  .shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+  .badge { position: absolute; right: 80px; top: 52px; z-index: 3; padding: 12px 26px; border-radius: 999px; font-weight: 800; font-size: 28px; color: #fff; background: linear-gradient(145deg, #25b974, #12804b); transform: rotate(5deg); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5); }
+  .copy { position: absolute; left: 64px; top: 76px; width: 470px; }
+  .eyebrow { font-weight: 800; font-size: 22px; letter-spacing: 0.14em; text-transform: uppercase; color: #f5b41f; margin-bottom: 18px; }
+  h1 { margin: 0; font-size: 76px; line-height: 1.02; font-weight: 850; letter-spacing: -0.03em; }
+  .tag { margin: 24px 0 0; font-size: 31px; line-height: 1.35; color: #c3cae0; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .chips { position: absolute; right: 56px; bottom: 56px; display: flex; gap: 12px; }
+  .chip { padding: 10px 22px; border-radius: 999px; font-weight: 700; font-size: 24px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.22); }
+  /* home card */
+  .home h1 { font-size: 92px; width: 560px; background: linear-gradient(95deg, #fff 0%, #fff 12%, #f5a623 48%, #e5484d 74%, #8a5ce0 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .home .copy { width: 560px; top: 100px; }
+  .home .tag { font-size: 30px; }
+  .tiles { position: absolute; right: 36px; top: 40px; width: 520px; height: 550px; }
+  .tile { position: absolute; width: 236px; height: 133px; border-radius: 18px; overflow: hidden; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.14), 0 20px 36px rgba(0, 0, 0, 0.5); background: #223; }
+  .tile img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+</style>
+</head>
+<body>
+<div class="glow" id="g1" style="left:-200px; bottom:-380px; background: var(--a, #8a5ce0)"></div>
+<div class="glow" id="g2" style="right:-180px; top:-360px; background: var(--b, #f5b41f)"></div>
+<div id="root"></div>
+<script type="module">
+  import { GAMES } from "../../public/assets/games.js";
+  const id = new URLSearchParams(location.search).get("id") || "home";
+  const root = document.getElementById("root");
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const brand = '<div class="brand"><span class="logo">210</span><span>Zone 210</span><span class="url">zone210.com</span></div>';
+  const AUD = { kids: "Kids", adults: "Adults", all: "Everyone" };
+  if (id === "home") {
+    document.body.classList.add("home");
+    document.documentElement.style.setProperty("--a", "#8a5ce0");
+    document.documentElement.style.setProperty("--b", "#f5b41f");
+    const pick = ["ludo", "chess", "music-lab", "word-craft", "space", "doodle", "ananse", "draw-guess", "tetris"].filter((x) => GAMES.some((g) => g.id === x)).slice(0, 8);
+    const pos = [[0, 10, -4], [250, 0, 3], [30, 150, 2], [280, 140, -3], [10, 295, -2], [250, 285, 4], [30, 440, 3], [275, 430, -2]];
+    root.innerHTML = `<div class="copy"><div class="eyebrow">Free · No sign-up</div><h1>Play, learn &amp; explore.</h1><p class="tag">${GAMES.length} free games, puzzles and learning adventures for kids and grown-ups. Play with friends online.</p></div>
+      <div class="tiles">${pick.map((x, i) => `<div class="tile" style="left:${pos[i][0]}px;top:${pos[i][1]}px;transform:rotate(${pos[i][2]}deg)"><img src="../../public/assets/thumbs/${x}.jpg" alt=""></div>`).join("")}</div>${brand}`;
+  } else {
+    const g = GAMES.find((x) => x.id === id);
+    document.documentElement.style.setProperty("--a", g.colors[0]);
+    document.documentElement.style.setProperty("--b", g.colors[1]);
+    root.innerHTML = `<div class="copy"><div class="eyebrow">${esc(g.tags[0] || "Game")} · Zone 210</div><h1>${esc(g.title)}</h1><p class="tag">${esc(g.tagline)}</p></div>
+      <div class="shot" style="--a:${g.colors[0]};--b:${g.colors[1]}">${g.emoji}<img src="../../public/assets/thumbs/${g.id}.jpg" alt="" onerror="this.remove()"></div>
+      ${g.online ? '<div class="badge">🌐 Play online</div>' : ""}
+      <div class="chips"><span class="chip">${esc(g.players)}</span><span class="chip">${AUD[g.audience]}</span></div>${brand}`;
+    const t = document.querySelector("h1");
+    const n = g.title.length;
+    t.style.fontSize = n > 22 ? "54px" : n > 14 ? "64px" : "76px";
+  }
+</script>
+</body>
+</html>
