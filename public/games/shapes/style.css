@@ -1,0 +1,49 @@
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.tab { font: 700 0.95rem var(--font); color: var(--muted); padding: 9px 16px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line-strong); cursor: pointer; touch-action: manipulation; }
+.tab[aria-selected="true"] { color: var(--on-gold); background: linear-gradient(180deg, #ffc93c, var(--gold)); border-color: var(--gold-deep); }
+.tab:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.starsum { font-weight: 800; padding: 8px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line-strong); }
+.panel { padding: 16px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); display: grid; gap: 12px; }
+.panel[hidden] { display: none; }
+.opt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.opt[hidden] { display: none; }
+.lbl { width: 56px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.qhead { display: flex; justify-content: space-between; font-weight: 700; color: var(--muted); font-size: 0.9rem; }
+.qtext { margin: 0; font-size: 1.15rem; font-weight: 800; text-align: center; }
+.qbox { display: grid; gap: 14px; justify-items: center; }
+.qshape { width: min(220px, 56vw); aspect-ratio: 1; }
+.qshape svg { width: 100%; height: 100%; }
+.answers { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.ans { font: 800 1.05rem var(--font); min-width: 120px; padding: 12px 16px; color: var(--ink); background: var(--surface-2); border: 2px solid var(--line-strong); border-radius: 14px; cursor: pointer; touch-action: manipulation; }
+.ans:hover:not(:disabled) { background: var(--gold-soft); border-color: var(--gold); }
+.ans.right { background: color-mix(in srgb, var(--green) 28%, var(--surface)); border-color: var(--green); }
+.ans.wrong { background: color-mix(in srgb, var(--red) 24%, var(--surface)); border-color: var(--red); }
+.ans:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ans.pic { min-width: 0; width: min(120px, 40vw); aspect-ratio: 1; padding: 8px; }
+.ans.pic svg { width: 100%; height: 100%; }
+.g-btn[disabled] { opacity: 0.45; }
+
+.anglebox { display: grid; place-items: center; }
+#angleSvg { width: min(420px, 100%); background: var(--surface-2); border-radius: 16px; border: 1px solid var(--line); touch-action: none; }
+.live { display: flex; justify-content: center; gap: 24px; font-weight: 700; }
+.live b { font-size: 1.5rem; color: var(--gold-deep); font-variant-numeric: tabular-nums; }
+
+.symwrap, .areawrap { display: grid; place-items: center; }
+.symgrid, .areagrid { display: grid; gap: 2px; padding: 6px; border-radius: 12px; background: var(--line-strong); touch-action: none; user-select: none; -webkit-user-select: none; }
+.symgrid { --n: 8; --cell: min(calc((100vw - 64px) / var(--n)), 48px); grid-template-columns: repeat(var(--n), var(--cell)); }
+.areagrid { --n: 12; --cell: min(calc((100vw - 64px) / var(--n)), 40px); grid-template-columns: repeat(var(--n), var(--cell)); }
+.cell { height: var(--cell); padding: 0; border: 0; border-radius: 4px; background: var(--surface); cursor: pointer; touch-action: none; }
+.cell.fixed { cursor: default; }
+.cell.mid-r { margin-right: 4px; }
+.cell.mid-b { margin-bottom: 4px; }
+.cell.bad { box-shadow: 0 0 0 3px var(--red) inset; }
+.cell.good { box-shadow: 0 0 0 3px var(--green) inset; }
+.cell.on { background: var(--gold); }
+.cell:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; position: relative; z-index: 2; }
+.palette { gap: 6px; justify-content: center; }
+.swatch { width: 38px; height: 38px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; padding: 0; touch-action: manipulation; box-shadow: 0 0 0 1px var(--line), 0 3px 6px rgba(42, 36, 51, 0.25); }
+.swatch[aria-pressed="true"] { transform: scale(1.18); box-shadow: 0 0 0 3px var(--gold), 0 3px 6px rgba(42, 36, 51, 0.25); }
+.swatch.erase { background: var(--surface) !important; display: grid; place-items: center; font-size: 1rem; }
+.rules summary { cursor: pointer; font-weight: 800; }
+.rules ul { margin: 10px 0 0; padding-left: 20px; color: var(--muted); line-height: 1.6; }

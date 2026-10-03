@@ -296,8 +296,10 @@ export function createOnline(o) {
   }
 
   async function join(code) {
-    st.touched = true;
     const clean = p2p.normalizeCode(code);
+    // a reload with the invite link still in the address: resume() puts the saved game back; a fresh join would restart it
+    if (canResume && saved0 && saved0.code === clean && !saved0.host && !st.started && !st.touched) return;
+    st.touched = true;
     if (clean.length < 5) { st.err = "Enter the 5-letter room code."; render(); return; }
     st.busy = true; st.err = ""; st.view = "idle"; render();
     try {

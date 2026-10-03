@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Draw &amp; Guess · Zone 210</title>
+    <meta name="theme-color" content="#eef0f5" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <script src="../../assets/sound.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Draw &amp; Guess</h1>
+          <p>Draw the secret word without using letters or numbers. Can your friends guess it before time runs out?</p>
+        </div>
+        <div class="g-bar"><button class="g-btn" id="restart" hidden>New Game</button></div>
+      </div>
+
+      <section class="g-panel setup" id="setup" aria-label="Game options">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="two" aria-pressed="true">Pass &amp; play</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">🌐 Online</button>
+          </div></div>
+        <div class="opt" id="countRow"><span class="lbl">Players</span>
+          <div class="g-chips" id="count" role="group" aria-label="Number of players">
+            <button class="g-chip" data-value="2" aria-pressed="false">2</button>
+            <button class="g-chip" data-value="3" aria-pressed="true">3</button>
+            <button class="g-chip" data-value="4" aria-pressed="false">4</button>
+            <button class="g-chip" data-value="5" aria-pressed="false">5</button>
+            <button class="g-chip" data-value="6" aria-pressed="false">6</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Words</span>
+          <div class="g-chips" id="level" role="group" aria-label="Word difficulty">
+            <button class="g-chip" data-value="easy" aria-pressed="true">Easy</button>
+            <button class="g-chip" data-value="medium" aria-pressed="false">Medium</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+            <button class="g-chip" data-value="mixed" aria-pressed="false">Mixed</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Time</span>
+          <div class="g-chips" id="secs" role="group" aria-label="Seconds per drawing">
+            <button class="g-chip" data-value="45" aria-pressed="false">45s</button>
+            <button class="g-chip" data-value="60" aria-pressed="true">60s</button>
+            <button class="g-chip" data-value="90" aria-pressed="false">90s</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Turns</span>
+          <div class="g-chips" id="rounds" role="group" aria-label="Drawings each">
+            <button class="g-chip" data-value="1" aria-pressed="false">1 each</button>
+            <button class="g-chip" data-value="2" aria-pressed="true">2 each</button>
+            <button class="g-chip" data-value="3" aria-pressed="false">3 each</button>
+          </div></div>
+        <div class="opt" id="startRow"><button class="g-btn" id="start">Start game</button></div>
+      </section>
+
+      <section id="play" hidden>
+        <div class="scores" id="scores" aria-live="polite"></div>
+        <div class="wordbar" id="wordbar"><span id="wordText"></span><span class="timer"><i id="timeFill"></i><b id="timeNum"></b></span></div>
+        <div class="stage" id="stage">
+          <canvas id="cv" width="800" height="600" aria-label="Drawing canvas"></canvas>
+          <div class="veil" id="veil" hidden><div><p id="veilText"></p><button class="g-btn" id="veilBtn"></button></div></div>
+        </div>
+        <section class="tools" id="tools" aria-label="Drawing tools">
+          <div class="row palette" id="palette" role="group" aria-label="Colours"></div>
+          <div class="row">
+            <div class="g-chips" id="sizes" role="group" aria-label="Brush size">
+              <button class="g-chip" data-value="5" aria-pressed="false">Thin</button>
+              <button class="g-chip" data-value="12" aria-pressed="true">Medium</button>
+              <button class="g-chip" data-value="26" aria-pressed="false">Thick</button>
+            </div>
+            <button class="g-btn ghost" id="eraser" aria-pressed="false">🧽 Eraser</button>
+            <button class="g-btn ghost" id="undo">↶ Undo</button>
+            <button class="g-btn ghost" id="clear">🗑 Clear</button>
+            <button class="g-btn ghost" id="skip" hidden>🔄 New word</button>
+          </div>
+        </section>
+        <form class="guess" id="guessForm" hidden autocomplete="off">
+          <input id="guessIn" type="text" maxlength="40" placeholder="Type your guess" aria-label="Your guess" autocapitalize="off" />
+          <button class="g-btn" type="submit">Guess</button>
+        </form>
+        <ul class="guesses" id="guesses" aria-live="polite"></ul>
+        <div class="picker" id="picker" hidden>
+          <p id="pickText">Who guessed it?</p>
+          <div class="g-chips" id="pickBtns"></div>
+        </div>
+        <p class="g-status" id="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <div class="modal" id="end" hidden role="dialog" aria-modal="true" aria-label="Game over">
+        <div class="box"><h2 id="endTitle"></h2><div id="endBody"></div><button class="g-btn" id="endAgain">Play again</button></div>
+      </div>
+
+      <details class="rules"><summary>How to play</summary>
+        <ul>
+          <li><b>Pass &amp; play:</b> one person draws on this device while everyone else guesses out loud. The drawer taps who got it right. Pass the device on for the next turn.</li>
+          <li><b>Online:</b> you and a friend take turns drawing. Your friend sees your drawing live and types guesses.</li>
+          <li>No letters, numbers or talking while you draw! Pointing is fine.</li>
+          <li>A correct guess scores for both the drawer and the guesser, and faster guesses score more.</li>
+        </ul>
+      </details>
+    </main>
+
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Shapes &amp; Geometry · Zone 210</title>
+    <meta name="theme-color" content="#eef0f5" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <script src="../../assets/sound.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Shapes &amp; Geometry</h1>
+          <p>Spot shapes, make angles, build mirror pictures and measure area and perimeter. Earn stars as you go.</p>
+        </div>
+        <div class="g-bar"><span class="starsum" id="starsum" aria-label="Stars earned"></span></div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Activities" id="tabs">
+        <button class="tab" role="tab" data-tab="spot" aria-selected="true">🔷 Shape Spotter</button>
+        <button class="tab" role="tab" data-tab="angle" aria-selected="false">📐 Angle Lab</button>
+        <button class="tab" role="tab" data-tab="sym" aria-selected="false">🦋 Symmetry</button>
+        <button class="tab" role="tab" data-tab="area" aria-selected="false">🟩 Area &amp; Perimeter</button>
+      </div>
+
+      <section class="panel" id="p-spot">
+        <div class="opt"><span class="lbl">Level</span>
+          <div class="g-chips" id="spotLevel" role="group" aria-label="Level">
+            <button class="g-chip" data-value="1" aria-pressed="true">1 · Basic shapes</button>
+            <button class="g-chip" data-value="2" aria-pressed="false">2 · More shapes</button>
+            <button class="g-chip" data-value="3" aria-pressed="false">3 · Properties</button>
+          </div></div>
+        <div class="qhead"><span id="spotNum"></span><span id="spotScore"></span></div>
+        <div class="qbox"><p class="qtext" id="spotQ"></p><div class="qshape" id="spotShape"></div><div class="answers" id="spotA"></div></div>
+        <p class="g-status" id="spotMsg" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="panel" id="p-angle" hidden>
+        <div class="opt"><span class="lbl">Game</span>
+          <div class="g-chips" id="angleMode" role="group" aria-label="Angle game">
+            <button class="g-chip" data-value="make" aria-pressed="true">Make the angle</button>
+            <button class="g-chip" data-value="name" aria-pressed="false">Name the angle</button>
+          </div></div>
+        <p class="qtext" id="angleQ"></p>
+        <div class="anglebox"><svg id="angleSvg" viewBox="0 0 320 240" role="img" aria-label="Angle drawing"></svg></div>
+        <div class="answers" id="angleA"></div>
+        <div class="row"><button class="g-btn" id="angleCheck">Check</button><button class="g-btn ghost" id="angleNext">Next ▶</button></div>
+        <p class="g-status" id="angleMsg" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="panel" id="p-sym" hidden>
+        <div class="opt"><span class="lbl">Game</span>
+          <div class="g-chips" id="symMode" role="group" aria-label="Symmetry game">
+            <button class="g-chip" data-value="puzzle" aria-pressed="true">Mirror puzzle</button>
+            <button class="g-chip" data-value="free" aria-pressed="false">Free painting</button>
+          </div></div>
+        <div class="opt" id="symLevelRow"><span class="lbl">Mirror</span>
+          <div class="g-chips" id="symLevel" role="group" aria-label="Mirror type">
+            <button class="g-chip" data-value="v" aria-pressed="true">Left ↔ right</button>
+            <button class="g-chip" data-value="h" aria-pressed="false">Top ↕ bottom</button>
+            <button class="g-chip" data-value="b" aria-pressed="false">Both</button>
+          </div></div>
+        <div class="opt" id="symFreeRow" hidden><span class="lbl">Mirror</span>
+          <div class="g-chips" id="symFree" role="group" aria-label="Free mirror">
+            <button class="g-chip" data-value="v" aria-pressed="false">↔</button>
+            <button class="g-chip" data-value="h" aria-pressed="false">↕</button>
+            <button class="g-chip" data-value="b" aria-pressed="true">Both</button>
+            <button class="g-chip" data-value="r" aria-pressed="false">Spin ×4</button>
+          </div></div>
+        <p class="qtext" id="symQ"></p>
+        <div class="symwrap"><div class="symgrid" id="symGrid" role="grid" aria-label="Pattern grid"></div></div>
+        <div class="row palette" id="symPal" role="group" aria-label="Colours"></div>
+        <div class="row"><button class="g-btn" id="symCheck">Check</button><button class="g-btn ghost" id="symNext">New pattern</button><button class="g-btn ghost" id="symClear">Clear my part</button></div>
+        <p class="g-status" id="symMsg" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="panel" id="p-area" hidden>
+        <p class="qtext" id="areaQ"></p>
+        <div class="live"><span>Area <b id="areaVal">0</b> squares</span><span>Perimeter <b id="perVal">0</b> units</span></div>
+        <div class="areawrap"><div class="areagrid" id="areaGrid" role="grid" aria-label="Square grid"></div></div>
+        <div class="row"><button class="g-btn" id="areaCheck">Check</button><button class="g-btn ghost" id="areaNext">New challenge</button><button class="g-btn ghost" id="areaClear">Clear</button></div>
+        <p class="g-status" id="areaMsg" role="status" aria-live="polite"></p>
+        <details class="rules"><summary>What are area and perimeter?</summary>
+          <ul><li><b>Area</b> is how many squares a shape covers.</li><li><b>Perimeter</b> is the distance around the outside: count the edges of the squares that touch empty space.</li><li>Two shapes can have the same area but different perimeters. Try it!</li></ul></details>
+      </section>
+    </main>
+
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

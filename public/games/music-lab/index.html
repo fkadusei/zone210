@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Music Lab · Zone 210</title>
+    <meta name="theme-color" content="#eef0f5" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <script src="../../assets/sound.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Music Lab</h1>
+          <p>Build beats, play the piano, drum on West African drums and test your ear. Jam live with a friend online.</p>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Mode">
+        <div class="opt"><span class="lbl">Mode</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Mode">
+            <button class="g-chip" data-value="solo" aria-pressed="true">Solo</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">🌐 Jam with a friend</button>
+          </div></div>
+      </section>
+
+      <div class="tabs" role="tablist" aria-label="Instruments" id="tabs">
+        <button class="tab" role="tab" data-tab="beat" aria-selected="true">🥁 Beat Maker</button>
+        <button class="tab" role="tab" data-tab="piano" aria-selected="false">🎹 Piano</button>
+        <button class="tab" role="tab" data-tab="pads" aria-selected="false">🪘 Drum Pads</button>
+        <button class="tab" role="tab" data-tab="tune" aria-selected="false">👂 Copy the Tune</button>
+      </div>
+
+      <section class="panel" id="p-beat">
+        <div class="transport">
+          <button class="g-btn" id="play">▶ Play</button>
+          <label class="slide">Tempo <input type="range" id="bpm" min="60" max="180" value="104" aria-label="Tempo"><b id="bpmNum">104</b></label>
+          <div class="g-chips" id="presets" role="group" aria-label="Rhythms"></div>
+          <button class="g-btn ghost" id="clearBeat">🗑 Clear</button>
+        </div>
+        <div class="seq" id="seq" role="group" aria-label="Beat grid"></div>
+        <p class="hint">Tap squares to add sounds. Tap a name on the left to hear it. Try a rhythm, then change it.</p>
+      </section>
+
+      <section class="panel" id="p-piano" hidden>
+        <div class="transport">
+          <div class="g-chips" id="voices" role="group" aria-label="Instrument sound"></div>
+          <label class="check"><input type="checkbox" id="penta" /> Pentatonic (every note sounds good)</label>
+          <label class="check"><input type="checkbox" id="names" checked /> Note names</label>
+        </div>
+        <div class="piano" id="piano" role="group" aria-label="Piano keys"></div>
+        <div class="transport">
+          <button class="g-btn ghost" id="rec">⏺ Record</button>
+          <button class="g-btn ghost" id="replay" disabled>▶ Play back</button>
+          <span class="hint" id="recNote">Tip: on a computer you can use the keys A S D F G H J K L.</span>
+        </div>
+      </section>
+
+      <section class="panel" id="p-pads" hidden>
+        <div class="pads" id="pads" role="group" aria-label="Drum pads"></div>
+        <p class="hint">Tap the pads like a drummer. The talking drum bends its pitch up, the way drummers send messages.</p>
+      </section>
+
+      <section class="panel" id="p-tune" hidden>
+        <div class="tune-top"><span>Round <b id="tRound">0</b></span><span>Best <b id="tBest">0</b></span><button class="g-btn" id="tStart">Start</button></div>
+        <div class="tpads" id="tpads" role="group" aria-label="Tune pads"></div>
+        <p class="g-status" id="tStatus" role="status" aria-live="polite">Listen to the pattern, then play it back.</p>
+      </section>
+
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
