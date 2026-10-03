@@ -354,8 +354,10 @@ export function createBook(host, api) {
         <button type="button" class="bk-btn" data-act="prev" aria-label="Previous page">◀</button>
         <input type="range" class="bk-range" min="0" max="${last}" value="0" aria-label="Page of the book">
         <button type="button" class="bk-btn" data-act="next" aria-label="Next page">▶</button>
+      </div>
+      <div class="bk-sub">
         <span class="bk-label"></span>
-        <button type="button" class="bk-btn bk-snd" data-act="sound" aria-label="Page sounds" aria-pressed="${sound.on}" title="Page sounds"></button>
+        <button type="button" class="bk-snd" data-act="sound" aria-pressed="${sound.on}" title="Page sounds"></button>
       </div>
       <p class="bk-live" aria-live="polite"></p>
     </div>`;
@@ -550,7 +552,7 @@ export function createBook(host, api) {
   const paintSound = () => {
     if (!ui.snd) return;
     ui.snd.setAttribute("aria-pressed", String(sound.on));
-    ui.snd.textContent = sound.on ? "🔊" : "🔇";
+    ui.snd.textContent = sound.on ? "🔊 Sound on" : "🔇 Sound off";
     ui.snd.title = sound.on ? "Page sounds on (tap to mute)" : "Page sounds off (tap to turn on)";
   };
   host.addEventListener("click", (e) => {
