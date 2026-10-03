@@ -81,7 +81,7 @@ public/               the website itself (everything below is served as static f
   assets/
     games.js          the catalog: one entry per game
     portal.js/.css    landing page
-    book.js/.css      the Book of Games view: 3D page-turning book, chapters, deep links (#book=<id>), synthesized page sounds
+    book.js/.css      the Zone 210 Playbook (Book view): 3D page-turning book, chapters, deep links (#book=<id>), synthesized page sounds
     shell.css         shared design system: light + dark theme tokens, buttons, panels
     theme.js          light/dark switch (follows the device setting, remembers the choice)
     back-link.js      injects the "← All games" pill into a game page

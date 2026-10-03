@@ -1,4 +1,4 @@
-/* The Book of Games (assets/book.js). Sizes are in em so the whole book scales with --pw, the width of one page. */
+/* The Zone 210 Playbook (assets/book.js). Sizes are in em so the whole book scales with --pw, the width of one page. */
 
 /* ---------- view switch + calmer hero while reading ---------- */
 .view-toggle { display: inline-flex; gap: 2px; padding: 4px; background: color-mix(in srgb, var(--surface) 76%, transparent); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow); }
@@ -305,7 +305,7 @@ html[data-saver="on"] .bk-ribbon { animation: none; }
 .c-corner.tr { top: 0.55em; right: 0.55em; border-left: 0; border-bottom: 0; border-radius: 0 0.8em 0 0; }
 .c-corner.bl { bottom: 0.55em; left: 0.55em; border-right: 0; border-top: 0; border-radius: 0 0 0 0.8em; }
 .c-corner.br { bottom: 0.55em; right: 0.55em; border-left: 0; border-top: 0; border-radius: 0 0 0.8em 0; }
-.c-pre { margin: 0; font: 700 0.85em var(--font); letter-spacing: 0.4em; text-transform: uppercase; color: #e9c36a; }
+.c-pre { margin: 0; font: 700 0.78em var(--font); letter-spacing: 0.22em; white-space: nowrap; text-transform: uppercase; color: #e9c36a; }
 .c-title { margin: 0.2em 0; display: grid; gap: 0.05em; font-size: 3.6em; font-weight: 900; line-height: 0.95; letter-spacing: -0.01em; }
 .c-title span { background: var(--foil); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0.04em 0.02em rgba(0, 0, 0, 0.6)); animation: bkfoil 6s ease-in-out infinite; }
 .c-title em { font-size: 0.36em; font-weight: 400; font-style: italic; color: #e9c36a; letter-spacing: 0.1em; }

@@ -1,5 +1,5 @@
 /**
- * The Book of Games: the landing page's second view. Every game gets a spread (text on the left page, picture on the
+ * The Zone 210 Playbook (the Book view): the landing page's second view. Every game gets a spread (text on the left page, picture on the
  * right) in a real 3D book whose pages turn around the spine.
  *
  * How it works
@@ -190,7 +190,7 @@ export function createBook(host, api) {
   };
   const pageNo = (s) => (mode === "single" ? s : 2 * s - 1);
   const labelOf = (s) => {
-    if (s <= 0) return "The Book of Games";
+    if (s <= 0) return "The Zone 210 Playbook";
     if (s === 1) return "Welcome & contents";
     if (s >= n() + 2) return "The End";
     const it = items[s - 2];
@@ -221,8 +221,8 @@ export function createBook(host, api) {
   const cover = () => `<div class="cover">
       <i class="c-corner tl"></i><i class="c-corner tr"></i><i class="c-corner bl"></i><i class="c-corner br"></i>
       <div class="c-frame">
-        <p class="c-pre">✦ Zone 210 ✦</p>
-        <h2 class="c-title"><span>The Book</span><em>of</em><span>Games</span></h2>
+        <p class="c-pre">✦ Play · Learn · Explore ✦</p>
+        <h2 class="c-title"><em>The</em><span>Zone 210</span><span>Playbook</span></h2>
         <div class="c-orn" aria-hidden="true"><i></i>❦<i></i></div>
         <div class="c-icons" aria-hidden="true"><span>🎲</span><span>♟️</span><span>🧩</span><span>🔬</span><span>🎨</span></div>
         <p class="c-count">${n()} games &amp; adventures</p>
@@ -241,7 +241,7 @@ export function createBook(host, api) {
     </ul>`;
   const welcome = (p) => `<div class="pg pg-welcome">
       <p class="kicker">Welcome to</p>
-      <h3 class="g-title">The Book of Games</h3>
+      <h3 class="g-title">The Zone 210 Playbook</h3>
       <div class="orn"><i></i>❦<i></i></div>
       <p class="g-tag">${n()} ${n() === 1 ? "game" : "games"}, puzzles and learning adventures, one page each. Read about a game, then press <b>Play now</b>.</p>
       ${howto}
@@ -251,7 +251,7 @@ export function createBook(host, api) {
   const contents = (p) => `<div class="pg pg-toc"><h3 class="g-title">Contents</h3><div class="orn"><i></i>❦<i></i></div>${tocList()}<button type="button" class="bk-link" data-act="surprise">🎁 Surprise me</button>${foot(p)}</div>`;
   const welcomeOne = () => `<div class="pg pg-one pg-front pg-welcome">
       <p class="kicker">Welcome to</p>
-      <h3 class="g-title">The Book of Games</h3>
+      <h3 class="g-title">The Zone 210 Playbook</h3>
       <div class="orn"><i></i>❦<i></i></div>
       <p class="g-tag">${n()} ${n() === 1 ? "game" : "games"} and adventures, one page each. Swipe to turn the pages.</p>
       ${tocList()}
