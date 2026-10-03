@@ -30,6 +30,16 @@ const bookKey = (h) => (h === "book" ? "cover" : h.startsWith("book=") ? decodeU
 try { if (localStorage.getItem(VIEW_KEY) === "book") state.view = "book"; } catch (err) { /* storage unavailable */ }
 if (bookKey(hash) !== null) state.view = "book";
 else if (["kids", "adults"].includes(hash)) state.view = "grid";
+// if the Book stopped the page last time (a very weak device), fall back to the grid once
+const BOOT_KEY = "zone210_bookboot";
+try {
+  if (localStorage.getItem(BOOT_KEY)) {
+    localStorage.removeItem(BOOT_KEY);
+    localStorage.setItem(VIEW_KEY, "grid");
+    state.view = "grid";
+    history.replaceState(null, "", window.location.pathname);
+  }
+} catch (err) { /* storage unavailable */ }
 const bookHost = $("bookhost");
 
 function matches(game) {
@@ -175,7 +185,10 @@ function render() {
     bookHost.hidden = !list.length;
     book.setGames(list, { favs, summary: summary(list), startKey: pendingKey });
     pendingKey = null;
-    if (list.length) book.show(); else book.hide();
+    if (list.length) {
+      try { localStorage.setItem(BOOT_KEY, "1"); setTimeout(() => localStorage.removeItem(BOOT_KEY), 3500); } catch (err) { /* storage unavailable */ }
+      book.show();
+    } else book.hide();
     return;
   }
   grid.innerHTML = "";

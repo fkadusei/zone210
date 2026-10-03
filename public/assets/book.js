@@ -378,6 +378,12 @@ export function createBook(host, api) {
     dirty = false;
   }
 
+  /** Only the leaves near the reader stay in the page: 50+ full-size 3D layers are too heavy for phones. */
+  function setWindow(center, extra = []) {
+    const keep = new Set(extra);
+    for (let k = center - 3; k <= center + 3; k += 1) keep.add(k);
+    leaves.forEach((lf, k) => { lf.hidden = !keep.has(k); });
+  }
   const zFinal = (k) => (leaves[k].classList.contains("flipped") ? k + 1 : L - k);
 
   function setLeaf(k, flipped, animate, rank = 0) {
@@ -462,6 +468,10 @@ export function createBook(host, api) {
       else if (t === 0) sound.close();
       else if (ks.length) sound.flip(1);
     }
+    const near = [];
+    for (let k = from - 3; k <= from + 3; k += 1) near.push(k);
+    setWindow(t, ks.concat(near));
+    timers.push(setTimeout(() => setWindow(cur), FLIP_MS + stagger * MAX_ANIMATED + 150));
     refreshState();
     if (shown && api.onNavigate && !opts.silent) api.onNavigate(keyOf(cur));
   }
@@ -579,6 +589,7 @@ export function createBook(host, api) {
     fillAround(s);
     cur = s;
     leaves.forEach((lf, k) => setLeaf(k, k < s, false));
+    setWindow(s);
     void ui.book.offsetWidth;
     leaves.forEach((lf) => { lf.style.transition = ""; });
     refreshState();
