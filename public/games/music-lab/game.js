@@ -121,15 +121,18 @@ const ROWS = [
   { id: "m0", name: "Tune C", c: "#4ad6c8", m: 60 },
 ];
 const PRESETS = {
-  Highlife: { kick: "x...x..x..x.x...", snare: "....x.......x...", hat: "x.x.x.x.x.x.x.x.", clap: "", conga: ".x..x.x..x..x.x.", bell: "x..x..x...x.x...", shaker: "..x...x...x...x.", m4: "", m3: "", m2: "x.......x.......", m1: "", m0: "....x.......x..." },
-  Afrobeat: { kick: "x..x..x...x..x..", snare: "....x.......x..x", hat: "x.x.x.x.x.x.x.xx", clap: "....x.......x...", conga: ".x.x..x..x.x..x.", bell: "x.x.x..x.x.x..x.", shaker: "xxxxxxxxxxxxxxxx", m4: "", m3: "..x.....", m2: "", m1: "x.......x.......", m0: "" },
-  "Hip-hop": { kick: "x.......x.x.....", snare: "....x.......x...", hat: "x.x.x.x.x.x.x.x.", clap: "....x.......x...", conga: "", bell: "", shaker: "", m4: "", m3: "", m2: "", m1: "", m0: "x...............x.x....." },
-  Funk: { kick: "x..x..x...x.x...", snare: "....x..x....x...", hat: "xxxxxxxxxxxxxxxx", clap: "", conga: "..x...x...x...x.", bell: "", shaker: "x.x.x.x.x.x.x.x.", m4: "", m3: "x.......", m2: "..x.....x.x.....", m1: "", m0: "" },
+  Highlife: { bpm: 104, kick: "x...x..x..x.x...", snare: "....x.......x...", hat: "x.x.x.x.x.x.x.x.", clap: "", conga: ".x..x.x..x..x.x.", bell: "x..x..x...x.x...", shaker: "..x...x...x...x.", m4: "", m3: "", m2: "x.......x.......", m1: "", m0: "....x.......x..." },
+  Afrobeat: { bpm: 110, kick: "x..x..x...x..x..", snare: "....x.......x..x", hat: "x.x.x.x.x.x.x.xx", clap: "....x.......x...", conga: ".x.x..x..x.x..x.", bell: "x.x.x..x.x.x..x.", shaker: "xxxxxxxxxxxxxxxx", m4: "", m3: "..x.....", m2: "", m1: "x.......x.......", m0: "" },
+  "Hip-hop": { bpm: 90, kick: "x.......x.x.....", snare: "....x.......x...", hat: "x.x.x.x.x.x.x.x.", clap: "....x.......x...", conga: "", bell: "", shaker: "", m4: "", m3: "", m2: "", m1: "", m0: "x...............x.x....." },
+  Funk: { bpm: 100, kick: "x..x..x...x.x...", snare: "....x..x....x...", hat: "xxxxxxxxxxxxxxxx", clap: "", conga: "..x...x...x...x.", bell: "", shaker: "x.x.x.x.x.x.x.x.", m4: "", m3: "x.......", m2: "..x.....x.x.....", m1: "", m0: "" },
+  "R&B": { bpm: 78, swing: 0.2, kick: "x.....x...x.....", snare: "....x.......x...", hat: "x.x...x.x.x...x.", clap: "....x.......x...", conga: "", bell: "", shaker: "..x.....x....x..", m4: "..........x.....", m3: "", m2: "x.......x.......", m1: "....x.......x...", m0: "x.....x.........x" },
+  House: { bpm: 124, kick: "x...x...x...x...", snare: "", hat: "..x...x...x...x.", clap: "....x.......x...", conga: ".x..x...x..x....", bell: "", shaker: "xxxxxxxxxxxxxxxx", m4: "", m3: "x..x..x...x..x..", m2: "", m1: "", m0: "x...............x......." },
 };
 const STEPS = 16;
 const mkGrid = () => ROWS.filter((r) => !r.sep).map(() => new Array(STEPS).fill(false));
 let grid = mkGrid();
 let bpm = 104;
+let swing = 0;
 let playing = false;
 let step = 0;
 let nextTime = 0;
@@ -171,10 +174,12 @@ $("seq").addEventListener("click", (e) => {
   if (v) hearRow(r);
   send({ t: "step", r, s, v });
 });
-$("presets").innerHTML = Object.keys(PRESETS).map((n) => `<button class="g-chip" data-p="${n}" aria-pressed="false">${n}</button>`).join("");
+$("presets").innerHTML = Object.keys(PRESETS).map((n) => `<button class="g-chip" data-p="${n.replace(/&/g, "&amp;")}" aria-pressed="false">${n.replace(/&/g, "&amp;")}</button>`).join("");
 function loadPreset(name) {
   const p = PRESETS[name];
   grid = REAL.map((r) => { const str = (p[r.id] || "").padEnd(STEPS, ".").slice(0, STEPS); return str.split("").map((ch) => ch === "x"); });
+  swing = p.swing || 0;
+  if (p.bpm) { bpm = p.bpm; $("bpm").value = bpm; $("bpmNum").textContent = bpm; }
   $("presets").querySelectorAll(".g-chip").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.p === name)));
   drawSeq();
 }
@@ -187,7 +192,7 @@ function schedule() {
   if (!c) return;
   while (nextTime < c.currentTime + 0.12) {
     const s = step;
-    const when = nextTime;
+    const when = nextTime + (s % 2 ? swing * (60 / bpm / 4) : 0);
     REAL.forEach((r, i) => {
       if (!grid[i][s]) return;
       if (r.d) DRUMS[r.d](c, when); else VOICES.marimba(c, when, hz(r.m));

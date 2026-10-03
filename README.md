@@ -60,7 +60,7 @@ saved games stay on the player's own device.
 | **Minesweeper** | Adults | three sizes, flags, chording, touch long-press, best times |
 | **Word Craft** | Everyone | crossing-word tile game on a 15×15 board: vs computer (3 levels), pass & play (2–4), online; ENABLE word list, hints, swap, blank tiles |
 | **Draw & Guess** | Everyone | draw a secret word on a canvas: pass & play (2–6) or online with live strokes, timer, hints, scores |
-| **Music Lab** | Everyone | 16-step beat maker with African drums, piano, djembe pads, Copy the Tune, live jam online (all sounds synthesized) |
+| **Music Lab** | Everyone | 16-step beat maker (Highlife, Afrobeat, Hip-hop, Funk, R&B, House) with African drums, piano, djembe pads, Copy the Tune, live jam online (all sounds synthesized) |
 | **Shapes & Geometry** | Kids | shape spotter, angle lab, mirror puzzles and free symmetry, area and perimeter builder, stars |
 | **Memory Garden** | Kids | grow plants by watering, memory-match to earn water and coins, shop, plant collection |
 
