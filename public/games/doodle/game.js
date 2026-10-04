@@ -1,4 +1,5 @@
 import { makePages } from "./pages2.js";
+import { makePeoplePages } from "./pages3.js";
 
 const $ = (id) => document.getElementById(id);
 const paint = $("paint");
@@ -145,6 +146,7 @@ function clipped(shape, draw) {
   lctx.restore();
 }
 Object.assign(PAGES, makePages({ stroke, solid, circle, poly, ell, clipped }));
+Object.assign(PAGES, makePeoplePages({ stroke, solid, circle, poly, ell, clipped }));
 
 function loadPage(id) {
   state.page = id;
@@ -368,7 +370,7 @@ $("sizes").addEventListener("click", (e) => {
   pressed($("sizes"), chip);
 });
 
-const CATS = [["animals", "🐾 Animals"], ["vehicles", "🚀 Vehicles"], ["scenes", "🏡 Scenes"], ["things", "🎨 Things"], ["patterns", "🔯 Patterns"]];
+const CATS = [["animals", "🐾 Animals"], ["people", "👦🏿 People"], ["vehicles", "🚀 Vehicles"], ["scenes", "🏡 Scenes"], ["things", "🎨 Things"], ["patterns", "🔯 Patterns"]];
 const catOf = (p) => (p.cat === "nature" ? "scenes" : p.cat);
 let shownCat = "animals";
 function pageButton(id, label) {
