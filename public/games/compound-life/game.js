@@ -1,5 +1,6 @@
 import { SETTINGS, ITEMS, NEEDS, NEED_LABEL, NEED_ICON, ACTIONS, JOBS, SKINS, HAIRS, OUTFITS, NAMES } from "./data.js";
-import { newHousehold, update, timeText, order, cancelAll, optionsFor, itemAt, buy, sell, move, canPlace, statusOf, gradeLetter } from "./sim.js";
+import { createOnline } from "../../assets/online.js";
+import { newHousehold, update, timeText, order, cancelAll, optionsFor, itemAt, buy, sell, move, canPlace, statusOf, gradeLetter, note, nearestFree, nameList } from "./sim.js";
 import { drawScene, WIDTH, HEIGHT, T, OY, itemPreview, portrait } from "./draw.js";
 
 const $ = (id) => document.getElementById(id);
@@ -22,7 +23,7 @@ let lastLog = null;
 
 function persist() {
   if (!H) return;
-  saves[H.setting] = H;
+  saves[H.setting] = { ...H, people: H.people.filter((p) => !p.visitor) }; // a visiting friend is never saved into your home
   saves.last = H.setting;
   try { localStorage.setItem(SAVE, JSON.stringify(saves)); } catch (err) { /* storage full or private */ }
 }
@@ -53,15 +54,16 @@ function housePreview(setting) {
   return c.toDataURL("image/jpeg", 0.8);
 }
 const previews = {};
-function randomPerson(age, i) {
-  const names = NAMES[age];
+function randomPerson(age, i, taken = []) {
+  const names = NAMES[age].filter((n) => !taken.includes(n));
   return { name: names[(i * 3 + Math.floor(Math.random() * names.length)) % names.length], age, skin: SKINS[Math.floor(Math.random() * 4)], hair: age === "adult" ? ["short", "afro", "braids", "bun"][Math.floor(Math.random() * 4)] : ["short", "puffs", "afro", "braids"][Math.floor(Math.random() * 4)], outfit: OUTFITS[Math.floor(Math.random() * OUTFITS.length)], job: null };
 }
 function showStart() {
   H = null;
   $("play").hidden = true;
   $("start").hidden = false;
-  if (!draft) draft = { setting: saves.last || "compound", people: [randomPerson("adult", 0), randomPerson("adult", 1), randomPerson("child", 2)], step: "home" };
+  if (!draft) draft = { setting: saves.last || "compound", people: [], step: "home" };
+  if (!draft.people.length) { const taken = []; [["adult", 0], ["adult", 1], ["child", 2]].forEach(([a, i]) => { const p = randomPerson(a, i, taken); taken.push(p.name); draft.people.push(p); }); }
   ["city", "compound"].forEach((s) => { if (!previews[s]) previews[s] = housePreview(s); });
   if (draft.step === "home") {
     $("start").innerHTML = `<h2>Choose a home</h2><div class="choices">${["compound", "city"].map((s) => {
@@ -103,7 +105,7 @@ $("start").addEventListener("click", (e) => {
   const act = b.dataset.act;
   if (act === "family") { draft.step = "family"; showStart(); }
   else if (act === "back") { draft.step = "home"; showStart(); }
-  else if (act === "add") { draft.people.push(randomPerson(draft.people.length >= 2 ? "child" : "adult", draft.people.length)); showStart(); }
+  else if (act === "add") { draft.people.push(randomPerson(draft.people.length >= 2 ? "child" : "adult", draft.people.length, draft.people.map((x) => x.name))); showStart(); }
   else if (act === "remove" && p) { draft.people.splice(draft.people.indexOf(p), 1); showStart(); }
   else if (act === "continue") { startGame(saves[draft.setting]); }
   else if (act === "start") { startGame(newHousehold({ setting: draft.setting, people: draft.people.map((x) => ({ ...x, name: x.name.trim() || "Friend" })) })); }
@@ -163,7 +165,7 @@ $("buyMode").addEventListener("click", () => setMode("buy"));
 /* ---- the family bar and the person panel ---- */
 const portraits = new Map();
 function drawFamily() {
-  setHTML($("family"), H.people.map((p) => {
+  setHTML($("family"), H.people.filter((p) => !p.visitor).map((p) => {
     const key = `${p.id}:${p.hair}:${p.skin}:${p.outfit}`;
     if (!portraits.has(key)) portraits.set(key, portrait(p));
     const face = p.mood > 70 ? "😄" : p.mood > 45 ? "🙂" : p.mood > 25 ? "😕" : "😫";
@@ -236,9 +238,9 @@ function where(e) {
   const y = ((e.clientY - r.top) / r.height) * HEIGHT;
   return { x, y, tx: Math.floor(x / T), ty: Math.floor((y - OY) / T), sx: e.clientX - r.left, sy: e.clientY - r.top };
 }
-function personAt(x, y) {
+function personAt(x, y, house = H) {
   let best = null;
-  H.people.forEach((p) => { if (p.away) return; const px = p.x * T + T / 2; const py = p.y * T + OY + T - 26; const d = Math.hypot(px - x, py - y); if (d < 26 && (!best || d < best.d)) best = { p, d }; });
+  house.people.forEach((p) => { if (p.away) return; const px = p.x * T + T / 2; const py = p.y * T + OY + T - 26; const d = Math.hypot(px - x, py - y); if (d < 26 && (!best || d < best.d)) best = { p, d }; });
   return best ? best.p : null;
 }
 cv.addEventListener("pointermove", (e) => {
@@ -254,6 +256,7 @@ cv.addEventListener("click", (e) => {
   if (!H) return;
   const w = where(e);
   hideMenu();
+  if (visit && visit.role === "away") { awayClick(w); return; }
   if (mode === "buy") {
     if (placing) {
       const id = placing.id || H.furniture.find((f) => f.uid === placing.uid).id;
@@ -272,6 +275,11 @@ cv.addEventListener("click", (e) => {
   // live mode
   const who = personAt(w.x, w.y);
   const me = person(selected);
+  if (who && who.visitor) {
+    if (me && !me.away) showMenu(w, `${who.name} (visiting)`, [{ label: `💬 ${me.name}: chat with ${who.name}`, go: () => chatWith(me, who) }]);
+    else toast(`${who.name} is visiting from your friend's home.`);
+    return;
+  }
   if (who) {
     if (me && who !== me && !me.away) {
       showMenu(w, who.name, [{ label: `💬 ${me.name}: chat with ${who.name}`, go: () => chatWith(me, who) }, { label: `👆 Switch to ${who.name}`, go: () => { selected = who.id; drawFamily(); drawPanels(); } }]);
@@ -331,19 +339,190 @@ function loop(now) {
   const dt = Math.min(0.25, (now - last) / 1000);
   last = now;
   if (!H || document.hidden) return;
-  let mins = dt * MPS[speed];
+  const away = visit && visit.role === "away";
+  let mins = away ? 0 : dt * MPS[speed]; // your own home is paused while you visit
   while (mins > 0) { const step = Math.min(1, mins); update(H, step); mins -= step; }
   frame += 1;
   if (saverOn() && frame % 2) return;
   const k = cv.width / WIDTH;
   ctx.setTransform(k, 0, 0, k, 0, 0);
-  drawScene(ctx, H, { t: now, selected, ghost: mode === "buy" && placing ? ghost : null, moving: placing && placing.uid });
+  if (away) { if (visit.VH) drawScene(ctx, visit.VH, { t: now, selected: VISITOR_ID }); else { ctx.fillStyle = "#1a2040"; ctx.fillRect(0, 0, WIDTH, HEIGHT); ctx.fillStyle = "#fff"; ctx.font = "bold 28px system-ui"; ctx.textAlign = "center"; ctx.fillText("Walking over to your friend's house…", WIDTH / 2, HEIGHT / 2); ctx.textAlign = "left"; } }
+  else drawScene(ctx, H, { t: now, selected, ghost: mode === "buy" && placing ? ghost : null, moving: placing && placing.uid });
   panelT += dt;
-  if (panelT > 0.4) { panelT = 0; drawPanels(); drawFamily(); checkLog(); if (mode === "buy") { const m = $("shop").querySelector("h3"); if (m) m.textContent = `Buy furniture · ₵${Math.round(H.money).toLocaleString()}`; } }
+  if (panelT > 0.4) { panelT = 0; if (away) drawVisitPanel(); else { drawPanels(); drawFamily(); checkLog(); } if (mode === "buy") { const m = $("shop").querySelector("h3"); if (m) m.textContent = `Buy furniture · ₵${Math.round(H.money).toLocaleString()}`; } }
 }
 requestAnimationFrame(loop);
 
-// open the saved family, or the start screen
+/* ---------------------------------------------------------------- 🌐 visiting a friend online */
+// The host's game runs the visit: the visitor becomes a guest in the host's home, steered by orders sent from the
+// visitor's device, and the host sends a picture of the house (people and furniture) a few times a second.
+const VISITOR_ID = 900;
+let visit = null; // { role: "home" | "away", personId, VH (the friend's house, for the visitor), lastNeeds }
+let snapTimer = 0;
+const net = createOnline({
+  container: document.querySelector(".play"),
+  before: $("family"),
+  prefix: "zone210-life-",
+  names: ["Host (my home)", "Visitor"],
+  privateState: true,
+  onStart: ({ role }) => beginVisit(role),
+  onData: (m) => onVisitMsg(m),
+  onLeft: () => endVisit("friend"),
+  onLeave: () => endVisit("me"),
+  onReconnect: () => { if (visit && visit.role === "away") sendVisitor(); },
+  getState: () => (visit ? { role: visit.role, personId: visit.personId, guest: visit.role === "home" ? guestRecord() : null } : null),
+  setState: (s) => { if (s && H) restoreVisit(s); },
+});
+function openVisitPanel() {
+  if (!H) return;
+  net.open();
+  $("visitBtn").setAttribute("aria-pressed", "true");
+  const host = document.querySelector('#onlSide [data-side="0"]');
+  if (host) host.click(); // whoever makes the room is the host by default
+}
+$("visitBtn").addEventListener("click", () => {
+  if (visit) { toast("Use Leave above to end the visit."); return; }
+  if ($("visitBtn").getAttribute("aria-pressed") === "true") { net.close(); $("visitBtn").setAttribute("aria-pressed", "false"); } else openVisitPanel();
+});
+const guest = () => H && H.people.find((p) => p.visitor);
+function guestRecord() { const g = guest(); return g ? { name: g.name, age: g.age, skin: g.skin, hair: g.hair, outfit: g.outfit, needs: g.needs } : null; }
+function beginVisit(role) {
+  if (!H) { toast("Create your family first."); net.close(); return; }
+  setMode("live");
+  if (role === 0) {
+    visit = { role: "home" };
+    toast("Your friend is on the way over! 🏠");
+    startSnaps();
+  } else {
+    const me = person(selected) && !person(selected).away ? person(selected) : H.people.find((p) => !p.away) || H.people[0];
+    visit = { role: "away", personId: me.id, VH: null, lastNeeds: { ...me.needs } };
+    sendVisitor();
+    toast(`${me.name} is off to visit your friend. Your home is paused until you come back.`);
+  }
+  $("buyMode").disabled = visit.role === "away";
+}
+function restoreVisit(s) {
+  visit = s.role === "home" ? { role: "home" } : { role: "away", personId: s.personId, VH: null, lastNeeds: { ...(person(s.personId) || H.people[0]).needs } };
+  if (s.role === "home") { if (s.guest && !guest()) addGuest(s.guest); startSnaps(); }
+  $("buyMode").disabled = visit.role === "away";
+}
+function sendVisitor() {
+  const me = person(visit.personId) || H.people[0];
+  net.send({ t: "visitor", p: { name: me.name, age: me.age, skin: me.skin, hair: me.hair, outfit: me.outfit, needs: visit.lastNeeds || me.needs } });
+}
+function addGuest(g) {
+  H.people = H.people.filter((p) => !p.visitor);
+  const S = SETTINGS[H.setting];
+  const [x, y] = nearestFree(H, S.exit[0], S.exit[1] - 1);
+  H.people.push({ id: VISITOR_ID, visitor: true, name: g.name, age: g.age, skin: g.skin, hair: g.hair, outfit: g.outfit, job: null, level: 0, perf: 0, grade: 70, skills: { cooking: 0, logic: 0, fitness: 0, music: 0 }, needs: { ...g.needs }, x, y, dir: 1, act: null, queue: [], away: false, leftToday: -1, mood: 80, walkT: 0 });
+}
+function startSnaps() { clearInterval(snapTimer); snapTimer = setInterval(sendSnap, 300); }
+function sendSnap() {
+  if (!H || !visit || visit.role !== "home" || !net.active) return;
+  net.send({ t: "snap", s: {
+    setting: H.setting, day: H.day, minute: H.minute, mangoes: H.mangoes, family: nameList(H.people.filter((p) => !p.visitor).map((p) => p.name)),
+    furniture: H.furniture,
+    people: H.people.map((p) => ({ id: p.id, name: p.name, age: p.age, skin: p.skin, hair: p.hair, outfit: p.outfit, x: +p.x.toFixed(2), y: +p.y.toFixed(2), dir: p.dir, away: p.away, visitor: !!p.visitor, mood: p.mood, needs: Object.fromEntries(NEEDS.map((n) => [n, Math.round(p.needs[n])])), act: p.act ? { type: p.act.type, phase: p.act.phase, uid: p.act.uid || null, floor: !!p.act.floor, path: p.act.path && p.act.path.length ? [1] : [] } : null, queue: p.visitor ? p.queue.map((q) => q.type) : undefined })),
+  } });
+}
+function onVisitMsg(m) {
+  if (!visit || !H) return;
+  if (visit.role === "home") {
+    const g = guest();
+    if (m.t === "visitor") { const fresh = !g; addGuest(m.p); if (fresh) { note(H, `${m.p.name} came to visit! 👋`); sfx.ok(); } }
+    else if (m.t === "order" && g) { order(H, g, m.type, m.uid || undefined, m.with ? { with: m.with } : {}); }
+    else if (m.t === "stop" && g) cancelAll(H, g);
+    else if (m.t === "gift" && g) {
+      if (m.kind === "money") { H.money += m.amount; note(H, `${g.name} gave the family ₵${m.amount} 🎁`); }
+      else if (ITEMS[m.id]) {
+        let placed = false;
+        for (let y = 1; y < 13 && !placed; y += 1) for (let x = 1; x < 19 && !placed; x += 1) if (canPlace(H, m.id, x, y)) { H.furniture.push({ uid: H.nextUid++, id: m.id, x, y }); placed = true; }
+        if (placed) note(H, `${g.name} brought a gift: a ${ITEMS[m.id].name.toLowerCase()} 🎁`); else { H.money += ITEMS[m.id].price; note(H, `${g.name} brought a gift, but there was no room, so they gave ₵${ITEMS[m.id].price} instead 🎁`); }
+      }
+      sfx.cash();
+    }
+    return;
+  }
+  // visiting
+  if (m.t === "snap") {
+    visit.VH = m.s;
+    const me = m.s.people.find((p) => p.visitor);
+    if (me && me.needs) visit.lastNeeds = me.needs;
+  }
+}
+function endVisit(who) {
+  if (!visit) return;
+  clearInterval(snapTimer);
+  if (visit.role === "home") {
+    const g = guest();
+    if (g) { note(H, `${g.name} went home. 👋`); H.people = H.people.filter((p) => !p.visitor); }
+    if (selected === VISITOR_ID) selected = H.people[0] ? H.people[0].id : null;
+  } else {
+    const me = person(visit.personId);
+    if (me && visit.lastNeeds) NEEDS.forEach((n) => { me.needs[n] = Math.max(0, Math.min(100, visit.lastNeeds[n])); });
+    toast(who === "friend" ? "Your friend ended the visit. Back home!" : "Back home! 🏠");
+  }
+  visit = null;
+  $("buyMode").disabled = false;
+  $("visitBtn").setAttribute("aria-pressed", "false");
+  drawFamily();
+  drawPanels();
+  persist();
+}
+// tapping the friend's house while visiting: your guest can use their furniture and chat with their family
+function awayClick(w) {
+  const VH = visit.VH;
+  if (!VH) return;
+  const me = VH.people.find((p) => p.visitor);
+  if (!me) return;
+  const who = personAt(w.x, w.y, VH);
+  if (who && !who.visitor) { showMenu(w, who.name, [{ label: `💬 Chat with ${who.name}`, go: () => { net.send({ t: "order", type: "chat", with: who.id }); sfx.ok(); } }]); return; }
+  const f = itemAt(VH, w.tx, w.ty);
+  if (!f) return;
+  const opts = optionsFor({ ...VH, people: VH.people, mangoes: VH.mangoes }, { ...me, age: me.age }).filter((o) => o.uid === f.uid && !ACTIONS[o.type].chore && o.type !== "jobsearch" && o.type !== "homework" && o.type !== "study");
+  if (!opts.length) { toast(`You can't use the ${ITEMS[f.id].name.toLowerCase()} here.`); return; }
+  showMenu(w, `${me.name} · ${ITEMS[f.id].name}`, opts.map((o) => ({ label: `${ACTIONS[o.type].icon} ${ACTIONS[o.type].label}`, go: () => { net.send({ t: "order", type: o.type, uid: o.uid }); sfx.ok(); } })));
+}
+const GIFTS = [["money", 50], ["money", 100], ["item", "plant"], ["item", "painting"], ["item", "radio"], ["item", "fishtank"]];
+function drawVisitPanel() {
+  const VH = visit.VH;
+  const me = VH && VH.people.find((p) => p.visitor);
+  $("money").textContent = `₵${Math.round(H.money).toLocaleString()}`;
+  $("clock").textContent = VH ? `Visiting · ${timeText(VH)}` : "Visiting…";
+  setHTML($("family"), "");
+  const status = me ? (me.act ? (me.act.phase === "walk" ? `Going to: ${ACTIONS[me.act.type].label.toLowerCase()}` : ACTIONS[me.act.type].label) : "Looking around") : "On the way";
+  setHTML($("person"), `<h3>👋 Visiting ${VH ? esc(VH.family) : "your friend"}</h3>
+    <p class="facts">${me ? `${esc(me.name)}: ${esc(status)}` : "Walking over…"} · Tap their furniture to use it, or tap someone to chat. Your own home is paused.</p>
+    <div class="needs">${NEEDS.map((n) => `<div class="need" title="${NEED_LABEL[n]}"><span>${NEED_ICON[n]}</span><span><span class="bar"><i data-n="${n}"></i></span></span></div>`).join("")}</div>
+    <div class="row"><span class="lbl">Bring a gift</span>${GIFTS.map(([k, v]) => { const price = k === "money" ? v : ITEMS[v].price; return `<button class="mini" data-gift="${k}:${v}" ${H.money < price ? "disabled" : ""}>${k === "money" ? `💵 ₵${v}` : `🎁 ${ITEMS[v].name} (₵${price})`}</button>`; }).join("")}</div>
+    <div class="row" style="margin-top:8px"><button class="mini" data-vstop="1">✋ Stop</button><button class="mini" data-gohome="1">🏠 Go home</button></div>`);
+  const needs = visit.lastNeeds || {};
+  $("person").querySelectorAll("[data-n]").forEach((i) => { const v = needs[i.dataset.n] || 0; i.style.width = `${Math.round(v)}%`; i.style.background = barColor(v); });
+}
+$("person").addEventListener("click", (e) => {
+  if (!visit || visit.role !== "away") return;
+  const g = e.target.closest("[data-gift]");
+  if (g && !g.disabled) {
+    const [kind, v] = g.dataset.gift.split(":");
+    const price = kind === "money" ? Number(v) : ITEMS[v].price;
+    if (H.money < price) return;
+    H.money -= price;
+    net.send(kind === "money" ? { t: "gift", kind, amount: Number(v) } : { t: "gift", kind, id: v });
+    toast(`You gave a gift 🎁 (₵${price} from your family's money).`);
+    sfx.cash();
+    persist();
+    return;
+  }
+  if (e.target.closest("[data-vstop]")) net.send({ t: "stop" });
+  if (e.target.closest("[data-gohome]")) { net.close(); endVisit("me"); }
+}, true);
+
+// open the saved family, or the start screen; an invite link opens the visit panel and joins
 if (saves.last && saves[saves.last]) startGame(saves[saves.last]);
 else showStart();
-window.__life = { get H() { return H; }, startGame, setSpeed };
+const invited = net.roomParam();
+if (invited) {
+  if (H) { net.open(); net.join(invited); }
+  else toast("Create your family first, then open the invite link again to visit.");
+}
+window.__life = { get H() { return H; }, get visit() { return visit; }, startGame, setSpeed };

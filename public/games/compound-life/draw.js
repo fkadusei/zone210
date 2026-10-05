@@ -185,6 +185,7 @@ export function drawScene(c, H, view) {
       const py = p.y * T + OY + T - 6;
       if (view.selected === p.id) { c.strokeStyle = "#ffcc33"; c.lineWidth = 3; c.beginPath(); c.ellipse(px, py + 2, 16, 6, 0, 0, Math.PI * 2); c.stroke(); }
       drawPerson(c, p, th.pose.lie ? px : px, th.pose.lie ? py - 14 : py, { ...th.pose, t: view.t + p.id * 300 });
+      if (p.visitor) { c.font = "bold 12px system-ui"; c.textAlign = "center"; const label = `👋 ${p.name}`; const w = c.measureText(label).width + 10; c.fillStyle = "rgba(20,24,40,0.75)"; rr(c, px - w / 2, py - 70, w, 17, 8); c.fill(); c.fillStyle = "#fff"; c.fillText(label, px, py - 57); c.textAlign = "left"; }
       if (th.pose.sleep && th.pose.lie) { c.fillStyle = "#fff"; c.font = "bold 14px system-ui"; c.fillText("z", px + 10, py - 30 - ((view.t / 40 + p.id * 10) % 12)); }
     }
   });
@@ -195,7 +196,7 @@ export function drawScene(c, H, view) {
     let px = p.x * T + T / 2;
     let py = p.y * T + OY + T - 62;
     if (pose.hidden) { py += 20; }
-    const low = NEEDS.filter((n) => p.needs[n] < 18).sort((a, b) => p.needs[a] - p.needs[b])[0];
+    const low = NEEDS.filter((n) => p.needs && p.needs[n] < 18).sort((a, b) => p.needs[a] - p.needs[b])[0];
     const doing = p.act && p.act.phase === "do" && ACTIONS[p.act.type] ? ACTIONS[p.act.type].icon : null;
     const icon = low && !(p.act && ACTIONS[p.act.type] && ACTIONS[p.act.type].need[low] > 0) ? NEED_ICON[low] : view.selected === p.id || pose.hidden ? doing : null;
     if (!icon) return;

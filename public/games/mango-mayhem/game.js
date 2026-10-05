@@ -10,7 +10,7 @@ const STEP = 1000 / 60;
 const PULL_MAX = 150;
 const POWER = 0.13;
 const GRAV = 0.2778; // px per step per step, Matter's default gravity at 60 steps a second
-const BIRD_COLORS = { kweku: "#e5484d", ama: "#3b82f6", kofi: "#f5c518", nana: "#2a2533" };
+const BIRD_COLORS = { kwaku: "#e5484d", ama: "#3b82f6", kofi: "#f5c518", nana: "#2a2533" };
 const saverOn = () => !!(window.z210Saver && window.z210Saver.on);
 
 /* ---------------------------------------------------------------- progress */
@@ -119,7 +119,7 @@ function startAdventure(i) {
   moveCamera(true);
 }
 function startDuel() {
-  G = freshState({ duel: true, theme: WORLDS[2], slings: DUEL_SLING, turn: 0, choice: ["kweku", "kweku"], over: false, winner: -1 });
+  G = freshState({ duel: true, theme: WORLDS[2], slings: DUEL_SLING, turn: 0, choice: ["kwaku", "kwaku"], over: false, winner: -1 });
   duelFort(G.builder, -1);
   duelFort(G.builder, 1);
   G.current = G.choice[0];
@@ -276,7 +276,7 @@ function cpuShot() {
   const targets = G.bodies.filter((b) => b.plugin.kind === "monkey" && !b.plugin.dead && b.position.x < W / 2);
   if (!targets.length) return;
   const tgt = targets[Math.floor(Math.random() * targets.length)];
-  const kind = opts.cpu === "easy" ? "kweku" : ["kweku", "nana", "ama", "kofi"][Math.floor(Math.random() * 4)];
+  const kind = opts.cpu === "easy" ? "kwaku" : ["kwaku", "nana", "ama", "kofi"][Math.floor(Math.random() * 4)];
   const s = G.slings[1];
   let best = null;
   for (let ang = 12; ang <= 72; ang += 1) for (let pw = 0.55; pw <= 1.001; pw += 0.025) {

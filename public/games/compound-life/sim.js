@@ -25,10 +25,11 @@ export function newHousehold({ setting, people, seed = Date.now() }) {
   });
   // start everyone inside, near the door
   H.people.forEach((p) => { const spot = nearestFree(H, Math.round(p.x), Math.round(p.y)); p.x = spot[0]; p.y = spot[1]; });
-  note(H, `Welcome to your new home, the ${H.people.map((p) => p.name).join(" and ")} family!`);
+  if (H.people.length) note(H, `Welcome to your new home, ${nameList(H.people.map((p) => p.name))}!`);
   return H;
 }
 
+export const nameList = (names) => (names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`);
 export const clock = (H) => ({ day: H.day, weekday: DAYS[H.day % 7], hour: Math.floor(H.minute / 60), min: Math.floor(H.minute % 60), weekend: H.day % 7 >= 5 });
 export const timeText = (H) => { const c = clock(H); const h12 = ((c.hour + 11) % 12) + 1; return `${c.weekday}, ${h12}:${String(c.min).padStart(2, "0")} ${c.hour < 12 ? "am" : "pm"}`; };
 export function note(H, text) { H.log.unshift({ day: H.day, minute: Math.floor(H.minute), text }); H.log.length = Math.min(H.log.length, 40); }
@@ -71,7 +72,7 @@ function flood(bm, [sx, sy]) {
   }
   return seen;
 }
-function nearestFree(H, x, y) {
+export function nearestFree(H, x, y) {
   const bm = blockedMap(H);
   if (!bm[y] || !bm[y][x]) return [x, y];
   for (let r = 1; r < 8; r += 1) for (let dy = -r; dy <= r; dy += 1) for (let dx = -r; dx <= r; dx += 1) { const nx = x + dx; const ny = y + dy; if (bm[ny] && bm[ny][nx] === false) return [nx, ny]; }
@@ -124,10 +125,11 @@ const canDo = (p, type) => { const A = ACTIONS[type]; if (!A) return false; if (
 /** Every action someone could do right now with the furniture in the house. */
 export function optionsFor(H, p) {
   const opts = [];
-  H.furniture.forEach((f) => ITEMS[f.id].acts.forEach((type) => { if (canDo(p, type) && !ACTIONS[type].hidden) opts.push({ type, uid: f.uid }); }));
+  const guestOk = (type) => !p.visitor || !(ACTIONS[type].chore || ACTIONS[type].jobsearch || ACTIONS[type].homework || type === "study");
+  H.furniture.forEach((f) => ITEMS[f.id].acts.forEach((type) => { if (canDo(p, type) && !ACTIONS[type].hidden && guestOk(type)) opts.push({ type, uid: f.uid }); }));
   if (H.people.some((o) => o !== p && !o.away && !(o.act && ACTIONS[o.act.type] && ACTIONS[o.act.type].quiet && o.act.phase === "do"))) opts.push({ type: "chat" });
   opts.push({ type: "phone" });
-  if (p.age === "adult" && !p.job) opts.push({ type: "findwork" });
+  if (p.age === "adult" && !p.job && !p.visitor) opts.push({ type: "findwork" });
   if (H.mangoes > 0) opts.push({ type: "mangosnack" });
   return opts;
 }
@@ -244,7 +246,7 @@ function finishAct(H, p) {
 }
 
 /* ---------------------------------------------------------------- the clock */
-const workHours = (p) => (p.age === "adult" ? (p.job ? { start: JOBS[p.job].start, end: JOBS[p.job].end } : null) : SCHOOL);
+const workHours = (p) => (p.visitor ? null : p.age === "adult" ? (p.job ? { start: JOBS[p.job].start, end: JOBS[p.job].end } : null) : SCHOOL);
 function dailyEvents(H) {
   const S = SETTINGS[H.setting];
   H.money -= S.bills;

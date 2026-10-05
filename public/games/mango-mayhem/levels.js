@@ -22,7 +22,7 @@ export const MATERIALS = {
 
 /** Birds: radius, density, and what a tap in mid-air does. */
 export const BIRDS = {
-  kweku: { name: "Kweku", r: 24, density: 0.004, power: "none", tip: "A steady, reliable shot." },
+  kwaku: { name: "Kwaku", r: 24, density: 0.004, power: "none", tip: "A steady, reliable shot." },
   ama: { name: "Ama", r: 22, density: 0.0038, power: "split", tip: "Tap in the air to split into three." },
   kofi: { name: "Kofi", r: 20, density: 0.0036, power: "dash", tip: "Tap in the air to dash forward fast." },
   nana: { name: "Nana", r: 30, density: 0.0085, power: "dive", tip: "Heavy! Tap in the air to dive straight down." },
@@ -37,26 +37,26 @@ export const WORLDS = [
 const G = GROUND;
 export const LEVELS = [
   // ---- The Village: wood ----
-  { world: 0, birds: ["kweku", "kweku", "kweku"], build(b) { b.tower(1150, G, 1, "wood"); b.monkey(1150, G); } },
-  { world: 0, birds: ["kweku", "kweku", "kweku"], build(b) { b.tower(1000, G, 1, "wood"); b.monkey(1000, G); b.tower(1300, G, 1, "wood"); b.monkey(1300, G); } },
-  { world: 0, birds: ["kweku", "kweku", "kweku"], build(b) { b.tower(1200, G, 2, "wood"); b.monkey(1200, G); b.monkey(1200, G - 122); } },
-  { world: 0, birds: ["kweku", "ama", "kweku"], build(b) { const top = b.pyramid(1200, G, 4, "wood", 46); b.monkey(1200, top); b.monkey(1360, G); } },
-  { world: 0, birds: ["kweku", "ama", "kweku", "kweku"], build(b) { const t1 = b.tower(950, G, 1, "wood"); b.monkey(950, t1); const t2 = b.tower(1200, G, 2, "wood"); b.monkey(1200, t2); b.monkey(1200, G); const t3 = b.tower(1450, G, 1, "wood"); b.monkey(1450, t3); } },
-  { world: 0, birds: ["kweku", "ama", "kofi"], build(b) { for (let i = 0; i < 3; i += 1) { b.box(960 + i * 52, G, 48, 60, "wood"); b.box(960 + i * 52, G - 60, 48, 60, "wood"); } const t = b.tower(1300, G, 2, "wood"); b.monkey(1300, G); b.monkey(1300, G - 122); b.monkey(1300, t); } },
+  { world: 0, birds: ["kwaku", "kwaku", "kwaku"], build(b) { b.tower(1150, G, 1, "wood"); b.monkey(1150, G); } },
+  { world: 0, birds: ["kwaku", "kwaku", "kwaku"], build(b) { b.tower(1000, G, 1, "wood"); b.monkey(1000, G); b.tower(1300, G, 1, "wood"); b.monkey(1300, G); } },
+  { world: 0, birds: ["kwaku", "kwaku", "kwaku"], build(b) { b.tower(1200, G, 2, "wood"); b.monkey(1200, G); b.monkey(1200, G - 122); } },
+  { world: 0, birds: ["kwaku", "ama", "kwaku"], build(b) { const top = b.pyramid(1200, G, 4, "wood", 46); b.monkey(1200, top); b.monkey(1360, G); } },
+  { world: 0, birds: ["kwaku", "ama", "kwaku", "kwaku"], build(b) { const t1 = b.tower(950, G, 1, "wood"); b.monkey(950, t1); const t2 = b.tower(1200, G, 2, "wood"); b.monkey(1200, t2); b.monkey(1200, G); const t3 = b.tower(1450, G, 1, "wood"); b.monkey(1450, t3); } },
+  { world: 0, birds: ["kwaku", "ama", "kofi"], build(b) { for (let i = 0; i < 3; i += 1) { b.box(960 + i * 52, G, 48, 60, "wood"); b.box(960 + i * 52, G - 60, 48, 60, "wood"); } const t = b.tower(1300, G, 2, "wood"); b.monkey(1300, G); b.monkey(1300, G - 122); b.monkey(1300, t); } },
   // ---- The Market: wood and clay pots ----
-  { world: 1, birds: ["kweku", "kweku", "ama"], build(b) { const top = b.pyramid(1150, G, 3, "clay", 50); b.monkey(1150, top); b.tower(1380, G, 1, "wood"); b.monkey(1380, G); } },
-  { world: 1, birds: ["kofi", "kweku", "kofi"], build(b) { b.ledge(1320, 600, 300, 30); const t = b.tower(1320, 600, 1, "wood"); b.monkey(1320, 600); b.monkey(1320, t); b.pyramid(1000, G, 3, "clay", 46); } },
-  { world: 1, birds: ["kweku", "ama", "kweku", "kofi"], build(b) { [1000, 1200, 1400].forEach((x) => { const t = b.tower(x, G, 1, "wood"); b.box(x, t, 120, 40, "clay"); b.monkey(x, G); }); } },
-  { world: 1, birds: ["ama", "kweku", "kofi"], build(b) { const t1 = b.tower(1050, G, 2, "wood", 110); const t2 = b.tower(1350, G, 2, "wood", 110); b.box(1200, Math.min(t1, t2), 420, 22, "wood"); b.monkey(1130, Math.min(t1, t2) - 22); b.monkey(1270, Math.min(t1, t2) - 22); b.monkey(1050, G); } },
-  { world: 1, birds: ["kweku", "kofi", "ama"], build(b) { for (let i = 0; i < 5; i += 1) for (let j = 0; j <= i; j += 1) b.box(1000 + i * 70, G - j * 50, 66, 50, j === i ? "clay" : "wood"); b.monkey(1280, G - 250); b.monkey(1420, G); } },
-  { world: 1, birds: ["kweku", "ama", "kofi", "kweku", "ama"], build(b) { const a = b.tower(1150, G, 3, "wood", 130); b.monkey(1150, G); b.monkey(1150, G - 244); b.monkey(1150, a); const c = b.tower(1400, G, 2, "wood", 110); b.box(1400, c, 130, 44, "clay"); b.monkey(1400, G); } },
+  { world: 1, birds: ["kwaku", "kwaku", "ama"], build(b) { const top = b.pyramid(1150, G, 3, "clay", 50); b.monkey(1150, top); b.tower(1380, G, 1, "wood"); b.monkey(1380, G); } },
+  { world: 1, birds: ["kofi", "kwaku", "kofi"], build(b) { b.ledge(1320, 600, 300, 30); const t = b.tower(1320, 600, 1, "wood"); b.monkey(1320, 600); b.monkey(1320, t); b.pyramid(1000, G, 3, "clay", 46); } },
+  { world: 1, birds: ["kwaku", "ama", "kwaku", "kofi"], build(b) { [1000, 1200, 1400].forEach((x) => { const t = b.tower(x, G, 1, "wood"); b.box(x, t, 120, 40, "clay"); b.monkey(x, G); }); } },
+  { world: 1, birds: ["ama", "kwaku", "kofi"], build(b) { const t1 = b.tower(1050, G, 2, "wood", 110); const t2 = b.tower(1350, G, 2, "wood", 110); b.box(1200, Math.min(t1, t2), 420, 22, "wood"); b.monkey(1130, Math.min(t1, t2) - 22); b.monkey(1270, Math.min(t1, t2) - 22); b.monkey(1050, G); } },
+  { world: 1, birds: ["kwaku", "kofi", "ama"], build(b) { for (let i = 0; i < 5; i += 1) for (let j = 0; j <= i; j += 1) b.box(1000 + i * 70, G - j * 50, 66, 50, j === i ? "clay" : "wood"); b.monkey(1280, G - 250); b.monkey(1420, G); } },
+  { world: 1, birds: ["kwaku", "ama", "kofi", "kwaku", "ama"], build(b) { const a = b.tower(1150, G, 3, "wood", 130); b.monkey(1150, G); b.monkey(1150, G - 244); b.monkey(1150, a); const c = b.tower(1400, G, 2, "wood", 110); b.box(1400, c, 130, 44, "clay"); b.monkey(1400, G); } },
   // ---- Rocky Hills: stone ----
-  { world: 2, birds: ["nana", "kweku", "kweku"], build(b) { const t = b.tower(1200, G, 1, "stone"); b.monkey(1200, G); b.monkey(1200, t); } },
+  { world: 2, birds: ["nana", "kwaku", "kwaku"], build(b) { const t = b.tower(1200, G, 1, "stone"); b.monkey(1200, G); b.monkey(1200, t); } },
   { world: 2, birds: ["nana", "nana", "kofi"], build(b) { const top = b.pyramid(1200, G, 4, "stone", 46); b.monkey(1200, top); b.monkey(1040, G); b.monkey(1360, G); } },
   { world: 2, birds: ["kofi", "nana", "ama"], build(b) { b.ledge(1350, 560, 320, 34); const t = b.tower(1350, 560, 1, "stone", 130); b.monkey(1350, 560); b.box(1350, t, 150, 44, "wood"); b.monkey(1350, t - 44); b.tower(1050, G, 1, "wood"); b.monkey(1050, G); } },
-  { world: 2, birds: ["nana", "ama", "kweku", "kofi"], build(b) { [1080, 1380].forEach((x) => { const t = b.tower(x, G, 2, "stone", 120); b.box(x, t, 150, 22, "wood"); b.monkey(x, G); b.monkey(x, t - 22); }); } },
-  { world: 2, birds: ["nana", "kofi", "ama", "nana", "kweku"], build(b) { b.box(975, G, 40, 130, "stone"); b.box(1030, G, 40, 130, "stone"); const t = b.tower(1220, G, 2, "stone", 140); b.pyramid(1220, t, 2, "clay", 48); b.monkey(1220, G); b.monkey(1220, G - 122); const c = b.tower(1440, G, 1, "wood", 110); b.monkey(1440, G); b.monkey(1440, c); } },
-  { world: 2, birds: ["nana", "ama", "kofi", "nana", "kweku", "ama"], build(b) { b.ledge(1400, 620, 260, 30); const a = b.tower(1150, G, 3, "stone", 140); b.monkey(1150, G); b.monkey(1150, G - 244); b.monkey(1150, a); const c = b.tower(1400, 620, 1, "wood", 120); b.box(1400, c, 140, 40, "clay"); b.monkey(1400, 620); b.pyramid(950, G, 3, "wood", 44); } },
+  { world: 2, birds: ["nana", "ama", "kwaku", "kofi"], build(b) { [1080, 1380].forEach((x) => { const t = b.tower(x, G, 2, "stone", 120); b.box(x, t, 150, 22, "wood"); b.monkey(x, G); b.monkey(x, t - 22); }); } },
+  { world: 2, birds: ["nana", "kofi", "ama", "nana", "kwaku"], build(b) { b.box(975, G, 40, 130, "stone"); b.box(1030, G, 40, 130, "stone"); const t = b.tower(1220, G, 2, "stone", 140); b.pyramid(1220, t, 2, "clay", 48); b.monkey(1220, G); b.monkey(1220, G - 122); const c = b.tower(1440, G, 1, "wood", 110); b.monkey(1440, G); b.monkey(1440, c); } },
+  { world: 2, birds: ["nana", "ama", "kofi", "nana", "kwaku", "ama"], build(b) { b.ledge(1400, 620, 260, 30); const a = b.tower(1150, G, 3, "stone", 140); b.monkey(1150, G); b.monkey(1150, G - 244); b.monkey(1150, a); const c = b.tower(1400, 620, 1, "wood", 120); b.box(1400, c, 140, 40, "clay"); b.monkey(1400, 620); b.pyramid(950, G, 3, "wood", 44); } },
 ];
 
 /** The duel: two mirrored forts. side -1 = left fort (player 1 at left sling), +1 = right fort. */
