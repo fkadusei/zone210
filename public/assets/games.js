@@ -650,7 +650,7 @@ export const GAMES = [
     id: "mango-mayhem",
     online: true,
     title: "Mango Mayhem",
-    tagline: "The greedy monkeys stole the mangoes! Pull the slingshot and knock down their towers across 18 levels, or duel a friend fort against fort.",
+    tagline: "The greedy monkeys stole the mangoes! Pull the slingshot and knock down their towers across 18 levels, alone or together with a friend online, or duel fort against fort.",
     audience: "all",
     cat: "fun",
     tags: ["Physics", "Arcade", "Multiplayer"],

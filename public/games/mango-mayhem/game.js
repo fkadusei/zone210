@@ -90,8 +90,10 @@ paintSound();
 const opts = { mode: "adventure", cpu: "normal" };
 let G = null;
 let myRole = 0;
-const isDuel = () => opts.mode !== "adventure";
+const isDuel = () => opts.mode !== "adventure" && opts.mode !== "coop";
 const online = () => opts.mode === "online";
+const coop = () => opts.mode === "coop"; // levels together with a friend online
+const netMode = () => online() || coop();
 const setStatus = (t) => { $("status").textContent = t; };
 
 function makeEngine() {
@@ -109,12 +111,13 @@ function freshState(extra) {
 
 function startAdventure(i) {
   const lv = LEVELS[i];
-  G = freshState({ duel: false, level: i, theme: WORLDS[lv.world], queue: lv.birds.slice(), slings: [SLING], turn: 0, total: lv.birds.length });
+  G = freshState({ duel: false, coop: coop(), pts: [0, 0], result: null, level: i, theme: WORLDS[lv.world], queue: lv.birds.slice(), slings: [SLING], turn: 0, total: lv.birds.length });
   lv.build(G.builder);
   G.current = G.queue.shift();
   hideOverlays();
   $("picker").hidden = true;
-  setStatus(`Level ${i + 1}: ${G.theme.name}. ${BIRDS[G.current].tip}`);
+  if (G.coop && myRole !== 0) G.phase = "wait";
+  setStatus(G.coop ? coopMessage() : `Level ${i + 1}: ${G.theme.name}. ${BIRDS[G.current].tip}`);
   settleNow();
   moveCamera(true);
 }
@@ -170,7 +173,7 @@ function kill(b, scored) {
     burst(x, y, col, saverOn() ? 5 : 11, 5);
   }
 }
-function addScore(n, x, y) { G.score += n; G.popups.push({ x, y, text: String(n), life: 60 }); }
+function addScore(n, x, y) { G.score += n; if (G.coop && G.phase !== "won") G.pts[G.turn] += n; G.popups.push({ x, y, text: String(n), life: 60 }); }
 function burst(x, y, colors, n, speed) {
   for (let i = 0; i < n; i += 1) {
     const a = Math.random() * Math.PI * 2;
@@ -224,9 +227,10 @@ function useAbility(fromNet) {
   }
   burst(b.position.x, b.position.y, ["#fff", "#ffe08a"], 8, 4);
   sfx.power();
-  if (online() && !fromNet) net.send({ t: "tap", s: sh.steps });
+  if (netMode() && !fromNet) net.send({ t: "tap", s: sh.steps });
 }
-const canAim = () => G && G.phase === "aim" && !G.over && G.current && (!G.duel || opts.mode === "two" || (opts.mode === "cpu" && G.turn === 0) || (online() && net.active && G.turn === myRole));
+const myShot = () => (!G.duel ? !G.coop || (net.active && G.turn === myRole) : opts.mode === "two" || (opts.mode === "cpu" && G.turn === 0) || (online() && net.active && G.turn === myRole));
+const canAim = () => G && G.phase === "aim" && !G.over && G.current && myShot();
 
 function toWorld(e) {
   const r = cv.getBoundingClientRect();
@@ -236,7 +240,7 @@ function toWorld(e) {
 cv.addEventListener("pointerdown", (e) => {
   if (!G) return;
   const p = toWorld(e);
-  if (G.phase === "flying" && G.shot && !G.shot.used && (!G.duel || opts.mode === "two" || (opts.mode === "cpu" && G.turn === 0) || (online() && G.turn === myRole))) { useAbility(false); return; }
+  if (G.phase === "flying" && G.shot && !G.shot.used && myShot()) { useAbility(false); return; }
   if (!canAim()) return;
   const s = sling();
   const near = Math.hypot(p.x - s.x, p.y - s.y) < 170 || (s.x < W / 2 ? p.x < cam.x + cam.w * 0.35 : p.x > cam.x + cam.w * 0.65);
@@ -265,7 +269,7 @@ const release = (e) => {
   const kind = G.current;
   const idx = G.duel ? G.turn : 0;
   launch(kind, vx, vy, idx);
-  if (online()) net.send({ t: "shot", k: kind, vx, vy });
+  if (netMode()) net.send({ t: "shot", k: kind, vx, vy });
 };
 cv.addEventListener("pointerup", release);
 cv.addEventListener("pointercancel", (e) => { if (G && G.drag && G.drag.id === e.pointerId) G.drag = null; });
@@ -344,6 +348,16 @@ function endShot() {
   G.birds.forEach((b) => Composite.remove(G.engine.world, b));
   G.birds = [];
   G.shot = null;
+  if (G.coop) {
+    const shooter = G.turn;
+    if (shooter !== myRole) { G.phase = "wait"; return; } // the shooter's side decides; wait for its result
+    if (!monkeysLeft()) G.result = "won";
+    else if (!G.queue.length) G.result = "lost";
+    else { G.current = G.queue.shift(); G.turn = 1 - shooter; }
+    net.send({ t: "state", s: snapshot() });
+    afterCoop();
+    return;
+  }
   if (!G.duel) {
     if (!monkeysLeft()) { win(); return; }
     if (!G.queue.length) { lose(); return; }
@@ -370,6 +384,16 @@ function afterTurn() {
   turnMessage();
   if (opts.mode === "cpu" && G.turn === 1) setTimeout(cpuShot, 700);
 }
+function afterCoop() {
+  if (G.result === "won") { win(); return; }
+  if (G.result === "lost") { lose(); return; }
+  G.phase = G.turn === myRole ? "aim" : "wait";
+  setStatus(coopMessage());
+}
+function coopMessage() {
+  const whose = G.turn === myRole ? `Your turn: ${BIRDS[G.current].name}. ${BIRDS[G.current].tip}` : `Your friend is firing ${BIRDS[G.current].name}…`;
+  return `🌐 Level ${G.level + 1} together. ${whose}`;
+}
 function turnMessage() {
   if (!G || !G.duel) return;
   const who = opts.mode === "cpu" ? (G.turn === 0 ? "Your turn (left fort)." : "The computer is aiming…") : online() ? (G.turn === myRole ? "Your turn! Pick a bird and fire." : "Your friend is aiming…") : `${G.turn === 0 ? "Left" : "Right"} fort's turn.`;
@@ -379,6 +403,7 @@ function turnMessage() {
 /* ---------------------------------------------------------------- online duel */
 function snapshot() {
   return {
+    kind: G.coop ? "coop" : "duel", level: G.level, queue: G.queue, current: G.current, score: G.score, pts: G.pts, result: G.result,
     turn: G.turn, over: G.over, winner: G.winner, choice: G.choice,
     bodies: G.bodies.filter((b) => !b.plugin.dead && !b.isStatic).map((b) => [b.plugin.id, +b.position.x.toFixed(1), +b.position.y.toFixed(1), +b.angle.toFixed(3), Math.round(b.plugin.hp)]),
   };
@@ -403,14 +428,38 @@ function applySnapshot(s) {
   G.over = s.over;
   G.winner = s.winner;
   if (s.choice) G.choice = s.choice;
+  if (G.coop) { G.queue = s.queue || []; G.current = s.current; G.score = s.score; G.pts = s.pts || [0, 0]; G.result = s.result; }
 }
+// switch the mode chips without starting or leaving anything (used when a friend's room decides the mode)
+function setModeChip(v) {
+  opts.mode = v;
+  $("mode").querySelectorAll(".g-chip").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.value === v)));
+  $("levelRow").hidden = true;
+  $("levels").hidden = isDuel();
+  $("restart").hidden = true;
+}
+const firstUnfinished = () => { const f = LEVELS.findIndex((l, i) => unlocked(i) && !prog.stars[i]); return f < 0 ? 0 : f; };
+function coopLevel(i) { if (!coop() || !net.active || myRole !== 0) return false; net.send({ t: "level", i }); startAdventure(i); return true; }
 const net = createOnline({
   container: document.querySelector(".g-page"),
   before: $("stage"),
   prefix: "zone210-mango-",
-  names: ["Left fort", "Right fort"],
-  onStart: ({ role }) => { myRole = role; startDuel(); },
+  names: ["Player 1", "Player 2"],
+  startInfo: () => (coop() ? { kind: "coop", level: G && !G.duel ? G.level : firstUnfinished() } : { kind: "duel" }),
+  onStart: ({ role, info }) => {
+    myRole = role;
+    if (info && info.kind === "coop") { setModeChip("coop"); startAdventure(Math.max(0, Math.min(LEVELS.length - 1, info.level || 0))); }
+    else { setModeChip("online"); startDuel(); }
+  },
   onData: (m) => {
+    if (G && G.coop && coop()) {
+      if (m.t === "shot" && G.turn !== myRole && G.phase !== "flying") { G.pendingTap = -1; launch(m.k, m.vx, m.vy, 0); }
+      else if (m.t === "tap" && G.shot) { if (G.shot.steps >= m.s) useAbility(true); else G.pendingTap = m.s; }
+      else if (m.t === "state") { applySnapshot(m.s); afterCoop(); }
+      else if (m.t === "level") startAdventure(m.i);
+      return;
+    }
+    if (coop() && m.t === "level") { startAdventure(m.i); return; }
     if (!online() || !G || !G.duel) return;
     if (m.t === "shot" && G.turn !== myRole && G.phase !== "flying") { G.pendingTap = -1; launch(m.k, m.vx, m.vy, G.turn); }
     else if (m.t === "tap" && G.shot) { if (G.shot.steps >= m.s) useAbility(true); else G.pendingTap = m.s; }
@@ -418,8 +467,12 @@ const net = createOnline({
     else if (m.t === "state") { applySnapshot(m.s); afterTurn(); if (G.over) net.setOver(true); }
   },
   onLeft: () => setStatus("Your friend left the game."),
-  getState: () => (G && G.duel ? snapshot() : null),
-  setState: (s) => { if (!s) return; startDuel(); applySnapshot(s); afterTurn(); },
+  getState: () => (G && (G.duel || G.coop) ? snapshot() : null),
+  setState: (s) => {
+    if (!s) return;
+    if (s.kind === "coop") { setModeChip("coop"); startAdventure(s.level || 0); applySnapshot(s); afterCoop(); return; }
+    setModeChip("online"); startDuel(); applySnapshot(s); afterTurn();
+  },
 });
 
 /* ---------------------------------------------------------------- bird picker (duel) */
@@ -451,18 +504,21 @@ function win() {
   saveProg();
   sfx.win();
   const next = i + 1 < LEVELS.length;
+  const together = G.coop ? `<p>🌐 Together! You scored ${G.pts[myRole].toLocaleString()}, your friend scored ${G.pts[1 - myRole].toLocaleString()}.</p>` : "";
+  const buttons = G.coop && myRole !== 0 ? "<p>Waiting for your friend to choose the next level…</p>" : `<button class="g-btn ghost" data-act="retry">↻ Play again</button><button class="g-btn ghost" data-act="levels">☰ Levels</button>${next ? '<button class="g-btn" data-act="next">Next level ▶</button>' : ""}`;
   $("result").innerHTML = `<div class="card"><h2>🥭 Mangoes saved!</h2>
     <div class="stars" aria-label="${stars} stars">${[1, 2, 3].map((k) => `<span class="${k <= stars ? "" : "off"}">⭐</span>`).join("")}</div>
-    <p>Score ${G.score.toLocaleString()}${left ? ` · ${left} bird${left === 1 ? "" : "s"} to spare` : ""} · Best ${prog.best[i].toLocaleString()}</p>
-    <div class="row"><button class="g-btn ghost" data-act="retry">↻ Play again</button><button class="g-btn ghost" data-act="levels">☰ Levels</button>${next ? '<button class="g-btn" data-act="next">Next level ▶</button>' : ""}</div></div>`;
+    <p>Score ${G.score.toLocaleString()}${left ? ` · ${left} bird${left === 1 ? "" : "s"} to spare` : ""} · Best ${prog.best[i].toLocaleString()}</p>${together}
+    <div class="row">${buttons}</div></div>`;
   $("result").hidden = false;
   setStatus(next ? "Level complete!" : "You finished every level! 🎉");
 }
 function lose() {
   G.phase = "lost";
   sfx.lose();
+  const buttons = G.coop && myRole !== 0 ? "<p>Waiting for your friend to try again or pick a level…</p>" : '<button class="g-btn" data-act="retry">↻ Try again</button><button class="g-btn ghost" data-act="levels">☰ Levels</button>';
   $("result").innerHTML = `<div class="card"><h2>🐒 The monkeys kept the mangoes!</h2><p>Score ${G.score.toLocaleString()}. Try a different angle, or knock the towers over from below.</p>
-    <div class="row"><button class="g-btn" data-act="retry">↻ Try again</button><button class="g-btn ghost" data-act="levels">☰ Levels</button></div></div>`;
+    <div class="row">${buttons}</div></div>`;
   $("result").hidden = false;
   setStatus("Out of birds.");
 }
@@ -479,21 +535,22 @@ $("result").addEventListener("click", (e) => {
   const b = e.target.closest("[data-act]");
   if (!b) return;
   const a = b.dataset.act;
-  if (a === "retry") startAdventure(G.level);
-  else if (a === "next") startAdventure(G.level + 1);
+  if (a === "retry") { if (!coopLevel(G.level)) startAdventure(G.level); }
+  else if (a === "next") { if (!coopLevel(G.level + 1)) startAdventure(G.level + 1); }
   else if (a === "levels") showLevels();
   else if (a === "duel") startDuel();
 });
 function showLevels() {
   if (isDuel()) return;
+  if (coop() && myRole !== 0 && net.active) { setStatus("Your friend chooses the level in a game together."); return; }
   const parts = WORLDS.map((w, wi) => `<div class="world">${["🏘️", "🧺", "⛰️"][wi]} ${w.name}</div><div class="lvls">${LEVELS.map((l, i) => (l.world === wi ? `<button class="lv" data-i="${i}" ${unlocked(i) ? "" : "disabled"} aria-label="Level ${i + 1}${prog.stars[i] ? `, ${prog.stars[i]} stars` : ""}${unlocked(i) ? "" : ", locked"}">${unlocked(i) ? i + 1 : "🔒"}<small>${"⭐".repeat(prog.stars[i] || 0) || "&nbsp;"}</small></button>` : "")).join("")}</div>`).join("");
   const total = prog.stars.reduce((t, s) => t + (s || 0), 0);
   $("menu").innerHTML = `<div class="card"><h2>Choose a level</h2><p>⭐ ${total} of ${LEVELS.length * 3} stars</p>${parts}</div>`;
   $("menu").hidden = false;
 }
-$("menu").addEventListener("click", (e) => { const b = e.target.closest("[data-i]"); if (b && !b.disabled) startAdventure(Number(b.dataset.i)); });
+$("menu").addEventListener("click", (e) => { const b = e.target.closest("[data-i]"); if (b && !b.disabled) { const i = Number(b.dataset.i); if (!coopLevel(i)) startAdventure(i); } });
 $("levels").addEventListener("click", showLevels);
-$("restart").addEventListener("click", () => { if (!G) return; if (!isDuel()) startAdventure(G.level); else if (!online()) startDuel(); });
+$("restart").addEventListener("click", () => { if (!G || netMode()) return; if (!isDuel()) startAdventure(G.level); else startDuel(); });
 
 /* ---------------------------------------------------------------- modes */
 function wire(id, key) {
@@ -505,8 +562,8 @@ function wire(id, key) {
     if (key === "mode") {
       $("levelRow").hidden = opts.mode !== "cpu";
       $("levels").hidden = isDuel();
-      $("restart").hidden = online();
-      if (online()) { net.open(); G = null; hideOverlays(); setStatus("Create a room or join one to duel a friend."); return; }
+      $("restart").hidden = netMode();
+      if (netMode()) { net.open(); G = null; hideOverlays(); setStatus(coop() ? "Create a room or join one to play the levels together with a friend." : "Create a room or join one to duel a friend."); return; }
       net.close();
       if (isDuel()) startDuel(); else { const first = LEVELS.findIndex((l, i) => unlocked(i) && !prog.stars[i]); startAdventure(first < 0 ? 0 : first); showLevels(); }
     }
@@ -781,6 +838,7 @@ function draw() {
   if (!G.duel) {
     ctx.textAlign = "right"; ctx.strokeText(G.score.toLocaleString(), W - 30, 56); ctx.fillText(G.score.toLocaleString(), W - 30, 56);
     ctx.textAlign = "left"; const lbl = `Level ${G.level + 1}`; ctx.strokeText(lbl, 30, 56); ctx.fillText(lbl, 30, 56);
+    if (G.coop && G.phase !== "won" && G.phase !== "lost") { ctx.textAlign = "center"; ctx.font = "800 28px system-ui, sans-serif"; const t = G.turn === myRole ? "🌐 Your turn" : "🌐 Your friend's turn"; ctx.strokeText(t, W / 2, 56); ctx.fillText(t, W / 2, 56); }
   } else {
     ctx.textAlign = "left"; const a = `🐒 × ${monkeysLeft(0)}`; ctx.strokeText(a, 30, 56); ctx.fillText(a, 30, 56);
     ctx.textAlign = "right"; const b = `🐒 × ${monkeysLeft(1)}`; ctx.strokeText(b, W - 30, 56); ctx.fillText(b, W - 30, 56);
