@@ -51,3 +51,4 @@
 #cats { margin-bottom: 8px; }
 #pages { margin-bottom: 4px; }
 .pages .tip { margin: 8px 0 0; padding: 8px 12px; border-radius: 12px; background: var(--gold-soft); font-size: 0.88rem; line-height: 1.45; }
+.tip:empty { display: none; }

@@ -52,7 +52,7 @@ saved games stay on the player's own device.
 | **Dots & Boxes** | Everyone | 3x3 to 5x5 boards, vs computer (three levels), a friend, or online with a friend, chain-aware computer |
 | **Battleship** | Everyone | place your fleet by hand or randomly, three computer levels (smart targeting on Hard), or online with a friend |
 | **Memory Match** | Kids | themes, three sizes, 1–2 players or online with a friend |
-| **Doodle & Color** | Kids | rainbow brush, stamps, 27 colouring pages in six groups (animals, people, vehicles, scenes, things, patterns; extra pages live in `pages2.js` and `pages3.js`), a paint bucket, "Surprise me", turn your own picture into a colouring page (edge detection, all on the device), save as PNG |
+| **Doodle & Color** | Kids | rainbow brush, stamps, 27 colouring pages in six groups (animals, people, vehicles, scenes, things, patterns; extra pages live in `pages2.js` and `pages3.js`), a paint bucket, "Surprise me", turn your own picture into a colouring page (edge detection, all on the device), save as PNG, or send to Photos from the phone share sheet |
 | **Spell Sprout** | Kids | 800 picture words, 12 themed packs and three levels, spoken aloud, hints, stars and a garden that grows (fully offline) |
 | **Word Guess** | Adults | daily word + practice, stats, shareable result |
 | **Sudoku** | Adults | generated puzzles with exactly one solution, notes, hints, auto-save |

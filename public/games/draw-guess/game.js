@@ -1,5 +1,6 @@
 import { createOnline } from "../../assets/online.js";
 import { pool } from "./words.js";
+import { canSharePhotos, toPhotos, download } from "../../assets/save-image.js";
 
 const $ = (id) => document.getElementById(id);
 const cv = $("cv");
@@ -290,7 +291,10 @@ function revealed() {
   next.addEventListener("click", advance);
   $("pickBtns").innerHTML = "";
   $("pickBtns").appendChild(next);
-  if (!online()) { const save = document.createElement("button"); save.className = "g-btn ghost"; save.textContent = "💾 Save picture"; save.addEventListener("click", savePicture); $("pickBtns").appendChild(save); }
+  if (!online()) {
+    if (canSharePhotos()) { const ph = document.createElement("button"); ph.className = "g-btn ghost"; ph.textContent = "📷 Save to Photos"; ph.addEventListener("click", savePhotos); $("pickBtns").appendChild(ph); }
+    const save = document.createElement("button"); save.className = "g-btn ghost"; save.textContent = "💾 Save picture"; save.addEventListener("click", savePicture); $("pickBtns").appendChild(save);
+  }
   $("pickText").textContent = r.ok ? "Nice one!" : "Better luck next time.";
   $("picker").hidden = false;
   if (online()) nextT = setTimeout(advance, 5000);
@@ -303,15 +307,17 @@ function advance() {
   G.round += 1;
   beginTurn();
 }
-function savePicture() {
+function pictureCanvas() {
   const out = document.createElement("canvas");
   out.width = 800; out.height = 600;
-  const o = out.getContext("2d");
-  o.drawImage(cv, 0, 0);
-  const a = document.createElement("a");
-  a.download = `draw-guess-${G.word.replace(/\W+/g, "-")}.png`;
-  a.href = out.toDataURL("image/png");
-  a.click();
+  out.getContext("2d").drawImage(cv, 0, 0);
+  return out;
+}
+const pictureName = () => `draw-guess-${G.word.replace(/\W+/g, "-")}.png`;
+function savePicture() { download(pictureCanvas(), pictureName()); }
+async function savePhotos() {
+  const r = await toPhotos(pictureCanvas(), pictureName());
+  if (r === "unsupported") download(pictureCanvas(), pictureName());
 }
 
 /* ---------- messages from the friend ---------- */

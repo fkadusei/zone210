@@ -1,3 +1,4 @@
+import { canSharePhotos, toPhotos, download } from "../../assets/save-image.js";
 import { makePages } from "./pages2.js";
 import { makePeoplePages } from "./pages3.js";
 
@@ -483,18 +484,29 @@ $("clear").addEventListener("click", () => {
   pctx.fillRect(0, 0, W, H);
   snapshot();
 });
-$("save").addEventListener("click", () => {
+function pictureCanvas() {
   const out = document.createElement("canvas");
   out.width = W;
   out.height = H;
   const octx = out.getContext("2d");
   octx.drawImage(paint, 0, 0);
   octx.drawImage(lines, 0, 0);
-  const a = document.createElement("a");
-  a.download = `my-picture-${state.page}.png`;
-  a.href = out.toDataURL("image/png");
-  a.click();
+  return out;
+}
+const pictureName = () => `my-picture-${state.page}.png`;
+$("save").addEventListener("click", async () => {
+  await download(pictureCanvas(), pictureName());
+  $("saveNote").textContent = "Saved to your Downloads.";
 });
+// phones and tablets: hand the picture to the share sheet so it can go straight into the photo library
+if (canSharePhotos()) {
+  $("savePhotos").hidden = false;
+  $("savePhotos").addEventListener("click", async () => {
+    const r = await toPhotos(pictureCanvas(), pictureName());
+    $("saveNote").textContent = r === "shared" ? "Done! If you chose Save Image, it is in your Photos." : r === "cancelled" ? "" : "Your browser could not open the share sheet, so the picture was downloaded instead.";
+    if (r === "unsupported") await download(pictureCanvas(), pictureName());
+  });
+}
 
 document.addEventListener("keydown", (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {

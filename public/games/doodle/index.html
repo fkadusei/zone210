@@ -34,6 +34,7 @@
         <div class="g-bar">
           <button class="g-btn ghost" id="undo" aria-label="Undo">↶ Undo</button>
           <button class="g-btn ghost" id="redo" aria-label="Redo">↷ Redo</button>
+          <button class="g-btn" id="savePhotos" hidden>📷 Save to Photos</button>
           <button class="g-btn" id="save">Save picture</button>
         </div>
       </div>
@@ -41,6 +42,7 @@
       <div class="pages" role="group" aria-label="Choose a colouring page">
         <div class="g-chips" id="cats" aria-label="Kinds of page"></div>
         <div class="g-chips" id="pages"></div>
+        <p class="tip" id="saveNote" role="status" aria-live="polite" style="margin:6px 0 0"></p>
         <p class="tip" id="photoTip" hidden>Tip: your own drawings, cartoons and simple pictures turn into the best colouring pages. Busy photos give lots of tiny lines.</p>
         <input type="file" id="photo" accept="image/*" hidden />
       </div>
