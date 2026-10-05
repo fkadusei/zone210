@@ -40,130 +40,213 @@ export function makePeoplePages({ stroke, solid, circle, poly, ell, clipped }) {
   }, 5);
   const grass = (x0, x1, y) => stroke((c) => { for (let x = x0; x < x1; x += 80) { c.moveTo(x, y); c.lineTo(x + 20, y - 34); c.lineTo(x + 40, y); c.lineTo(x + 60, y - 30); c.lineTo(x + 80, y); } }, 5);
 
-  /* ---- face and hair ---- */
-  const face = (m, cy, r, eye = 7) => {
-    const e = r * 0.38;
-    [-1, 1].forEach((d) => {
-      stroke(ell(m.X(d * e), m.Y(cy - 6), m.S(eye), m.S(eye * 1.4)), 4);
-      stroke((c) => { c.arc(m.X(d * e), m.Y(cy - 8 - r * 0.3), m.S(eye * 2.3), PI * 1.18, PI * 1.82); }, 4);
+  /* ---- shapes that follow a body: tapered tubes for limbs, an egg-shaped head, hands with a thumb ---- */
+  // a tube along joints (e.g. shoulder, elbow, wrist) with a radius at each joint
+  const tube = (m, joints, rs) => {
+    const P = joints.map((j) => m.P(...j));
+    const R = rs.map((r) => m.S(r * 1.2));
+    const n = P.length;
+    const left = [];
+    const right = [];
+    P.forEach((p, i) => {
+      const a = P[Math.max(i - 1, 0)];
+      const b = P[Math.min(i + 1, n - 1)];
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      const tx = (b[0] - a[0]) / len;
+      const ty = (b[1] - a[1]) / len;
+      left.push([p[0] - ty * R[i], p[1] + tx * R[i]]);
+      right.push([p[0] + ty * R[i], p[1] - tx * R[i]]);
     });
-    stroke((c) => { c.moveTo(m.X(-r * 0.06), m.Y(cy + r * 0.14)); c.quadraticCurveTo(m.X(0), m.Y(cy + r * 0.24), m.X(r * 0.08), m.Y(cy + r * 0.14)); }, 4);
-    stroke((c) => { c.arc(m.X(0), m.Y(cy + r * 0.22), m.S(r * 0.42), PI * 0.18, PI * 0.82); }, 5);
+    const e = P[n - 1];
+    const f = P[n - 2];
+    const dl = Math.hypot(e[0] - f[0], e[1] - f[1]) || 1;
+    const tip = [e[0] + ((e[0] - f[0]) / dl) * R[n - 1] * 1.1, e[1] + ((e[1] - f[1]) / dl) * R[n - 1] * 1.1];
+    const s0 = P[0];
+    const s1 = P[1];
+    const d0 = Math.hypot(s0[0] - s1[0], s0[1] - s1[1]) || 1;
+    const top = [s0[0] + ((s0[0] - s1[0]) / d0) * R[0] * 1.1, s0[1] + ((s0[1] - s1[1]) / d0) * R[0] * 1.1];
+    return smooth([top, ...left, tip, ...right.reverse()]);
   };
-  const ears = (m, cy, r) => [-1, 1].forEach((d) => stroke(ell(m.X(d * r), m.Y(cy + 2), m.S(r * 0.18), m.S(r * 0.26)), 5));
-  const head = (m, cy, r) => solid(circle(m.X(0), m.Y(cy), m.S(r)));
-  const cap = (m, cy, r, lift = 1) => solid(smooth(L(m, [[-r, cy - 6], [-r * 0.92, cy - r * 0.95], [-r * 0.45, cy - r * 1.26 * lift], [r * 0.45, cy - r * 1.26 * lift], [r * 0.92, cy - r * 0.95], [r, cy - 6], [r * 0.7, cy - r * 0.55], [0, cy - r * 0.42], [-r * 0.7, cy - r * 0.55]])));
+  const wide = (m, k) => ({ ...m, X: (v) => m.X(v * k), P: (a, b) => m.P(a * k, b) });
+  const egg = (m, cx, cy, rx, ry) => (c) => {
+    c.moveTo(m.X(cx), m.Y(cy - ry));
+    c.bezierCurveTo(m.X(cx + rx * 1.08), m.Y(cy - ry), m.X(cx + rx * 1.06), m.Y(cy + ry * 0.35), m.X(cx + rx * 0.5), m.Y(cy + ry * 0.86));
+    c.quadraticCurveTo(m.X(cx + rx * 0.22), m.Y(cy + ry), m.X(cx), m.Y(cy + ry));
+    c.quadraticCurveTo(m.X(cx - rx * 0.22), m.Y(cy + ry), m.X(cx - rx * 0.5), m.Y(cy + ry * 0.86));
+    c.bezierCurveTo(m.X(cx - rx * 1.06), m.Y(cy + ry * 0.35), m.X(cx - rx * 1.08), m.Y(cy - ry), m.X(cx), m.Y(cy - ry));
+    c.closePath();
+  };
+  // a hand at `at`, pointing the way `to` is from `at`, with the thumb on the `side` (+1 or -1) side
+  function hand(m, at, to, k, side) {
+    const [wx, wy] = m.P(...at);
+    const [tx, ty] = m.P(...to);
+    const th = Math.atan2(-(tx - wx), ty - wy);
+    const cs = Math.cos(th);
+    const sn = Math.sin(th);
+    const T = (x, y) => [wx + m.S(k) * (x * cs - y * sn), wy + m.S(k) * (x * sn + y * cs)];
+    const palm = [[-7, 0], [7, 0], [9, 14], [8, 30], [2, 38], [-4, 36], [-8, 26], [-9, 12]].map(([x, y]) => T(x, y));
+    const thumb = [T(side * 6, 4), T(side * 15, 20), T(side * 17, 28)];
+    stroke((c) => { c.moveTo(...thumb[0]); c.quadraticCurveTo(...thumb[1], ...thumb[2]); c.quadraticCurveTo(...T(side * 11, 26), ...T(side * 8, 18)); }, 5);
+    solid(smooth(palm), 5);
+    stroke((c) => { c.moveTo(...T(-2, 26)); c.lineTo(...T(-1.5, 36)); c.moveTo(...T(3, 27)); c.lineTo(...T(2.5, 37)); }, 3);
+  }
+  const arm = (m, d, sh, el, wr, rs, k) => {
+    stroke(tube(m, [[d * sh[0], sh[1]], [d * el[0], el[1]], [d * wr[0], wr[1]]], rs), 6);
+    hand(m, [d * wr[0], wr[1]], [d * (wr[0] + (wr[0] - el[0]) * 0.3), wr[1] + 30], k, -d);
+  };
+  const leg = (m, d, joints, rs) => stroke(tube(m, joints.map(([x, y]) => [d * x, y]), rs), 6);
+  const sneaker = (m, d, x, y, w = 1) => solid(smooth(L(m, [[d * (x - 14 * w), y - 20], [d * (x + 16 * w), y - 18], [d * (x + 32 * w), y - 8], [d * (x + 32 * w), y + 4], [d * (x - 14 * w), y + 4]])), 6);
+  const shoeLine = (m, d, x, y, w = 1) => stroke((c) => { c.moveTo(m.X(d * (x - 14 * w)), m.Y(y - 2)); c.lineTo(m.X(d * (x + 32 * w)), m.Y(y - 2)); }, 3);
 
-  /* ---- bodies: drawn back to front, and clothes use solid() so limbs never show through them ---- */
-  const arms = (m, shoulderY, outX, handY, w = 13, hand = 15, sides = [-1, 1]) => sides.forEach((d) => {
-    stroke(limb(m.P(d * (outX - 6), shoulderY), m.P(d * (outX + 8), handY), m.S(w), m.S(w * 0.85)), 6);
-    solid(circle(m.X(d * (outX + 9)), m.Y(handY + 6), m.S(hand)));
-  });
-  const shoes = (m, gap, w) => [-1, 1].forEach((d) => solid(ell(m.X(d * (gap + 6)), m.Y(-11), m.S(w), m.S(12)), 6));
-  const neck = (m, y1, y2, w) => stroke(limb(m.P(0, y1), m.P(0, y2), m.S(w), m.S(w)), 5);
-  const collar = (m, y, r) => stroke((c) => { c.arc(m.X(0), m.Y(y), m.S(r), 0.05, PI - 0.05); }, 5);
+  /* ---- face and hair ---- */
+  function face(m, cx, cy, rx, ry, kind = "adult") {
+    const e = rx * 0.4;
+    const ey = cy - ry * 0.05;
+    const ew = rx * 0.23;
+    const eh = ry * (kind === "baby" ? 0.13 : 0.1);
+    [-1, 1].forEach((d) => {
+      const x = cx + d * e;
+      stroke((c) => { c.moveTo(m.X(x - ew), m.Y(ey)); c.quadraticCurveTo(m.X(x), m.Y(ey - eh * 2.3), m.X(x + ew), m.Y(ey)); c.quadraticCurveTo(m.X(x), m.Y(ey + eh * 1.9), m.X(x - ew), m.Y(ey)); }, 4); // eye
+      stroke(circle(m.X(x), m.Y(ey), m.S(eh * 0.7)), 3); // pupil
+      stroke((c) => { c.moveTo(m.X(x - ew * 1.2), m.Y(ey - ry * 0.18)); c.quadraticCurveTo(m.X(x), m.Y(ey - ry * 0.28), m.X(x + ew * 1.2), m.Y(ey - ry * 0.17)); }, 5); // eyebrow
+    });
+    stroke((c) => { c.moveTo(m.X(cx - rx * 0.02), m.Y(cy + ry * 0.06)); c.quadraticCurveTo(m.X(cx - rx * 0.14), m.Y(cy + ry * 0.3), m.X(cx - rx * 0.16), m.Y(cy + ry * 0.38)); c.quadraticCurveTo(m.X(cx), m.Y(cy + ry * 0.46), m.X(cx + rx * 0.17), m.Y(cy + ry * 0.38)); }, 4); // nose
+    const ly = cy + ry * 0.62;
+    const depth = kind === "adult" ? 0.24 : 0.3;
+    stroke((c) => { c.moveTo(m.X(cx - rx * 0.36), m.Y(ly - ry * 0.02)); c.quadraticCurveTo(m.X(cx), m.Y(ly + ry * depth), m.X(cx + rx * 0.36), m.Y(ly - ry * 0.02)); }, 5); // smile
+  }
+  const head = (m, cx, cy, rx, ry) => {
+    [-1, 1].forEach((d) => stroke(ell(m.X(cx + d * rx * 1.02), m.Y(cy + ry * 0.08), m.S(rx * 0.17), m.S(ry * 0.25)), 5)); // ears
+    solid(egg(m, cx, cy, rx, ry), 6);
+  };
+  const shortHair = (m, cx, cy, rx, ry) => solid(smooth(L(m, [[cx - rx * 1.02, cy - ry * 0.16], [cx - rx * 1.07, cy - ry * 0.6], [cx - rx * 0.62, cy - ry * 1.1], [cx, cy - ry * 1.2], [cx + rx * 0.62, cy - ry * 1.1], [cx + rx * 1.07, cy - ry * 0.6], [cx + rx * 1.02, cy - ry * 0.16], [cx + rx * 0.84, cy - ry * 0.36], [cx + rx * 0.46, cy - ry * 0.56], [cx, cy - ry * 0.6], [cx - rx * 0.46, cy - ry * 0.56], [cx - rx * 0.84, cy - ry * 0.36]])), 6);
+  // natural hair: a big round shape with a scalloped edge, drawn behind the head
+  function afro(m, cx, cy, R) {
+    const N = 16;
+    stroke((c) => {
+      for (let i = 0; i <= N; i += 1) {
+        const a0 = (i / N) * PI * 2;
+        const a1 = ((i + 1) / N) * PI * 2;
+        const am = (a0 + a1) / 2;
+        const p0 = [m.X(cx + R * Math.cos(a0)), m.Y(cy + R * Math.sin(a0))];
+        const p1 = [m.X(cx + R * Math.cos(a1)), m.Y(cy + R * Math.sin(a1))];
+        if (i === 0) c.moveTo(...p0);
+        c.quadraticCurveTo(m.X(cx + R * 1.16 * Math.cos(am)), m.Y(cy + R * 1.16 * Math.sin(am)), ...p1);
+      }
+      c.closePath();
+    }, 6);
+  }
+  const tinyStar = (m, x, y, r) => stroke((c) => { for (let i = 0; i < 10; i += 1) { const rr = i % 2 ? r * 0.45 : r; const a = (PI / 5) * i - PI / 2; (i ? c.lineTo : c.moveTo).call(c, m.X(x + rr * Math.cos(a)), m.Y(y + rr * Math.sin(a))); } c.closePath(); }, 4);
+  const line2 = (m, pts, w = 4) => stroke((c) => { c.moveTo(m.X(pts[0][0]), m.Y(pts[0][1])); pts.slice(1).forEach(([x, y]) => c.lineTo(m.X(x), m.Y(y))); }, w);
+  const mirror = (pts) => [...pts, ...pts.slice().reverse().map(([x, y]) => [-x, y])];
 
-  function boy(m) {
-    const u = M(m.X(0), m.Y(-54), m.S(1)); // the upper body sits on long legs
-    [-1, 1].forEach((d) => stroke(limb(m.P(d * 30, -134), m.P(d * 30, -26), m.S(19), m.S(16)), 6));
-    shoes(m, 26, 34);
-    arms(u, -190, 96, -100);
-    solid(smooth(L(u, [[-62, -122], [0, -128], [62, -122], [66, -62], [8, -60], [0, -84], [-8, -60], [-66, -62]])), 6); // shorts
-    neck(u, -252, -232, 17);
-    solid(smooth(L(u, [[-22, -238], [-66, -224], [-104, -184], [-96, -146], [-62, -164], [-60, -112], [0, -106], [60, -112], [62, -164], [96, -146], [104, -184], [66, -224], [22, -238]])), 6); // t-shirt
-    collar(u, -238, 22);
-    stroke((c) => { c.moveTo(u.X(-24), u.Y(-186)); c.lineTo(u.X(-4), u.Y(-166)); c.moveTo(u.X(-4), u.Y(-186)); c.lineTo(u.X(-24), u.Y(-166)); }, 4);
-    ears(u, -312, 72);
-    head(u, -312, 72);
-    cap(u, -312, 72);
-    face(u, -312, 72);
+  /* ---- people: feet at (0, 0), standing, seen from the front ---- */
+  function man(m0, sides = [-1, 1]) {
+    const m = wide(m0, 1.14);
+    // trousers
+    [-1, 1].forEach((d) => sneaker(m, d, 24, 0, 1));
+    solid(smooth(L(m, [[-50, -250], [50, -250], [56, -224], [53, -170], [43, -118], [37, -70], [34, -24], [11, -24], [13, -118], [5, -196], [0, -204], [-5, -196], [-13, -118], [-11, -24], [-34, -24], [-37, -70], [-43, -118], [-53, -170], [-56, -224]])), 6);
+    [-1, 1].forEach((d) => { shoeLine(m, d, 24, 0, 1); });
+    line2(m, [[0, -236], [0, -212]], 3); // fly
+    // arms (behind the shirt sleeves)
+    sides.forEach((d) => arm(m, d, [64, -368], [78, -290], [82, -214], [16, 13, 10], 1.15));
+    stroke(tube(m, [[0, -410], [0, -384]], [15, 17]), 5); // neck
+    solid(smooth(L(m, [[-17, -390], [-62, -380], [-90, -362], [-96, -314], [-66, -308], [-52, -336], [-46, -270], [-50, -246], [50, -246], [46, -270], [52, -336], [66, -308], [96, -314], [90, -362], [62, -380], [17, -390]])), 6); // shirt
+    stroke(poly(L(m, [[-17, -390], [-36, -376], [-6, -358]])), 5); stroke(poly(L(m, [[17, -390], [36, -376], [6, -358]])), 5); // collar
+    line2(m, [[0, -366], [0, -250]], 3);
+    [-338, -306, -274].forEach((y) => stroke(circle(m.X(7), m.Y(y), m.S(3.5)), 3));
+    stroke(poly(L(m, [[20, -340], [46, -340], [46, -312], [20, -312]])), 3); // pocket
+    stroke(poly(L(m, [[-52, -250], [52, -250], [52, -238], [-52, -238]])), 5); // belt
+    stroke(poly(L(m, [[-8, -250], [8, -250], [8, -238], [-8, -238]])), 4); // buckle
+    head(m0, 0, -447, 35, 43);
+    shortHair(m0, 0, -447, 35, 43);
+    face(m0, 0, -447, 35, 43);
   }
-  function girl(m) {
-    const u = M(m.X(0), m.Y(-44), m.S(1));
-    [-1, 1].forEach((d) => stroke(limb(m.P(d * 28, -134), m.P(d * 28, -26), m.S(14), m.S(12)), 6));
-    shoes(m, 22, 28);
-    [-1, 1].forEach((d) => stroke((c) => { c.moveTo(m.X(d * 6), m.Y(-14)); c.lineTo(m.X(d * 42), m.Y(-14)); }, 4)); // shoe straps
-    [-1, 1].forEach((d) => stroke(circle(u.X(d * 66), u.Y(-378), u.S(34)), 6)); // hair puffs
-    [-1, 1].forEach((d) => { stroke(poly([u.P(d * 66, -342), u.P(d * 98, -358), u.P(d * 98, -326)]), 4); stroke(poly([u.P(d * 66, -342), u.P(d * 40, -358), u.P(d * 40, -326)]), 4); }); // bows
-    arms(u, -206, 80, -118, 11, 13);
-    neck(u, -252, -232, 16);
-    solid(smooth(L(u, [[-22, -238], [-62, -226], [-70, -186], [-54, -152], [-82, -112], [-118, -72], [-60, -66], [0, -70], [60, -66], [118, -72], [82, -112], [54, -152], [70, -186], [62, -226], [22, -238]])), 6); // dress
-    collar(u, -238, 22);
-    stroke((c) => { c.moveTo(u.X(-54), u.Y(-152)); c.lineTo(u.X(54), u.Y(-152)); }, 5);
-    stroke(poly([u.P(0, -152), u.P(-28, -172), u.P(-28, -132)]), 4); stroke(poly([u.P(0, -152), u.P(28, -172), u.P(28, -132)]), 4); stroke(circle(u.X(0), u.Y(-152), u.S(7)), 4);
-    stroke((c) => { for (let x = -112; x < 112; x += 28) { c.moveTo(u.X(x), u.Y(-72)); c.lineTo(u.X(x + 14), u.Y(-92)); c.lineTo(u.X(x + 28), u.Y(-72)); } }, 4);
-    ears(u, -312, 68);
-    head(u, -312, 68);
-    cap(u, -312, 68, 0.9);
-    face(u, -312, 68);
+  function woman(m0, sides = [-1, 1]) {
+    const m = wide(m0, 1.14);
+    afro(m0, 0, -436, 66); // natural hair behind the head
+    [-1, 1].forEach((d) => leg(m, d, [[24, -110], [24, -66], [21, -24]], [12, 11, 8]));
+    [-1, 1].forEach((d) => solid(smooth(L(m, [[d * -8, -22], [d * 22, -22], [d * 36, -8], [d * 36, 4], [d * -8, 4]])), 6));
+    sides.forEach((d) => arm(m, d, [54, -346], [64, -270], [68, -198], [12, 10, 8], 1.05));
+    stroke(tube(m, [[0, -382], [0, -358]], [13, 15]), 5);
+    solid(smooth(L(m, [[-14, -362], [-48, -354], [-70, -338], [-72, -304], [-52, -298], [-44, -318], [-38, -290], [-30, -246], [-50, -208], [-92, -96], [0, -90], [92, -96], [50, -208], [30, -246], [38, -290], [44, -318], [52, -298], [72, -304], [70, -338], [48, -354], [14, -362]])), 6); // dress
+    stroke((c) => { c.arc(m.X(0), m.Y(-362), m.S(22), 0.05, PI - 0.05); }, 5); // neckline
+    stroke(poly(L(m, [[-31, -252], [31, -252], [32, -238], [-32, -238]])), 5); // sash
+    [[-120, 70], [-108, 74]].forEach(([y, w]) => line2(m, [[-w, y], [w, y]], 4)); // bands near the hem
+    stroke((c) => { for (let x = -60; x < 60; x += 20) { c.moveTo(m.X(x), m.Y(-120)); c.lineTo(m.X(x + 10), m.Y(-108)); c.lineTo(m.X(x + 20), m.Y(-120)); } }, 3);
+    [[-18, -190], [20, -176], [-8, -150], [32, -140]].forEach(([x, y]) => stroke(circle(m.X(x), m.Y(y), m.S(6)), 3)); // dress pattern
+    head(m0, 0, -418, 32, 40);
+    [-1, 1].forEach((d) => { line2(m0, [[d * 33, -402], [d * 33, -392]], 3); stroke(circle(m0.X(d * 33), m0.Y(-387), m0.S(5)), 3); }); // earrings
+    face(m0, 0, -418, 32, 40);
   }
-  function man(m, sides = [-1, 1]) {
-    arms(m, -240, 112, -128, 16, 17, sides);
-    solid(smooth(L(m, [[-64, -204], [0, -210], [64, -204], [60, -110], [58, -30], [8, -26], [0, -150], [-8, -26], [-58, -30], [-60, -110]])), 6); // trousers
-    shoes(m, 32, 38);
-    neck(m, -340, -310, 20);
-    solid(smooth(L(m, [[-24, -306], [-80, -292], [-118, -246], [-108, -198], [-72, -218], [-70, -178], [0, -172], [70, -178], [72, -218], [108, -198], [118, -246], [80, -292], [24, -306]])), 6); // shirt
-    stroke(poly([m.P(-24, -306), m.P(-38, -290), m.P(-6, -276)]), 5); stroke(poly([m.P(24, -306), m.P(38, -290), m.P(6, -276)]), 5); // collar
-    stroke((c) => { c.moveTo(m.X(0), m.Y(-276)); c.lineTo(m.X(0), m.Y(-182)); }, 4);
-    [-250, -222, -194].forEach((y) => stroke(circle(m.X(8), m.Y(y), m.S(4)), 3));
-    stroke((c) => { c.moveTo(m.X(-70), m.Y(-186)); c.lineTo(m.X(70), m.Y(-186)); }, 7); // belt
-    ears(m, -376, 60);
-    head(m, -376, 60);
-    cap(m, -376, 60, 0.85);
-    face(m, -376, 60, 6);
+  function boy(m0) {
+    const m = wide(m0, 1.16);
+    [-1, 1].forEach((d) => leg(m, d, [[22, -122], [23, -68], [20, -22]], [13, 11, 8]));
+    [-1, 1].forEach((d) => line2(m, [[d * 22 - 11, -48], [d * 22 + 11, -48]], 3)); // socks
+    [-1, 1].forEach((d) => sneaker(m, d, 18, 0, 0.9));
+    [-1, 1].forEach((d) => stroke((c) => { c.moveTo(m.X(d * 12), m.Y(-14)); c.lineTo(m.X(d * 24), m.Y(-10)); c.moveTo(m.X(d * 12), m.Y(-8)); c.lineTo(m.X(d * 24), m.Y(-5)); }, 3)); // laces
+    [-1, 1].forEach((d) => arm(m, d, [46, -298], [56, -232], [59, -172], [11, 10, 8], 0.85));
+    solid(smooth(L(m, [[-38, -186], [38, -186], [42, -166], [44, -112], [8, -108], [2, -150], [0, -154], [-2, -150], [-8, -108], [-44, -112], [-42, -166]])), 6); // shorts
+    stroke(tube(m, [[0, -330], [0, -310]], [12, 13]), 5);
+    solid(smooth(L(m, [[-14, -312], [-42, -304], [-64, -290], [-66, -254], [-44, -250], [-38, -262], [-34, -196], [-38, -176], [38, -176], [34, -196], [38, -262], [44, -250], [66, -254], [64, -290], [42, -304], [14, -312]])), 6); // t-shirt
+    stroke((c) => { c.arc(m.X(0), m.Y(-312), m.S(15), 0.05, PI - 0.05); c.moveTo(m.X(-14), m.Y(-318)); c.arc(m.X(0), m.Y(-318), m.S(14), PI, PI * 2, false); }, 4); // collar rib
+    tinyStar(m, 0, -246, 14);
+    head(m0, 0, -367, 38, 45);
+    shortHair(m0, 0, -367, 38, 45);
+    face(m0, 0, -367, 38, 45, "kid");
   }
-  function woman(m, sides = [-1, 1]) {
-    stroke(circle(m.X(0), m.Y(-384), m.S(88)), 6); // round natural hair
-    [-26, 26].forEach((x) => stroke(limb(m.P(x, -118), m.P(x, -26), m.S(14), m.S(12)), 6));
-    shoes(m, 20, 30);
-    arms(m, -246, 86, -140, 13, 15, sides);
-    neck(m, -330, -296, 18);
-    solid(smooth(L(m, [[-26, -300], [-70, -284], [-78, -236], [-60, -204], [-68, -180], [-128, -108], [-60, -98], [0, -102], [60, -98], [128, -108], [68, -180], [60, -204], [78, -236], [70, -284], [26, -300]])), 6); // dress
-    collar(m, -300, 26);
-    stroke((c) => { c.moveTo(m.X(-60), m.Y(-204)); c.lineTo(m.X(60), m.Y(-204)); }, 6); // belt
-    stroke((c) => { for (let x = -120; x < 120; x += 30) { c.moveTo(m.X(x), m.Y(-102)); c.lineTo(m.X(x + 15), m.Y(-124)); c.lineTo(m.X(x + 30), m.Y(-102)); } }, 4); // zigzag trim
-    [-1, 1].forEach((d) => stroke(circle(m.X(d * 40), m.Y(-160), m.S(11)), 4)); // dress pattern
-    ears(m, -362, 56);
-    head(m, -362, 56);
-    [-1, 1].forEach((d) => stroke(circle(m.X(d * 58), m.Y(-336), m.S(8)), 4)); // earrings
-    face(m, -362, 56, 6);
+  function girl(m0) {
+    const m = wide(m0, 1.16);
+    [-1, 1].forEach((d) => leg(m, d, [[18, -114], [19, -66], [16, -24]], [9.5, 8.5, 6.5]));
+    [-1, 1].forEach((d) => line2(m, [[d * 18 - 8, -50], [d * 18 + 8, -50]], 3)); // socks
+    [-1, 1].forEach((d) => { solid(smooth(L(m, [[d * -6, -22], [d * 16, -22], [d * 28, -10], [d * 28, 3], [d * -6, 3]])), 6); line2(m, [[d * 2, -14], [d * 24, -14]], 3); }); // shoes with a strap
+    [-1, 1].forEach((d) => stroke(circle(m0.X(d * 52), m0.Y(-398), m0.S(30)), 6)); // hair puffs
+    [-1, 1].forEach((d) => { stroke(poly(L(m0, [[d * 44, -384], [d * 66, -396], [d * 66, -372]])), 4); stroke(poly(L(m0, [[d * 44, -384], [d * 24, -396], [d * 24, -372]])), 4); }); // bows
+    [-1, 1].forEach((d) => arm(m, d, [42, -298], [50, -236], [53, -178], [9.5, 8.5, 7], 0.78));
+    stroke(tube(m, [[0, -330], [0, -310]], [11, 12]), 5);
+    solid(smooth(L(m, [[-13, -312], [-38, -302], [-58, -292], [-58, -262], [-38, -258], [-33, -268], [-28, -232], [-44, -172], [-66, -112], [0, -106], [66, -112], [44, -172], [28, -232], [33, -268], [38, -258], [58, -262], [58, -292], [38, -302], [13, -312]])), 6); // dress
+    stroke((c) => { c.arc(m.X(0), m.Y(-312), m.S(18), 0.05, PI - 0.05); }, 4);
+    stroke(poly(L(m, [[-28, -234], [28, -234], [29, -224], [-29, -224]])), 4); // sash
+    stroke(poly(L(m, [[0, -229], [-22, -246], [-22, -212]])), 4); stroke(poly(L(m, [[0, -229], [22, -246], [22, -212]])), 4); stroke(circle(m.X(0), m.Y(-229), m.S(5)), 3); // bow
+    stroke((c) => { for (let x = -40; x < 40; x += 20) { c.moveTo(m.X(x), m.Y(-120)); c.lineTo(m.X(x + 10), m.Y(-130)); c.lineTo(m.X(x + 20), m.Y(-120)); } }, 3);
+    head(m0, 0, -364, 36, 43);
+    shortHair(m0, 0, -364, 36, 43);
+    face(m0, 0, -364, 36, 43, "kid");
   }
   function baby(m) {
-    [-1, 1].forEach((d) => solid(limb(m.P(d * 34, -34), m.P(d * 34, -4), m.S(19), m.S(17)), 6)); // legs
-    [-1, 1].forEach((d) => solid(ell(m.X(d * 32), m.Y(4), m.S(26), m.S(17)), 6)); // feet
-    [-1, 1].forEach((d) => solid(limb(m.P(d * 58, -98), m.P(d * 70, -50), m.S(13), m.S(12)), 5)); // arms
-    [-1, 1].forEach((d) => solid(circle(m.X(d * 72), m.Y(-42), m.S(13)), 5)); // hands
-    solid(smooth(L(m, [[-30, -120], [0, -126], [30, -120], [54, -86], [56, -34], [0, -24], [-56, -34], [-54, -86]])), 6); // onesie
-    [-60, -48, -36].forEach((y) => stroke(circle(m.X(0), m.Y(y), m.S(4)), 3)); // snaps
-    ears(m, -176, 58);
-    head(m, -176, 58);
-    stroke((c) => { c.arc(m.X(2), m.Y(-246), m.S(11), PI * 0.9, PI * 2.6); }, 5); // a little curl
-    face(m, -176, 58, 6);
-    [-1, 1].forEach((d) => stroke(circle(m.X(d * 38), m.Y(-152), m.S(9)), 3)); // cheeks
+    [-1, 1].forEach((d) => leg(m, d, [[22, -34], [30, -10], [34, 4]], [17, 14, 11])); // chubby legs
+    [-1, 1].forEach((d) => solid(ell(m.X(d * 36), m.Y(10), m.S(15), m.S(11)), 5)); // feet
+    [-1, 1].forEach((d) => arm(m, d, [40, -96], [52, -66], [56, -40], [11, 10, 8], 0.55));
+    solid(smooth(L(m, [[-22, -104], [0, -108], [22, -104], [44, -86], [48, -44], [30, -24], [-30, -24], [-48, -44], [-44, -86]])), 6); // onesie
+    [-72, -60, -48].forEach((y) => stroke(circle(m.X(0), m.Y(y), m.S(3.5)), 3));
+    stroke((c) => { c.arc(m.X(0), m.Y(-106), m.S(14), 0.05, PI - 0.05); }, 4);
+    head(m, 0, -148, 40, 44);
+    [[-8, -194], [6, -197], [-20, -188]].forEach(([x, y]) => stroke(circle(m.X(x), m.Y(y), m.S(6)), 3)); // little curls
+    face(m, 0, -148, 40, 44, "baby");
   }
 
   return {
     boy: {
       label: "👦🏿 Boy", cat: "people",
       draw() {
-        boy(M(400, 566, 1.1));
+        boy(M(400, 566, 1.2));
         sun(100, 100, 42); cloud(590, 120, 1); grass(0, 800, 590);
       },
     },
     girl: {
       label: "👧🏿 Girl", cat: "people",
       draw() {
-        girl(M(400, 566, 1.06));
+        girl(M(400, 566, 1.12));
         sun(700, 100, 42); cloud(60, 130, 1); grass(0, 800, 590);
       },
     },
     family: {
       label: "👨🏾👩🏾👧🏿👦🏿 Family", cat: "people",
       draw() {
-        girl(M(150, 566, 0.64));
-        man(M(310, 566, 0.86));
-        woman(M(520, 566, 0.84));
-        boy(M(676, 566, 0.64));
+        girl(M(150, 566, 0.66));
+        man(M(305, 566, 0.9));
+        woman(M(515, 566, 0.9));
+        boy(M(670, 566, 0.68));
         sun(90, 80, 34); cloud(560, 70, 0.8); grass(0, 800, 594);
         stroke(heart(400, 36, 22), 5);
       },
@@ -171,15 +254,13 @@ export function makePeoplePages({ stroke, solid, circle, poly, ell, clipped }) {
     dadbaby: {
       label: "👨🏾👶🏿 Dad & baby", cat: "people",
       draw() {
-        const dad = M(300, 570, 1.12);
+        const dad = M(300, 568, 1);
         man(dad, [-1]);
-        // the baby sits in dad's arms
-        const bb = M(390, 410, 0.78);
-        stroke(limb(dad.P(112, -236), dad.P(128, -166), dad.S(16), dad.S(15)), 6); // upper arm, behind the baby
-        baby(bb);
-        // dad's arm holds the baby from underneath
-        solid(limb(dad.P(128, -166), dad.P(58, -146), dad.S(15), dad.S(14)), 6);
-        solid(circle(dad.X(44), dad.Y(-146), dad.S(16)), 6);
+        stroke(tube(wide(dad, 1.14), [[64, -368], [82, -290], [78, -212]], [14, 11, 10]), 6); // upper arm, behind the baby
+        baby(M(352, 350, 0.82));
+        const w = wide(dad, 1.14);
+        stroke(tube(w, [[78, -212], [52, -206], [28, -206]], [10, 9, 8]), 6); // forearm under the baby
+        hand(w, [28, -206], [8, -190], 1.1, -1);
         sun(700, 90, 40); cloud(560, 190, 0.8); grass(0, 800, 594);
         stroke(heart(640, 300, 26), 5);
       },
@@ -187,13 +268,13 @@ export function makePeoplePages({ stroke, solid, circle, poly, ell, clipped }) {
     mombaby: {
       label: "👩🏾👶🏿 Mom & baby", cat: "people",
       draw() {
-        const mom = M(300, 570, 1.12);
+        const mom = M(300, 568, 0.98);
         woman(mom, [-1]);
-        const bb = M(392, 428, 0.78);
-        stroke(limb(mom.P(104, -238), mom.P(124, -168), mom.S(14), mom.S(14)), 6); // upper arm, behind the baby
-        baby(bb);
-        solid(limb(mom.P(124, -168), mom.P(54, -150), mom.S(14), mom.S(13)), 6);
-        solid(circle(mom.X(46), mom.Y(-150), mom.S(15)), 6);
+        const w = wide(mom, 1.14);
+        stroke(tube(w, [[54, -346], [80, -280], [76, -212]], [12, 11, 10]), 6);
+        baby(M(352, 354, 0.82));
+        stroke(tube(w, [[76, -212], [52, -206], [28, -205]], [10, 9, 8]), 6);
+        hand(w, [28, -205], [8, -190], 1.05, -1);
         sun(100, 90, 40); cloud(560, 90, 0.9); grass(0, 800, 594);
         stroke(heart(650, 300, 26), 5);
       },
