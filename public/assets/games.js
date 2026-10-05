@@ -659,4 +659,16 @@ export const GAMES = [
     colors: ["#ff9a3c", "#7cc46a"],
     added: "2026-10-05",
   },
+  {
+    id: "compound-life",
+    title: "Compound Life",
+    tagline: "Create a family and move them into a Ghanaian compound house or a modern city apartment. Cook, work, study, play and decorate as they live their lives.",
+    audience: "all",
+    cat: "fun",
+    tags: ["Life sim", "Family", "Creative"],
+    players: "1 player",
+    emoji: "🏘️",
+    colors: ["#d9784a", "#79c05f"],
+    added: "2026-10-05",
+  },
 ];
