@@ -646,4 +646,17 @@ export const GAMES = [
     colors: ["#4faa48", "#ffd45e"],
     added: "2026-10-02",
   },
+  {
+    id: "mango-mayhem",
+    online: true,
+    title: "Mango Mayhem",
+    tagline: "The greedy monkeys stole the mangoes! Pull the slingshot and knock down their towers across 18 levels, or duel a friend fort against fort.",
+    audience: "all",
+    cat: "fun",
+    tags: ["Physics", "Arcade", "Multiplayer"],
+    players: "1–2 players",
+    emoji: "🥭",
+    colors: ["#ff9a3c", "#7cc46a"],
+    added: "2026-10-05",
+  },
 ];

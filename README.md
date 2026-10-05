@@ -58,6 +58,7 @@ saved games stay on the player's own device.
 | **Sudoku** | Adults | generated puzzles with exactly one solution, notes, hints, auto-save |
 | **Tile Merge** | Adults | 2048-style, swipe or arrow keys, undo |
 | **Minesweeper** | Adults | three sizes, flags, chording, touch long-press, best times |
+| **Mango Mayhem** | Everyone | slingshot physics (Matter.js, MIT, in `assets/vendor/`): 18 levels in 3 worlds, 4 birds with tap powers, stars and saved progress, a camera that follows the shot, fort-vs-fort duel vs computer / 2 players / online with rejoin; levels checked by `node tools/check-mango-levels.mjs` |
 | **Word Craft** | Everyone | crossing-word tile game on a 15×15 board: vs computer (3 levels), pass & play (2–4), online; ENABLE word list, hints, swap, blank tiles |
 | **Draw & Guess** | Everyone | draw a secret word on a canvas: pass & play (2–6) or online with live strokes, timer, hints, scores |
 | **Music Lab** | Everyone | 16-step beat maker (Highlife, Afrobeat, Hip-hop, Funk, R&B, House) with African drums, piano, djembe pads, Copy the Tune, live jam online (all sounds synthesized) |
