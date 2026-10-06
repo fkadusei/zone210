@@ -9,6 +9,19 @@
  */
 export const GAMES = [
   {
+    id: "abc-123",
+    title: "ABC & 123",
+    tagline: "Learn the A B C and count 1 2 3 with a friendly voice: tap letters and numbers to hear them, find them, match big and small letters, count fun things and trace with your finger.",
+    audience: "kids",
+    cat: "learn",
+    tags: ["Alphabet", "Numbers", "Learning", "Offline"],
+    players: "1 player",
+    emoji: "🔤",
+    colors: ["#e5484d", "#4f6df5"],
+    added: "2026-10-06",
+    featured: true,
+  },
+  {
     id: "music-lab",
     online: true,
     title: "Music Lab",
@@ -20,7 +33,6 @@ export const GAMES = [
     emoji: "🥁",
     colors: ["#8a5ce0", "#4ad6c8"],
     added: "2026-10-02",
-    featured: true,
   },
   {
     id: "ludo",
@@ -671,17 +683,5 @@ export const GAMES = [
     emoji: "🏡",
     colors: ["#b8705a", "#79c05f"],
     added: "2026-10-05",
-  },
-  {
-    id: "abc-123",
-    title: "ABC & 123",
-    tagline: "Learn the A B C and count 1 2 3 with a friendly voice: tap letters and numbers to hear them, find them, match big and small letters, count fun things and trace with your finger.",
-    audience: "kids",
-    cat: "learn",
-    tags: ["Alphabet", "Numbers", "Learning", "Offline"],
-    players: "1 player",
-    emoji: "🔤",
-    colors: ["#e5484d", "#4f6df5"],
-    added: "2026-10-06",
   },
 ];
