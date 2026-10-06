@@ -1,9 +1,18 @@
-// Prints every line the ABC & 123 voice says as JSON, keyed by clip name, for ../ananse-audio/generate.py.
-//   node dump-texts.mjs > texts.json
-//   python ../ananse-audio/generate.py texts.json ../../public/games/abc-123/audio --voices af_heart --trim --speed 0.78
-// (generate.py needs Python 3.12 with kokoro and soundfile; see its header.)
+// Prints every line the ABC & 123 voice says as JSON, keyed by clip name.
+//   node dump-texts.mjs --plain > texts.json      (letters written as letters: "G is for giraffe." — for Chatterbox)
+//   python chatterbox_generate.py texts.json ../../public/games/abc-123/audio
 // After re-recording, raise CLIPS_V in public/games/abc-123/game.js so phones fetch the new clips.
-import { CLIPS } from "../../public/games/abc-123/data.js";
-// letter names the voice dictionary lacks, as phonemes (Kokoro alphabet: A is the "ay" sound)
-const PRON = { Ay: "ˈA", Ee: "ˈi", Jee: "ʤˈi", Oops: "ˈups" };
-console.log(JSON.stringify({ pron: PRON, clips: CLIPS }));
+// Without --plain, letter names are spelled for the voice ("Jee is for giraffe."), as the device-voice fallback uses.
+import { CLIPS, LETTERS } from "../../public/games/abc-123/data.js";
+const clips = { ...CLIPS };
+const spelled = {}; // the spelled form, as a second option for clips that come out wrong
+if (process.argv.includes("--plain")) {
+  for (const x of LETTERS) {
+    const k = x.L.toLowerCase();
+    clips[`l/${k}`] = `${x.L}.`;
+    clips[`w/${k}`] = `${x.L} is for ${x.word}.`;
+    spelled[`l/${k}`] = CLIPS[`l/${k}`];
+    spelled[`w/${k}`] = CLIPS[`w/${k}`];
+  }
+}
+console.log(JSON.stringify({ pron: {}, clips, spelled }));

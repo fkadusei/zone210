@@ -19,8 +19,8 @@ const COLORS = [350, 25, 45, 140, 175, 205, 230, 265, 300];
 const hue = (i) => COLORS[i % COLORS.length];
 
 // ---------- the voice: recorded clips, or the device's voice if a clip is missing ----------
-const VOICE = "af_heart";
-const CLIPS_V = 2; // raise when the clips are re-recorded, so phones do not keep playing cached old ones
+const VOICE = "cbx_calm";
+const CLIPS_V = 3; // raise when the clips are re-recorded, so phones do not keep playing cached old ones
 let have = null;
 fetch("audio/index.json").then((r) => r.json()).then((j) => { have = new Set(j[VOICE] || []); }).catch(() => { have = new Set(); });
 const player = new Audio();

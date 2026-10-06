@@ -1,5 +1,5 @@
 // ABC & 123: the letters, numbers and every line the voice says.
-// The voice clips are made from CLIPS by tools/abc-audio (node dump-texts.mjs, then generate.py). If a clip is
+// The voice clips are made from CLIPS by tools/abc-audio (node dump-texts.mjs --plain, then chatterbox_generate.py). If a clip is
 // missing the page falls back to the device's own voice reading the same text.
 
 // say: how the letter name is spelled for the voice (a lone "A" is read as "uh")
