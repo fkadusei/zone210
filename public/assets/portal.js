@@ -334,3 +334,16 @@ function drawResume() {
 }
 drawResume();
 window.addEventListener("pageshow", drawResume);
+
+// a greeting for the time of day on this device (its own clock and time zone; nothing is looked up or sent)
+function greet() {
+  const el = document.getElementById("greet");
+  if (!el) return;
+  const h = new Date().getHours();
+  const [emoji, text] = h >= 5 && h < 12 ? ["🌅", "Good morning!"] : h >= 12 && h < 17 ? ["☀️", "Good afternoon!"] : h >= 17 && h < 22 ? ["🌆", "Good evening!"] : ["🌙", "Hello, night owl!"];
+  el.innerHTML = `<span aria-hidden="true">${emoji}</span> ${text}`;
+  el.hidden = false;
+}
+greet();
+setInterval(greet, 60000); // still right if the page is left open past a change
+
