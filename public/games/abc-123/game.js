@@ -22,7 +22,8 @@ const hue = (i) => COLORS[i % COLORS.length];
 const VOICE = "cbx_calm";
 const CLIPS_V = 3; // raise when the clips are re-recorded, so phones do not keep playing cached old ones
 let have = null;
-fetch("audio/index.json").then((r) => r.json()).then((j) => { have = new Set(j[VOICE] || []); }).catch(() => { have = new Set(); });
+let voice = VOICE; // the folder named in audio/index.json (the recorded voice in use)
+fetch("audio/index.json").then((r) => r.json()).then((j) => { voice = Object.keys(j)[0] || VOICE; have = new Set(j[voice] || []); }).catch(() => { have = new Set(); });
 const player = new Audio();
 player.preload = "auto";
 let token = 0;
@@ -44,7 +45,7 @@ function play(k, done) {
   if (have && have.has(k)) {
     player.onended = fin;
     player.onerror = () => speak(k, fin);
-    player.src = `audio/${VOICE}/${k}.m4a?v=${CLIPS_V}`;
+    player.src = `audio/${voice}/${k}.m4a?v=${CLIPS_V}`;
     player.play().catch(() => speak(k, fin));
   } else speak(k, fin);
 }
