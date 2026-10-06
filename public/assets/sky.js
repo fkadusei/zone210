@@ -1,5 +1,5 @@
 /**
- * The home page sky: tiny stars that fade and glow, and now and then a shooting star (dark theme), or soft drifting
+ * The home page sky: tiny stars that fade and glow, and frequent shooting stars (dark theme), or soft drifting
  * golden sparkles (light theme). One small canvas behind everything, about 30 frames a second, paused when the tab
  * is hidden. Battery saver or the device's "reduce motion" setting shows a still sky instead.
  */
@@ -55,7 +55,7 @@
       });
     }
     meteors = [];
-    nextMeteor = performance.now() + rnd(2500, 6000);
+    nextMeteor = performance.now() + rnd(800, 2500);
   }
 
   function meteor() {
@@ -78,7 +78,7 @@
     }
     ctx.globalAlpha = 1;
     if (still || !dark()) return;
-    if (t > nextMeteor) { meteor(); nextMeteor = t + rnd(5000, 12000); }
+    if (t > nextMeteor) { meteor(); if (Math.random() < 0.2) meteor(); nextMeteor = t + rnd(1800, 4500); } // frequent, sometimes two at once
     for (var j = meteors.length - 1; j >= 0; j -= 1) {
       var m = meteors[j];
       m.life += dt;

@@ -335,15 +335,36 @@ function drawResume() {
 drawResume();
 window.addEventListener("pageshow", drawResume);
 
-// a greeting for the time of day on this device (its own clock and time zone; nothing is looked up or sent)
+// a greeting for the time of day on this device (its own clock and time zone; nothing is looked up or sent),
+// with a little extra on Fridays and weekends and on world days that everyone can share
+const WORLD_DAYS = {
+  "1-1": ["🎆", "Happy New Year!"],
+  "3-14": ["🥧", "Happy Pi Day!"], // 3.14
+  "4-22": ["🌍", "Happy Earth Day!"],
+  "4-23": ["📚", "Happy World Book Day!"],
+  "6-1": ["🎈", "Happy Children's Day!"],
+  "6-11": ["🪁", "Happy International Day of Play!"],
+  "10-5": ["🍎", "Happy World Teachers' Day!"],
+  "11-13": ["💛", "Happy World Kindness Day!"],
+  "11-20": ["🧒", "Happy World Children's Day!"],
+  "12-24": ["✨", "Season's greetings!"],
+  "12-25": ["✨", "Season's greetings!"],
+  "12-26": ["✨", "Season's greetings!"],
+  "12-31": ["🎇", "Happy New Year's Eve!"],
+};
+const DAY_EXTRA = { 5: "Happy Friday!", 6: "Happy Saturday!", 0: "Happy Sunday!" };
 function greet() {
   const el = document.getElementById("greet");
   if (!el) return;
-  const h = new Date().getHours();
+  const now = new Date();
+  const h = now.getHours();
   const [emoji, text] = h >= 5 && h < 12 ? ["🌅", "Good morning!"] : h >= 12 && h < 17 ? ["☀️", "Good afternoon!"] : h >= 17 && h < 22 ? ["🌆", "Good evening!"] : ["🌙", "Hello, night owl!"];
-  el.innerHTML = `<span aria-hidden="true">${emoji}</span> ${text}`;
+  const special = WORLD_DAYS[`${now.getMonth() + 1}-${now.getDate()}`];
+  // a world day leads; otherwise the time of day, plus the day's name on Friday to Sunday
+  el.innerHTML = special
+    ? `<span aria-hidden="true">${special[0]}</span> ${special[1]} <small>${text}</small>`
+    : `<span aria-hidden="true">${emoji}</span> ${text}${DAY_EXTRA[now.getDay()] ? ` <small>${DAY_EXTRA[now.getDay()]}</small>` : ""}`;
   el.hidden = false;
 }
 greet();
 setInterval(greet, 60000); // still right if the page is left open past a change
-
