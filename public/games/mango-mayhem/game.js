@@ -18,7 +18,7 @@ const SAVE_KEY = "zone210_mango";
 let prog = { stars: [], best: [] };
 try { prog = { ...prog, ...JSON.parse(localStorage.getItem(SAVE_KEY)) }; } catch (err) { /* storage unavailable */ }
 const saveProg = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(prog)); } catch (err) { /* private mode */ } };
-const unlocked = (i) => i === 0 || (prog.stars[i - 1] || 0) > 0;
+const unlocked = () => true; // every level is open; the menu suggests the next one you have not won yet
 
 /* ---------------------------------------------------------------- sound */
 let soundOn = true;
@@ -585,9 +585,10 @@ $("result").addEventListener("click", (e) => {
   else if (a === "duel") startDuel();
 });
 function showLevels() {
+  const next = LEVELS.findIndex((l, i) => !prog.stars[i]);
   if (isDuel()) return;
   if (coop() && myRole !== 0 && net.active) { setStatus("Your friend chooses the level in a game together."); return; }
-  const parts = WORLDS.map((w, wi) => `<div class="world">${["🏘️", "🧺", "⛰️"][wi]} ${w.name}</div><div class="lvls">${LEVELS.map((l, i) => (l.world === wi ? `<button class="lv" data-i="${i}" ${unlocked(i) ? "" : "disabled"} aria-label="Level ${i + 1}${prog.stars[i] ? `, ${prog.stars[i]} stars` : ""}${unlocked(i) ? "" : ", locked"}">${unlocked(i) ? i + 1 : "🔒"}<small>${"⭐".repeat(prog.stars[i] || 0) || "&nbsp;"}</small></button>` : "")).join("")}</div>`).join("");
+  const parts = WORLDS.map((w, wi) => `<div class="world">${["🏘️", "🧺", "⛰️"][wi]} ${w.name}</div><div class="lvls">${LEVELS.map((l, i) => (l.world === wi ? `<button class="lv${i === next ? " next" : ""}" data-i="${i}" aria-label="Level ${i + 1}${prog.stars[i] ? `, ${prog.stars[i]} stars` : i === next ? ", up next" : ""}">${i + 1}<small>${"⭐".repeat(prog.stars[i] || 0) || "&nbsp;"}</small></button>` : "")).join("")}</div>`).join("");
   const total = prog.stars.reduce((t, s) => t + (s || 0), 0);
   $("menu").innerHTML = `<div class="card"><h2>Choose a level</h2><p>⭐ ${total} of ${LEVELS.length * 3} stars</p>${parts}</div>`;
   $("menu").hidden = false;
