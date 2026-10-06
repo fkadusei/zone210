@@ -11,6 +11,8 @@
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 /games/ananse/audio/*
   Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+/games/abc-123/audio/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
 /games/lab210/img/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 /games/word-craft/enable.txt

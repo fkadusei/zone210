@@ -5,6 +5,7 @@ Makes the narration audio for Ananse Stories with the open-source Kokoro voices.
   python generate.py texts.json ../../public/games/ananse/audio            # all voices, only what changed
   python generate.py texts.json OUTDIR --voices bf_emma --only ananse      # a few clips
   python generate.py texts.json OUTDIR --oov                               # list words Kokoro does not know
+  python generate.py texts.json OUTDIR --trim                              # cut silence around each clip (ABC & 123)
 
 Needs Python 3.12 with: pip install kokoro soundfile   (the macOS command afconvert makes the small .m4a files).
 Names (see pron.js) are given to Kokoro as explicit phonemes. Clips are only remade when the text, the
@@ -35,6 +36,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("texts"); ap.add_argument("out")
     ap.add_argument("--voices", default=",".join(VOICES)); ap.add_argument("--only", default=""); ap.add_argument("--oov", action="store_true")
+    ap.add_argument("--trim", action="store_true", help="cut the silence before and after each clip (short words, counting)")
     a = ap.parse_args()
     data = json.load(open(a.texts)); pron = data["pron"]; clips = data["clips"]
     if a.oov:
@@ -55,12 +57,15 @@ def main():
         for key, text in clips.items():
             if a.only and not key.startswith(a.only): continue
             ready = speakable(text, pron, VOICES[voice] == "b")
-            h = hashlib.sha1(f"{voice}|{ready}".encode()).hexdigest()[:12]
+            h = hashlib.sha1(f"{voice}|{ready}{'|trim' if a.trim else ''}".encode()).hexdigest()[:12]
             dst = os.path.join(a.out, voice, key + ".m4a")
             if done.get(key) == h and os.path.exists(dst): continue
             audio = [x for _, _, x in pipe(ready, voice=voice, speed=0.92)]
             if not audio: print("NO AUDIO", voice, key); continue
             wav = np.concatenate([x.numpy() if hasattr(x, "numpy") else x for x in audio])
+            if a.trim:
+                loud = np.where(np.abs(wav) > np.abs(wav).max() * 0.03)[0]
+                if len(loud): wav = wav[max(0, loud[0] - 1200):loud[-1] + 3000]  # keep 50 ms before, 125 ms after
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             with tempfile.TemporaryDirectory() as tmp:
                 w = os.path.join(tmp, "c.wav"); sf.write(w, wav, 24000)
