@@ -20,6 +20,7 @@ const hue = (i) => COLORS[i % COLORS.length];
 
 // ---------- the voice: recorded clips, or the device's voice if a clip is missing ----------
 const VOICE = "af_heart";
+const CLIPS_V = 2; // raise when the clips are re-recorded, so phones do not keep playing cached old ones
 let have = null;
 fetch("audio/index.json").then((r) => r.json()).then((j) => { have = new Set(j[VOICE] || []); }).catch(() => { have = new Set(); });
 const player = new Audio();
@@ -30,8 +31,8 @@ function speak(k, done) {
   if (!text || !window.speechSynthesis) { done(); return; }
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "en-US";
-  u.rate = 0.88;
-  u.pitch = 1.1;
+  u.rate = 0.78;
+  u.pitch = 1.05;
   u.onend = done;
   u.onerror = done;
   speechSynthesis.speak(u);
@@ -39,11 +40,11 @@ function speak(k, done) {
 function play(k, done) {
   let over = false;
   const fin = () => { if (!over) { over = true; done(); } };
-  setTimeout(fin, 7000); // never get stuck on a clip that does not end
+  setTimeout(fin, 9000); // never get stuck on a clip that does not end
   if (have && have.has(k)) {
     player.onended = fin;
     player.onerror = () => speak(k, fin);
-    player.src = `audio/${VOICE}/${k}.m4a`;
+    player.src = `audio/${VOICE}/${k}.m4a?v=${CLIPS_V}`;
     player.play().catch(() => speak(k, fin));
   } else speak(k, fin);
 }
@@ -60,8 +61,8 @@ function say(items, then) {
     if (!it) { if (then) then(); return; }
     if (it.on) it.on();
     if (!it.k) { step(); return; }
-    if (data.muted) { setTimeout(step, 550); return; }
-    play(it.k, () => setTimeout(step, it.gap ?? 80));
+    if (data.muted) { setTimeout(step, 800); return; }
+    play(it.k, () => setTimeout(step, it.gap ?? 320));
   };
   step();
 }
@@ -119,7 +120,7 @@ function viewABC() {
   $("parade").addEventListener("click", () => {
     const tiles = [...view.querySelectorAll(".tile")];
     const lit = (i) => { tiles.forEach((t) => t.classList.remove("lit")); if (tiles[i]) { tiles[i].classList.add("lit"); if (!calm()) tiles[i].scrollIntoView({ block: "nearest" }); } };
-    say(["p/abc", ...LETTERS.map((x, i) => ({ k: `l/${lc(x.L)}`, on: () => lit(i), gap: 40 })), { on: () => lit(-1) }], () => { ding(); burst(); });
+    say(["p/abc", ...LETTERS.map((x, i) => ({ k: `l/${lc(x.L)}`, on: () => lit(i), gap: 220 })), { on: () => lit(-1) }], () => { ding(); burst(); });
   });
 }
 function letterCard(i) {
@@ -173,7 +174,7 @@ function numberCard(n) {
   const count = () => {
     dots.forEach((d) => d.classList.remove("lit"));
     if (!n) { say(["n/0"]); return; }
-    say(["p/count", ...dots.map((d, k) => ({ k: `n/${k + 1}`, on: () => d.classList.add("lit"), gap: 120 }))], () => { ding(); });
+    say(["p/count", ...dots.map((d, k) => ({ k: `n/${k + 1}`, on: () => d.classList.add("lit"), gap: 420 }))], () => { ding(); });
   };
   $("hear").addEventListener("click", count);
   $("prev").addEventListener("click", () => numberCard((n + 20) % 21));
@@ -255,7 +256,7 @@ function answer(b) {
   if (Q.kind === "count") {
     // count them together, then praise
     const dots = [...view.querySelectorAll(".dot.on")];
-    say([...dots.map((d, k) => ({ k: `n/${k + 1}`, on: () => d.classList.add("lit"), gap: 60 })), praise()], go);
+    say([...dots.map((d, k) => ({ k: `n/${k + 1}`, on: () => d.classList.add("lit"), gap: 380 })), praise()], go);
   } else if (Q.kind === "match") say([`l/${lc(LETTERS[Q.target].L)}`, praise()], go);
   else say([praise()], go);
 }
