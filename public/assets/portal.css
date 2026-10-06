@@ -305,3 +305,6 @@ html[data-saver="on"] .fav-btn { transition: none; }
 
 /* keep the headline on one line on a phone */
 @media (max-width: 480px) { .hero h1 { font-size: clamp(1.6rem, 8.2vw, 2.4rem); letter-spacing: -0.03em; } }
+
+/* the home page sky (assets/sky.js): behind everything, never in the way of taps */
+.sky { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
