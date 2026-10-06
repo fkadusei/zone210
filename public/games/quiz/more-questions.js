@@ -395,29 +395,7 @@ d|Twi belongs to which language family?|Niger–Congo|Afroasiatic|Nilo-Saharan|K
 `,
 };
 
-const EXTRA_GHANA_AFRICA = {
-  Ghana: `
-k|What is the name of Ghana's national football team?|The Black Stars|The Super Eagles|The Lions|The Pharaohs
-k|Which colour is at the top of Ghana's flag?|Red|Green|Gold|Blue
-k|Which colour is at the bottom of Ghana's flag?|Green|Red|Blue|White
-k|What is the name of the famous Ghanaian cloth woven in bright colours?|Kente|Denim|Wool|Silk
-k|Which meal is made by pounding cassava and plantain?|Fufu|Pizza|Pasta|Noodles
-k|Which city is Ghana's capital?|Accra|Kumasi|Tamale|Ho
-k|What does "Medaase" mean in Twi?|Thank you|Good morning|Goodbye|Please
-k|What is the popular street food of fried plantain and pepper?|Kelewele|Burger|Hot dog|Pizza
-k|Which ocean lies south of Ghana?|The Atlantic Ocean|The Indian Ocean|The Arctic Ocean|The Pacific Ocean
-k|Which dish is rice cooked in a spicy tomato stew?|Jollof rice|Banku|Kenkey|Fufu
-k|Banku is mainly made from…|Fermented corn and cassava dough|Wheat|Potatoes|Rice
-k|Which language do many people in Ashanti speak?|Twi|Ga|Ewe|Hausa
-a|Which port city near Accra is Ghana's main harbour?|Tema|Takoradi|Cape Coast|Sekondi
-a|Which footballer won African Footballer of the Year three times in the 1990s?|Abedi Pele|Michael Essien|Asamoah Gyan|Samuel Eto'o
-a|Which people celebrate the Hogbetsotso festival?|The Anlo-Ewe|The Ga|The Ashanti|The Dagomba
-a|The king of the Ashanti is called the…|Asantehene|Ooni|Kabaka|Oba
-d|Who wrote the novel Our Sister Killjoy?|Ama Ata Aidoo|Ayi Kwei Armah|Efua Sutherland|Kofi Awoonor
-d|What is the sacred golden symbol of the Ashanti nation?|The Golden Stool|The Golden Sword|The Golden Drum|The Golden Crown
-d|In which year did Ghana become a republic?|1960|1957|1966|1979
-d|Who wrote The Beautyful Ones Are Not Yet Born?|Ayi Kwei Armah|Chinua Achebe|Ngũgĩ wa Thiong'o|Wole Soyinka
-`,
+const EXTRA_AFRICA = {
   Africa: `
 k|Which animal is the largest on land and lives in Africa?|African elephant|Rhino|Hippo|Giraffe
 k|Which African animal has a very long neck?|Giraffe|Zebra|Lion|Hyena
@@ -465,6 +443,6 @@ function parse(raw, topic) {
 
 export const MORE_QUESTIONS = [
   ...Object.entries(RAW).flatMap(([topic, raw]) => parse(raw, topic)),
-  ...Object.entries(EXTRA_GHANA_AFRICA).flatMap(([topic, raw]) => parse(raw, topic)),
+  ...Object.entries(EXTRA_AFRICA).flatMap(([topic, raw]) => parse(raw, topic)),
 ];
-export const TOPICS = ["Ghana", "Africa", "World", ...Object.keys(RAW)];
+export const TOPICS = ["Africa", "World", ...Object.keys(RAW)];

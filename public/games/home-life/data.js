@@ -1,5 +1,5 @@
 /**
- * Compound Life data: the two homes (a modern city apartment or a Ghanaian compound house), furniture, jobs and actions.
+ * Home Life data: the two homes (a modern city apartment or a suburban family house), furniture, jobs and actions.
  * The house is a grid of 20 x 14 tiles. Rooms are rectangles carved out of solid wall; doors are single tiles.
  */
 export const COLS = 20;
@@ -13,7 +13,7 @@ export const FLOORS = {
   t: { walk: true, a: "#e6e9ef", b: "#d6dae3" }, // kitchen tiles
   b: { walk: true, a: "#cfe6f2", b: "#b7d6e8" }, // bathroom tiles
   c: { walk: true, a: "#c9c2b6", b: "#bdb5a8" }, // concrete courtyard
-  k: { walk: true, a: "#b9a48a", b: "#ab967b" }, // compound kitchen floor
+  k: { walk: true, a: "#b9a48a", b: "#ab967b" }, // stone floor
   g: { walk: true, a: "#79c05f", b: "#6cb153" }, // grass
   s: { walk: true, a: "#9a9aa6", b: "#8d8d99" }, // pavement outside
   D: { walk: true, a: "#8a6a48", b: "#8a6a48" }, // doorway
@@ -48,32 +48,32 @@ export const SETTINGS = {
     ],
     jobs: ["office", "nurse", "developer", "cashier", "teacher", "driver"],
   },
-  compound: {
-    name: "Ghanaian compound house",
-    blurb: "Rooms around a sunny courtyard, with a mango tree, a coal pot kitchen and a yard for football.",
-    money: 1600,
-    bills: 45,
+  suburb: {
+    name: "Suburban family house",
+    blurb: "A family house with three bedrooms, a big kitchen and a front lawn with a barbecue and an apple tree.",
+    money: 2000,
+    bills: 70,
     grid: carve(
-      [[1, 1, 6, 3, "w"], [8, 1, 4, 3, "w"], [13, 1, 6, 3, "w"], [3, 5, 13, 6, "c"], [1, 6, 2, 4, "k"], [17, 6, 2, 3, "b"], [1, 11, 18, 2, "g"]],
-      [[3, 4], [9, 4], [15, 4], [16, 7], [9, 13]],
+      [[1, 1, 6, 4, "w"], [8, 1, 5, 4, "w"], [14, 1, 5, 4, "b"], [1, 6, 9, 4, "o"], [11, 6, 8, 4, "t"], [1, 11, 18, 2, "g"]],
+      [[3, 5], [9, 5], [15, 5], [10, 7], [5, 10]],
+      Array.from({ length: COLS }, (_, i) => [i, 13, "s"]),
     ),
-    exit: [9, 13],
+    exit: [5, 13],
     furniture: [
-      ["sofa", 1, 1], ["tv", 4, 1], ["radio", 6, 3],
-      ["dbed", 8, 1], ["wardrobe", 11, 1],
-      ["bed", 13, 1], ["bed", 15, 1], ["desk", 17, 1],
-      ["coalpot", 1, 6], ["cupboard", 2, 6], ["barrel", 1, 9],
-      ["ptable", 8, 7], ["pchair", 7, 7], ["pchair", 10, 7], ["bench", 5, 9], ["mango", 12, 5], ["tank", 15, 9], ["line", 5, 5],
-      ["bucket", 17, 6], ["toilet", 18, 8],
-      ["goal", 2, 11], ["plant", 18, 11], ["plant", 1, 12],
+      ["dbed", 1, 1], ["lamp", 3, 1], ["wardrobe", 6, 1],
+      ["bed", 8, 1], ["desk", 10, 1], ["bed", 12, 1],
+      ["toilet", 14, 1], ["bsink", 16, 1], ["shower", 18, 1],
+      ["bookshelf", 1, 6], ["tv", 6, 6], ["sofa", 6, 8], ["computer", 2, 9], ["radio", 1, 9], ["plant", 9, 9],
+      ["fridge", 12, 6], ["counter", 13, 6], ["stove", 16, 6], ["sink", 17, 6], ["table", 13, 8], ["chair", 12, 8], ["chair", 15, 8],
+      ["grill", 2, 11], ["pchair", 6, 11], ["ptable", 7, 11], ["pchair", 9, 11], ["goal", 11, 12], ["apple", 14, 11], ["bench", 16, 11], ["plant", 18, 12],
     ],
-    jobs: ["trader", "teacher", "tailor", "farmer", "trotro", "nurse"],
+    jobs: ["office", "nurse", "teacher", "chef", "mechanic", "artist"],
   },
 };
 
 /**
  * Furniture. w/h in tiles; walk = people can walk over it (rugs); acts = what people can do with it;
- * where: "both" | "city" | "compound" (what the shop sells in each home).
+ * where: "both" | "city" | "suburb" (what the shop sells in each home).
  */
 export const ITEMS = {
   bed: { name: "Single bed", cat: "Bedroom", w: 1, h: 2, price: 300, acts: ["sleep", "nap"], where: "both" },
@@ -95,24 +95,20 @@ export const ITEMS = {
   weights: { name: "Exercise set", cat: "Fun", w: 2, h: 1, price: 300, acts: ["workout"], where: "both" },
   goal: { name: "Football goal", cat: "Fun", w: 2, h: 1, price: 200, acts: ["football"], where: "both" },
   fridge: { name: "Fridge", cat: "Kitchen", w: 1, h: 1, price: 480, acts: ["snack", "cook"], where: "both" },
-  counter: { name: "Kitchen counter", cat: "Kitchen", w: 2, h: 1, price: 200, acts: [], where: "city" },
-  stove: { name: "Cooker", cat: "Kitchen", w: 1, h: 1, price: 380, acts: ["cook"], where: "city" },
-  sink: { name: "Kitchen sink", cat: "Kitchen", w: 1, h: 1, price: 150, acts: ["dishes"], where: "city" },
-  coalpot: { name: "Coal pot", cat: "Kitchen", w: 1, h: 1, price: 60, acts: ["cook"], where: "compound" },
-  cupboard: { name: "Food cupboard", cat: "Kitchen", w: 1, h: 1, price: 140, acts: ["snack"], where: "compound" },
-  barrel: { name: "Water barrel", cat: "Kitchen", w: 1, h: 1, price: 70, acts: ["dishes"], where: "compound" },
-  table: { name: "Dining table", cat: "Kitchen", w: 2, h: 1, price: 220, acts: [], where: "city" },
-  chair: { name: "Dining chair", cat: "Kitchen", w: 1, h: 1, price: 55, acts: [], where: "city" },
-  ptable: { name: "Plastic table", cat: "Kitchen", w: 2, h: 1, price: 60, acts: [], where: "compound" },
-  pchair: { name: "Plastic chair", cat: "Living", w: 1, h: 1, price: 15, acts: ["relax"], where: "compound" },
-  bench: { name: "Wooden bench", cat: "Living", w: 2, h: 1, price: 75, acts: ["relax"], where: "compound" },
-  mango: { name: "Mango tree", cat: "Outdoor", w: 2, h: 2, price: 120, acts: ["pick", "shade"], where: "compound" },
-  tank: { name: "Water tank", cat: "Outdoor", w: 1, h: 1, price: 320, acts: [], where: "compound" },
-  line: { name: "Clothes line", cat: "Outdoor", w: 3, h: 1, price: 30, acts: ["laundry"], where: "compound" },
+  counter: { name: "Kitchen counter", cat: "Kitchen", w: 2, h: 1, price: 200, acts: [], where: "both" },
+  stove: { name: "Cooker", cat: "Kitchen", w: 1, h: 1, price: 380, acts: ["cook"], where: "both" },
+  sink: { name: "Kitchen sink", cat: "Kitchen", w: 1, h: 1, price: 150, acts: ["dishes"], where: "both" },
+  table: { name: "Dining table", cat: "Kitchen", w: 2, h: 1, price: 220, acts: [], where: "both" },
+  chair: { name: "Dining chair", cat: "Kitchen", w: 1, h: 1, price: 55, acts: [], where: "both" },
+  ptable: { name: "Patio table", cat: "Outdoor", w: 2, h: 1, price: 90, acts: [], where: "suburb" },
+  pchair: { name: "Patio chair", cat: "Outdoor", w: 1, h: 1, price: 25, acts: ["relax"], where: "suburb" },
+  grill: { name: "Barbecue grill", cat: "Outdoor", w: 1, h: 1, price: 250, acts: ["cook"], where: "suburb" },
+  apple: { name: "Apple tree", cat: "Outdoor", w: 2, h: 2, price: 120, acts: ["pick", "shade"], where: "suburb" },
+  bench: { name: "Garden bench", cat: "Outdoor", w: 2, h: 1, price: 75, acts: ["relax"], where: "suburb" },
+  line: { name: "Clothes line", cat: "Outdoor", w: 3, h: 1, price: 30, acts: ["laundry"], where: "suburb" },
   toilet: { name: "Toilet", cat: "Bathroom", w: 1, h: 1, price: 260, acts: ["toilet"], where: "both" },
-  bsink: { name: "Bathroom sink", cat: "Bathroom", w: 1, h: 1, price: 140, acts: ["wash"], where: "city" },
-  shower: { name: "Shower", cat: "Bathroom", w: 1, h: 1, price: 420, acts: ["shower"], where: "city" },
-  bucket: { name: "Bucket bath", cat: "Bathroom", w: 1, h: 1, price: 45, acts: ["shower"], where: "compound" },
+  bsink: { name: "Bathroom sink", cat: "Bathroom", w: 1, h: 1, price: 140, acts: ["wash"], where: "both" },
+  shower: { name: "Shower", cat: "Bathroom", w: 1, h: 1, price: 420, acts: ["shower"], where: "both" },
 };
 
 export const NEEDS = ["hunger", "energy", "fun", "hygiene", "social", "bladder"];
@@ -146,9 +142,9 @@ export const ACTIONS = {
   jobsearch: { label: "Look for a job", icon: "💼", need: { fun: -0.02 }, mins: 30, adults: true, jobsearch: true },
   fish: { label: "Watch the fish", icon: "🐠", need: { fun: 0.5, energy: 0.03 }, mins: 30 },
   piano: { label: "Play the piano", icon: "🎹", need: { fun: 0.9 }, mins: 45, skill: "music" },
-  workout: { label: "Work out", icon: "🏋🏾", need: { fun: 0.3, energy: -0.2, hygiene: -0.2 }, mins: 45, skill: "fitness" },
+  workout: { label: "Work out", icon: "🏋", need: { fun: 0.3, energy: -0.2, hygiene: -0.2 }, mins: 45, skill: "fitness" },
   football: { label: "Play football", icon: "⚽", need: { fun: 1.2, energy: -0.25, hygiene: -0.15, social: 0.2 }, mins: 50, skill: "fitness" },
-  pick: { label: "Pick mangoes", icon: "🥭", need: { fun: 0.3 }, mins: 15, mango: true },
+  pick: { label: "Pick apples", icon: "🍎", need: { fun: 0.3 }, mins: 15, mango: true },
   shade: { label: "Rest in the shade", icon: "🌳", need: { energy: 0.12, fun: 0.25 }, mins: 40 },
   laundry: { label: "Hang the laundry", icon: "👕", need: { fun: -0.04 }, mins: 25, chore: true },
   water: { label: "Water the plant", icon: "💧", need: { fun: 0.25 }, mins: 6 },
@@ -167,15 +163,14 @@ export const JOBS = {
   cashier: { name: "Supermarket", start: 10, end: 18, titles: ["Cashier", "Shift lead", "Supervisor", "Store manager"], pay: [110, 150, 210, 300] },
   teacher: { name: "Teacher", start: 7, end: 14, titles: ["Teaching assistant", "Teacher", "Head of year", "Head teacher"], pay: [130, 180, 240, 320] },
   driver: { name: "Taxi driver", start: 6, end: 14, titles: ["Learner driver", "Driver", "Senior driver", "Fleet owner"], pay: [120, 170, 230, 340] },
-  trader: { name: "Market trader", start: 6, end: 14, titles: ["Hawker", "Stall keeper", "Wholesaler", "Market queen"], pay: [90, 140, 210, 320] },
-  tailor: { name: "Tailor", start: 8, end: 16, titles: ["Apprentice", "Tailor", "Master tailor", "Fashion house owner"], pay: [80, 130, 200, 300] },
-  farmer: { name: "Farmer", start: 6, end: 13, titles: ["Farm hand", "Farmer", "Cocoa farmer", "Plantation owner"], pay: [80, 120, 180, 260] },
-  trotro: { name: "Trotro driver", start: 5, end: 13, titles: ["Mate", "Trotro driver", "Senior driver", "Station master"], pay: [90, 130, 190, 270] },
+  chef: { name: "Chef", start: 10, end: 18, titles: ["Kitchen helper", "Line cook", "Sous chef", "Head chef"], pay: [120, 170, 240, 340] },
+  mechanic: { name: "Mechanic", start: 8, end: 16, titles: ["Apprentice", "Mechanic", "Senior mechanic", "Garage owner"], pay: [110, 160, 230, 320] },
+  artist: { name: "Artist", start: 9, end: 17, titles: ["Art student", "Illustrator", "Designer", "Creative director"], pay: [100, 160, 250, 380] },
 };
 export const SCHOOL = { start: 7.5, end: 14 };
 export const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-export const SKINS = ["#8d5524", "#6b3e1f", "#4a2a14", "#3a1f0d", "#c68642"];
+export const SKINS = ["#fbe0c8", "#eec3a0", "#d9a273", "#c68642", "#9c6436", "#6b3e1f", "#3a1f0d"]; // light to dark: every family can look like itself
 export const HAIRS = ["short", "afro", "puffs", "braids", "bun", "bald"];
 export const OUTFITS = ["#e5484d", "#3b82f6", "#2fb36d", "#f5a623", "#8a5ce0", "#ec6aa0", "#14b8a6", "#f2f2f2"];
-export const NAMES = { adult: ["Kwame", "Ama", "Kofi", "Akosua", "Yaw", "Abena", "Kwesi", "Efua"], child: ["Kojo", "Adwoa", "Kwabena", "Esi", "Fiifi", "Afia"] };
+export const NAMES = { adult: ["Alex", "Maya", "Sam", "Leo", "Zara", "Omar", "Mei", "Lucas", "Priya", "Noah", "Aisha", "Kofi", "Ama", "Elena", "Ravi", "Sofia"], child: ["Kai", "Lily", "Ben", "Nia", "Mateo", "Hana", "Finn", "Amara", "Yuki", "Ezra"] };

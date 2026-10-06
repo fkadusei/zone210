@@ -1,6 +1,6 @@
 import * as p2p from "../../assets/p2p.js";
 
-// ---------- rules: Dame (Ghanaian draughts, 8x8) ----------
+// ---------- rules: Dame (draughts with flying kings, 8x8) ----------
 // board: 64 cells, index = row * 8 + col. null | "l" | "L" | "d" | "D" (capital = king)
 // Light ("l") starts at the bottom and moves up; dark ("d") starts at the top and moves down.
 // Men step one square diagonally forward and capture in ALL four directions.
@@ -626,7 +626,7 @@ mute.addEventListener("click", () => {
 // ---------- online play (peer to peer, no game server) ----------
 const PREFIX = "zone210-dame-";
 const ROOM_KEY = "zone210_dame_room"; // sessionStorage: lets a reload rejoin the same game
-const REACTS = ["👏🏿", "😮", "😂", "🔥", "🤝", "😅", "🤔", "❤️"];
+const REACTS = ["👏", "😮", "😂", "🔥", "🤝", "😅", "🤔", "❤️"];
 let inbox = [];
 let reconnecting = false;
 

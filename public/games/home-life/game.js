@@ -62,13 +62,13 @@ function showStart() {
   H = null;
   $("play").hidden = true;
   $("start").hidden = false;
-  if (!draft) draft = { setting: saves.last || "compound", people: [], step: "home" };
+  if (!draft) draft = { setting: SETTINGS[saves.last] ? saves.last : "suburb", people: [], step: "home" };
   if (!draft.people.length) { const taken = []; [["adult", 0], ["adult", 1], ["child", 2]].forEach(([a, i]) => { const p = randomPerson(a, i, taken); taken.push(p.name); draft.people.push(p); }); }
-  ["city", "compound"].forEach((s) => { if (!previews[s]) previews[s] = housePreview(s); });
+  ["city", "suburb"].forEach((s) => { if (!previews[s]) previews[s] = housePreview(s); });
   if (draft.step === "home") {
-    $("start").innerHTML = `<h2>Choose a home</h2><div class="choices">${["compound", "city"].map((s) => {
-      const sv = saves[s];
-      return `<button class="home-card" data-home="${s}" aria-pressed="${draft.setting === s}"><img src="${previews[s]}" alt=""><b>${s === "city" ? "🏙️" : "🏘️"} ${SETTINGS[s].name}</b><span>${SETTINGS[s].blurb} Starting money ₵${SETTINGS[s].money.toLocaleString()}.</span>${sv ? `<span class="cont">Saved family: ${esc(sv.people.map((p) => p.name).join(", "))} · Day ${sv.day - 4}</span>` : ""}</button>`;
+    $("start").innerHTML = `<h2>Choose a home</h2><div class="choices">${["suburb", "city"].map((s) => {
+      const sv = saves[s] && SETTINGS[saves[s].setting] ? saves[s] : null;
+      return `<button class="home-card" data-home="${s}" aria-pressed="${draft.setting === s}"><img src="${previews[s]}" alt=""><b>${s === "city" ? "🏙️" : "🏡"} ${SETTINGS[s].name}</b><span>${SETTINGS[s].blurb} Starting money $${SETTINGS[s].money.toLocaleString()}.</span>${sv ? `<span class="cont">Saved family: ${esc(sv.people.map((p) => p.name).join(", "))} · Day ${sv.day - 4}</span>` : ""}</button>`;
     }).join("")}</div>
     <div class="row">${saves[draft.setting] ? '<button class="g-btn" data-act="continue">▶ Continue this family</button><button class="g-btn ghost" data-act="family">Start a new family here</button>' : '<button class="g-btn" data-act="family">Next: create your family ▶</button>'}</div>`;
     return;
@@ -83,7 +83,7 @@ function showStart() {
         <div class="row"><span class="lbl">Skin</span>${SKINS.map((s) => `<button class="sw" style="background:${s}" data-f="skin" data-v="${s}" aria-pressed="${p.skin === s}" aria-label="Skin tone"></button>`).join("")}</div>
         <div class="row"><span class="lbl">Hair</span>${HAIRS.map((h) => `<button class="mini" data-f="hair" data-v="${h}" aria-pressed="${p.hair === h}">${{ short: "Short", afro: "Afro", puffs: "Puffs", braids: "Braids", bun: "Bun", bald: "Bald" }[h]}</button>`).join("")}</div>
         <div class="row"><span class="lbl">Clothes</span>${OUTFITS.map((o) => `<button class="sw" style="background:${o}" data-f="outfit" data-v="${o}" aria-pressed="${p.outfit === o}" aria-label="Clothes colour"></button>`).join("")}</div>
-        ${p.age === "adult" ? `<div class="row"><span class="lbl">Job</span><select data-f="job" aria-label="Job"><option value="">No job yet (find one later)</option>${SETTINGS[draft.setting].jobs.map((j) => `<option value="${j}" ${p.job === j ? "selected" : ""}>${JOBS[j].titles[0]} · ${JOBS[j].start}:00–${JOBS[j].end}:00 · ₵${JOBS[j].pay[0]}/day</option>`).join("")}</select></div>` : '<div class="facts">Goes to school on weekdays.</div>'}
+        ${p.age === "adult" ? `<div class="row"><span class="lbl">Job</span><select data-f="job" aria-label="Job"><option value="">No job yet (find one later)</option>${SETTINGS[draft.setting].jobs.map((j) => `<option value="${j}" ${p.job === j ? "selected" : ""}>${JOBS[j].titles[0]} · ${JOBS[j].start}:00–${JOBS[j].end}:00 · $${JOBS[j].pay[0]}/day</option>`).join("")}</select></div>` : '<div class="facts">Goes to school on weekdays.</div>'}
       </div>
       ${draft.people.length > 1 ? `<button class="mini" data-act="remove" aria-label="Remove ${esc(p.name)}">✕</button>` : "<span></span>"}
     </div>`).join("")}</div>
@@ -176,18 +176,18 @@ $("family").addEventListener("click", (e) => { const b = e.target.closest(".fam"
 const barColor = (v) => (v > 60 ? "#2fb36d" : v > 30 ? "#f5a623" : "#e5484d");
 function drawPanels() {
   if (!H) return;
-  $("money").textContent = `₵${Math.round(H.money).toLocaleString()}`;
+  $("money").textContent = `$${Math.round(H.money).toLocaleString()}`;
   $("money").classList.toggle("debt", H.money < 0);
   $("clock").textContent = `Day ${H.day - 4} · ${timeText(H)}`;
   const p = person(selected);
   if (p && mode === "live") {
-    const job = p.age === "adult" ? (p.job ? `${JOBS[p.job].titles[p.level]} (${JOBS[p.job].start}:00–${JOBS[p.job].end}:00, ₵${JOBS[p.job].pay[p.level]}/day) · performance ${Math.max(0, Math.round(p.perf))}%` : "No job yet: look for work on the phone or computer.") : `School grade: <b>${gradeLetter(p.grade)}</b> (homework helps)`;
+    const job = p.age === "adult" ? (p.job ? `${JOBS[p.job].titles[p.level]} (${JOBS[p.job].start}:00–${JOBS[p.job].end}:00, $${JOBS[p.job].pay[p.level]}/day) · performance ${Math.max(0, Math.round(p.perf))}%` : "No job yet: look for work on the phone or computer.") : `School grade: <b>${gradeLetter(p.grade)}</b> (homework helps)`;
     const skills = Object.entries(p.skills).filter(([, v]) => v >= 0.5).map(([k, v]) => `${k} ${v.toFixed(1)}`).join(", ") || "none yet";
     setHTML($("person"), `<h3>${esc(p.name)} · ${statusOf(H, p)}</h3>
       <div class="needs">${NEEDS.map((n) => `<div class="need" title="${NEED_LABEL[n]}"><span>${NEED_ICON[n]}</span><span><span class="bar"><i data-n="${n}"></i></span></span></div>`).join("")}</div>
-      <div class="facts">${job}<br>Skills: ${skills}${H.mangoes ? ` · 🥭 ${H.mangoes} mangoes in the house` : ""}</div>
+      <div class="facts">${job}<br>Skills: ${skills}${H.mangoes ? ` · 🍎 ${H.mangoes} apples in the house` : ""}</div>
       <div class="queue">${p.act && p.act.type !== "leave" && ACTIONS[p.act.type] ? `<span class="mini" aria-pressed="true">${ACTIONS[p.act.type].icon} ${ACTIONS[p.act.type].label}</span>` : ""}${p.queue.map((q, i) => (ACTIONS[q.type] ? `<button class="mini" data-cancel="${i}">${ACTIONS[q.type].icon} ${ACTIONS[q.type].label} ✕</button>` : "")).join("")}</div>
-      <div class="row" style="margin-top:8px"><button class="mini" data-do="phone">📱 Call a friend</button>${H.mangoes ? '<button class="mini" data-do="mangosnack">🥭 Eat a mango</button>' : ""}${p.age === "adult" && !p.job ? '<button class="mini" data-do="findwork">💼 Look for work</button>' : ""}<button class="mini" data-do="stop">✋ Stop</button></div>
+      <div class="row" style="margin-top:8px"><button class="mini" data-do="phone">📱 Call a friend</button>${H.mangoes ? '<button class="mini" data-do="mangosnack">🍎 Eat an apple</button>' : ""}${p.age === "adult" && !p.job ? '<button class="mini" data-do="findwork">💼 Look for work</button>' : ""}<button class="mini" data-do="stop">✋ Stop</button></div>
       <label class="toggle"><input type="checkbox" id="fw" ${H.freeWill ? "checked" : ""}> Free will (people look after themselves)</label>`);
     $("person").querySelectorAll("[data-n]").forEach((i) => { const v = p.needs[i.dataset.n]; i.style.width = `${Math.round(v)}%`; i.style.background = barColor(v); });
   }
@@ -216,12 +216,12 @@ function drawShop() {
   const avail = Object.entries(ITEMS).filter(([, it]) => it.where === "both" || it.where === H.setting);
   const cats = [...new Set(avail.map(([, it]) => it.cat))];
   if (!cats.includes(shopCat)) shopCat = cats[0];
-  $("shop").innerHTML = `<h3>Buy furniture · ₵${Math.round(H.money).toLocaleString()}</h3><p class="facts">Tap an item, then tap the floor to place it. Tap something you own to move or sell it.</p>
+  $("shop").innerHTML = `<h3>Buy furniture · $${Math.round(H.money).toLocaleString()}</h3><p class="facts">Tap an item, then tap the floor to place it. Tap something you own to move or sell it.</p>
     <div class="cats">${cats.map((c) => `<button class="mini" data-cat="${c}" aria-pressed="${c === shopCat}">${c}</button>`).join("")}</div>
     <div class="items">${avail.filter(([, it]) => it.cat === shopCat).map(([id, it]) => {
       const key = `${id}:${H.setting}`;
       if (!previewCache.has(key)) previewCache.set(key, itemPreview(id, H.setting));
-      return `<button class="item" data-buy="${id}" aria-pressed="${placing && placing.id === id}" ${H.money < it.price ? "disabled" : ""}><img src="${previewCache.get(key)}" alt="">${it.name}<small>₵${it.price}</small></button>`;
+      return `<button class="item" data-buy="${id}" aria-pressed="${placing && placing.id === id}" ${H.money < it.price ? "disabled" : ""}><img src="${previewCache.get(key)}" alt="">${it.name}<small>$${it.price}</small></button>`;
     }).join("")}</div>`;
 }
 $("shop").addEventListener("click", (e) => {
@@ -264,12 +264,12 @@ cv.addEventListener("click", (e) => {
       const gx = Math.max(0, Math.min(w.tx, 20 - it.w));
       const gy = Math.max(0, Math.min(w.ty, 14 - it.h));
       const ok = placing.uid ? move(H, placing.uid, gx, gy) : buy(H, id, gx, gy);
-      if (ok) { sfx.cash(); toast(placing.uid ? `Moved the ${it.name.toLowerCase()}.` : `Bought a ${it.name.toLowerCase()} for ₵${it.price}.`); placing = null; ghost = null; drawShop(); }
+      if (ok) { sfx.cash(); toast(placing.uid ? `Moved the ${it.name.toLowerCase()}.` : `Bought a ${it.name.toLowerCase()} for $${it.price}.`); placing = null; ghost = null; drawShop(); }
       else { sfx.no(); toast(H.money < it.price && !placing.uid ? "Not enough money." : "It doesn't fit there (and doorways must stay clear)."); }
       return;
     }
     const f = itemAt(H, w.tx, w.ty);
-    if (f) showMenu(w, ITEMS[f.id].name, [{ label: "✋ Move it", go: () => { placing = { uid: f.uid }; toast("Tap where it should go."); } }, { label: `💰 Sell for ₵${Math.floor(ITEMS[f.id].price / 2)}`, go: () => { const back = sell(H, f.uid); sfx.cash(); toast(`Sold for ₵${back}.`); drawShop(); } }]);
+    if (f) showMenu(w, ITEMS[f.id].name, [{ label: "✋ Move it", go: () => { placing = { uid: f.uid }; toast("Tap where it should go."); } }, { label: `💰 Sell for $${Math.floor(ITEMS[f.id].price / 2)}`, go: () => { const back = sell(H, f.uid); sfx.cash(); toast(`Sold for $${back}.`); drawShop(); } }]);
     return;
   }
   // live mode
@@ -349,7 +349,7 @@ function loop(now) {
   if (away) { if (visit.VH) drawScene(ctx, visit.VH, { t: now, selected: VISITOR_ID }); else { ctx.fillStyle = "#1a2040"; ctx.fillRect(0, 0, WIDTH, HEIGHT); ctx.fillStyle = "#fff"; ctx.font = "bold 28px system-ui"; ctx.textAlign = "center"; ctx.fillText("Walking over to your friend's house…", WIDTH / 2, HEIGHT / 2); ctx.textAlign = "left"; } }
   else drawScene(ctx, H, { t: now, selected, ghost: mode === "buy" && placing ? ghost : null, moving: placing && placing.uid });
   panelT += dt;
-  if (panelT > 0.4) { panelT = 0; if (away) drawVisitPanel(); else { drawPanels(); drawFamily(); checkLog(); } if (mode === "buy") { const m = $("shop").querySelector("h3"); if (m) m.textContent = `Buy furniture · ₵${Math.round(H.money).toLocaleString()}`; } }
+  if (panelT > 0.4) { panelT = 0; if (away) drawVisitPanel(); else { drawPanels(); drawFamily(); checkLog(); } if (mode === "buy") { const m = $("shop").querySelector("h3"); if (m) m.textContent = `Buy furniture · $${Math.round(H.money).toLocaleString()}`; } }
 }
 requestAnimationFrame(loop);
 
@@ -433,11 +433,11 @@ function onVisitMsg(m) {
     else if (m.t === "order" && g) { order(H, g, m.type, m.uid || undefined, m.with ? { with: m.with } : {}); }
     else if (m.t === "stop" && g) cancelAll(H, g);
     else if (m.t === "gift" && g) {
-      if (m.kind === "money") { H.money += m.amount; note(H, `${g.name} gave the family ₵${m.amount} 🎁`); }
+      if (m.kind === "money") { H.money += m.amount; note(H, `${g.name} gave the family $${m.amount} 🎁`); }
       else if (ITEMS[m.id]) {
         let placed = false;
         for (let y = 1; y < 13 && !placed; y += 1) for (let x = 1; x < 19 && !placed; x += 1) if (canPlace(H, m.id, x, y)) { H.furniture.push({ uid: H.nextUid++, id: m.id, x, y }); placed = true; }
-        if (placed) note(H, `${g.name} brought a gift: a ${ITEMS[m.id].name.toLowerCase()} 🎁`); else { H.money += ITEMS[m.id].price; note(H, `${g.name} brought a gift, but there was no room, so they gave ₵${ITEMS[m.id].price} instead 🎁`); }
+        if (placed) note(H, `${g.name} brought a gift: a ${ITEMS[m.id].name.toLowerCase()} 🎁`); else { H.money += ITEMS[m.id].price; note(H, `${g.name} brought a gift, but there was no room, so they gave $${ITEMS[m.id].price} instead 🎁`); }
       }
       sfx.cash();
     }
@@ -487,14 +487,14 @@ const GIFTS = [["money", 50], ["money", 100], ["item", "plant"], ["item", "paint
 function drawVisitPanel() {
   const VH = visit.VH;
   const me = VH && VH.people.find((p) => p.visitor);
-  $("money").textContent = `₵${Math.round(H.money).toLocaleString()}`;
+  $("money").textContent = `$${Math.round(H.money).toLocaleString()}`;
   $("clock").textContent = VH ? `Visiting · ${timeText(VH)}` : "Visiting…";
   setHTML($("family"), "");
   const status = me ? (me.act ? (me.act.phase === "walk" ? `Going to: ${ACTIONS[me.act.type].label.toLowerCase()}` : ACTIONS[me.act.type].label) : "Looking around") : "On the way";
   setHTML($("person"), `<h3>👋 Visiting ${VH ? esc(VH.family) : "your friend"}</h3>
     <p class="facts">${me ? `${esc(me.name)}: ${esc(status)}` : "Walking over…"} · Tap their furniture to use it, or tap someone to chat. Your own home is paused.</p>
     <div class="needs">${NEEDS.map((n) => `<div class="need" title="${NEED_LABEL[n]}"><span>${NEED_ICON[n]}</span><span><span class="bar"><i data-n="${n}"></i></span></span></div>`).join("")}</div>
-    <div class="row"><span class="lbl">Bring a gift</span>${GIFTS.map(([k, v]) => { const price = k === "money" ? v : ITEMS[v].price; return `<button class="mini" data-gift="${k}:${v}" ${H.money < price ? "disabled" : ""}>${k === "money" ? `💵 ₵${v}` : `🎁 ${ITEMS[v].name} (₵${price})`}</button>`; }).join("")}</div>
+    <div class="row"><span class="lbl">Bring a gift</span>${GIFTS.map(([k, v]) => { const price = k === "money" ? v : ITEMS[v].price; return `<button class="mini" data-gift="${k}:${v}" ${H.money < price ? "disabled" : ""}>${k === "money" ? `💵 $${v}` : `🎁 ${ITEMS[v].name} ($${price})`}</button>`; }).join("")}</div>
     <div class="row" style="margin-top:8px"><button class="mini" data-vstop="1">✋ Stop</button><button class="mini" data-gohome="1">🏠 Go home</button></div>`);
   const needs = visit.lastNeeds || {};
   $("person").querySelectorAll("[data-n]").forEach((i) => { const v = needs[i.dataset.n] || 0; i.style.width = `${Math.round(v)}%`; i.style.background = barColor(v); });
@@ -508,7 +508,7 @@ $("person").addEventListener("click", (e) => {
     if (H.money < price) return;
     H.money -= price;
     net.send(kind === "money" ? { t: "gift", kind, amount: Number(v) } : { t: "gift", kind, id: v });
-    toast(`You gave a gift 🎁 (₵${price} from your family's money).`);
+    toast(`You gave a gift 🎁 ($${price} from your family's money).`);
     sfx.cash();
     persist();
     return;
@@ -518,7 +518,7 @@ $("person").addEventListener("click", (e) => {
 }, true);
 
 // open the saved family, or the start screen; an invite link opens the visit panel and joins
-if (saves.last && saves[saves.last]) startGame(saves[saves.last]);
+if (saves.last && saves[saves.last] && SETTINGS[saves[saves.last].setting]) startGame(saves[saves.last]);
 else showStart();
 const invited = net.roomParam();
 if (invited) {

@@ -8,7 +8,7 @@ saved games stay on the player's own device.
 
 | Game | For | Notes |
 |---|---|---|
-| **Ghana Ludo** | Everyone | three.js board, online rooms (peer-to-peer), computer players, Easy/Normal/Hard |
+| **Ludo** | Everyone | three.js board, online rooms (peer-to-peer), computer players, Easy/Normal/Hard |
 | **Chess** | Everyone | 3D board (2D option), full rules, computer at three levels, online play by room code, clocks, hints, undo, saved games |
 | **Oware** | Everyone | Ghana's traditional mancala (Abapa rules), vs computer, 2 players, or online with a friend |
 | **Quizzz Time** | Everyone | 900+ questions in 16 topics plus endless fresh maths (hand-written plus generated capitals, flags and maths); never repeats until you've seen them all; Kids / Family / Adults levels, timer optional |
@@ -59,7 +59,7 @@ saved games stay on the player's own device.
 | **Tile Merge** | Adults | 2048-style, swipe or arrow keys, undo |
 | **Minesweeper** | Adults | three sizes, flags, chording, touch long-press, best times |
 | **Mango Mayhem** | Everyone | slingshot physics (Matter.js, MIT, in `assets/vendor/`): 18 levels in 3 worlds, 4 birds with tap powers (Kwaku, Ama, Kofi, Nana), stars and saved progress, a camera that follows the shot, levels together online (take turns with the birds, shared result, points per player, host picks the level), fort-vs-fort duel vs computer / 2 players / online, rejoin after reload; levels checked by `node tools/check-mango-levels.mjs` |
-| **Compound Life** | Everyone | family life sim: pick a Ghanaian compound house or a modern city apartment, build a family (skin tone, hair, clothes, job), needs, free will, jobs with promotions, school and grades, cooking, buy/move/sell furniture, saved per home, 🌐 online visiting (the guest walks around the host's home, chats, uses furniture, brings gifts; host runs the visit, rejoin after reload); checked by `node tools/check-life.mjs` |
+| **Home Life** | Everyone | family life sim: pick a suburban family house or a modern city apartment, build a family (skin tone, hair, clothes, job), needs, free will, jobs with promotions, school and grades, cooking, buy/move/sell furniture, saved per home, 🌐 online visiting (the guest walks around the host's home, chats, uses furniture, brings gifts; host runs the visit, rejoin after reload); checked by `node tools/check-life.mjs` |
 | **Word Craft** | Everyone | crossing-word tile game on a 15×15 board: vs computer (3 levels), pass & play (2–4), online; ENABLE word list, hints, swap, blank tiles |
 | **Draw & Guess** | Everyone | draw a secret word on a canvas: pass & play (2–6) or online with live strokes, timer, hints, scores |
 | **Music Lab** | Everyone | 16-step beat maker (Highlife, Afrobeat, Hip-hop, Funk, R&B, House) with African drums, piano, djembe pads, Copy the Tune, live jam online (all sounds synthesized) |

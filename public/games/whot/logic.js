@@ -1,5 +1,5 @@
 /**
- * Whot rules (the West African card game). 54 cards: five shapes with the usual numbers, and five Whot (20) wild cards.
+ * Whot rules (a shape-matching card game). 54 cards: five shapes with the usual numbers, and five Whot (20) wild cards.
  *   1 Hold on: play again.   2 Pick two.   5 Pick three.   8 Suspension: the next player misses a turn.
  *   14 General market: everyone else picks one card.   20 Whot: wild, you call the shape.
  * A pick two / pick three can be passed on by playing another 2 / 5 (the penalty stacks).

@@ -159,7 +159,7 @@ export function playMCQ(root, ctx, opts, back) {
       const pct = r.total ? Math.round((r.correct / r.total) * 100) : 0;
       const short = (q) => `${(q.q || q.big || "").length > 60 ? (q.q || q.big).slice(0, 57) + "…" : q.q || q.big} → ${q.opts[q.a]}`;
       ctx.showEnd({
-        emoji: pct >= 90 ? "🏆" : pct >= 60 ? "🎉" : "💪🏿",
+        emoji: pct >= 90 ? "🏆" : pct >= 60 ? "🎉" : "💪",
         title: r.record ? "New best!" : `${r.correct} of ${r.total} right`,
         text: `${r.score} points · ${pct}% correct${r.record || !r.best ? "" : ` · best ${r.best}`}`,
         missed: r.missed.map(short),

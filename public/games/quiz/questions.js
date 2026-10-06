@@ -1,35 +1,10 @@
 /**
  * Question bank. The FIRST answer in each `a` array is the correct one; the game shuffles them.
- * c = topic ("Ghana" | "Africa" | "World")
+ * c = topic ("Africa" | "World")
  * l = level: "kids" (ages ~5-10), "all" (family), "adults"
  * why = optional short explanation shown after answering
  */
 export const QUESTIONS = [
-  // ---------------------------------------------------------------- Ghana
-  { c: "Ghana", l: "kids", q: "What is the capital city of Ghana?", a: ["Accra", "Kumasi", "Tamale", "Cape Coast"] },
-  { c: "Ghana", l: "kids", q: "What colour is the star in the middle of Ghana's flag?", a: ["Black", "Red", "Gold", "Green"], why: "The Black Star stands for African freedom." },
-  { c: "Ghana", l: "kids", q: "What is Ghana's national football team called?", a: ["The Black Stars", "The Super Eagles", "The Indomitable Lions", "The Pharaohs"] },
-  { c: "Ghana", l: "kids", q: "What does “Akwaaba” mean in Twi?", a: ["Welcome", "Goodbye", "Thank you", "Good morning"] },
-  { c: "Ghana", l: "kids", q: "What money do people use in Ghana?", a: ["The cedi", "The naira", "The shilling", "The rand"] },
-  { c: "Ghana", l: "kids", q: "Ghana grows lots of which crop, used to make chocolate?", a: ["Cocoa", "Sugar cane", "Vanilla", "Peanuts"] },
-  { c: "Ghana", l: "kids", q: "Which spicy fried snack is made from ripe plantain?", a: ["Kelewele", "Sushi", "Tacos", "Falafel"] },
-  { c: "Ghana", l: "kids", q: "Which country is directly east of Ghana?", a: ["Togo", "Burkina Faso", "Côte d'Ivoire", "Nigeria"] },
-  { c: "Ghana", l: "all", q: "In which year did Ghana become independent?", a: ["1957", "1960", "1948", "1966"], why: "Ghana was the first sub-Saharan African country to gain independence from colonial rule." },
-  { c: "Ghana", l: "all", q: "Who was Ghana's first president?", a: ["Kwame Nkrumah", "Jerry Rawlings", "John Kufuor", "Kofi Busia"] },
-  { c: "Ghana", l: "all", q: "Lake Volta in Ghana is the world's largest artificial lake by what measure?", a: ["Surface area", "Depth", "Age", "Saltiness"], why: "Created by the Akosombo Dam, it covers roughly 8,500 square kilometres." },
-  { c: "Ghana", l: "all", q: "Which Ghanaian diplomat became Secretary-General of the United Nations?", a: ["Kofi Annan", "Ban Ki-moon", "Boutros Boutros-Ghali", "Javier Pérez de Cuéllar"] },
-  { c: "Ghana", l: "all", q: "What is Ghana's highest mountain?", a: ["Mount Afadjato", "Mount Kilimanjaro", "Mount Cameroon", "Mount Kenya"] },
-  { c: "Ghana", l: "all", q: "Kumasi is the capital of which region?", a: ["Ashanti", "Volta", "Northern", "Western"] },
-  { c: "Ghana", l: "all", q: "Which of these is a UNESCO World Heritage Site in Ghana?", a: ["Cape Coast Castle", "Great Zimbabwe", "Robben Island", "Fort Jesus"] },
-  { c: "Ghana", l: "all", q: "Which brightly woven cloth is famous in Ghana?", a: ["Kente", "Ankara", "Kitenge", "Shweshwe"] },
-  { c: "Ghana", l: "all", q: "The Adinkra symbol “Sankofa” reminds us to…", a: ["Learn from the past", "Save for tomorrow", "Respect the moon", "Work in a group"], why: "Sankofa is often translated as “go back and get it”." },
-  { c: "Ghana", l: "all", q: "On which date is Ghana's Independence Day?", a: ["6 March", "1 July", "25 May", "4 April"] },
-  { c: "Ghana", l: "all", q: "What gives Jollof rice its red colour?", a: ["Tomatoes", "Beetroot", "Cranberries", "Red cabbage"] },
-  { c: "Ghana", l: "all", q: "Fufu in Ghana is traditionally eaten with…", a: ["Soup", "Salad", "Cereal", "Ice cream"] },
-  { c: "Ghana", l: "adults", q: "What was Ghana called before independence?", a: ["The Gold Coast", "The Ivory Coast", "The Grain Coast", "The Slave Coast"] },
-  { c: "Ghana", l: "adults", q: "The Akosombo Dam sits on which river?", a: ["The Volta", "The Niger", "The Congo", "The Zambezi"] },
-  { c: "Ghana", l: "adults", q: "Which Ghanaian striker scored for the Black Stars at the 2006, 2010 and 2014 World Cups?", a: ["Asamoah Gyan", "Michael Essien", "Abedi Pele", "Stephen Appiah"] },
-  { c: "Ghana", l: "adults", q: "Which Ghanaian leader founded the Convention People's Party?", a: ["Kwame Nkrumah", "J. B. Danquah", "Hilla Limann", "Kofi Busia"] },
 
   // --------------------------------------------------------------- Africa
   { c: "Africa", l: "kids", q: "What is the longest river in Africa?", a: ["The Nile", "The Congo", "The Niger", "The Zambezi"] },

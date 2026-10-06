@@ -1,5 +1,5 @@
 /**
- * Compound Life drawing: floors, walls, furniture and people in a gentle three-quarter view, all with canvas shapes.
+ * Home Life drawing: floors, walls, furniture and people in a gentle three-quarter view, all with canvas shapes.
  */
 import { COLS, ROWS, FLOORS, SETTINGS, ITEMS, ACTIONS, NEEDS, NEED_ICON } from "./data.js";
 
@@ -18,7 +18,7 @@ const shade = "rgba(0,0,0,0.18)";
 export function drawHouse(c, H) {
   const S = SETTINGS[H.setting];
   const city = H.setting === "city";
-  c.fillStyle = city ? "#6f7d96" : "#c9a06a";
+  c.fillStyle = city ? "#6f7d96" : "#7aa86a";
   c.fillRect(0, 0, WIDTH, HEIGHT);
   for (let y = 0; y < ROWS; y += 1) for (let x = 0; x < COLS; x += 1) {
     const f = S.grid[y][x];
@@ -40,11 +40,12 @@ export function drawHouse(c, H) {
     const px = x * T;
     const py = y * T + OY;
     const outer = y === 0 || x === 0 || x === COLS - 1 || y === ROWS - 1;
-    c.fillStyle = city ? (outer ? "#e8e4dc" : "#f4f1ea") : outer ? "#d9784a" : "#f0d9b5";
+    const hedge = !city && outer && ((S.grid[y][x - 1] || "") === "g" || (S.grid[y][x + 1] || "") === "g");
+    c.fillStyle = city ? (outer ? "#e8e4dc" : "#f4f1ea") : hedge ? "#4f9a45" : outer ? "#b8705a" : "#f0d9b5";
     c.fillRect(px, py - OY, T, T);
     const below = y + 1 < ROWS ? S.grid[y + 1][x] : "#";
     if (below !== "#") {
-      c.fillStyle = city ? "#cfc8bb" : outer ? "#b55a33" : "#d9b98d";
+      c.fillStyle = city ? "#cfc8bb" : hedge ? "#3e7d36" : outer ? "#9a5846" : "#d9b98d";
       c.fillRect(px, py + T - OY, T, OY);
       c.fillStyle = "rgba(0,0,0,0.12)";
       c.fillRect(px, py + T - 3, T, 3);
@@ -69,8 +70,8 @@ export function drawItem(c, id, x, y, w, h, use = false, setting = "city") {
       fillR(c, x + p + 3, y + p + 3, w - 2 * p - 6, h - 2 * p - 6, 5, "#f6f2e8");
       const pil = id === "dbed" ? 2 : 1;
       for (let i = 0; i < pil; i += 1) fillR(c, x + p + 8 + (i * (w - 2 * p - 16)) / pil, y + p + 7, (w - 2 * p - 16) / pil - 4, 14, 5, "#ffffff");
-      fillR(c, x + p + 3, y + h * 0.42, w - 2 * p - 6, h * 0.58 - p - 3, 5, setting === "compound" ? "#e8a33a" : "#5b7fd6");
-      if (setting === "compound") { c.fillStyle = "#c0392b"; for (let k = 0; k < 4; k += 1) c.fillRect(x + p + 3, y + h * 0.48 + k * 14, w - 2 * p - 6, 4); }
+      fillR(c, x + p + 3, y + h * 0.42, w - 2 * p - 6, h * 0.58 - p - 3, 5, setting === "suburb" ? "#6f9a5e" : "#5b7fd6");
+      if (setting === "suburb") { c.fillStyle = "rgba(255,255,255,0.25)"; for (let k = 0; k < 3; k += 1) c.fillRect(x + p + 3, y + h * 0.5 + k * 16, w - 2 * p - 6, 3); }
       break;
     }
     case "wardrobe": fillR(c, x + p, y - 14, w - 2 * p, h + 10, 4, "#9a6a3e"); line(c, "#5a3a1e", 2, x + w / 2, y - 12, x + w / 2, y + h - 6); circ(c, x + w / 2 - 5, y + h / 2 - 6, 2.5, "#e8c060"); circ(c, x + w / 2 + 5, y + h / 2 - 6, 2.5, "#e8c060"); break;
@@ -78,10 +79,10 @@ export function drawItem(c, id, x, y, w, h, use = false, setting = "city") {
     case "desk": fillR(c, x + p, y + 10, w - 2 * p, h - 16, 4, "#b98a52"); line(c, "#6a4a2a", 3, x + 10, y + h - 6, x + 10, y + h - 2); line(c, "#6a4a2a", 3, x + w - 10, y + h - 6, x + w - 10, y + h - 2); fillR(c, x + 14, y + 14, 18, 12, 2, "#3b82f6"); line(c, "#f5c518", 3, x + 40, y + 16, x + 58, y + 24); break;
     case "bookshelf": fillR(c, x + p, y - 14, w - 2 * p, h + 10, 3, "#7a4e2a"); ["#e5484d", "#3b82f6", "#2fb36d", "#f5a623", "#8a5ce0", "#ec6aa0"].forEach((col, i) => { c.fillStyle = col; c.fillRect(x + 9 + (i % 3) * 10, y - 8 + Math.floor(i / 3) * 22, 7, 18); }); break;
     case "computer": fillR(c, x + p, y + 12, w - 2 * p, h - 18, 4, "#d9dde6"); fillR(c, x + w / 2 - 22, y - 10, 44, 28, 3, "#1b1f2a"); fillR(c, x + w / 2 - 18, y - 6, 36, 20, 2, use ? "#4ad6c8" : "#2b3550"); fillR(c, x + w / 2 - 16, y + 24, 32, 8, 2, "#9aa1b0"); break;
-    case "sofa": fillR(c, x + 2, y + 4, w - 4, h - 6, 10, setting === "compound" ? "#8a3a2a" : "#2f8f88"); fillR(c, x + 6, y + 6, w - 12, 14, 7, setting === "compound" ? "#a24a36" : "#3aa79f"); for (let i = 0; i < 3; i += 1) fillR(c, x + 8 + (i * (w - 16)) / 3, y + 22, (w - 16) / 3 - 4, h - 30, 5, setting === "compound" ? "#b55a44" : "#48b8b0"); break;
+    case "sofa": fillR(c, x + 2, y + 4, w - 4, h - 6, 10, setting === "suburb" ? "#8a6a52" : "#2f8f88"); fillR(c, x + 6, y + 6, w - 12, 14, 7, setting === "suburb" ? "#9c7a60" : "#3aa79f"); for (let i = 0; i < 3; i += 1) fillR(c, x + 8 + (i * (w - 16)) / 3, y + 22, (w - 16) / 3 - 4, h - 30, 5, setting === "suburb" ? "#b08e72" : "#48b8b0"); break;
     case "tv": fillR(c, x + 6, y + 22, w - 12, h - 26, 4, "#5a3a1e"); fillR(c, x + 14, y - 14, w - 28, 36, 4, "#111"); { const g = c.createLinearGradient(x, y - 10, x + w, y + 18); if (use) { g.addColorStop(0, "#4ad6c8"); g.addColorStop(0.5, "#f5c518"); g.addColorStop(1, "#e5484d"); } else { g.addColorStop(0, "#1e2638"); g.addColorStop(1, "#2c3a5a"); } c.fillStyle = g; c.fillRect(x + 18, y - 10, w - 36, 28); } break;
     case "radio": fillR(c, x + 8, y + 14, w - 16, h - 20, 5, "#c0392b"); circ(c, x + 18, y + 28, 7, "#2a1a14"); circ(c, x + 32, y + 28, 4, "#f5c518"); line(c, "#555", 2, x + 34, y + 14, x + 42, y + 2); if (use) { c.fillStyle = "#fff"; c.font = "14px system-ui"; c.fillText("♪", x + 36, y + 6); } break;
-    case "rug": { fillR(c, x + 4, y + 6, w - 8, h - 12, 4, setting === "compound" ? "#f5c518" : "#c9b8e8"); const stripes = setting === "compound" ? ["#2fb36d", "#e5484d", "#111", "#2fb36d"] : ["#8a7ab8", "#b8a8e0"]; stripes.forEach((col, i) => { c.fillStyle = col; c.fillRect(x + 10 + i * ((w - 20) / stripes.length), y + 10, (w - 20) / stripes.length / 2, h - 20); }); break; }
+    case "rug": { fillR(c, x + 4, y + 6, w - 8, h - 12, 4, setting === "suburb" ? "#d9c9a8" : "#c9b8e8"); const stripes = setting === "suburb" ? ["#b07a4a", "#8a9a6a"] : ["#8a7ab8", "#b8a8e0"]; stripes.forEach((col, i) => { c.fillStyle = col; c.fillRect(x + 10 + i * ((w - 20) / stripes.length), y + 10, (w - 20) / stripes.length / 2, h - 20); }); break; }
     case "plant": fillR(c, x + 14, y + 26, w - 28, 18, 4, "#c0603a"); [[0, -6, 12], [-9, 4, 9], [9, 4, 9], [0, 10, 8]].forEach(([dx, dy, r]) => circ(c, x + w / 2 + dx, y + 18 + dy, r, "#3e9e4e")); break;
     case "painting": line(c, "#6a4a2a", 3, x + 14, y + h - 4, x + w / 2, y + 4, x + w - 14, y + h - 4); fillR(c, x + 8, y + 6, w - 16, 26, 2, "#f6efe0"); circ(c, x + 18, y + 16, 5, "#f5a623"); line(c, "#2fb36d", 3, x + 12, y + 28, x + 22, y + 20, x + 30, y + 26, x + 40, y + 16); break;
     case "fishtank": fillR(c, x + 6, y + 18, w - 12, h - 22, 3, "#5a3a1e"); fillR(c, x + 8, y - 6, w - 16, 26, 3, "rgba(120,200,255,0.8)"); circ(c, x + 30, y + 6, 4, "#f5a623"); circ(c, x + 56, y + 2, 3, "#e5484d"); break;
@@ -93,20 +94,16 @@ export function drawItem(c, id, x, y, w, h, use = false, setting = "city") {
     case "counter": fillR(c, x + 2, y + 4, w - 4, h - 8, 3, "#e3e6ec"); fillR(c, x + 2, y + 4, w - 4, 10, 3, "#b8bec9"); line(c, "#c3c9d4", 1, x + w / 2, y + 16, x + w / 2, y + h - 6); break;
     case "stove": fillR(c, x + 4, y + 4, w - 8, h - 8, 3, "#f1f3f7"); [[14, 14], [32, 14], [14, 30], [32, 30]].forEach(([dx, dy]) => { c.strokeStyle = use ? "#ff7a2e" : "#444"; c.lineWidth = 2.5; c.beginPath(); c.arc(x + dx, y + dy, 6, 0, Math.PI * 2); c.stroke(); }); break;
     case "sink": fillR(c, x + 2, y + 4, w - 4, h - 8, 3, "#e3e6ec"); fillR(c, x + 10, y + 12, w - 20, h - 24, 8, "#9fb4c8"); line(c, "#777", 3, x + w / 2, y + 6, x + w / 2, y + 14); break;
-    case "coalpot": fillR(c, x + 12, y + 26, w - 24, 14, 3, "#3a3a3a"); circ(c, x + w / 2, y + 24, 13, "#555"); circ(c, x + w / 2, y + 24, 9, use ? "#ff7a2e" : "#7a3a1a"); if (use) { c.fillStyle = "rgba(255,140,40,0.35)"; c.beginPath(); c.arc(x + w / 2, y + 22, 20, 0, Math.PI * 2); c.fill(); } fillR(c, x + 12, y + 8, w - 24, 12, 4, "#8a8a8a"); break;
-    case "cupboard": fillR(c, x + 4, y - 6, w - 8, h + 2, 4, "#9a6a3e"); line(c, "#5a3a1e", 2, x + w / 2, y - 4, x + w / 2, y + h - 6); circ(c, x + w / 2 - 5, y + 18, 2.5, "#e8c060"); circ(c, x + w / 2 + 5, y + 18, 2.5, "#e8c060"); break;
-    case "barrel": fillR(c, x + 10, y + 6, w - 20, h - 10, 8, "#2f6fd6"); c.fillStyle = "#4a8af0"; c.beginPath(); c.ellipse(x + w / 2, y + 8, (w - 20) / 2, 6, 0, 0, Math.PI * 2); c.fill(); break;
     case "table": case "ptable": { const top = id === "ptable" ? "#f2f2f2" : "#b98a52"; fillR(c, x + 4, y + 8, w - 8, h - 14, 6, top); fillR(c, x + 4, y + h - 10, w - 8, 4, 2, shade); circ(c, x + w * 0.3, y + h / 2, 8, "#fff"); circ(c, x + w * 0.7, y + h / 2, 8, "#fff"); circ(c, x + w * 0.3, y + h / 2, 5, "#f5a623"); break; }
     case "chair": fillR(c, x + 12, y + 12, w - 24, h - 18, 4, "#9a6a3e"); fillR(c, x + 12, y + 6, w - 24, 8, 3, "#7a4e2a"); break;
     case "pchair": fillR(c, x + 12, y + 14, w - 24, h - 20, 6, "#e5484d"); fillR(c, x + 12, y + 6, w - 24, 10, 5, "#c0392b"); break;
     case "bench": fillR(c, x + 4, y + 16, w - 8, 14, 4, "#a8733d"); line(c, "#6a4a2a", 4, x + 10, y + 30, x + 10, y + 40); line(c, "#6a4a2a", 4, x + w - 10, y + 30, x + w - 10, y + 40); break;
-    case "mango": fillR(c, x + w / 2 - 8, y + h / 2, 16, h / 2 - 4, 4, "#6a4a2a"); [[-24, -12, 26], [20, -16, 26], [0, -30, 28], [-10, 6, 22], [16, 4, 22]].forEach(([dx, dy, r]) => circ(c, x + w / 2 + dx, y + h / 2 + dy, r, "#2f8a3a")); [[-20, -4], [12, -22], [24, 2], [-2, -18]].forEach(([dx, dy]) => circ(c, x + w / 2 + dx, y + h / 2 + dy, 5, "#ffb02e")); break;
-    case "tank": fillR(c, x + 8, y - 22, w - 16, h + 14, 10, "#1e1e22"); c.fillStyle = "#333"; c.beginPath(); c.ellipse(x + w / 2, y - 20, (w - 16) / 2, 6, 0, 0, Math.PI * 2); c.fill(); line(c, "#444", 2, x + 10, y - 4, x + w - 10, y - 4); break;
+    case "apple": fillR(c, x + w / 2 - 8, y + h / 2, 16, h / 2 - 4, 4, "#6a4a2a"); [[-24, -12, 26], [20, -16, 26], [0, -30, 28], [-10, 6, 22], [16, 4, 22]].forEach(([dx, dy, r]) => circ(c, x + w / 2 + dx, y + h / 2 + dy, r, "#2f8a3a")); [[-20, -4], [12, -22], [24, 2], [-2, -18]].forEach(([dx, dy]) => circ(c, x + w / 2 + dx, y + h / 2 + dy, 5, "#e5484d")); break;
+    case "grill": line(c, "#333", 3, x + 16, y + 30, x + 12, y + h - 4); line(c, "#333", 3, x + w - 16, y + 30, x + w - 12, y + h - 4); c.fillStyle = "#1f1f22"; c.beginPath(); c.arc(x + w / 2, y + 26, 15, Math.PI, 0); c.fill(); fillR(c, x + w / 2 - 16, y + 24, 32, 8, 3, "#2b2b30"); if (use) { c.fillStyle = "rgba(255,140,40,0.35)"; c.beginPath(); c.arc(x + w / 2, y + 22, 20, 0, Math.PI * 2); c.fill(); circ(c, x + w / 2 - 6, y + 10, 3, "rgba(220,220,220,0.8)"); circ(c, x + w / 2 + 4, y + 4, 4, "rgba(220,220,220,0.7)"); } break;
     case "line": line(c, "#6a4a2a", 4, x + 6, y + h - 4, x + 6, y + 4); line(c, "#6a4a2a", 4, x + w - 6, y + h - 4, x + w - 6, y + 4); line(c, "#ddd", 1.5, x + 6, y + 8, x + w - 6, y + 8); ["#e5484d", "#3b82f6", "#f5c518", "#2fb36d"].forEach((col, i) => fillR(c, x + 16 + i * 28, y + 9, 18, 18, 2, col)); break;
     case "toilet": fillR(c, x + 14, y + 4, w - 28, 12, 3, "#fff"); c.fillStyle = "#fff"; c.beginPath(); c.ellipse(x + w / 2, y + 28, 12, 14, 0, 0, Math.PI * 2); c.fill(); c.strokeStyle = "#cfd6e0"; c.lineWidth = 2; c.stroke(); break;
     case "bsink": fillR(c, x + 10, y + 6, w - 20, 22, 8, "#fff"); fillR(c, x + 15, y + 10, w - 30, 12, 5, "#cfe6f2"); fillR(c, x + w / 2 - 4, y + 26, 8, 16, 3, "#fff"); break;
     case "shower": fillR(c, x + 3, y + 3, w - 6, h - 6, 4, "rgba(180,220,245,0.55)"); c.strokeStyle = "#8fb8d0"; c.lineWidth = 2; rr(c, x + 3, y + 3, w - 6, h - 6, 4); c.stroke(); circ(c, x + w / 2, y + 10, 5, "#9aa1b0"); if (use) { c.fillStyle = "rgba(255,255,255,0.7)"; [[-10, 8], [6, 2], [0, 16], [12, 14]].forEach(([dx, dy]) => { c.beginPath(); c.arc(x + w / 2 + dx, y + 18 + dy, 6, 0, Math.PI * 2); c.fill(); }); } break;
-    case "bucket": fillR(c, x + 3, y + 3, w - 6, h - 6, 4, "rgba(160,200,230,0.45)"); fillR(c, x + 14, y + 18, 20, 18, 4, "#2f6fd6"); c.fillStyle = "#9fd3f2"; c.beginPath(); c.ellipse(x + 24, y + 19, 10, 4, 0, 0, Math.PI * 2); c.fill(); if (use) { c.fillStyle = "rgba(255,255,255,0.7)"; circ(c, x + 14, y + 12, 5, "rgba(255,255,255,0.75)"); circ(c, x + 32, y + 10, 4, "rgba(255,255,255,0.75)"); } break;
     default: fillR(c, x + 6, y + 6, w - 12, h - 12, 4, "#bbb");
   }
 }
@@ -218,7 +215,7 @@ export function drawScene(c, H, view) {
   if (dark > 0) {
     c.fillStyle = `rgba(10,20,60,${dark})`;
     c.fillRect(0, 0, WIDTH, HEIGHT);
-    H.furniture.forEach((f) => { if (f.id === "lamp" || f.id === "tv" || f.id === "coalpot") { const it = ITEMS[f.id]; const g = c.createRadialGradient(f.x * T + (it.w * T) / 2, f.y * T + OY + 10, 4, f.x * T + (it.w * T) / 2, f.y * T + OY + 10, 90); g.addColorStop(0, `rgba(255,220,140,${dark * 0.8})`); g.addColorStop(1, "rgba(255,220,140,0)"); c.fillStyle = g; c.fillRect(f.x * T - 90, f.y * T - 90, 180 + it.w * T, 180); } });
+    H.furniture.forEach((f) => { if (f.id === "lamp" || f.id === "tv") { const it = ITEMS[f.id]; const g = c.createRadialGradient(f.x * T + (it.w * T) / 2, f.y * T + OY + 10, 4, f.x * T + (it.w * T) / 2, f.y * T + OY + 10, 90); g.addColorStop(0, `rgba(255,220,140,${dark * 0.8})`); g.addColorStop(1, "rgba(255,220,140,0)"); c.fillStyle = g; c.fillRect(f.x * T - 90, f.y * T - 90, 180 + it.w * T, 180); } });
   }
   // buy mode: grid and the item being placed
   if (view.ghost) {

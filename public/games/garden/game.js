@@ -6,12 +6,12 @@ const PLANTS = [
   { id: "tomato", name: "Tomato", e: "🍅", cost: 0, reward: 4, wait: 15000 },
   { id: "hibiscus", name: "Hibiscus", e: "🌺", cost: 10, reward: 6, wait: 17000 },
   { id: "pepper", name: "Pepper", e: "🌶️", cost: 15, reward: 6, wait: 18000 },
-  { id: "maize", name: "Maize", e: "🌽", cost: 20, reward: 8, wait: 19000 },
-  { id: "eggplant", name: "Garden egg", e: "🍆", cost: 25, reward: 8, wait: 20000 },
+  { id: "maize", name: "Corn", e: "🌽", cost: 20, reward: 8, wait: 19000 },
+  { id: "eggplant", name: "Eggplant", e: "🍆", cost: 25, reward: 8, wait: 20000 },
   { id: "pineapple", name: "Pineapple", e: "🍍", cost: 30, reward: 10, wait: 22000 },
-  { id: "banana", name: "Plantain", e: "🍌", cost: 35, reward: 10, wait: 22000 },
+  { id: "banana", name: "Banana", e: "🍌", cost: 35, reward: 10, wait: 22000 },
   { id: "mango", name: "Mango", e: "🥭", cost: 40, reward: 12, wait: 24000 },
-  { id: "groundnut", name: "Groundnut", e: "🥜", cost: 45, reward: 14, wait: 25000 },
+  { id: "groundnut", name: "Peanut", e: "🥜", cost: 45, reward: 14, wait: 25000 },
 ];
 const byId = (id) => PLANTS.find((p) => p.id === id);
 const PLOT_COST = [0, 0, 0, 0, 0, 0, 15, 25, 40];

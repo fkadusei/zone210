@@ -625,26 +625,22 @@ function paintWorld(theme) {
     ctx.fill();
   });
   ctx.globalAlpha = 1;
-  const baobab = (x, s) => {
-    ctx.fillStyle = "rgba(70,45,30,0.5)";
-    ctx.beginPath();
-    ctx.moveTo(x - 26 * s, GROUND);
-    ctx.bezierCurveTo(x - 34 * s, GROUND - 60 * s, x - 14 * s, GROUND - 110 * s, x - 16 * s, GROUND - 150 * s);
-    ctx.lineTo(x + 16 * s, GROUND - 150 * s);
-    ctx.bezierCurveTo(x + 14 * s, GROUND - 110 * s, x + 34 * s, GROUND - 60 * s, x + 26 * s, GROUND);
-    ctx.fill();
-    ctx.lineWidth = 7 * s; ctx.strokeStyle = "rgba(70,45,30,0.5)"; ctx.lineCap = "round";
-    [[-1, -50], [1, -46], [-0.4, -62], [0.5, -64]].forEach(([d, h]) => { ctx.beginPath(); ctx.moveTo(x + d * 8 * s, GROUND - 148 * s); ctx.lineTo(x + d * 48 * s, GROUND - 148 * s + h * s * 0.6); ctx.stroke(); });
-    ctx.fillStyle = "rgba(60,90,40,0.45)";
-    [[-46, -188, 30], [0, -200, 36], [44, -186, 30], [-20, -170, 26], [24, -168, 26]].forEach(([dx, dy, r]) => { ctx.beginPath(); ctx.arc(x + dx * s, GROUND + dy * s, r * s, 0, Math.PI * 2); ctx.fill(); });
+  const tree = (x, s) => {
+    ctx.fillStyle = "rgba(80,55,35,0.5)";
+    ctx.fillRect(x - 9 * s, GROUND - 120 * s, 18 * s, 120 * s);
+    ctx.fillStyle = "rgba(55,110,50,0.45)";
+    [[-38, -140, 40], [36, -146, 40], [0, -182, 48], [-14, -120, 34], [18, -118, 34]].forEach(([dx, dy, r]) => { ctx.beginPath(); ctx.arc(x + dx * s, GROUND + dy * s, r * s, 0, Math.PI * 2); ctx.fill(); });
   };
-  const hut = (x, s) => {
-    ctx.fillStyle = "rgba(150,100,60,0.45)";
-    ctx.beginPath(); ctx.ellipse(x, GROUND - 26 * s, 34 * s, 28 * s, 0, Math.PI, 0); ctx.lineTo(x + 34 * s, GROUND); ctx.lineTo(x - 34 * s, GROUND); ctx.fill();
-    ctx.fillStyle = "rgba(120,80,40,0.55)";
-    ctx.beginPath(); ctx.moveTo(x - 46 * s, GROUND - 40 * s); ctx.lineTo(x, GROUND - 96 * s); ctx.lineTo(x + 46 * s, GROUND - 40 * s); ctx.fill();
+  const house = (x, s) => {
+    ctx.fillStyle = "rgba(170,120,90,0.45)";
+    ctx.fillRect(x - 34 * s, GROUND - 56 * s, 68 * s, 56 * s);
+    ctx.fillStyle = "rgba(140,70,60,0.55)";
+    ctx.beginPath(); ctx.moveTo(x - 44 * s, GROUND - 52 * s); ctx.lineTo(x, GROUND - 96 * s); ctx.lineTo(x + 44 * s, GROUND - 52 * s); ctx.fill();
+    ctx.fillStyle = "rgba(255,240,200,0.45)";
+    ctx.fillRect(x - 22 * s, GROUND - 40 * s, 14 * s, 14 * s);
+    ctx.fillRect(x + 8 * s, GROUND - 40 * s, 14 * s, 14 * s);
   };
-  baobab(600, 1.05); baobab(1540, 0.85); hut(440, 0.9); hut(800, 0.7);
+  tree(600, 1.05); tree(1540, 0.85); house(440, 0.9); house(800, 0.7);
   ctx.fillStyle = theme.ground;
   ctx.fillRect(cam.x - 2, GROUND, cam.w + 4, H - GROUND + 4);
   ctx.fillStyle = "#5fae4a";
@@ -763,7 +759,7 @@ function drawBird(x, y, angle, kind, r) {
   });
   ctx.strokeStyle = "#111"; ctx.lineWidth = Math.max(2, r * 0.12);
   ctx.beginPath(); ctx.moveTo(r * 0.02, -r * 0.48); ctx.lineTo(r * 0.36, -r * 0.36); ctx.moveTo(r * 0.36, -r * 0.42); ctx.lineTo(r * 0.68, -r * 0.5); ctx.stroke();
-  // beak (Nana is a hornbill with a big yellow beak)
+  // beak (Yuki is a hornbill with a big yellow beak)
   ctx.fillStyle = kind === "nana" ? "#ffcc33" : "#ffb02e";
   ctx.beginPath();
   if (kind === "nana") { ctx.moveTo(r * 0.7, -r * 0.2); ctx.quadraticCurveTo(r * 1.7, -r * 0.1, r * 1.55, r * 0.25); ctx.lineTo(r * 0.75, r * 0.15); }

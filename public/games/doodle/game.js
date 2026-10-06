@@ -371,7 +371,7 @@ $("sizes").addEventListener("click", (e) => {
   pressed($("sizes"), chip);
 });
 
-const CATS = [["animals", "🐾 Animals"], ["people", "👦🏿 People"], ["vehicles", "🚀 Vehicles"], ["scenes", "🏡 Scenes"], ["things", "🎨 Things"], ["patterns", "🔯 Patterns"]];
+const CATS = [["animals", "🐾 Animals"], ["people", "👦 People"], ["vehicles", "🚀 Vehicles"], ["scenes", "🏡 Scenes"], ["things", "🎨 Things"], ["patterns", "🔯 Patterns"]];
 const catOf = (p) => (p.cat === "nature" ? "scenes" : p.cat);
 let shownCat = "animals";
 function pageButton(id, label) {

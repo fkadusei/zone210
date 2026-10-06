@@ -24,8 +24,8 @@ export const MATERIALS = {
 export const BIRDS = {
   kwaku: { name: "Kwaku", r: 24, density: 0.004, power: "none", tip: "A steady, reliable shot." },
   ama: { name: "Ama", r: 22, density: 0.0038, power: "split", tip: "Tap in the air to split into three." },
-  kofi: { name: "Kofi", r: 20, density: 0.0036, power: "dash", tip: "Tap in the air to dash forward fast." },
-  nana: { name: "Nana", r: 30, density: 0.0085, power: "dive", tip: "Heavy! Tap in the air to dive straight down." },
+  kofi: { name: "Diego", r: 20, density: 0.0036, power: "dash", tip: "Tap in the air to dash forward fast." },
+  nana: { name: "Yuki", r: 30, density: 0.0085, power: "dive", tip: "Heavy! Tap in the air to dive straight down." },
 };
 
 export const WORLDS = [

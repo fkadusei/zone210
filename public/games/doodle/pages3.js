@@ -227,21 +227,21 @@ export function makePeoplePages({ stroke, solid, circle, poly, ell, clipped }) {
 
   return {
     boy: {
-      label: "👦🏿 Boy", cat: "people",
+      label: "👦 Boy", cat: "people",
       draw() {
         boy(M(400, 566, 1.2));
         sun(100, 100, 42); cloud(590, 120, 1); grass(0, 800, 590);
       },
     },
     girl: {
-      label: "👧🏿 Girl", cat: "people",
+      label: "👧 Girl", cat: "people",
       draw() {
         girl(M(400, 566, 1.12));
         sun(700, 100, 42); cloud(60, 130, 1); grass(0, 800, 590);
       },
     },
     family: {
-      label: "👨🏾👩🏾👧🏿👦🏿 Family", cat: "people",
+      label: "👨👩👧👦 Family", cat: "people",
       draw() {
         girl(M(150, 566, 0.66));
         man(M(305, 566, 0.9));
@@ -252,7 +252,7 @@ export function makePeoplePages({ stroke, solid, circle, poly, ell, clipped }) {
       },
     },
     dadbaby: {
-      label: "👨🏾👶🏿 Dad & baby", cat: "people",
+      label: "👨👶 Dad & baby", cat: "people",
       draw() {
         const dad = M(300, 568, 1);
         man(dad, [-1]);
@@ -266,7 +266,7 @@ export function makePeoplePages({ stroke, solid, circle, poly, ell, clipped }) {
       },
     },
     mombaby: {
-      label: "👩🏾👶🏿 Mom & baby", cat: "people",
+      label: "👩👶 Mom & baby", cat: "people",
       draw() {
         const mom = M(300, 568, 0.98);
         woman(mom, [-1]);

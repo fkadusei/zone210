@@ -1,5 +1,5 @@
 /**
- * Compound Life simulation: plain data in, plain data out (saved as JSON), no drawing, so it can be tested in Node.
+ * Home Life simulation: plain data in, plain data out (saved as JSON), no drawing, so it can be tested in Node.
  * Time is in game minutes. update(H, dt) moves the clock, people, needs, jobs and school forward by dt minutes.
  */
 import { COLS, ROWS, FLOORS, SETTINGS, ITEMS, NEEDS, DECAY, ACTIONS, JOBS, SCHOOL, DAYS } from "./data.js";
@@ -133,7 +133,7 @@ export function optionsFor(H, p) {
   if (H.mangoes > 0) opts.push({ type: "mangosnack" });
   return opts;
 }
-ACTIONS.mangosnack = { label: "Eat a mango", icon: "🥭", need: { hunger: 2.4, fun: 0.2 }, mins: 8, self: true };
+ACTIONS.mangosnack = { label: "Eat an apple", icon: "🍎", need: { hunger: 2.4, fun: 0.2 }, mins: 8, self: true };
 
 function urgency(v) { const d = (100 - v) / 100; return d * d * 3 + 0.15; }
 function chooseAuto(H, p, bm) {
@@ -231,7 +231,7 @@ function finishAct(H, p) {
     H.people.forEach((o) => { if (o !== p && !o.away && o.needs.hunger < 70 && (!o.act || (!o.act.manual && !ACTIONS[o.act.type].lie && o.act.type !== "leave"))) { if (o.act) stopAct(H, o); o.queue.unshift(table ? { type: "eatmeal", uid: table.uid } : { type: "eatmeal" }); } });
     return;
   }
-  if (a.type === "pick") { H.mangoes += 3; note(H, `${p.name} picked 3 mangoes 🥭`); }
+  if (a.type === "pick") { H.mangoes += 3; note(H, `${p.name} picked 3 apples 🍎`); }
   if (a.type === "mangosnack") H.mangoes = Math.max(0, H.mangoes - 1);
   if (a.type === "homework") { p.grade = Math.min(100, p.grade + 6); }
   if (a.type === "dress") p.outfitIdx = (p.outfitIdx || 0) + 1;
@@ -250,7 +250,7 @@ const workHours = (p) => (p.visitor ? null : p.age === "adult" ? (p.job ? { star
 function dailyEvents(H) {
   const S = SETTINGS[H.setting];
   H.money -= S.bills;
-  note(H, `Paid ₵${S.bills} for rent, water and light.`);
+  note(H, `Paid $${S.bills} for rent, water and power.`);
   if (H.money < 0) note(H, "⚠️ The family is in debt! Find work, or sell some furniture.");
 }
 
@@ -279,7 +279,7 @@ export function update(H, dt) {
           H.money += pay;
           p.perf += p.mood > 65 ? 22 : p.mood > 45 ? 10 : -12;
           p.perf = Math.max(-50, p.perf);
-          let msg = `${p.name} came home from work and earned ₵${pay}.`;
+          let msg = `${p.name} came home from work and earned $${pay}.`;
           if (p.perf >= 100 && p.level < J.titles.length - 1) { p.level += 1; p.perf = 0; msg += ` 🎉 Promoted to ${J.titles[p.level]}!`; }
           note(H, msg);
         } else {

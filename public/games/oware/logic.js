@@ -1,5 +1,5 @@
 /**
- * Oware (Abapa rules), the traditional mancala game played across Ghana and West Africa.
+ * Oware (Abapa rules), a traditional mancala game.
  * Pure logic, no DOM.
  *
  * Board: 12 pits. Pits 0-5 belong to player 0 (South), 6-11 to player 1 (North). Seeds are sown

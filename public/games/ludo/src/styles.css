@@ -56,13 +56,13 @@ html, body {
   color: #1b120c;
   background: var(--gold);
 }
-.kente {
+.weave {
   width: 44px;
   height: 26px;
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.25);
   background:
-    repeating-linear-gradient(90deg, #f2c230 0 6px, #c8281e 6px 12px, #1f7a3d 12px 18px, #141010 18px 24px);
+    repeating-linear-gradient(90deg, #e5484d 0 6px, #2fb36d 6px 12px, #f5c518 12px 18px, #3b82f6 18px 24px);
 }
 
 .controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }

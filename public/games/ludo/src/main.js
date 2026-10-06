@@ -1,5 +1,5 @@
 /**
- * Ghana Ludo 3D — UI controller.
+ * Ludo 3D — UI controller.
  * Glues the rules engine (engine.js), the three.js view (scene.js), audio, networking (net.js)
  * and the HUD together.
  *
@@ -96,7 +96,7 @@ const STORAGE_KEY = "ghana_ludo_3d_state_v1";
 const SOLO_KEY = "ghana_ludo_3d_solo_v1";
 
 // Reactions are sent as indexes into these fixed lists, so peers can never inject arbitrary text.
-const REACTIONS = ["👍🏿", "😂", "😮", "😡", "👏🏿", "🎉", "😭", "🔥"];
+const REACTIONS = ["👍", "😂", "😮", "😡", "👏", "🎉", "😭", "🔥"];
 const PHRASES = ["Good game!", "Nice move!", "Oops!", "Your turn!", "Hurry up!", "Well played!"];
 const REACT_COOLDOWN_MS = 1200;
 const game = new Game();

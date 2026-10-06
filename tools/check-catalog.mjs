@@ -47,7 +47,9 @@ GAMES.forEach((g, i) => {
 
 // files for games that are not in the catalog
 const ids = new Set(GAMES.map((g) => g.id));
-for (const d of fs.readdirSync(path.join(root, "games"))) if (fs.statSync(path.join(root, "games", d)).isDirectory() && !ids.has(d)) warns.push(`games/${d}/ is not in the catalog`);
+// a folder holding only a redirect page (an old address of a renamed game) is fine
+const isRedirect = (d) => { const fl = fs.readdirSync(path.join(root, "games", d)); return fl.length === 1 && fl[0] === "index.html" && /http-equiv="refresh"/.test(fs.readFileSync(path.join(root, "games", d, "index.html"), "utf8")); };
+for (const d of fs.readdirSync(path.join(root, "games"))) if (fs.statSync(path.join(root, "games", d)).isDirectory() && !ids.has(d) && !isRedirect(d)) warns.push(`games/${d}/ is not in the catalog`);
 for (const [dir, label] of [["assets/thumbs", "thumbnail"], ["assets/og", "share card"]]) {
   for (const f of fs.readdirSync(path.join(root, dir))) {
     const id = f.replace(/\.jpg$/, "");

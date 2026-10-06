@@ -8,7 +8,7 @@ const dedupe = (list) => {
   return list.filter((q) => (seen.has(q.q) ? false : seen.add(q.q)));
 };
 let QUESTIONS = dedupe([...CORE, ...MORE_QUESTIONS, ...countryQuestions(), ...mathQuestions(90)]);
-const TOPIC_ICON = { Ghana: "🇬🇭", Africa: "🌍", World: "🌐", Science: "🔬", Nature: "🦁", Space: "🚀", History: "🏛️", Geography: "🗺️", Sports: "⚽", Music: "🎵", "Movies & TV": "🎬", Food: "🍲", Technology: "💻", Maths: "➗", "Art & Books": "📚", Words: "🔤" };
+const TOPIC_ICON = { Africa: "🌍", World: "🌐", Science: "🔬", Nature: "🦁", Space: "🚀", History: "🏛️", Geography: "🗺️", Sports: "⚽", Music: "🎵", "Movies & TV": "🎬", Food: "🍲", Technology: "💻", Maths: "➗", "Art & Books": "📚", Words: "🔤" };
 const SEEN_KEY = "zone210_quiz_seen";
 const readSeen = () => {
   try {
@@ -217,7 +217,7 @@ function finish() {
     }
   }
   const pct = correctCount / round.length;
-  $("endEmoji").textContent = pct === 1 ? "🏆" : pct >= 0.7 ? "🎉" : pct >= 0.4 ? "👍🏿" : "📚";
+  $("endEmoji").textContent = pct === 1 ? "🏆" : pct >= 0.7 ? "🎉" : pct >= 0.4 ? "👍" : "📚";
   $("endTitle").textContent = pct === 1 ? "Perfect score!" : pct >= 0.7 ? "Great job!" : pct >= 0.4 ? "Nice try!" : "Keep learning!";
   $("endText").textContent = `${correctCount} of ${round.length} correct · ${score} points${record ? " · New best!" : ""}`;
   $("end").classList.add("show");

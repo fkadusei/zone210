@@ -1,18 +1,18 @@
 #!/usr/bin/env node
-/** Compound Life check: a family lives a week in each home without getting stuck. Run: node tools/check-life.mjs */
+/** Home Life check: a family lives a week in each home without getting stuck. Run: node tools/check-life.mjs */
 import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "public/games/compound-life");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "public/games/home-life");
 const D = await import(pathToFileURL(path.join(root, "data.js")).href);
 const L = await import(pathToFileURL(path.join(root, "sim.js")).href);
 let bad = 0;
 for (const setting of Object.keys(D.SETTINGS)) {
   const jobs = D.SETTINGS[setting].jobs;
   const H = L.newHousehold({ setting, seed: 42, people: [
-    { name: "Kwame", age: "adult", skin: D.SKINS[1], hair: "short", outfit: D.OUTFITS[1], job: jobs[0] },
+    { name: "Alex", age: "adult", skin: D.SKINS[1], hair: "short", outfit: D.OUTFITS[1], job: jobs[0] },
     { name: "Ama", age: "adult", skin: D.SKINS[2], hair: "afro", outfit: D.OUTFITS[0], job: null },
-    { name: "Kojo", age: "child", skin: D.SKINS[1], hair: "short", outfit: D.OUTFITS[2] },
-    { name: "Esi", age: "child", skin: D.SKINS[3], hair: "puffs", outfit: D.OUTFITS[5] },
+    { name: "Leo", age: "child", skin: D.SKINS[1], hair: "short", outfit: D.OUTFITS[2] },
+    { name: "Nia", age: "child", skin: D.SKINS[3], hair: "puffs", outfit: D.OUTFITS[5] },
   ] });
   const seen = {};
   const lowFor = Object.fromEntries(H.people.map((p) => [p.name, {}]));
@@ -31,7 +31,7 @@ for (const setting of Object.keys(D.SETTINGS)) {
   }
   const stuck = Object.entries(worst).filter(([, v]) => v > 240);
   const moods = H.people.map((p) => `${p.name} ${p.mood}`).join(", ");
-  console.log(`\n${setting}: day ${H.day}, money ₵${H.money}, ${((Date.now() - t0) / 1000).toFixed(1)}s, moods: ${moods}`);
+  console.log(`\n${setting}: day ${H.day}, money $${H.money}, ${((Date.now() - t0) / 1000).toFixed(1)}s, moods: ${moods}`);
   console.log("  jobs:", H.people.filter((p) => p.age === "adult").map((p) => `${p.name}: ${p.job ? D.JOBS[p.job].titles[p.level] : "none"}`).join(", "), "| grades:", H.people.filter((p) => p.age === "child").map((p) => `${p.name} ${L.gradeLetter(p.grade)}`).join(", "));
   console.log("  activities (minutes):", Object.entries(seen).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(", "));
   console.log("  last messages:", H.log.slice(0, 6).map((l) => l.text).join(" | "));

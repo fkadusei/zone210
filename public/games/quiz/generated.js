@@ -108,7 +108,7 @@ export function flagsSupported() {
   try {
     const ctx = document.createElement("canvas").getContext("2d");
     ctx.font = "32px sans-serif";
-    const f = String.fromCodePoint(0x1f1ec, 0x1f1ed); // Ghana
+    const f = String.fromCodePoint(0x1f1ec, 0x1f1ed); // a flag emoji
     return Math.abs(ctx.measureText(f).width - ctx.measureText("GH").width) > 2;
   } catch (err) {
     return false;

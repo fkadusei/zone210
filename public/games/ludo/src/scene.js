@@ -36,7 +36,7 @@ const DICE_FACES = [
   { v: 2, n: [0, 0, 1] }, { v: 5, n: [0, 0, -1] },
 ];
 
-const TOTAL_BOARD = 16.6; // 15 cells + kente border
+const TOTAL_BOARD = 16.6; // 15 cells + woven border
 const cellWorld = (row, col) => new THREE.Vector3(col - 7, 0, row - 7);
 const ease = (k) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 
@@ -59,10 +59,10 @@ function star(ctx, cx, cy, outer, inner, fill) {
   ctx.fill();
 }
 
-/** Kente-inspired woven border, drawn as two staggered bands of colored blocks. */
-function drawKenteBorder(ctx, N, U) {
-  const palette = ["#f2c230", "#c8281e", "#1f7a3d", "#141010"];
-  ctx.fillStyle = "#141010";
+/** A woven wooden inlay border, drawn as two staggered bands of blocks. */
+function drawWovenBorder(ctx, N, U) {
+  const palette = ["#d6a868", "#8a5a33", "#b98a52", "#5a3a1e"];
+  ctx.fillStyle = "#3a2414";
   ctx.fillRect(0, 0, N, N);
   const bands = [
     { from: 0.06, to: 0.36, shift: 0 },
@@ -91,10 +91,10 @@ function drawKenteBorder(ctx, N, U) {
       ctx.fillRect(N - a - w + o, p + (block - s) / 2, s, s);
     }
   });
-  // Clean corner squares with a black star (Ghana).
+  // Corner squares with a gold star.
   const corner = 0.8 * U;
   [[0, 0], [N - corner, 0], [0, N - corner], [N - corner, N - corner]].forEach(([x, y]) => {
-    ctx.fillStyle = "#141010";
+    ctx.fillStyle = "#3a2414";
     ctx.fillRect(x, y, corner, corner);
     ctx.strokeStyle = "#f2c230";
     ctx.lineWidth = U * 0.05;
@@ -116,7 +116,7 @@ function makeBoardTexture(game, renderer) {
   const ctx = canvas.getContext("2d");
   const g = (v) => M + v * U; // grid-line coordinate -> px
 
-  drawKenteBorder(ctx, N, U);
+  drawWovenBorder(ctx, N, U);
 
   // Playing field
   ctx.fillStyle = "#f7f1e3";

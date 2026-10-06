@@ -1,5 +1,5 @@
 /**
- * Yote (West African capture game) rules and a computer opponent. Pure functions, no DOM.
+ * Yote (traditional capture game) rules and a computer opponent. Pure functions, no DOM.
  * 5 rows x 6 columns (index = row * 6 + col). Each player starts with 12 pieces in hand. Players are 1 and 2.
  * On your turn do ONE of: place a piece from your hand on any empty square; slide a piece one square up, down, left or right
  * onto an empty square; or jump an adjacent enemy piece (up, down, left or right) onto the empty square beyond it, capturing it.

@@ -112,7 +112,7 @@ const ROWS = [
   { id: "clap", name: "Clap", c: "#ec6aa0", d: "clap" },
   { id: "conga", name: "Conga", c: "#2fb36d", d: "conga" },
   { id: "bell", name: "Bell", c: "#3b82f6", d: "bell" },
-  { id: "shaker", name: "Shekere", c: "#8a5ce0", d: "shaker" },
+  { id: "shaker", name: "Shaker", c: "#8a5ce0", d: "shaker" },
   { sep: true },
   { id: "m4", name: "Tune A", c: "#4ad6c8", m: 69 },
   { id: "m3", name: "Tune G", c: "#4ad6c8", m: 67 },
@@ -121,7 +121,7 @@ const ROWS = [
   { id: "m0", name: "Tune C", c: "#4ad6c8", m: 60 },
 ];
 const PRESETS = {
-  Highlife: { bpm: 104, kick: "x...x..x..x.x...", snare: "....x.......x...", hat: "x.x.x.x.x.x.x.x.", clap: "", conga: ".x..x.x..x..x.x.", bell: "x..x..x...x.x...", shaker: "..x...x...x...x.", m4: "", m3: "", m2: "x.......x.......", m1: "", m0: "....x.......x..." },
+  Pop: { bpm: 104, kick: "x...x..x..x.x...", snare: "....x.......x...", hat: "x.x.x.x.x.x.x.x.", clap: "", conga: ".x..x.x..x..x.x.", bell: "x..x..x...x.x...", shaker: "..x...x...x...x.", m4: "", m3: "", m2: "x.......x.......", m1: "", m0: "....x.......x..." },
   Afrobeat: { bpm: 110, kick: "x..x..x...x..x..", snare: "....x.......x..x", hat: "x.x.x.x.x.x.x.xx", clap: "....x.......x...", conga: ".x.x..x..x.x..x.", bell: "x.x.x..x.x.x..x.", shaker: "xxxxxxxxxxxxxxxx", m4: "", m3: "..x.....", m2: "", m1: "x.......x.......", m0: "" },
   "Hip-hop": { bpm: 90, kick: "x.......x.x.....", snare: "....x.......x...", hat: "x.x.x.x.x.x.x.x.", clap: "....x.......x...", conga: "", bell: "", shaker: "", m4: "", m3: "", m2: "", m1: "", m0: "x...............x.x....." },
   Funk: { bpm: 100, kick: "x..x..x...x.x...", snare: "....x..x....x...", hat: "xxxxxxxxxxxxxxxx", clap: "", conga: "..x...x...x...x.", bell: "", shaker: "x.x.x.x.x.x.x.x.", m4: "", m3: "x.......", m2: "..x.....x.x.....", m1: "", m0: "" },
@@ -223,7 +223,7 @@ function setPlaying(on, remote) {
   if (!remote) send({ t: "play", on });
 }
 $("play").addEventListener("click", () => setPlaying(!playing));
-loadPreset("Highlife");
+loadPreset("Pop");
 
 /* ---------------------------------------------------------------- piano */
 let voice = "piano";
@@ -321,14 +321,14 @@ buildPiano();
 
 /* ---------------------------------------------------------------- drum pads */
 const PADS = [
-  { id: "djBass", name: "Djembe bass", icon: "🪘", c: "#e5484d", key: "q" },
-  { id: "djTone", name: "Djembe tone", icon: "🪘", c: "#f5a623", key: "w" },
-  { id: "djSlap", name: "Djembe slap", icon: "✋", c: "#f5d90a", key: "e" },
+  { id: "djBass", name: "Bass drum", icon: "🪘", c: "#e5484d", key: "q" },
+  { id: "djTone", name: "Hand drum", icon: "🪘", c: "#f5a623", key: "w" },
+  { id: "djSlap", name: "Drum slap", icon: "✋", c: "#f5d90a", key: "e" },
   { id: "clap", name: "Clap", icon: "👏", c: "#ec6aa0", key: "r" },
-  { id: "talkLo", name: "Talking drum low", icon: "🥁", c: "#2fb36d", key: "z" },
-  { id: "talkHi", name: "Talking drum high", icon: "🥁", c: "#3b82f6", key: "x" },
-  { id: "bell", name: "Gankogui bell", icon: "🔔", c: "#8a5ce0", key: "c" },
-  { id: "shaker", name: "Shekere", icon: "🥚", c: "#4ad6c8", key: "v" },
+  { id: "talkLo", name: "Pitch drum low", icon: "🥁", c: "#2fb36d", key: "z" },
+  { id: "talkHi", name: "Pitch drum high", icon: "🥁", c: "#3b82f6", key: "x" },
+  { id: "bell", name: "Cowbell", icon: "🔔", c: "#8a5ce0", key: "c" },
+  { id: "shaker", name: "Shaker", icon: "🥚", c: "#4ad6c8", key: "v" },
 ];
 $("pads").innerHTML = PADS.map((p) => `<button type="button" class="pad" data-id="${p.id}" style="--c:${p.c}" aria-label="${p.name}"><span>${p.icon}</span>${p.name}</button>`).join("");
 function padHit(id, remote) {

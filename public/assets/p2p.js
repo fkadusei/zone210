@@ -2,7 +2,7 @@
  * Peer-to-peer rooms for two-player games (WebRTC via PeerJS). No game server: one browser hosts a room,
  * the other connects straight to it. PeerJS's free cloud broker only introduces the peers.
  *
- * Relay (TURN) credentials come from the same config as Ghana Ludo, so one setting covers both games.
+ * Relay (TURN) credentials come from the same config as Ludo, so one setting covers both games.
  */
 import { TURN_SERVERS, TURN_CREDENTIALS_URL } from "../games/ludo/src/config.js";
 
