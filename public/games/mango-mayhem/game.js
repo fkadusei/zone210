@@ -274,6 +274,50 @@ const release = (e) => {
 cv.addEventListener("pointerup", release);
 cv.addEventListener("pointercancel", (e) => { if (G && G.drag && G.drag.id === e.pointerId) G.drag = null; });
 
+/* ---------------------------------------------------------------- keyboard aiming */
+// up/down: angle, left/right: how far back the band is pulled, Space/Enter: fire (or use the bird's power in flight).
+// The aim is kept between shots so a near miss can be nudged.
+const kbAim = { ang: 40, pw: 0.75 };
+function keyPull() {
+  const s = sling();
+  const dir = s.x < W / 2 ? 1 : -1; // the left sling fires right, the right one (duel) fires left
+  const len = PULL_MAX * kbAim.pw;
+  const a = (kbAim.ang * Math.PI) / 180;
+  return { x: -dir * Math.cos(a) * len, y: Math.sin(a) * len };
+}
+let aimSaid = 0;
+function showKeyAim() {
+  G.drag = { id: "key", pull: keyPull() };
+  sfx.stretch(kbAim.pw);
+  clearTimeout(aimSaid);
+  aimSaid = setTimeout(() => setStatus(`Aim: angle ${Math.round(kbAim.ang)}°, power ${Math.round(kbAim.pw * 100)}%. Space to fire.`), 250);
+}
+cv.addEventListener("keydown", (e) => {
+  if (!G) return;
+  if (e.key === " " || e.key === "Enter") {
+    e.preventDefault();
+    if (G.phase === "flying" && G.shot && !G.shot.used && myShot()) { useAbility(false); return; }
+    if (!canAim()) return;
+    if (!G.drag || G.drag.id !== "key") { showKeyAim(); return; } // first press shows the aim
+    const { pull } = G.drag;
+    const vx = -pull.x * POWER, vy = -pull.y * POWER;
+    const kind = G.current;
+    launch(kind, vx, vy, G.duel ? G.turn : 0);
+    if (netMode()) net.send({ t: "shot", k: kind, vx, vy });
+    return;
+  }
+  const step = e.shiftKey ? 0.5 : 2;
+  const d = { ArrowUp: [step, 0], ArrowDown: [-step, 0], ArrowRight: [0, step / 40], ArrowLeft: [0, -step / 40] }[e.key];
+  if (!d) return;
+  e.preventDefault();
+  if (!canAim()) return;
+  if (G.drag && G.drag.id === "key") {
+    kbAim.ang = Math.min(80, Math.max(5, kbAim.ang + d[0]));
+    kbAim.pw = Math.min(1, Math.max(0.3, kbAim.pw + d[1]));
+  }
+  showKeyAim();
+});
+
 /* ---------------------------------------------------------------- the computer's shot (duel) */
 function cpuShot() {
   if (!G || !G.duel || G.over || G.turn !== 1 || G.phase !== "aim") return;
