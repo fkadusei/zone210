@@ -8,6 +8,6 @@
 .shell.down { background: radial-gradient(circle at 35% 30%, #e8dcc0, #b4a07a 80%); transform: scaleX(0.92); }
 .shell.rolling { animation: shellroll 0.16s linear infinite; }
 @keyframes shellroll { 50% { transform: translateY(-6px) rotate(14deg); } }
-html[data-saver] .shell.rolling { animation: none; }
+html[data-saver="on"] .shell.rolling { animation: none; }
 .tinfo { min-height: 1.5em; font-weight: 700; text-align: center; }
 .tinfo .grace { color: var(--gold); }

@@ -1,5 +1,6 @@
 /** Board, game flow and online play shared by Nine Men's Morris and Morabaraba (engine: mills-engine.js). */
 import { createOnline } from "./online.js";
+import { boardKeys } from "./board-keys.js";
 import { rulesFor, VARIANTS, initial, actions, act, removable, removePiece, endTurn, outcome, chooseOption, isPlacing, canFly, countOn, other, turnOptions } from "./mills-engine.js";
 
 export function startMills({ variant, storeKey, prefix, palette }) {
@@ -128,7 +129,7 @@ export function startMills({ variant, storeKey, prefix, palette }) {
       const live = (rmMode && removes.has(i)) || (placing && !v) || (!rmMode && !isPlacing(s) && (movable.has(i) || targets.has(i)));
       const hit = el("circle", { cx: x, cy: y, r: 24, class: "hit" });
       hit.style.cursor = live ? "pointer" : "default";
-      hit.addEventListener("click", () => onPoint(i));
+      hit.dataset.i = i; hit.addEventListener("click", () => onPoint(i));
     }
     renderBars();
   }
@@ -329,6 +330,8 @@ export function startMills({ variant, storeKey, prefix, palette }) {
     })
   );
   $("newGame").addEventListener("click", newGame);
+  // keyboard and screen-reader play on the board
+  boardKeys(svg, { selector: "[data-i]", describe: (i) => (s && s.b[i] ? (flipNames(s.b[i]) === "You" ? "your piece" : `${flipNames(s.b[i])}'s piece`) : "") });
   $("again").addEventListener("click", () => { if (online()) { net.rematch(); $("end").classList.remove("show"); } else newGame(); });
   $("endView").addEventListener("click", () => $("end").classList.remove("show"));
   $("undo").addEventListener("click", undo);

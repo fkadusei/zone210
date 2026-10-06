@@ -301,7 +301,7 @@ body { overflow-x: hidden; }
 .fav-btn svg { fill: none; }
 .fav-btn[aria-pressed="true"] { color: #2b1f00; background: linear-gradient(180deg, #ffd15a, var(--gold)); border-color: #fff; }
 .fav-btn[aria-pressed="true"] svg { fill: currentColor; }
-html[data-saver] .fav-btn { transition: none; }
+html[data-saver="on"] .fav-btn { transition: none; }
 
 /* keep the headline on one line on a phone */
 @media (max-width: 480px) { .hero h1 { font-size: clamp(1.6rem, 8.2vw, 2.4rem); letter-spacing: -0.03em; } }

@@ -1,4 +1,5 @@
 import { createOnline } from "../../assets/online.js";
+import { boardKeys } from "../../assets/board-keys.js";
 import { initial, legalMoves, play, chooseMove, other, centre } from "./logic.js";
 
 const $ = (id) => document.getElementById(id);
@@ -129,7 +130,7 @@ function draw() {
     if (i === hintMove) el("circle", { cx: x, cy: y, r: r + 4, fill: "none", stroke: "#2fbf71", "stroke-width": 3.5, class: "pulse" });
     if (i === hover && !v && legal.has(i)) el("circle", { cx: x, cy: y, r, fill: s.turn === 1 ? "rgba(10,12,19,0.45)" : "rgba(255,255,255,0.6)" });
     const hit = el("circle", { cx: x, cy: y, r: gap * 0.5, class: "pt" + (legal.has(i) ? "" : " dead") });
-    hit.addEventListener("click", () => onPoint(i));
+    hit.dataset.i = i; hit.addEventListener("click", () => onPoint(i));
     hit.addEventListener("pointerenter", () => { if (hover !== i && !s.b[i]) { hover = i; if (canAct) draw(); } });
   }
   const bar = (p) => {
@@ -261,3 +262,6 @@ newGame();
 const invited = net.roomParam();
 if (invited) { settings.mode = "online"; syncChips(); newGame(); net.join(invited); }
 window.__pente = { onPoint, legalMoves, play, centre, get s() { return s; }, get over() { return over; }, get busy() { return busy; }, get myP() { return myP; }, tourn };
+
+// keyboard and screen-reader play on the board
+boardKeys($("mb"), { selector: "[data-i]", describe: (i) => (s && s.b[i] ? `${s.b[i] === 1 ? "Black" : "White"} stone` : "") });

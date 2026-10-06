@@ -286,6 +286,8 @@ body::after {
 }
 .turn-card.current { animation: breathe 2.4s ease-in-out infinite; }
 @keyframes breathe { 50% { transform: translateY(-1px) scale(1.015); } }
+html[data-saver="on"] .turn-card.current { animation: none; }
+@media (prefers-reduced-motion: reduce) { .turn-card.current { animation: none; } }
 .status { animation: pop 0.25s ease; }
 @keyframes pop { from { transform: translateX(-50%) translateY(6px); opacity: 0.4; } }
 .modal-card, .direction-card {

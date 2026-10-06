@@ -86,7 +86,7 @@ public/               the website itself (everything below is served as static f
     book.js/.css      the Zone 210 Playbook (Book view): 3D page-turning book, chapters, deep links (#book=<id>), synthesized page sounds
     shell.css         shared design system: light + dark theme tokens, buttons, panels
     theme.js          light/dark switch (follows the device setting, remembers the choice)
-    back-link.js      injects the "← All games" pill into a game page
+    back-link.js      injects the "← Back" pill into a game page (browser Back if you came from this site, else home)
     thumbs/<id>.jpg   optional card screenshot (falls back to generated art)
   games/<id>/         one folder per game (index.html + its own files)
 ```

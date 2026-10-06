@@ -12,7 +12,7 @@ const CAT_COLOR = {
   Actinide: "var(--c-actin)",
   "Unknown properties": "var(--c-unknown)",
 };
-const PHASE_COLOR = { Solid: "#3b6fd9", Liquid: "#12a4a4", Gas: "#e08a0a" };
+const PHASE_COLOR = { Solid: "#3b6fd9", Liquid: "#0e8181", Gas: "#a26406" };
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const shuffle = (a) => {
   const arr = a.slice();
@@ -82,8 +82,8 @@ export function mountTable(root, ctx) {
     els.forEach((e) => {
       html += `<button class="el" data-n="${e.n}" style="grid-column:${e.x};grid-row:${e.y};--col:${colorOf(e)}" aria-label="${esc(e.name)}, atomic number ${e.n}"><span class="n">${e.n}</span><span class="s">${esc(e.s)}</span><span class="nm">${esc(e.name)}</span></button>`;
     });
-    html += `<div class="el" style="grid-column:3;grid-row:6;--col:var(--c-lanth);pointer-events:none;opacity:.55"><span class="s" style="font-size:.62rem">57–71</span></div>`;
-    html += `<div class="el" style="grid-column:3;grid-row:7;--col:var(--c-actin);pointer-events:none;opacity:.55"><span class="s" style="font-size:.62rem">89–103</span></div>`;
+    html += `<div class="el" style="grid-column:3;grid-row:6;--col:var(--c-lanth);pointer-events:none;cursor:default;opacity:.55"><span class="s" style="font-size:.62rem">57–71</span></div>`;
+    html += `<div class="el" style="grid-column:3;grid-row:7;--col:var(--c-actin);pointer-events:none;cursor:default;opacity:.55"><span class="s" style="font-size:.62rem">89–103</span></div>`;
     html += `<div class="pt-note" style="grid-row:1;grid-column:3/13">Tap any element</div>`;
     grid.innerHTML = html;
     grid.querySelectorAll(".el[data-n]").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.n), true)));

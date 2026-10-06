@@ -1,4 +1,5 @@
 import { createOnline } from "../../assets/online.js";
+import { boardKeys } from "../../assets/board-keys.js";
 import { actions, apply, outcome, chooseAction, other } from "./logic.js";
 
 const $ = (id) => document.getElementById(id);
@@ -123,7 +124,7 @@ function draw() {
     if (placing && !v) el("circle", { cx: x, cy: y, r: 12, fill: "rgba(255,255,255,0.45)", class: "pulse" });
     if (hintA && ((hintA.kind === "place" && hintA.to === i) || (hintA.kind === "move" && (hintA.from === i || hintA.to === i)))) el("circle", { cx: x, cy: y, r: 34, fill: "none", stroke: "#2fbf71", "stroke-width": 4, class: "pulse" });
     const hit = el("circle", { cx: x, cy: y, r: 38, class: "hit" });
-    hit.addEventListener("click", () => onPoint(i));
+    hit.dataset.i = i; hit.addEventListener("click", () => onPoint(i));
   }
   $("pbars").innerHTML = [1, 2].map((p) => `<div class="pbar${!over && s.turn === p ? " turn" : ""}" style="--c1:${PAL[p][0]};--c2:${PAL[p][1]}"><span class="chip"></span><span class="nm">${nameOf(p)}<small>To place ${s.place[p]} · On board ${s.b.filter((v) => v === p).length}</small></span></div>`).join("");
 }
@@ -252,3 +253,7 @@ newGame();
 const invited = net.roomParam();
 if (invited) { settings.mode = "online"; syncChips(); newGame(); net.join(invited); }
 window.__achi = { onPoint, actions, get s() { return s; }, get over() { return over; }, get busy() { return busy; }, get myP() { return myP; } };
+
+// keyboard and screen-reader play on the board
+const ownr = (n, what) => (n === "You" ? `your ${what}` : `${n}'s ${what}`);
+boardKeys($("mb"), { selector: "[data-i]", describe: (i) => (s && s.b[i] ? ownr(nameOf(s.b[i]), "piece") : "") });

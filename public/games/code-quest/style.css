@@ -34,7 +34,7 @@
 #robotbody { transition: transform var(--dur, 0.3s) ease; transform-box: fill-box; transform-origin: center; }
 #robot.bump { animation: bump 0.35s linear; }
 @keyframes bump { 25% { margin-left: -4px; } 75% { margin-left: 4px; } }
-html[data-saver] #robot, html[data-saver] #robotbody { transition: none; }
+html[data-saver="on"] #robot, html[data-saver="on"] #robotbody { transition: none; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin: 12px 0 0; }
 .palette { display: flex; flex-wrap: wrap; gap: 8px; }
 .block { font: inherit; font-weight: 800; font-size: 0.9rem; padding: 8px 12px; border-radius: 12px; border: 0; cursor: grab; color: #fff; touch-action: none; user-select: none; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); display: inline-flex; align-items: center; gap: 6px; }

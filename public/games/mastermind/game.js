@@ -90,7 +90,7 @@ const setStatus = (t, kind = "") => { statusEl.textContent = t; statusEl.classNa
 function peg(c, cls = "", label) {
   const b = document.createElement(cls.includes("slot") || cls.includes("btn") ? "button" : "div");
   b.className = `peg ${cls}`.trim();
-  if (c === null || c === undefined) { if (cls.includes("q")) b.textContent = "?"; return b; }
+  if (c === null || c === undefined) { if (cls.includes("q")) b.textContent = "?"; if (b.tagName === "BUTTON") b.setAttribute("aria-label", "Empty slot"); return b; }
   b.classList.add("on");
   b.style.backgroundColor = COLORS[c];
   if (settings.symbols === "on") b.textContent = GLYPHS[c];

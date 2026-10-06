@@ -12,7 +12,7 @@
 #mb .hit { fill: transparent; cursor: pointer; }
 #mb .pulse { animation: mpulse 1s ease-in-out infinite; }
 @keyframes mpulse { 50% { opacity: 0.4; } }
-html[data-saver] #mb .pulse { animation: none; }
+html[data-saver="on"] #mb .pulse { animation: none; }
 .tools { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
 .rules { margin: 18px auto 0; max-width: 560px; }
 .rules summary { cursor: pointer; font-weight: 800; }

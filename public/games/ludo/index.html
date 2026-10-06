@@ -35,12 +35,12 @@
   </head>
   <body>
     <!-- Full-bleed 3D canvas -->
-    <div id="stage" class="stage"></div>
+    <main id="stage" class="stage" aria-label="Ludo board"></main>
 
     <!-- HUD -->
     <header class="topbar">
       <div class="brand">
-        <a class="home-link" href="../../" aria-label="Back to all games">&larr; Games</a>
+        <a class="home-link" href="../../" data-back aria-label="Go back">&larr; Back</a>
         <span class="weave" aria-hidden="true"></span>
         <h1>Ludo</h1>
         <span class="room-badge" id="roomBadge" hidden></span>
@@ -258,6 +258,7 @@
       </div>
     </section>
 
+    <script src="../../assets/back-link.js"></script>
     <script type="module" src="src/main.js"></script>
   </body>
 </html>

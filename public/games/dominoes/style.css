@@ -33,7 +33,7 @@
 .chain .tile { --u: var(--u); }
 .chain .tile.last { box-shadow: 0 0 0 3px #ffd65a, 0 4px 8px rgba(0, 0, 0, 0.35); animation: land 0.35s ease-out; }
 @keyframes land { from { transform: scale(1.35); opacity: 0.4; } }
-html[data-saver] .chain .tile.last { animation: none; }
+html[data-saver="on"] .chain .tile.last { animation: none; }
 .chain .empty { color: rgba(255, 255, 255, 0.7); font-weight: 700; padding: 30px 0; }
 
 .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin-top: 10px; min-height: 42px; }

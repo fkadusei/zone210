@@ -56,6 +56,6 @@
 @keyframes drop { from { transform: scale(0.3); opacity: 0; } }
 .disc[data-c="2"] { animation-name: drop2; }
 @keyframes drop2 { from { transform: rotateY(180deg) scale(0.3); opacity: 0; } }
-html[data-saver] .disc, html[data-saver] .cell::before, html[data-saver] .cell::after { animation: none; transition: none; }
+html[data-saver="on"] .disc, html[data-saver="on"] .cell::before, html[data-saver="on"] .cell::after { animation: none; transition: none; }
 
 .tools { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }

@@ -1,4 +1,5 @@
 import { createOnline } from "../../assets/online.js";
+import { boardKeys } from "../../assets/board-keys.js";
 import { ROWS, COLS, initial, actions, act, bonusTargets, takeBonus, endTurn, outcome, chooseOption, other, totalOf, onBoard, turnOptions } from "./logic.js";
 
 const $ = (id) => document.getElementById(id);
@@ -143,7 +144,7 @@ function draw() {
     if (bonus.has(i)) el("circle", { cx: x, cy: y, r: 25, fill: "rgba(220,50,50,0.25)", stroke: "#d43b3b", "stroke-width": 3.5, class: "pulse" });
     if (hintOpt && ((hintOpt.a.kind === "place" && hintOpt.a.to === i) || (hintOpt.a.kind !== "place" && (hintOpt.a.from === i || hintOpt.a.to === i)))) el("rect", { x: x - 29, y: y - 29, width: 58, height: 58, rx: 9, fill: "none", stroke: "#2fbf71", "stroke-width": 4, class: "pulse" });
     const hit = el("rect", { x: x - 30, y: y - 30, width: 60, height: 60, class: "hit" });
-    hit.addEventListener("click", () => onCell(i));
+    hit.dataset.i = i; hit.addEventListener("click", () => onCell(i));
   }
   const bars = [1, 2].map((p) => `<div class="pbar${!over && s.turn === p ? " turn" : ""}" style="--c1:${PAL[p][0]};--c2:${PAL[p][1]}"><span class="chip"></span><span class="nm">${nameOf(p)}<small>In hand ${s.hand[p]} · On board ${onBoard(s, p)}</small></span></div>`);
   $("pbars").innerHTML = bars.join("");
@@ -309,3 +310,6 @@ newGame();
 const invited = net.roomParam();
 if (invited) { settings.mode = "online"; syncChips(); newGame(); net.join(invited); }
 window.__yote = { onCell, actions, bonusTargets, turnOptions, ROWS, get s() { return s; }, get rmMode() { return rmMode; }, get over() { return over; }, get busy() { return busy; }, get myP() { return myP; }, doBonus };
+
+// keyboard and screen-reader play on the board
+boardKeys($("mb"), { selector: "[data-i]", describe: (i) => (s && s.b[i] ? `${s.b[i] === 1 ? "Gold" : "Blue"} piece` : "") });

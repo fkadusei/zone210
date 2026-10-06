@@ -50,7 +50,7 @@
 button.pcard { cursor: default; }
 .pcard.land { animation: land 0.32s ease-out; }
 @keyframes land { from { transform: translateY(-26px) scale(1.18); opacity: 0.35; } }
-html[data-saver] .pcard.land, html[data-saver] .ct-draw.hint .stack { animation: none; }
+html[data-saver="on"] .pcard.land, html[data-saver="on"] .ct-draw.hint .stack { animation: none; }
 
 .ct-hand { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding-top: 6px; min-height: calc(var(--cw) * 1.45 + 14px); }
 .ct-hand .pcard { transition: transform 0.12s, box-shadow 0.12s, opacity 0.12s; }

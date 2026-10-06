@@ -1,4 +1,5 @@
 import { createOnline } from "../../assets/online.js";
+import { boardKeys } from "../../assets/board-keys.js";
 import { N, valid, initial, actions, act, endTurn, outcome, chooseTurn, foxMoves, foxPos, geeseCount, other } from "./logic.js";
 
 const $ = (id) => document.getElementById(id);
@@ -149,7 +150,7 @@ function draw() {
     if (hintTurn && hintTurn.moves.some((m) => m.from === i || m.to === i)) el("circle", { cx: x, cy: y, r: 23, fill: "none", stroke: "#2fbf71", "stroke-width": 4, class: "pulse" });
     if (result && result.trapped === i) el("circle", { cx: x, cy: y, r: 25, fill: "none", stroke: "#d43b3b", "stroke-width": 4, class: "pulse" });
     const hit = el("circle", { cx: x, cy: y, r: 22, class: "hit" });
-    hit.addEventListener("click", () => onPoint(i));
+    hit.dataset.i = i; hit.addEventListener("click", () => onPoint(i));
   }
   const g = geeseCount(s);
   const bar = (p) => `<div class="pbar${!over && s.turn === p ? " turn" : ""}" style="--c1:${p === 1 ? "#ffb347" : "#fffaf0"};--c2:${p === 1 ? "#c8680a" : "#cfc6af"}"><span class="chip"></span><span class="nm">${pname(p)}<small>${p === 1 ? `Fox · captured ${s.captured}` : `Geese · ${g} left`}</small></span></div>`;
@@ -320,3 +321,6 @@ newGame();
 const invited = net.roomParam();
 if (invited) { settings.mode = "online"; syncChips(); newGame(); net.join(invited); }
 window.__fg = { onPoint, actions, foxMoves, stopChain, get s() { return s; }, get over() { return over; }, get busy() { return busy; }, get myP() { return myP; }, get chainFrom() { return chainFrom; } };
+
+// keyboard and screen-reader play on the board
+boardKeys($("mb"), { selector: "[data-i]", describe: (i) => (s && s.b[i] === 1 ? "fox" : s && s.b[i] === 2 ? "goose" : "") });

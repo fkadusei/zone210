@@ -1,4 +1,5 @@
 import { createOnline } from "../../assets/online.js";
+import { boardKeys } from "../../assets/board-keys.js";
 import { CELLS, NB, initial, legalMoves, apply, winner, chooseMove, count, other } from "./logic.js";
 
 const $ = (id) => document.getElementById(id);
@@ -150,7 +151,7 @@ function draw() {
     if (targets.has(i)) el("circle", { cx: x, cy: y, r: v ? 28 : 12, fill: v ? "none" : "rgba(255,214,90,0.9)", stroke: v ? "#ff5d5d" : "#b07a00", "stroke-width": v ? 4 : 2.5, class: "pulse" });
     if (hint && (hint.cells.includes(i) || (NB[hint.cells[0]][hint.d] === i))) el("circle", { cx: x, cy: y, r: 29, fill: "none", stroke: "#2fbf71", "stroke-width": 3.5, class: "pulse" });
     const hit = el("circle", { cx: x, cy: y, r: 27, class: "hc" + (canAct ? "" : " dead") });
-    hit.addEventListener("click", () => onCell(i));
+    hit.dataset.i = i; hit.addEventListener("click", () => onCell(i));
   }
   const bar = (p) => {
     const pushed = s.off[p]; // marbles of the other colour that p has pushed off
@@ -286,3 +287,6 @@ newGame();
 const invited = net.roomParam();
 if (invited) { settings.mode = "online"; syncChips(); newGame(); net.join(invited); }
 window.__ab = { onCell, legalMoves, apply, NB, CELLS, get s() { return s; }, get over() { return over; }, get busy() { return busy; }, get myP() { return myP; } };
+
+// keyboard and screen-reader play on the board
+boardKeys($("mb"), { selector: "[data-i]", describe: (i) => (s && s.b[i] ? `${cname(s.b[i])} marble` : "") });

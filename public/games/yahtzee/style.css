@@ -20,7 +20,7 @@
 .die.held::after { content: "KEPT"; position: absolute; left: 0; right: 0; bottom: -20px; text-align: center; font-size: 0.62rem; font-weight: 900; letter-spacing: 0.08em; color: #ffd65a; }
 .die.rolling { animation: shake 0.42s ease-in-out; }
 @keyframes shake { 20% { transform: translate(-3px, -6px) rotate(-14deg); } 45% { transform: translate(3px, 2px) rotate(12deg); } 70% { transform: translate(-2px, -3px) rotate(-8deg); } }
-html[data-saver] .die.rolling { animation: none; }
+html[data-saver="on"] .die.rolling { animation: none; }
 .die.blank { opacity: 0.5; }
 .tray-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: center; margin-top: 10px; }
 .tip { font-size: 0.85rem; font-weight: 700; opacity: 0.92; }

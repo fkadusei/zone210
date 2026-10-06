@@ -1,4 +1,5 @@
 import { createOnline } from "../../assets/online.js";
+import { boardKeys } from "../../assets/board-keys.js";
 import { neighbors, emptyBoard, winningPath, chooseMove, shouldSwap, pieOpening } from "./logic.js";
 
 const $ = (id) => document.getElementById(id);
@@ -126,7 +127,7 @@ function draw() {
     const v = b[i];
     const cls = "cellhex " + (v === 1 ? "r" : v === 2 ? "b" : "empty") + (winSet.has(i) ? " win" : "") + (!v && canAct ? "" : " dead");
     const h = el("polygon", { points: pts, class: cls });
-    h.addEventListener("click", () => onCell(i));
+    h.dataset.i = i; h.addEventListener("click", () => onCell(i));
     if (i === last) el("circle", { cx: x, cy: y, r: S * 0.28, fill: "#fff", opacity: 0.9, "pointer-events": "none" });
   }
   const bar = (c) => { const p = who[c]; return `<div class="pbar${!over && toMove === c ? " turn" : ""}" style="--c1:${c === 1 ? "#ff8a8f" : "#8ab8ff"};--c2:${c === 1 ? "#c82a30" : "#2a5fc4"}"><span class="chip"></span><span class="nm">${pname(p)}<small>${cname(c)} · ${c === 1 ? "top ↔ bottom" : "left ↔ right"}</small></span></div>`; };
@@ -265,3 +266,6 @@ newGame();
 const invited = net.roomParam();
 if (invited) { settings.mode = "online"; syncChips(); newGame(); net.join(invited); }
 window.__hex = { onCell, neighbors, doSwap, get b() { return b; }, get n() { return n; }, get toMove() { return toMove; }, get who() { return who; }, get over() { return over; }, get busy() { return busy; }, get myP() { return myP; }, get moves() { return moves; } };
+
+// keyboard and screen-reader play on the board
+boardKeys($("mb"), { selector: "[data-i]", describe: (i) => (b[i] ? `${cname(b[i])} stone` : "") });

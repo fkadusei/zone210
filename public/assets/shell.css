@@ -229,3 +229,7 @@ body::after {
 
 /* "How to play" toggles: a finger-sized tap area */
 summary { padding-block: 7px; cursor: pointer; }
+
+/* keyboard focus on SVG board points (assets/board-keys.js) and a fallback ring for any control */
+svg [role="button"]:focus-visible { outline: none; stroke: var(--focus) !important; stroke-width: 4px !important; stroke-opacity: 1 !important; }
+:where(button, a, input, select, summary, [tabindex]):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }

@@ -1,4 +1,5 @@
 import { createOnline } from "../../assets/online.js";
+import { boardKeys } from "../../assets/board-keys.js";
 import { N, initial, apply, pawnMoves, wallLegal, pathFor, chooseMove, other } from "./logic.js";
 
 const $ = (id) => document.getElementById(id);
@@ -119,7 +120,7 @@ function draw() {
       const goal0 = r === 0; // Blue's goal row
       const goal8 = r === N - 1;
       const cell = el("rect", { x: px(c), y: py(r), width: CELL, height: CELL, rx: 8, fill: goal0 ? "#4c78c9" : goal8 ? "#c95a5a" : "#f0dcb8", opacity: goal0 || goal8 ? 0.85 : 1, class: "cell" + (legalSet.has(r * N + c) ? " go" : "") });
-      cell.addEventListener("click", () => onCell(r, c));
+      cell.dataset.i = r * N + c; cell.addEventListener("click", () => onCell(r, c));
     }
   }
   s.walls.forEach(([r, c, o]) => { const rc = wallRect(r, c, o); el("rect", { ...rc, rx: 4, fill: "url(#wood)", stroke: "#7a5226", "stroke-width": 1 }); });
@@ -326,3 +327,6 @@ window.__q = {
   apply, pawnMoves, wallLegal, onCell, chooseMove, other,
   playWall: (r, c, o) => { tool = "wall"; ghost = { r, c, o }; placeGhost(); },
 };
+
+// keyboard and screen-reader play on the board
+boardKeys($("mb"), { selector: "[data-i]", describe: (i) => { if (!s) return ""; const k = Object.keys(s.p).find((p) => s.p[p] && s.p[p][0] === Math.floor(i / N) && s.p[p][1] === i % N); return k !== undefined ? `${colorName(Number(k))} pawn` : ""; } });

@@ -36,7 +36,8 @@
 @media (max-width: 680px) { .explore { grid-template-columns: minmax(0, 1fr); } }
 .facts { display: grid; gap: 8px; }
 .facts .line { padding: 8px 12px; border-radius: 12px; background: var(--surface-2); font-weight: 700; }
-.facts .line b { color: var(--blue); }
+.facts .line b { color: #3a55d8; }
+:root[data-theme="dark"] .facts .line b { color: #8ea2ff; }
 .nl { width: 100%; height: auto; margin-top: 12px; }
 .nl text { fill: var(--muted); font-size: 12px; font-weight: 700; text-anchor: middle; }
 .nl .axis { stroke: var(--line-strong); stroke-width: 3; stroke-linecap: round; }

@@ -17,7 +17,7 @@
 #bg text { font-family: var(--font); user-select: none; pointer-events: none; }
 #bg .pulse { animation: bgpulse 1s ease-in-out infinite; }
 @keyframes bgpulse { 50% { opacity: 0.45; } }
-html[data-saver] #bg .pulse { animation: none; }
+html[data-saver="on"] #bg .pulse { animation: none; }
 
 .dice-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
 .rules { margin: 18px auto 0; max-width: 880px; }

@@ -1,4 +1,5 @@
 import { createOnline } from "../../assets/online.js";
+import { boardKeys } from "../../assets/board-keys.js";
 import { HOLES, ZONES_FOR, zoneOf, zoneHoles, opposite, initial, reachable, legalMoves, apply, won, inTarget, chooseMove } from "./logic.js";
 
 const $ = (id) => document.getElementById(id);
@@ -149,7 +150,7 @@ function draw() {
     const { x, y } = xy(i, rot);
     const hit = el("circle", { cx: x, cy: y, r: 11, class: "hit" });
     hit.style.cursor = canAct && (s.b[i] === s.turn || dests.has(i)) ? "pointer" : "default";
-    hit.addEventListener("click", () => onHole(i));
+    hit.dataset.i = i; hit.addEventListener("click", () => onHole(i));
   }
   $("pbars").innerHTML = s.zones.map((z, seat) => `<div class="pbar${!over && s.turn === seat ? " turn" : ""}" style="--c1:#fff;--c2:${COLORS[z]}"><span class="chip"></span><span class="nm">${nameOf(seat)}<small>${inTarget(s, seat)}/10 home</small></span></div>`).join("");
 }
@@ -273,3 +274,6 @@ newGame();
 const invited = net.roomParam();
 if (invited) { settings.mode = "online"; syncChips(); newGame(); net.join(invited); }
 window.__cc = { onHole, reachable, legalMoves, choose: (lvl) => chooseMove(s, lvl), get s() { return s; }, get over() { return over; }, get busy() { return busy; }, get mySeat() { return mySeat; } };
+
+// keyboard and screen-reader play on the board
+boardKeys($("mb"), { selector: "[data-i]", describe: (i) => (s && s.b[i] >= 0 ? `${CNAME[s.zones[s.b[i]]]} marble` : "") });

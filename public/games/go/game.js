@@ -1,4 +1,5 @@
 import { createOnline } from "../../assets/online.js";
+import { boardKeys } from "../../assets/board-keys.js";
 import { KOMI, newGame as freshGame, isLegal, legalMoves, play, groupAt, score, estimateDead, chooseMove, other } from "./logic.js";
 
 const $ = (id) => document.getElementById(id);
@@ -134,9 +135,9 @@ function draw() {
     if (i === s.last && phase === "play") el("circle", { cx: x, cy: y, r: radius * 0.3, fill: "none", stroke: v === 1 ? "#fff" : "#c92d2d", "stroke-width": 2 });
     if (i === hintMove) el("circle", { cx: x, cy: y, r: radius + 3, fill: "none", stroke: "#2fbf71", "stroke-width": 3.5, class: "pulse" });
     if (i === hover && !v && canAct) el("circle", { cx: x, cy: y, r: radius, fill: s.turn === 1 ? "rgba(10,12,19,0.45)" : "rgba(255,255,255,0.6)" });
-    if (phase === "score" && v) { const hit = el("circle", { cx: x, cy: y, r: gap * 0.5, class: "pt gp" }); hit.addEventListener("click", () => onScoreClick(i)); } else {
+    if (phase === "score" && v) { const hit = el("circle", { cx: x, cy: y, r: gap * 0.5, class: "pt gp" }); hit.dataset.i = i; hit.addEventListener("click", () => onScoreClick(i)); } else {
       const hit = el("circle", { cx: x, cy: y, r: gap * 0.5, class: "pt" + (canAct && !v ? "" : " dead") });
-      hit.addEventListener("click", () => onPoint(i));
+      hit.dataset.i = i; hit.addEventListener("click", () => onPoint(i));
       hit.addEventListener("pointerenter", () => { if (hover !== i && !v) { hover = i; if (canAct) draw(); } });
     }
   }
@@ -339,3 +340,6 @@ window.__go = {
   accept: () => document.getElementById("accept").click(), resign: () => document.getElementById("resign").click(),
   get s() { return s; }, get phase() { return phase; }, get over() { return over; }, get busy() { return busy; }, get myC() { return myC; }, get dead() { return dead; },
 };
+
+// keyboard and screen-reader play on the board
+boardKeys($("mb"), { selector: "[data-i]", describe: (i) => (s && s.b[i] ? `${cname(s.b[i])} stone` : "") });

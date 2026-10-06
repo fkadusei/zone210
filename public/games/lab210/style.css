@@ -47,8 +47,8 @@
 
 /* ---------- periodic table ---------- */
 :root {
-  --c-alkali: #e5484d; --c-alkaline: #f0900a; --c-trans: #4f7df0; --c-post: #22a06b; --c-metalloid: #12a4a4;
-  --c-nonmetal: #8b5cf6; --c-noble: #d946a8; --c-lanth: #5865e8; --c-actin: #9a4fe0; --c-unknown: #64748b;
+  --c-alkali: #d04146; --c-alkaline: #a76406; --c-trans: #466fd5; --c-post: #1c8458; --c-metalloid: #0e8181;
+  --c-nonmetal: #8457e9; --c-noble: #c53f98; --c-lanth: #5865e8; --c-actin: #984edd; --c-unknown: #64748b;
 }
 .pt-wrap { overflow-x: auto; padding-bottom: 6px; }
 .pt-grid { display: grid; grid-template-columns: repeat(18, minmax(0, 1fr)); gap: 3px; min-width: 610px; }
@@ -198,7 +198,7 @@
 .circuit .wire { fill: none; stroke: var(--muted); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 .circuit .flow { fill: none; stroke: var(--gold); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 1 13; animation: flow var(--dur, 1s) linear infinite; }
 @keyframes flow { to { stroke-dashoffset: -14; } }
-html[data-saver] .circuit .flow { animation: none; }
+html[data-saver="on"] .circuit .flow { animation: none; }
 .circuit text { font: 700 12px system-ui; fill: var(--muted); }
 
 .anat { position: relative; max-width: 640px; margin: 0 auto; border-radius: 14px; overflow: hidden; background: #fff; border: 1px solid var(--line); }
