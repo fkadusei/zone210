@@ -1,0 +1,88 @@
+.stars { display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 999px; background: var(--gold-soft); border: 1px solid var(--gold); font-weight: 800; }
+.tabs { margin-bottom: 14px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.row.center { justify-content: center; }
+.opts { margin-bottom: 12px; }
+
+/* letter and number tiles */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 10px; }
+.tile {
+  position: relative; display: grid; place-items: center; aspect-ratio: 1; padding: 0;
+  font: 900 2.3rem/1 var(--font); color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+  background: linear-gradient(160deg, hsl(var(--h) 70% 52%), hsl(var(--h) 72% 38%));
+  border: 0; border-radius: 18px; box-shadow: 0 4px 0 hsl(var(--h) 70% 26%), 0 8px 16px rgba(0, 0, 0, 0.18);
+  cursor: pointer; touch-action: manipulation; transition: transform 0.12s ease;
+}
+.tile small { position: absolute; right: 9px; bottom: 6px; font-size: 1rem; font-weight: 800; opacity: 0.9; }
+.tile.seen::after { content: "✓"; position: absolute; left: 8px; top: 5px; font-size: 0.8rem; font-weight: 900; opacity: 0.9; }
+.tile:hover { transform: translateY(-3px); }
+.tile:active { transform: translateY(2px); box-shadow: 0 1px 0 hsl(var(--h) 70% 26%); }
+.tile.lit { transform: scale(1.12); box-shadow: 0 0 0 4px #fff, 0 0 0 7px var(--gold), 0 10px 22px rgba(0, 0, 0, 0.3); z-index: 2; }
+.tiles.nums .tile { font-size: 2.1rem; }
+
+/* the big card for one letter or number */
+.card {
+  max-width: 560px; margin: 0 auto; padding: 22px 18px 18px; text-align: center;
+  background: color-mix(in srgb, var(--surface) 90%, transparent); border: 1px solid var(--line); border-radius: 26px;
+  box-shadow: var(--shadow);
+}
+.card .big {
+  display: inline-flex; align-items: baseline; gap: 14px; padding: 8px 30px; border-radius: 26px;
+  font: 900 clamp(5rem, 22vw, 8rem)/1 var(--font); color: #fff; text-shadow: 0 4px 0 rgba(0, 0, 0, 0.22);
+  background: linear-gradient(160deg, hsl(var(--h, 45) 72% 52%), hsl(var(--h, 45) 72% 36%));
+}
+.card .big span { font-size: 0.7em; }
+.card .pic { font-size: clamp(4rem, 18vw, 6rem); line-height: 1.15; margin-top: 10px; }
+.card .word { margin: 4px 0 0; font: 800 clamp(1.8rem, 7vw, 2.6rem)/1.2 var(--font); text-transform: capitalize; }
+.card .word.small { font-size: 1.2rem; text-transform: none; color: var(--muted); }
+.card .word b { color: hsl(var(--h, 45) 80% 45%); }
+:root[data-theme="dark"] .card .word b { color: hsl(var(--h, 45) 85% 68%); }
+.card .back { margin-top: 10px; }
+.card h2 { margin: 6px 0 0; font-size: 1.8rem; }
+.card .empty { font-size: 1.3rem; font-weight: 700; color: var(--muted); }
+.stars-row { font-size: 1.8rem; letter-spacing: 2px; min-height: 1.2em; margin: 6px 0 0; }
+
+/* ten-frames: rows of five */
+.frames { display: grid; gap: 10px; justify-content: center; margin-top: 14px; }
+.frame { display: grid; grid-template-columns: repeat(5, minmax(0, 46px)); gap: 6px; padding: 8px; border-radius: 14px; background: color-mix(in srgb, var(--surface-2) 80%, transparent); border: 2px solid var(--line); }
+.dot { display: grid; place-items: center; aspect-ratio: 1; border-radius: 10px; font-size: clamp(1.3rem, 6vw, 2rem); background: color-mix(in srgb, var(--bg) 40%, transparent); transition: transform 0.15s ease; }
+.dot.lit { transform: scale(1.18); box-shadow: 0 0 0 3px var(--gold); background: var(--gold-soft); }
+
+/* quizzes */
+.quiz { max-width: 640px; margin: 0 auto; text-align: center; }
+.meter { display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; }
+.meter i { width: 14px; height: 14px; border-radius: 50%; background: var(--line); }
+.meter i.done { background: var(--green); }
+.meter i.now { background: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+.show { display: inline-grid; place-items: center; min-width: 150px; padding: 6px 26px; border-radius: 26px; font: 900 6.5rem/1.1 var(--font); color: #fff; background: linear-gradient(160deg, hsl(var(--h) 72% 52%), hsl(var(--h) 72% 36%)); text-shadow: 0 4px 0 rgba(0, 0, 0, 0.22); }
+.hear { margin: 14px auto 6px; display: inline-flex; }
+.choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 420px; margin: 10px auto 0; }
+.choice {
+  aspect-ratio: 1.6; font: 900 clamp(2.6rem, 12vw, 4.2rem)/1 var(--font); color: #fff; text-shadow: 0 3px 0 rgba(0, 0, 0, 0.22);
+  background: linear-gradient(160deg, hsl(var(--h) 70% 52%), hsl(var(--h) 72% 38%));
+  border: 0; border-radius: 22px; box-shadow: 0 5px 0 hsl(var(--h) 70% 26%), 0 10px 18px rgba(0, 0, 0, 0.2);
+  cursor: pointer; touch-action: manipulation; transition: transform 0.12s ease, opacity 0.2s ease;
+}
+.choice:active:not(:disabled) { transform: translateY(3px); }
+.choice.right { background: linear-gradient(160deg, #3ccf7f, #17904f); box-shadow: 0 5px 0 #0d5e33, 0 0 0 5px #fff, 0 0 0 9px #2fbf71; transform: scale(1.05); }
+.choice.wrong { opacity: 0.35; animation: nope 0.4s ease; }
+.choice:disabled { cursor: default; }
+@keyframes nope { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+
+/* tracing */
+.trace { position: relative; max-width: 440px; margin: 0 auto; border-radius: 24px; background: color-mix(in srgb, var(--surface) 92%, transparent); border: 2px dashed var(--line); overflow: hidden; }
+.trace canvas { position: absolute; left: 0; top: 0; }
+.trace #ink { touch-action: none; cursor: crosshair; }
+
+/* a burst of stars after a right answer */
+.cheer { position: fixed; left: 50%; top: 55%; width: 0; height: 0; pointer-events: none; z-index: 50; }
+.cheer span { position: absolute; font-size: 2rem; animation: pop var(--d) ease-out forwards; }
+@keyframes pop { from { transform: translate(0, 0) scale(0.4); opacity: 1; } to { transform: translate(var(--x), var(--y)) scale(1.2); opacity: 0; } }
+
+html[data-saver="on"] .choice.wrong, html[data-saver="on"] .cheer span { animation: none; }
+html[data-saver="on"] .tile, html[data-saver="on"] .dot, html[data-saver="on"] .choice { transition: none; }
+@media (max-width: 520px) {
+  .tiles { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; }
+  .tile { font-size: 2rem; border-radius: 15px; }
+  .show { font-size: 5rem; }
+}
