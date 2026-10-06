@@ -216,8 +216,13 @@ export function createBook(host, api) {
       <span class="shot"><span class="bk-emoji" aria-hidden="true">${g.emoji}</span><img src="assets/thumbs/${g.id}.jpg" alt="" decoding="async"></span>
       <span class="cap">Fig. ${i + 1} · ${esc(g.title)}</span>
     </a>`;
-  const stickers = (g) => `${api.isNew(g) ? '<span class="sticker new">✨ New</span>' : ""}${g.online ? '<span class="sticker online">🌐 Play online</span>' : ""}`;
+  const stickers = (g) => `${g.featured ? '<span class="sticker feat">⭐ Featured this week</span>' : ""}${api.isNew(g) ? '<span class="sticker new">✨ New</span>' : ""}${g.online ? '<span class="sticker online">🌐 Play online</span>' : ""}`;
 
+  // this week's featured game, as a link to its page (only when it is in the book, e.g. not hidden by a search)
+  const featLine = () => {
+    const it = items.find((x) => x.g.featured);
+    return it ? `<button type="button" class="c-feat" data-act="jump" data-to="${spreadOf(it.g.id)}">⭐ This week: <b>${esc(it.g.title)}</b></button>` : "";
+  };
   const cover = () => `<div class="cover">
       <i class="c-corner tl"></i><i class="c-corner tr"></i><i class="c-corner bl"></i><i class="c-corner br"></i>
       <div class="c-frame">
@@ -226,6 +231,7 @@ export function createBook(host, api) {
         <div class="c-orn" aria-hidden="true"><i></i>❦<i></i></div>
         <div class="c-icons" aria-hidden="true"><span>🎲</span><span>♟️</span><span>🧩</span><span>🔬</span><span>🎨</span></div>
         <p class="c-count">${n()} games &amp; adventures</p>
+        ${featLine()}
       </div>
       <button type="button" class="c-open" data-act="next">Open the book</button>
     </div>`;
