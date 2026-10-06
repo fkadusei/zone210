@@ -6,6 +6,7 @@
  * cat: "strategy" | "family" | "puzzles" | "learn" | "fun"   (filter chips on the home page)
  * added: "YYYY-MM-DD" optional; shows a New badge for 10 days
  * audience: "kids" | "adults" | "all"   (all = fun for everyone)
+ * featured: true pins a game as the featured game (beats the weekly rotation below); leave it off normally
  */
 export const GAMES = [
   {
@@ -20,7 +21,6 @@ export const GAMES = [
     emoji: "🥁",
     colors: ["#8a5ce0", "#4ad6c8"],
     added: "2026-10-02",
-    featured: true,
   },
   {
     id: "ludo",
@@ -685,3 +685,29 @@ export const GAMES = [
     added: "2026-10-06",
   },
 ];
+
+// ---- weekly featured game ----
+// Each week (from Monday, UTC) a different game is featured, in a fixed shuffled order, so everyone sees the same
+// one that week and nothing has to be redeployed. A game marked featured: true above wins instead.
+// Games listed here are left out of the rotation (for example while they are being fixed).
+export const NOT_FEATURED = ["abc-123"];
+const PINNED = GAMES.find((g) => g.featured) || null; // read before the badge below is handed out
+export function weekNumber(date = new Date()) {
+  const MONDAY = Date.UTC(2026, 0, 5); // a Monday
+  return Math.floor((date.getTime() - MONDAY) / (7 * 86400000));
+}
+// a steady shuffle: each game gets a fixed number from its id, so adding a game slots it in without reshuffling
+const rank = (id) => { let h = 2166136261; for (const c of id) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+export function featuredFor(date = new Date()) {
+  if (PINNED) return PINNED;
+  const pool = GAMES.filter((g) => !NOT_FEATURED.includes(g.id)).sort((a, b) => rank(a.id) - rank(b.id));
+  const w = weekNumber(date);
+  return pool[((w % pool.length) + pool.length) % pool.length];
+}
+// put this week's game first and give it the Featured badge
+{
+  const f = featuredFor();
+  f.featured = true;
+  GAMES.splice(GAMES.indexOf(f), 1);
+  GAMES.unshift(f);
+}

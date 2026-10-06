@@ -106,6 +106,10 @@ Oware seed conservation over hundreds of random games, scoring checked against a
 3. Add an entry to `public/assets/games.js` (`id` must match the folder name). Set `audience` to `kids`, `adults` or `all`.
 4. Optional: drop a 16:10 screenshot at `public/assets/thumbs/my-game.jpg`.
 
+**Featured game:** a different game is featured each week (from Monday, UTC), in a fixed shuffled order worked out
+in `public/assets/games.js`, so no deploy is needed. Add an id to `NOT_FEATURED` to leave a game out of the rotation,
+or put `featured: true` on one game to pin it until you remove it.
+
 ## Run locally
 
 Browsers block ES modules from `file://`, so serve the folder. The simplest way (no `/api/turn`, which is fine: Ludo just
