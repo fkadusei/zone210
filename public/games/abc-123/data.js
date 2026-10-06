@@ -1,5 +1,6 @@
 // ABC & 123: the letters, numbers and every line the voice says.
-// The voice clips are made from CLIPS by tools/abc-audio/azure_generate.mjs (letters given as exact sounds). If a clip is
+// The voice clips (Kokoro af_heart, speed 0.92) come from CLIPS via tools/abc-audio (dump-texts.mjs + ../ananse-audio/generate.py --trim);
+// tools/abc-audio/azure_generate.mjs is the planned replacement. If a clip is
 // missing the page falls back to the device's own voice reading the same text.
 
 // say: how the letter name is spelled for the voice (a lone "A" is read as "uh")
