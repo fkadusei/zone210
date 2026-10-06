@@ -1,0 +1,76 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Font options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;700&family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;700&family=Lexend:wght@400;500;700;800&display=swap">
+<style>
+:root{--bg:#0a0e1a;--card:#141a2e;--ink:#eef0ff;--muted:#9aa3c7;--line:#273152;--gold:#f5b41f}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif;padding:16px}
+main{max-width:900px;margin:0 auto} .top h1{font-size:1.5rem;margin:.2em 0} .top p{color:var(--muted)}
+.opt{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px 18px;margin:16px 0}
+.tag{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2b1f00;background:var(--gold);border-radius:999px;padding:2px 10px}
+.opt h2{margin:.4em 0 0;font-size:1.15rem} .desc{margin:.2em 0 .8em;color:var(--muted)}
+.mock{font-family:var(--b);background:radial-gradient(circle at 20% 0,#1d2550,#0d1226 70%);border-radius:14px;padding:18px}
+.greet{margin:0 0 4px;font-family:var(--h);font-weight:600;font-size:1.3rem} .greet small{font-size:.78em;color:var(--muted)}
+.mock h1{margin:0;font-family:var(--h);font-weight:var(--w);font-size:clamp(2rem,6vw,3.4rem);line-height:1.05;letter-spacing:-.02em}
+.grad{background:linear-gradient(95deg,#fff 0%,#fff 12%,#f5a623 48%,#e5484d 74%,#8a5ce0 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:#b8c0e0;font-size:1.02rem;max-width:560px} .row{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.chip{padding:6px 14px;border-radius:999px;border:1px solid var(--line);font-weight:700;font-size:.9rem} .chip.on{background:var(--gold);color:#2b1f00;border-color:var(--gold)}
+.card{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#1c2546;border-radius:14px;padding:12px 14px;margin-top:8px}
+.card b{font-family:var(--h);font-size:1.3rem;font-weight:var(--w)} .card p{margin:2px 0 0;color:#b8c0e0;font-size:.92rem;max-width:480px}
+.btn{font-family:var(--h);font-weight:700;background:linear-gradient(180deg,#ffc93c,var(--gold));color:#2b1f00;border-radius:12px;padding:9px 16px}
+.nums{margin:12px 0 0;color:var(--muted);font-size:.9rem;font-variant-numeric:tabular-nums}
+</style></head><body><main><div class="top"><h1>Font options for Zone 210</h1><p>Each shows the same home page bits: greeting, headline, intro, filter chips, a game card and numbers. Option 0 is what the site uses now.</p></div>
+<section class="opt" style="--h:ui-sans-serif, -apple-system, 'Segoe UI', Roboto, sans-serif;--b:ui-sans-serif, -apple-system, 'Segoe UI', Roboto, sans-serif;--w:850">
+<div class="tag">Current</div><h2>Now: system font</h2><p class="desc">the device's own font (San Francisco on Apple, Segoe on Windows, Roboto on Android)</p>
+<div class="mock">
+ <p class="greet">🌅 Good morning! <small>Happy Saturday!</small></p>
+ <h1><span class="grad">Play, learn &amp; explore.</span></h1>
+ <p class="lead">Board games, brain teasers, science and coding adventures, and creative activities for kids and grown-ups.</p>
+ <div class="row"><span class="chip on">Everyone</span><span class="chip">Kids</span><span class="chip">Adults</span><span class="chip">🧩 Puzzles 8</span></div>
+ <div class="card"><div><b>Mango Mayhem</b><p>The greedy monkeys stole the village mangoes! Pull the slingshot, aim, and knock their towers down.</p></div><span class="btn">Play now →</span></div>
+ <p class="nums">Score 1,284 · Level 12 · 3 of 54 stars · ABC 123</p>
+</div></section><section class="opt" style="--h:'Fredoka', sans-serif;--b:'Nunito', sans-serif;--w:700">
+<div class="tag">Option 1</div><h2>Fredoka + Nunito</h2><p class="desc">Rounded and friendly. Playful for kids, still tidy for grown-ups.</p>
+<div class="mock">
+ <p class="greet">🌅 Good morning! <small>Happy Saturday!</small></p>
+ <h1><span class="grad">Play, learn &amp; explore.</span></h1>
+ <p class="lead">Board games, brain teasers, science and coding adventures, and creative activities for kids and grown-ups.</p>
+ <div class="row"><span class="chip on">Everyone</span><span class="chip">Kids</span><span class="chip">Adults</span><span class="chip">🧩 Puzzles 8</span></div>
+ <div class="card"><div><b>Mango Mayhem</b><p>The greedy monkeys stole the village mangoes! Pull the slingshot, aim, and knock their towers down.</p></div><span class="btn">Play now →</span></div>
+ <p class="nums">Score 1,284 · Level 12 · 3 of 54 stars · ABC 123</p>
+</div></section><section class="opt" style="--h:'Baloo 2', sans-serif;--b:'Nunito', sans-serif;--w:800">
+<div class="tag">Option 2</div><h2>Baloo 2 + Nunito</h2><p class="desc">Bubbly and bold, the most game-like and cartoon-ish.</p>
+<div class="mock">
+ <p class="greet">🌅 Good morning! <small>Happy Saturday!</small></p>
+ <h1><span class="grad">Play, learn &amp; explore.</span></h1>
+ <p class="lead">Board games, brain teasers, science and coding adventures, and creative activities for kids and grown-ups.</p>
+ <div class="row"><span class="chip on">Everyone</span><span class="chip">Kids</span><span class="chip">Adults</span><span class="chip">🧩 Puzzles 8</span></div>
+ <div class="card"><div><b>Mango Mayhem</b><p>The greedy monkeys stole the village mangoes! Pull the slingshot, aim, and knock their towers down.</p></div><span class="btn">Play now →</span></div>
+ <p class="nums">Score 1,284 · Level 12 · 3 of 54 stars · ABC 123</p>
+</div></section><section class="opt" style="--h:'Bricolage Grotesque', sans-serif;--b:'DM Sans', sans-serif;--w:800">
+<div class="tag">Option 3</div><h2>Bricolage Grotesque + DM Sans</h2><p class="desc">Characterful and modern: quirky headings, clean text. Feels like a design studio.</p>
+<div class="mock">
+ <p class="greet">🌅 Good morning! <small>Happy Saturday!</small></p>
+ <h1><span class="grad">Play, learn &amp; explore.</span></h1>
+ <p class="lead">Board games, brain teasers, science and coding adventures, and creative activities for kids and grown-ups.</p>
+ <div class="row"><span class="chip on">Everyone</span><span class="chip">Kids</span><span class="chip">Adults</span><span class="chip">🧩 Puzzles 8</span></div>
+ <div class="card"><div><b>Mango Mayhem</b><p>The greedy monkeys stole the village mangoes! Pull the slingshot, aim, and knock their towers down.</p></div><span class="btn">Play now →</span></div>
+ <p class="nums">Score 1,284 · Level 12 · 3 of 54 stars · ABC 123</p>
+</div></section><section class="opt" style="--h:'Outfit', sans-serif;--b:'Plus Jakarta Sans', sans-serif;--w:800">
+<div class="tag">Option 4</div><h2>Outfit + Plus Jakarta Sans</h2><p class="desc">Geometric and polished: friendly but grown-up, like a modern app.</p>
+<div class="mock">
+ <p class="greet">🌅 Good morning! <small>Happy Saturday!</small></p>
+ <h1><span class="grad">Play, learn &amp; explore.</span></h1>
+ <p class="lead">Board games, brain teasers, science and coding adventures, and creative activities for kids and grown-ups.</p>
+ <div class="row"><span class="chip on">Everyone</span><span class="chip">Kids</span><span class="chip">Adults</span><span class="chip">🧩 Puzzles 8</span></div>
+ <div class="card"><div><b>Mango Mayhem</b><p>The greedy monkeys stole the village mangoes! Pull the slingshot, aim, and knock their towers down.</p></div><span class="btn">Play now →</span></div>
+ <p class="nums">Score 1,284 · Level 12 · 3 of 54 stars · ABC 123</p>
+</div></section><section class="opt" style="--h:'Lexend', sans-serif;--b:'Lexend', sans-serif;--w:700">
+<div class="tag">Option 5</div><h2>Lexend</h2><p class="desc">Designed for easy reading (good for young and new readers). Calm and clear.</p>
+<div class="mock">
+ <p class="greet">🌅 Good morning! <small>Happy Saturday!</small></p>
+ <h1><span class="grad">Play, learn &amp; explore.</span></h1>
+ <p class="lead">Board games, brain teasers, science and coding adventures, and creative activities for kids and grown-ups.</p>
+ <div class="row"><span class="chip on">Everyone</span><span class="chip">Kids</span><span class="chip">Adults</span><span class="chip">🧩 Puzzles 8</span></div>
+ <div class="card"><div><b>Mango Mayhem</b><p>The greedy monkeys stole the village mangoes! Pull the slingshot, aim, and knock their towers down.</p></div><span class="btn">Play now →</span></div>
+ <p class="nums">Score 1,284 · Level 12 · 3 of 54 stars · ABC 123</p>
+</div></section></main></body></html>

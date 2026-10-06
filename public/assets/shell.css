@@ -1,4 +1,11 @@
 /* Zone 210 shared design system: light + dark themes, hairline borders, layered shadows, one gold accent. */
+
+/* Fonts, hosted here (assets/fonts, SIL Open Font License): Nunito for text, Fredoka for headings and buttons.
+   Latin letters only; anything else falls back to the system font. */
+@font-face { font-family: "Nunito"; font-style: normal; font-weight: 200 1000; font-display: swap; src: url("fonts/nunito-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Fredoka"; font-style: normal; font-weight: 300 700; font-display: swap; src: url("fonts/fredoka-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 :root {
   /* light theme: soft cool grey, never stark white */
   --bg: #eef0f5;
@@ -29,7 +36,8 @@
   --purple: #8a5ce0;
   --focus: #4f6df5;
   --radius: 16px;
-  --font: ui-sans-serif, -apple-system, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font: "Nunito", ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-head: "Fredoka", "Nunito", ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light;
 }
 
@@ -103,7 +111,7 @@ body::after {
   padding: max(72px, calc(env(safe-area-inset-top) + 62px)) 16px 44px;
 }
 .g-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.g-head h1 { margin: 0; font-size: clamp(1.7rem, 4vw, 2.3rem); font-weight: 800; letter-spacing: -0.02em; }
+.g-head h1 { margin: 0; font-size: clamp(1.7rem, 4vw, 2.3rem); font-weight: 650; letter-spacing: -0.005em; }
 .g-head p { margin: 5px 0 0; color: var(--muted); }
 .g-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
@@ -233,3 +241,8 @@ summary { padding-block: 7px; cursor: pointer; }
 /* keyboard focus on SVG board points (assets/board-keys.js) and a fallback ring for any control */
 svg [role="button"]:focus-visible { outline: none; stroke: var(--focus) !important; stroke-width: 4px !important; stroke-opacity: 1 !important; }
 :where(button, a, input, select, summary, [tabindex]):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* headings and main buttons in the rounded heading font (the book's pages keep their storybook serif) */
+:where(h1, h2, h3):not(.pg *), .g-btn { font-family: var(--font-head); }
+:where(h1, h2, h3):not(.pg *) { font-weight: 600; letter-spacing: -0.005em; }
+

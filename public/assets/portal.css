@@ -23,8 +23,9 @@ body { overflow-x: hidden; }
   color: var(--on-gold);
   background: linear-gradient(145deg, #ffd15a, var(--gold) 55%, #e89b0b);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 6px 14px rgba(207, 148, 16, 0.35);
+  font-family: var(--font-head);
 }
-.brand-name { font-weight: 800; font-size: 1.05rem; letter-spacing: -0.01em; }
+.brand-name { font-family: var(--font-head); font-weight: 600; font-size: 1.12rem; letter-spacing: 0; }
 .nav .theme-toggle { position: static; }
 
 /* ---------- hero ---------- */
@@ -43,10 +44,10 @@ body { overflow-x: hidden; }
   border-radius: 999px;
   box-shadow: var(--shadow);
 }
-.greet { margin: 0 0 6px; font-size: clamp(1.15rem, 2.6vw, 1.5rem); font-weight: 750; letter-spacing: -0.01em; color: var(--ink); }
+.greet { font-family: var(--font-head); margin: 0 0 6px; font-size: clamp(1.15rem, 2.6vw, 1.5rem); font-weight: 600; letter-spacing: 0; color: var(--ink); }
 .greet span { margin-right: 4px; }
 .greet small { font-size: 0.78em; font-weight: 650; color: var(--muted); margin-left: 2px; }
-.hero h1 { margin: 0; font-size: clamp(2.5rem, 7.4vw, 4.4rem); font-weight: 850; line-height: 1.02; letter-spacing: -0.035em; }
+.hero h1 { margin: 0; font-size: clamp(2.5rem, 7.4vw, 4.4rem); font-weight: 650; line-height: 1.05; letter-spacing: -0.01em; }
 .grad { background: linear-gradient(95deg, var(--ink) 0%, var(--ink) 14%, #f5a623 48%, #e5484d 74%, #8a5ce0 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lead { margin: 18px 0 0; max-width: 36em; color: var(--muted); font-size: clamp(1.05rem, 2.3vw, 1.25rem); line-height: 1.55; }
 
