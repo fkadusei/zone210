@@ -29,7 +29,7 @@ const BODY = {
 
 export function mountBody(root, ctx) {
   let sel = "heart";
-  root.innerHTML = `<div class="two"><div class="g-panel"><div class="anat"><img src="img/internal_organs.svg" alt="Labelled diagram of the human internal organs" width="1363" height="1212" decoding="async">
+  root.innerHTML = `<div class="two"><div class="g-panel"><div class="anat"><img src="img/internal_organs.webp" alt="Labelled diagram of the human internal organs" width="1280" height="1138" decoding="async">
     <svg viewBox="0 0 1363 1212" id="bsvg" aria-hidden="true"></svg></div>
     <p class="hint">Tap an organ in the picture, or pick it from the list. Illustration: "Internal organs" by Mikael Häggström, public domain (CC0), from Wikimedia Commons.</p>
     <div class="orglist" id="bl"></div></div><div class="g-panel" id="bd"></div></div>`;

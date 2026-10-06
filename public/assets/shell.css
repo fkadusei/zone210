@@ -226,3 +226,6 @@ body::after {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   body::before, body::after { animation: none !important; }
 }
+
+/* "How to play" toggles: a finger-sized tap area */
+summary { padding-block: 7px; cursor: pointer; }

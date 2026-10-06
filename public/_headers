@@ -2,3 +2,24 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# Pictures, story audio and big data files change rarely: phones keep them for a day
+# and can use a copy up to a week old while checking for a new one in the background.
+/assets/thumbs/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/assets/og/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/games/ananse/audio/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+/games/lab210/img/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/games/word-craft/enable.txt
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+/games/globe/data/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/favicon.ico
+  Cache-Control: public, max-age=604800
+/favicon.svg
+  Cache-Control: public, max-age=604800
+/apple-touch-icon.png
+  Cache-Control: public, max-age=604800

@@ -295,6 +295,17 @@ rackEl.addEventListener("click", (e) => {
 });
 
 $("recall").addEventListener("click", recall);
+// Zoom board (phones): bigger squares, the board scrolls inside its frame; starts on the middle of the board
+const wrapEl = boardEl.parentElement;
+function setZoom(on) {
+  wrapEl.classList.toggle("zoom", on);
+  $("zoomBtn").setAttribute("aria-pressed", String(on));
+  $("zoomBtn").textContent = on ? "🔍 Whole board" : "🔍 Zoom board";
+  try { localStorage.setItem("zone210_wordcraft_zoom", on ? "1" : "0"); } catch (e) { /* storage blocked */ }
+  if (on) requestAnimationFrame(() => { wrapEl.scrollLeft = (wrapEl.scrollWidth - wrapEl.clientWidth) / 2; wrapEl.scrollTop = (wrapEl.scrollHeight - wrapEl.clientHeight) / 2; });
+}
+$("zoomBtn").addEventListener("click", () => setZoom(!wrapEl.classList.contains("zoom")));
+try { if (localStorage.getItem("zone210_wordcraft_zoom") === "1") setZoom(true); } catch (e) { /* storage blocked */ }
 $("shuffleBtn").addEventListener("click", () => {
   recall();
   for (let i = rackView.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [rackView[i], rackView[j]] = [rackView[j], rackView[i]]; }

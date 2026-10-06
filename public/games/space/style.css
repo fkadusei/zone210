@@ -18,6 +18,7 @@
 @media (max-width: 560px) { .stage-note { right: 12px; bottom: 52px; } }
 .labels { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
 .lab { position: absolute; left: 0; top: 0; transform: translate(-50%, -150%); pointer-events: auto; font: inherit; font-size: 0.74rem; font-weight: 800; color: #fff; background: rgba(8, 14, 36, 0.62); border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 999px; padding: 2px 9px; cursor: pointer; white-space: nowrap; }
+.lab::before { content: ""; position: absolute; inset: -8px -3px; } /* a bigger tap area without a bigger label */
 .lab:hover, .lab:focus-visible { background: rgba(60, 90, 200, 0.85); outline: none; }
 .lab.moon { font-size: 0.68rem; opacity: 0.9; }
 .lab.on { border-color: #ffd65a; }

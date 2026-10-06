@@ -116,6 +116,10 @@ cd public && python3 -m http.server 8000     # then open http://localhost:8000
 
 To run the site and the Worker together exactly as Cloudflare does: `npx wrangler dev`.
 
+Phone check: with a server on port 8123 (`cd public && python3 -m http.server 8123`), `node tools/audit.mjs` opens every
+page at phone size and lists page errors, missing files, sideways scrolling, tap targets under 24px and how much each
+page downloads (`--w 768 --h 1024` for tablet size, or name games to check just those).
+
 ## Deploy to Cloudflare (Workers with static assets)
 
 1. Push this repo to GitHub.

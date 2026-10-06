@@ -10,8 +10,15 @@
 .score b { margin-left: auto; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
 
 .board-wrap { position: relative; display: grid; place-items: center; margin-top: 6px; }
+/* on a phone the 15x15 board has small squares: Zoom makes them bigger and lets the board scroll inside its frame */
+#zoomBtn { display: none; }
+@media (max-width: 600px) {
+  #zoomBtn { display: inline-flex; }
+  .board-wrap.zoom { place-items: start; overflow: auto; max-height: 72vh; padding: 8px; margin-inline: -8px; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .board-wrap.zoom .board { --cell: 34px; touch-action: pan-x pan-y; }
+}
 .board {
-  --cell: min(calc((100vw - 28px) / 15), 40px);
+  --cell: min(calc((100vw - 72px) / 15), 40px); /* 15 cells + gaps + padding inside the 16px page gutters */
   display: grid;
   grid-template-columns: repeat(15, var(--cell));
   grid-template-rows: repeat(15, var(--cell));
@@ -75,7 +82,7 @@ html[data-saver="on"] .sq.hinted .tile { animation: none; }
 .preview.bad { color: var(--red); }
 
 .rackbar { display: grid; gap: 10px; justify-items: center; margin-top: 4px; }
-.rack { --rt: min(calc((100vw - 56px) / 7), 56px); display: flex; gap: 6px; padding: 10px 14px; border-radius: 14px; background: #6a4524; box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.5), 0 0 0 3px #4a2e17; min-height: calc(var(--rt) + 20px); }
+.rack { --rt: min(calc((100vw - 96px) / 7), 56px); display: flex; gap: 6px; padding: 10px 14px; border-radius: 14px; background: #6a4524; box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.5), 0 0 0 3px #4a2e17; min-height: calc(var(--rt) + 20px); }
 .rt { position: relative; width: var(--rt); height: var(--rt); padding: 0; font: 800 calc(var(--rt) * 0.55) var(--font); color: #2b1d0b; background: linear-gradient(160deg, #fbe7b0, #e4c378); border: 0; border-radius: 7px; box-shadow: 0 3px 0 #a47a2c, 0 5px 8px rgba(0, 0, 0, 0.4); cursor: pointer; touch-action: manipulation; transition: transform 0.12s; }
 .rt sub { position: absolute; right: 10%; bottom: 6%; font-size: 0.38em; font-weight: 700; }
 .rt:hover:not(:disabled) { transform: translateY(-3px); }
