@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Spot the Difference · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+    <meta name="description" content="Two pictures, a few sneaky differences. Endless puzzles in twelve scenes, three levels, hints and stars, or race a friend online to spot them first." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Zone 210" />
+    <meta property="og:title" content="Spot the Difference · Zone 210" />
+    <meta property="og:description" content="Two pictures, a few sneaky differences. Endless puzzles in twelve scenes, three levels, hints and stars, or race a friend online to spot them first." />
+    <meta property="og:url" content="https://zone210.com/games/spot-the-difference/" />
+    <meta property="og:image" content="https://zone210.com/assets/og/spot-the-difference.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Spot the Difference on Zone 210" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Spot the Difference · Zone 210" />
+    <meta name="twitter:description" content="Two pictures, a few sneaky differences. Endless puzzles in twelve scenes, three levels, hints and stars, or race a friend online to spot them first." />
+    <meta name="twitter:image" content="https://zone210.com/assets/og/spot-the-difference.jpg" />
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Spot the Difference</h1>
+          <p>The two pictures look the same, but they aren't. Tap every difference.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute" aria-pressed="true">🔊 Sound on</button>
+          <button class="g-btn" id="newp">New puzzle</button>
+        </div>
+      </div>
+
+      <section class="g-panel setup" aria-label="Game options">
+        <div class="opt"><span class="lbl">Level</span>
+          <div class="g-chips" id="level" role="group" aria-label="Level">
+            <button class="g-chip" data-value="easy" aria-pressed="true">Easy · 3</button>
+            <button class="g-chip" data-value="medium" aria-pressed="false">Medium · 5</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard · 7</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Players</span>
+          <div class="g-chips" id="players" role="group" aria-label="Players">
+            <button class="g-chip" data-value="1" aria-pressed="true">1 player</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">🌐 Online race</button>
+          </div></div>
+      </section>
+
+      <div class="g-stats" id="stats"></div>
+      <div class="titlebar"><b id="title"></b><button class="g-btn ghost" id="hint">💡 Hint</button></div>
+      <div class="pics">
+        <div class="pic" id="picL" tabindex="0" role="img"></div>
+        <div class="pic" id="picR" tabindex="0" role="img"></div>
+      </div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+
+      <div class="result" id="result" hidden>
+        <p class="stars" id="resStars" aria-hidden="true"></p>
+        <h2 id="resTitle"></h2>
+        <p id="resText"></p>
+        <button class="g-btn" id="next">Next puzzle ▶</button>
+      </div>
+
+      <details class="rules"><summary>How to play</summary>
+        <ul>
+          <li>The two pictures are almost the same. Find the differences: something missing or extra, a different colour, a swapped object, something flipped, bigger or smaller, or (on Hard) moved.</li>
+          <li>Tap the difference in either picture. Wrong taps are counted, so look carefully!</li>
+          <li>Stuck? Tap 💡 Hint for a glowing clue. Finish with no hints and few wrong taps for three stars.</li>
+          <li><b>Online race:</b> you and a friend get the same puzzle. Whoever spots each difference first gets the point.</li>
+          <li>Keyboard: Tab to a picture, move the crosshair with the arrow keys (Shift for small steps) and press Enter.</li>
+        </ul>
+      </details>
+    </main>
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

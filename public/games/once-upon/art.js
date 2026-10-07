@@ -74,4 +74,6 @@ export function artHTML(scene, key = 0) {
   return `<div class="art" data-k="${key}"><svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${bg}</svg><div class="chars">${chars}</div>${fx}</div>`;
 }
 export const BACKDROPS = Object.keys(BG);
+/** Just the drawn backdrop as an <svg> (also used by Spot the Difference). */
+export const backdropSVG = (name, cls = "") => `<svg class="${cls}" viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${(BG[name] || BG.village)()}</svg>`;
 export { MOVES };
