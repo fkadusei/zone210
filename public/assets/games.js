@@ -771,6 +771,18 @@ export const GAMES = [
     emoji: "🔲",
     colors: ["#7c3aed", "#0ea5e9"],
   },
+  {
+    id: "calm-corner",
+    title: "Calm Corner",
+    tagline: "A quiet place to take a break: breathing with a growing circle, a feelings check-in with kind ideas, the 5-4-3-2-1 senses game, and calming rain, waves, wind and chimes.",
+    audience: "all",
+    cat: "learn",
+    added: "2026-10-07",
+    tags: ["Wellbeing", "Calm", "Feelings", "Offline"],
+    players: "1 player",
+    emoji: "🌿",
+    colors: ["#6366f1", "#22d3ee"],
+  },
 ];
 
 // ---- weekly featured game ----

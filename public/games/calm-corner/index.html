@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Calm Corner · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+    <meta name="description" content="A quiet place to take a break: breathing with a growing circle, a feelings check-in with kind ideas, the 5-4-3-2-1 senses game, and calming rain, waves, wind and chimes." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Zone 210" />
+    <meta property="og:title" content="Calm Corner · Zone 210" />
+    <meta property="og:description" content="A quiet place to take a break: breathing with a growing circle, a feelings check-in with kind ideas, the 5-4-3-2-1 senses game, and calming rain, waves, wind and chimes." />
+    <meta property="og:url" content="https://zone210.com/games/calm-corner/" />
+    <meta property="og:image" content="https://zone210.com/assets/og/calm-corner.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Calm Corner on Zone 210" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Calm Corner · Zone 210" />
+    <meta name="twitter:description" content="A quiet place to take a break: breathing with a growing circle, a feelings check-in with kind ideas, the 5-4-3-2-1 senses game, and calming rain, waves, wind and chimes." />
+    <meta name="twitter:image" content="https://zone210.com/assets/og/calm-corner.jpg" />
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Calm Corner</h1>
+          <p>A quiet place to breathe, notice your feelings and relax.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="voice" aria-pressed="true">🗣️ Voice on</button>
+        </div>
+      </div>
+      <div class="g-chips tabs" id="tabs" role="tablist" aria-label="Activities">
+        <button class="g-chip" role="tab" data-tab="breathe" aria-pressed="true">🌬️ Breathe</button>
+        <button class="g-chip" role="tab" data-tab="feel" aria-pressed="false">💭 How do I feel?</button>
+        <button class="g-chip" role="tab" data-tab="senses" aria-pressed="false">🖐️ 5-4-3-2-1</button>
+        <button class="g-chip" role="tab" data-tab="sounds" aria-pressed="false">🎧 Calm sounds</button>
+      </div>
+      <section id="view"></section>
+      <p class="foot">If you often feel very sad, worried or scared, please talk to a grown-up you trust. You don't have to handle big feelings alone.</p>
+    </main>
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
