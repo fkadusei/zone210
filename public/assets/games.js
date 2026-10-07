@@ -746,6 +746,18 @@ export const GAMES = [
     emoji: "🧩",
     colors: ["#0ea5e9", "#a855f7"],
   },
+  {
+    id: "hello-world",
+    title: "Hello World",
+    tagline: "Say hello around the world, then learn everyday words in Spanish, French, German, Portuguese, Arabic, Swahili, Hindi, Mandarin, Japanese and Korean, with their own writing, a say-it guide and a quiz.",
+    audience: "all",
+    cat: "learn",
+    added: "2026-10-07",
+    tags: ["Languages", "World", "Learning", "Offline"],
+    players: "1 player",
+    emoji: "👋",
+    colors: ["#0ea5e9", "#f43f5e"],
+  },
 ];
 
 // ---- weekly featured game ----
