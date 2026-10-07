@@ -441,6 +441,18 @@ export const GAMES = [
     colors: ["#f59e0b", "#ef4444"],
   },
   {
+    id: "once-upon",
+    title: "Once Upon a Time",
+    tagline: "Eighteen classic tales from around the world as living picture books: Cinderella, the Three Little Pigs, Momotaro, Ali Baba and more. Make choices, help with little activities and find all 40 endings.",
+    audience: "kids",
+    cat: "learn",
+    added: "2026-10-07",
+    tags: ["Stories", "Reading", "Fairy tales", "Offline"],
+    players: "1 player",
+    emoji: "📖",
+    colors: ["#8b5cf6", "#f59e0b"],
+  },
+  {
     id: "lab210",
     title: "Lab 210",
     tagline: "Physics, chemistry and biology in one lab: periodic table, equation balancer, projectiles, circuits, cells, the human body, genetics, food chains, a quiz and a daily experiment.",
