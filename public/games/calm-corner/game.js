@@ -1,5 +1,7 @@
 // Calm Corner: breathing with a growing and shrinking circle, a feelings check-in, the 5-4-3-2-1 senses exercise,
 // and calming sounds made right in the browser (rain, waves, wind, chimes). Everything stays on this device.
+import { FEELINGS, KIND, SENSES, CUES, sensesLine } from "./lines.js";
+
 const $ = (id) => document.getElementById(id);
 const store = {
   get(key, fallback) { try { const raw = localStorage.getItem(key); return raw === null ? fallback : JSON.parse(raw); } catch (err) { return fallback; } },
@@ -11,9 +13,26 @@ const save = () => store.set(KEY, data);
 const view = $("view");
 const reduce = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function speak(text) {
-  if (!data.voice || !window.speechSynthesis) return;
-  speechSynthesis.cancel();
+// ---------- the voice: three soft recorded voices (Kokoro), the device's own voice, or none ----------
+const VOICES = [["af_nicole", "Nicole (soft)"], ["af_heart", "Heart (warm)"], ["bf_emma", "Emma (gentle, British)"], ["device", "My device's voice"], ["off", "No voice"]];
+if (data.voice === true) data.voice = "af_nicole"; // older settings were on/off
+if (data.voice === false) data.voice = "off";
+if (!VOICES.some(([k]) => k === data.voice)) data.voice = "af_nicole";
+let clips = null;
+fetch("audio/index.json").then((r) => r.json()).then((j) => { clips = j; }).catch(() => { clips = {}; });
+const player = new Audio();
+function hush() { player.pause(); if (window.speechSynthesis) speechSynthesis.cancel(); }
+/** Says a line: the recorded clip in the chosen voice if there is one, otherwise the device's voice reads the words. */
+function talk(key, text) {
+  if (data.voice === "off") return;
+  hush();
+  if (data.voice !== "device" && clips && (clips[data.voice] || []).includes(key)) {
+    player.src = `audio/${data.voice}/${key}.m4a`;
+    player.volume = 0.9;
+    player.play().catch(() => {});
+    return;
+  }
+  if (!window.speechSynthesis) return;
   const u = new SpeechSynthesisUtterance(text);
   u.rate = 0.8; u.pitch = 0.95; u.lang = "en-GB";
   speechSynthesis.speak(u);
@@ -39,8 +58,8 @@ function setTab(tab) {
   TABS[data.tab]();
 }
 $("tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) setTab(b.dataset.tab); });
-const voiceBtn = () => { $("voice").textContent = data.voice ? "🗣️ Voice on" : "🔇 Voice off"; $("voice").setAttribute("aria-pressed", String(data.voice)); };
-$("voice").addEventListener("click", () => { data.voice = !data.voice; save(); voiceBtn(); if (!data.voice && window.speechSynthesis) speechSynthesis.cancel(); });
+const voiceBtn = () => { $("voice").innerHTML = VOICES.map(([k, n]) => `<option value="${k}" ${k === data.voice ? "selected" : ""}>${n}</option>`).join(""); };
+$("voice").addEventListener("change", () => { data.voice = $("voice").value; save(); if (data.voice === "off") hush(); else talk("k/9", "Breathe. You're doing great."); });
 
 // ---------- breathing ----------
 const PATTERNS = {
@@ -70,11 +89,11 @@ function viewBreathe() {
     const run = () => {
       if (!running) return;
       if (step >= p.steps.length) { step = 0; breath += 1; }
-      if (breath >= total) { stop("Well done 💛"); bell(396, 0.08, 4); speak("Well done. Notice how you feel now."); $("rounds").textContent = `${total} calm breaths. Notice how your body feels now.`; return; }
+      if (breath >= total) { stop("Well done 💛"); bell(396, 0.08, 4); talk("b/done", CUES.done); $("rounds").textContent = `${total} calm breaths. Notice how your body feels now.`; return; }
       const [kind, secs] = p.steps[step];
       $("phase").textContent = WORD[kind];
       $("rounds").textContent = `Breath ${breath + 1} of ${total}`;
-      speak(WORD[kind]);
+      talk(`b/${kind}`, CUES[kind]);
       bell(kind === "in" ? 528 : kind === "out" ? 396 : 440, 0.05, 1.6);
       // the circle grows as you breathe in, waits on hold, shrinks as you breathe out (a bar fills instead with reduced motion)
       ball.style.transitionDuration = `${secs}s`;
@@ -91,19 +110,6 @@ function viewBreathe() {
 }
 
 // ---------- feelings ----------
-const FEELINGS = [
-  ["😊", "Happy", "That's lovely! Who could you share your happy feeling with?", "sounds"],
-  ["😌", "Calm", "Calm is a great feeling. Enjoy it for a moment: take one slow breath and smile.", "sounds"],
-  ["🤩", "Excited", "Excitement is full of energy! If it feels too big, try a few balloon breaths to settle.", "breathe"],
-  ["😢", "Sad", "It's okay to feel sad. You could talk to someone you trust, have a hug, or do something gentle.", "breathe"],
-  ["😠", "Angry", "It's okay to feel angry. Try squeezing your hands tight, then letting go, and take five slow breaths.", "breathe"],
-  ["😟", "Worried", "Worries can feel heavy. Try the 5-4-3-2-1 senses game to bring your mind back to right now.", "senses"],
-  ["😨", "Scared", "Being scared is your body trying to keep you safe. Find a grown-up you trust, and breathe slowly together.", "breathe"],
-  ["😤", "Frustrated", "When something is hard, take a break. Breathe, have a drink of water, then try again.", "breathe"],
-  ["😴", "Tired", "Your body might need rest. Try sleepy breathing, or listen to some calm sounds.", "sounds"],
-  ["🥺", "Lonely", "Feeling lonely is hard. Who could you call, play with, or sit next to today?", "senses"],
-];
-const KIND = ["You are braver than you think.", "It's okay to make mistakes. That's how we learn.", "Your feelings matter.", "You can do hard things, one small step at a time.", "Take your time. There's no rush.", "You are kind, and kindness is strong.", "Every day is a fresh start.", "It's okay to ask for help.", "You are loved.", "Breathe. You're doing great."];
 function viewFeel() {
   const recent = data.diary.slice(-7).reverse();
   view.innerHTML = `<p class="tip">How are you feeling right now? Tap the face that fits. All feelings are okay.</p>
@@ -123,15 +129,14 @@ function viewFeel() {
     $("answer").hidden = false;
     $("answer").innerHTML = `<p><b>${emoji} ${name}.</b> ${msg}</p><button class="g-btn" id="goTo">${label}</button>`;
     $("goTo").addEventListener("click", () => setTab(go));
-    speak(`${name}. ${msg}`);
+    talk(`f/${b.dataset.i}`, `${name}. ${msg}`);
   });
-  $("nextKind").addEventListener("click", () => { const k = KIND[Math.floor(Math.random() * KIND.length)]; $("kind").textContent = k; speak(k); });
+  $("nextKind").addEventListener("click", () => { const i = Math.floor(Math.random() * KIND.length); $("kind").textContent = KIND[i]; talk(`k/${i}`, KIND[i]); });
   const cd = $("clearDiary");
   if (cd) cd.addEventListener("click", () => { data.diary = []; save(); viewFeel(); });
 }
 
 // ---------- 5-4-3-2-1 ----------
-const SENSES = [[5, "👀", "things you can see", "Look around slowly. Name them out loud or in your head."], [4, "✋", "things you can touch", "Your clothes, the floor, a cushion... how do they feel?"], [3, "👂", "things you can hear", "Listen carefully: near sounds and far-away sounds."], [2, "👃", "things you can smell", "If you can't smell anything, think of two smells you like."], [1, "👅", "thing you can taste", "Or think of your favourite taste."]];
 function viewSenses() {
   let s = 0, got = 0;
   const draw = () => {
@@ -139,7 +144,7 @@ function viewSenses() {
       view.innerHTML = `<div class="senses done"><p class="big">🌈</p><h2>All done!</h2><p>You brought your mind back to right now. How do you feel?</p><button class="g-btn" id="again">Do it again</button></div>`;
       $("again").addEventListener("click", viewSenses);
       bell(396, 0.08, 4);
-      speak("All done. You brought your mind back to right now.");
+      talk("s/done", CUES.senses);
       return;
     }
     const [n, e, what, tip] = SENSES[s];
@@ -152,7 +157,7 @@ function viewSenses() {
       if (got === n) { s += 1; got = 0; setTimeout(draw, 700); }
       draw();
     }));
-    if (got === 0) speak(`Find ${n} ${what}.`);
+    if (got === 0) talk(`s/${s}`, sensesLine(SENSES[s]));
   };
   draw();
 }
@@ -227,7 +232,7 @@ function viewSounds() {
   $("stopS").addEventListener("click", () => { stopSound(); clearTimeout(endT); view.querySelectorAll(".snd").forEach((b) => b.classList.remove("on")); $("sstat").textContent = ""; });
   // the sound keeps playing if you switch to another part of Calm Corner, and stops when you leave the page
 }
-window.addEventListener("pagehide", stopSound);
+window.addEventListener("pagehide", () => { stopSound(); hush(); });
 
 voiceBtn();
 setTab(data.tab);

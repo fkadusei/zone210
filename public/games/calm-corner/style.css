@@ -50,3 +50,5 @@
 .snd { display: grid; justify-items: center; gap: 6px; padding: 18px 8px; border-radius: 20px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: 700 1rem var(--font); cursor: pointer; }
 .snd span { font-size: 2.8rem; }
 .snd.on { border-color: #7dd3fc; background: color-mix(in srgb, #7dd3fc 16%, var(--surface)); box-shadow: 0 0 0 3px color-mix(in srgb, #7dd3fc 30%, transparent); }
+.vsel { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--muted); }
+.vsel select { font: inherit; color: var(--ink); background: var(--surface-2); border: 1.5px solid var(--line-strong); border-radius: 10px; padding: 8px 10px; }

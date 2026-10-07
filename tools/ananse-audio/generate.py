@@ -18,7 +18,7 @@ _e.EspeakFallback = _no  # the bundled espeak crashes on some Macs; the names ge
 import numpy as np, soundfile as sf
 from kokoro import KPipeline
 
-VOICES = {"bf_emma": "b", "bm_george": "b", "af_heart": "a"}  # voice -> Kokoro language code (b British, a American)
+VOICES = {"bf_emma": "b", "bm_george": "b", "af_heart": "a", "af_nicole": "a"}  # voice -> Kokoro language code (b British, a American)
 
 # ordinary words the Kokoro dictionary lacks (found with --oov), and a few African names that are not in pron.js
 EXTRA = {"Kwasi": "kwˈɑsi", "Akosua": "ɑkˈoʊsuɑ", "Kwadwo": "kwˈɑʤoʊ", "Adwoa": "ɑʤˈoʊɑ", "Kwabena": "kwɑbˈɛnɑ", "Abena": "ɑbˈɛnɑ", "Akua": "ɑkˈuɑ", "Yaa": "jˈɑ", "Afua": "ɑfˈuɑ", "Kwame": "kwˈɑmɛ", "heavier": "hˈɛviəɹ", "nodded": "nˈɑdɪd", "tugged": "tˈʌgd", "Ama": "ˈɑmɑ", "Esi": "ˈɛsi", "Kofi": "kˈoʊfi", "hopped": "hˈɑpt", "patted": "pˈætɪd", "pitter": "pˈɪtəɹ", "popped": "pˈɑpt", "rubbed": "ɹˈʌbd", "scurried": "skˈʌɹid", "splish": "splˈɪʃ", "tapped": "tˈæpt", "tipped": "tˈɪpt", "zipped": "zˈɪpt"}
