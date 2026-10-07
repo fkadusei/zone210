@@ -19,13 +19,17 @@ if (data.voice === true) data.voice = "af_nicole"; // older settings were on/off
 if (data.voice === false) data.voice = "off";
 if (!VOICES.some(([k]) => k === data.voice)) data.voice = "af_nicole";
 let clips = null;
-fetch("audio/index.json").then((r) => r.json()).then((j) => { clips = j; }).catch(() => { clips = {}; });
+const clipsReady = fetch("audio/index.json").then((r) => r.json()).then((j) => { clips = j; }).catch(() => { clips = {}; });
 const player = new Audio();
 function hush() { player.pause(); if (window.speechSynthesis) speechSynthesis.cancel(); }
 /** Says a line: the recorded clip in the chosen voice if there is one, otherwise the device's voice reads the words. */
-function talk(key, text) {
+let talkN = 0;
+async function talk(key, text) {
   if (data.voice === "off") return;
   hush();
+  const my = ++talkN;
+  if (!clips) await clipsReady; // the list of recordings may still be loading on the first line
+  if (my !== talkN) return;
   if (data.voice !== "device" && clips && (clips[data.voice] || []).includes(key)) {
     player.src = `audio/${data.voice}/${key}.m4a`;
     player.volume = 0.9;
@@ -141,7 +145,7 @@ function viewSenses() {
   let s = 0, got = 0;
   const draw = () => {
     if (s >= SENSES.length) {
-      view.innerHTML = `<div class="senses done"><p class="big">🌈</p><h2>All done!</h2><p>You brought your mind back to right now. How do you feel?</p><button class="g-btn" id="again">Do it again</button></div>`;
+      view.innerHTML = `<div class="senses done"><h2>All done!</h2><p>You brought your mind back to right now. How do you feel?</p><button class="g-btn" id="again">Do it again</button></div>`;
       $("again").addEventListener("click", viewSenses);
       bell(396, 0.08, 4);
       talk("s/done", CUES.senses);
@@ -154,8 +158,9 @@ function viewSenses() {
     view.querySelectorAll(".dot").forEach((b) => b.addEventListener("click", () => {
       if (Number(b.dataset.i) !== got) return;
       got += 1; bell(528 + got * 66, 0.05, 1.2);
-      if (got === n) { s += 1; got = 0; setTimeout(draw, 700); }
-      draw();
+      // show the tick; when the step is finished, move on once (drawing twice made the voice say "Find" twice)
+      b.classList.add("on"); b.textContent = "✓";
+      if (got === n) { s += 1; got = 0; setTimeout(draw, 700); } else draw();
     }));
     if (got === 0) talk(`s/${s}`, sensesLine(SENSES[s]));
   };
