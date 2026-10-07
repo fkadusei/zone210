@@ -721,6 +721,18 @@ export const GAMES = [
     emoji: "🕰️",
     colors: ["#f59e0b", "#e5484d"],
   },
+  {
+    id: "money",
+    title: "Money & Shopping",
+    tagline: "Count coins and notes, pay the exact price, give the right change and go shopping on a budget, in dollars, euros, pounds, rupees, naira, cedis, shillings or rand.",
+    audience: "kids",
+    cat: "learn",
+    added: "2026-10-07",
+    tags: ["Money", "Maths", "Learning", "Offline"],
+    players: "1 player",
+    emoji: "🪙",
+    colors: ["#22c55e", "#eab308"],
+  },
 ];
 
 // ---- weekly featured game ----
