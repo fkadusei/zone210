@@ -1,4 +1,4 @@
-/** Achi rules and a computer opponent. Pure functions, no DOM. 3x3 points (index = row * 3 + col), 4 pieces each, players 1 and 2. */
+/** Achi rules and a computer opponent. Pure functions, no DOM. 3x3 points (index = row * 3 + col), 3 pieces each, players 1 and 2. */
 export const LINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
 // lines of the board: rows, columns, and the two diagonals through the centre
 export const ADJ = (() => {
@@ -9,7 +9,7 @@ export const ADJ = (() => {
   return a;
 })();
 export const other = (p) => 3 - p;
-export const initial = () => ({ b: Array(9).fill(0), place: { 1: 4, 2: 4 }, turn: 1 });
+export const initial = () => ({ b: Array(9).fill(0), place: { 1: 3, 2: 3 }, turn: 1 });
 export const clone = (s) => ({ b: s.b.slice(), place: { 1: s.place[1], 2: s.place[2] }, turn: s.turn });
 
 export function actions(s, p = s.turn) {

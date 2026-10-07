@@ -122,7 +122,7 @@ export const GAMES = [
     id: "achi",
     online: true,
     title: "Achi",
-    tagline: "A classic game of skill: place four pieces, then slide them to make three in a row. Play the computer, a friend, or a friend online.",
+    tagline: "A classic game of skill: place three pieces, then slide them to make three in a row. Play the computer, a friend, or a friend online.",
     audience: "all",
     cat: "strategy",
     tags: ["Board", "Strategy", "Traditional", "Online"],
