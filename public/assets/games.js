@@ -733,6 +733,19 @@ export const GAMES = [
     emoji: "🪙",
     colors: ["#22c55e", "#eab308"],
   },
+  {
+    id: "jigsaw",
+    online: true,
+    title: "Jigsaw Puzzles",
+    tagline: "Real jigsaw puzzles from 12 to 96 pieces, made from the pictures of the Zone 210 games. A ghost picture and edges-first to help, best times, or race a friend online on the same puzzle.",
+    audience: "all",
+    cat: "puzzles",
+    added: "2026-10-07",
+    tags: ["Puzzle", "Pictures", "Multiplayer", "Offline"],
+    players: "1–2 players",
+    emoji: "🧩",
+    colors: ["#0ea5e9", "#a855f7"],
+  },
 ];
 
 // ---- weekly featured game ----

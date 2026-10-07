@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Jigsaw Puzzles · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+    <meta name="description" content="Real jigsaw puzzles from 12 to 96 pieces, made from the pictures of the Zone 210 games. A ghost picture and edges-first to help, best times, or race a friend online on the same puzzle." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Zone 210" />
+    <meta property="og:title" content="Jigsaw Puzzles · Zone 210" />
+    <meta property="og:description" content="Real jigsaw puzzles from 12 to 96 pieces, made from the pictures of the Zone 210 games. A ghost picture and edges-first to help, best times, or race a friend online on the same puzzle." />
+    <meta property="og:url" content="https://zone210.com/games/jigsaw/" />
+    <meta property="og:image" content="https://zone210.com/assets/og/jigsaw.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jigsaw Puzzles on Zone 210" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Jigsaw Puzzles · Zone 210" />
+    <meta name="twitter:description" content="Real jigsaw puzzles from 12 to 96 pieces, made from the pictures of the Zone 210 games. A ghost picture and edges-first to help, best times, or race a friend online on the same puzzle." />
+    <meta name="twitter:image" content="https://zone210.com/assets/og/jigsaw.jpg" />
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Jigsaw Puzzles</h1>
+          <p>Pick a picture, choose how many pieces, and put it back together.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute">🔊 Sound on</button>
+          <button class="g-btn" id="shuffle">↻ Start again</button>
+        </div>
+      </div>
+      <section class="g-panel setup" aria-label="Puzzle options">
+        <div class="opt"><span class="lbl">Pieces</span>
+          <div class="g-chips" id="size" role="group" aria-label="Number of pieces">
+            <button class="g-chip" data-value="12" aria-pressed="false">12</button>
+            <button class="g-chip" data-value="24" aria-pressed="true">24</button>
+            <button class="g-chip" data-value="48" aria-pressed="false">48</button>
+            <button class="g-chip" data-value="96" aria-pressed="false">96</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Help</span>
+          <div class="g-chips"><button class="g-chip" id="ghost" aria-pressed="true">👻 Ghost picture</button><button class="g-chip" id="edges" aria-pressed="false">🧱 Edges first</button></div></div>
+        <div class="opt"><span class="lbl">Players</span>
+          <div class="g-chips" id="players" role="group" aria-label="Players">
+            <button class="g-chip" data-value="1" aria-pressed="true">1 player</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">🌐 Online race</button>
+          </div></div>
+        <details id="chooser" class="chooser"><summary>🖼️ Choose a picture</summary><div class="gallery" id="gallery"></div></details>
+      </section>
+      <div class="g-stats" id="stats"></div>
+      <div class="titlebar"><b id="title"></b></div>
+      <div class="table" id="table"><div class="board" id="board" aria-hidden="true"></div></div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+      <div class="result" id="result" hidden><h2 id="resTitle"></h2><p id="resText"></p><button class="g-btn" id="again">New puzzle ▶</button></div>
+      <details class="rules"><summary>How to play</summary><ul>
+        <li>Drag each piece to where it belongs. When it is close, it snaps into place.</li>
+        <li>👻 Ghost picture shows a faint copy of the picture on the board. 🧱 Edges first hides the middle pieces until the border is done.</li>
+        <li>Keyboard: Tab to a piece and press Enter to put it in its place.</li>
+        <li><b>Online race:</b> you and a friend get the same picture, cut the same way. Whoever finishes first wins.</li>
+      </ul></details>
+    </main>
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
