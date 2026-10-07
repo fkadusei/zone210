@@ -1,6 +1,6 @@
 import { createOnline } from "../../assets/online.js";
 import { boardKeys } from "../../assets/board-keys.js";
-import { actions, apply, outcome, chooseAction, other } from "./logic.js";
+import { initial, actions, apply, outcome, chooseAction, other } from "./logic.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -132,7 +132,7 @@ function draw() {
 // ---------- flow ----------
 const keyOf = () => s.b.join("") + s.turn + s.place[1] + s.place[2];
 function newGame() {
-  s = { b: Array(9).fill(0), place: { 1: 4, 2: 4 }, turn: 1 };
+  s = initial(); // 3 pieces each (set in logic.js)
   sel = null; over = false; busy = false; win = null; last = null; hist = []; reps = new Map(); hintA = null;
   $("end").classList.remove("show");
   net.setOver(false);
