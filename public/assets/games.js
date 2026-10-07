@@ -758,6 +758,19 @@ export const GAMES = [
     emoji: "👋",
     colors: ["#0ea5e9", "#f43f5e"],
   },
+  {
+    id: "nonograms",
+    online: true,
+    title: "Nonograms",
+    tagline: "Picture logic puzzles: use the number clues to fill in squares and reveal a hidden picture. Three sizes, endless puzzles, hints, and an online race against a friend.",
+    audience: "all",
+    cat: "puzzles",
+    added: "2026-10-07",
+    tags: ["Logic", "Puzzle", "Multiplayer", "Offline"],
+    players: "1–2 players",
+    emoji: "🔲",
+    colors: ["#7c3aed", "#0ea5e9"],
+  },
 ];
 
 // ---- weekly featured game ----
