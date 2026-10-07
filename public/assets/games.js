@@ -709,6 +709,18 @@ export const GAMES = [
     colors: ["#e5484d", "#4f6df5"],
     added: "2026-10-06",
   },
+  {
+    id: "tell-the-time",
+    title: "Tell the Time",
+    tagline: "Learn to read a clock: drag the hands and hear the time in words, then read the clock and set the clock, from o'clock to any minute.",
+    audience: "kids",
+    cat: "learn",
+    added: "2026-10-07",
+    tags: ["Time", "Maths", "Learning", "Offline"],
+    players: "1 player",
+    emoji: "🕰️",
+    colors: ["#f59e0b", "#e5484d"],
+  },
 ];
 
 // ---- weekly featured game ----
