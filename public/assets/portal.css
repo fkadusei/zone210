@@ -323,5 +323,6 @@ html[data-saver="on"] .fav-btn { transition: none; }
 
 /* while the cards are being dealt (portal.js) */
 .grid.dealing > li { position: relative; animation: none; }
+.grid.dealing .card { box-shadow: 0 2px 0 rgba(255, 255, 255, 0.08), 0 6px 14px rgba(0, 0, 0, 0.45); } /* gives each card in the deck a visible edge */
 /* a game that is both featured and new shows both badges, one under the other */
 .flag:not(.fresh):not(.online) ~ .flag.fresh { top: 44px; }
