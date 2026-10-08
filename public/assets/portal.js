@@ -310,20 +310,29 @@ function deal() {
   if (cards.length < 2) return;
   const g = grid.getBoundingClientRect();
   const deckX = g.left + g.width / 2, deckY = Math.max(g.top, 0) + Math.min(240, vh * 0.32);
-  const SHUFFLE = 560, GAP = 70, FLY = 640;
+  const HOLD = 350, SHUFFLE = 1250, GAP = 240, FLY = 1000; // slow enough to see: the pile, three riffles, then the deal
   grid.classList.add("dealing"); // switches off the usual fade-up while the deal runs
   cards.forEach((li, k) => {
     const r = li.getBoundingClientRect();
     const dx = deckX - (r.left + r.width / 2), dy = deckY - (r.top + r.height / 2);
     const tilt = (Math.random() - 0.5) * 16, side = k % 2 ? 1 : -1;
-    const T = SHUFFLE + k * GAP + FLY;
+    const T = HOLD + SHUFFLE + k * GAP + FLY;
+    const at = (ms) => ms / T;
     const pile = (x, y, a) => `translate(${dx + x}px, ${dy + y - k * 1.5}px) rotate(${a}deg) scale(0.6)`;
     li.style.zIndex = String(200 - k); // the first card dealt is on top of the pile
+    // three riffles: the pile splits left and right and comes back together, a little less each time
+    const riffle = [1, 0.75, 0.5].flatMap((amt, n) => {
+      const t0 = HOLD + n * (SHUFFLE / 3);
+      return [
+        { transform: pile(side * 70 * amt, -10 * amt, tilt + side * 14 * amt), offset: at(t0 + SHUFFLE / 6), easing: "ease-in-out" },
+        { transform: pile(0, 0, tilt * (0.6 - n * 0.2)), offset: at(t0 + SHUFFLE / 3), easing: "ease-in-out" },
+      ];
+    });
     const anim = li.animate([
       { transform: pile(0, 0, tilt), offset: 0 },
-      { transform: pile(side * 46, -8, tilt + side * 10), offset: (SHUFFLE * 0.35) / T },
-      { transform: pile(0, 0, tilt * 0.4), offset: (SHUFFLE * 0.7) / T },
-      { transform: pile(0, 0, tilt * 0.4), offset: (SHUFFLE + k * GAP) / T, easing: "cubic-bezier(.2,.85,.25,1.12)" },
+      { transform: pile(0, 0, tilt), offset: at(HOLD), easing: "ease-in-out" },
+      ...riffle,
+      { transform: pile(0, 0, 0), offset: at(HOLD + SHUFFLE + k * GAP), easing: "cubic-bezier(.22,.9,.28,1.12)" },
       { transform: "none", offset: 1 },
     ], { duration: T, fill: "backwards" });
     anim.finished.then(() => { li.style.zIndex = ""; if (k === cards.length - 1) grid.classList.remove("dealing"); }).catch(() => {});
