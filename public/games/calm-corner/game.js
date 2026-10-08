@@ -1,6 +1,7 @@
 // Calm Corner: breathing with a growing and shrinking circle, a feelings check-in, the 5-4-3-2-1 senses exercise,
 // and calming sounds made right in the browser (rain, waves, wind, chimes). Everything stays on this device.
 import { FEELINGS, KIND, SENSES, CUES, sensesLine } from "./lines.js";
+import { PIECES, playMusic, stopMusic, setMusicVolume, playingMusic } from "./music.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -53,7 +54,7 @@ function bell(f = 528, vol = 0.08, len = 2.5) {
 }
 
 // ---------- tabs ----------
-const TABS = { breathe: viewBreathe, feel: viewFeel, senses: viewSenses, sounds: viewSounds };
+const TABS = { breathe: viewBreathe, feel: viewFeel, senses: viewSenses, sounds: viewSounds, music: viewMusic };
 let cleanup = () => {};
 function setTab(tab) {
   cleanup(); cleanup = () => {};
@@ -237,7 +238,30 @@ function viewSounds() {
   $("stopS").addEventListener("click", () => { stopSound(); clearTimeout(endT); view.querySelectorAll(".snd").forEach((b) => b.classList.remove("on")); $("sstat").textContent = ""; });
   // the sound keeps playing if you switch to another part of Calm Corner, and stops when you leave the page
 }
-window.addEventListener("pagehide", () => { stopSound(); hush(); });
+// ---------- calm music (composed as it plays, music.js) ----------
+let musicEnd = 0;
+function viewMusic() {
+  const moods = [["Meditation", "🧘"], ["Relax", "🌿"], ["Sleep", "🌙"]];
+  const now = playingMusic();
+  view.innerHTML = `<p class="tip">Gentle instrumental music, made right here on your device, so it never sounds quite the same twice. It can play along with the calm sounds too.</p>
+    ${moods.map(([m, e]) => `<h3 class="mood">${e} ${m}</h3><div class="pieces">${PIECES.filter((p) => p.mood === m).map((p) => `<button class="piece${now === p.id ? " on" : ""}" data-p="${p.id}" aria-pressed="${now === p.id}"><span class="pe">${p.emoji}</span><b>${p.name}</b><small>${p.about}</small><i class="play" aria-hidden="true">${now === p.id ? "⏸" : "▶"}</i></button>`).join("")}</div>`).join("")}
+    <div class="row"><label class="len">Volume <input type="range" id="mvol" min="0.05" max="1" step="0.05" value="${data.mvol || 0.6}"></label>
+      <label class="len">Stop after <select id="mmins"><option value="10">10 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option><option value="0">Don't stop</option></select></label>
+      <button class="g-btn ghost" id="mstop">⏹ Stop</button></div><p class="tip small" id="mstat" aria-live="polite">${now ? "Playing." : ""}</p>`;
+  const paint = () => { const id = playingMusic(); view.querySelectorAll(".piece").forEach((b) => { const on = b.dataset.p === id; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); b.querySelector(".play").textContent = on ? "⏸" : "▶"; }); };
+  view.querySelectorAll(".piece").forEach((b) => b.addEventListener("click", () => {
+    clearTimeout(musicEnd);
+    if (playingMusic() === b.dataset.p) { stopMusic(); paint(); $("mstat").textContent = ""; return; }
+    playMusic(b.dataset.p, Number($("mvol").value) * 0.7, ac());
+    paint();
+    const m = Number($("mmins").value);
+    if (m) musicEnd = setTimeout(() => { stopMusic(8); paint(); const st = $("mstat"); if (st) st.textContent = "The music faded away. 💤"; }, m * 60000);
+    $("mstat").textContent = m ? `Playing. It will gently fade out after ${m >= 60 ? "an hour" : `${m} minutes`}.` : "Playing.";
+  }));
+  $("mvol").addEventListener("input", () => { data.mvol = Number($("mvol").value); save(); setMusicVolume(data.mvol * 0.7); });
+  $("mstop").addEventListener("click", () => { clearTimeout(musicEnd); stopMusic(); paint(); $("mstat").textContent = ""; });
+}
+window.addEventListener("pagehide", () => { stopSound(); stopMusic(0.2); hush(); });
 
 voiceBtn();
 setTab(data.tab);
