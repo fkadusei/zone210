@@ -115,8 +115,9 @@ Oware seed conservation over hundreds of random games, scoring checked against a
 4. Optional: drop a 16:10 screenshot at `public/assets/thumbs/my-game.jpg`.
 5. Run `node tools/seo.mjs` so search engines can find it: it updates `sitemap.xml`, `robots.txt`, each page's canonical link and structured data, and the home page's game count and "All games" links. `tools/check-catalog.mjs` warns if you forget.
 
-**Featured game:** a different game is featured each week (from Monday, UTC), in a fixed shuffled order worked out
-in `public/assets/games.js`, so no deploy is needed. Add an id to `NOT_FEATURED` to leave a game out of the rotation,
+**Featured game:** a different game is featured each week (from Monday, UTC): the one that has waited longest since
+its last turn (new games go first, from the week after their `added` date), worked out in `public/assets/games.js`, so
+no deploy is needed and adding a game never changes the current week. Add an id to `NOT_FEATURED` to leave a game out of the rotation,
 or put `featured: true` on one game to pin it until you remove it.
 
 ## Run locally

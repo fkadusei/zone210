@@ -297,6 +297,40 @@ window.addEventListener("hashchange", () => {
 
 render();
 
+// ---------- the deal: on the first visit in a session, the cards are shuffled in a pile and dealt into place ----------
+// Only the cards on the screen take part; the rest simply appear. Off in book view, with Battery saver or reduced
+// motion, after the first time in a session (coming back from a game), or when the page opens part-way down.
+function deal() {
+  const calm = document.documentElement.getAttribute("data-saver") === "on" || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  let seen = false;
+  try { seen = sessionStorage.getItem("zone210_dealt") === "1"; sessionStorage.setItem("zone210_dealt", "1"); } catch (err) { /* storage unavailable */ }
+  if (calm || seen || state.view !== "grid" || window.scrollY > 40 || !grid.animate) return;
+  const vh = window.innerHeight;
+  const cards = [...grid.children].filter((li) => !li.classList.contains("group") && li.getBoundingClientRect().top < vh + 40);
+  if (cards.length < 2) return;
+  const g = grid.getBoundingClientRect();
+  const deckX = g.left + g.width / 2, deckY = Math.max(g.top, 0) + Math.min(240, vh * 0.32);
+  const SHUFFLE = 560, GAP = 70, FLY = 640;
+  grid.classList.add("dealing"); // switches off the usual fade-up while the deal runs
+  cards.forEach((li, k) => {
+    const r = li.getBoundingClientRect();
+    const dx = deckX - (r.left + r.width / 2), dy = deckY - (r.top + r.height / 2);
+    const tilt = (Math.random() - 0.5) * 16, side = k % 2 ? 1 : -1;
+    const T = SHUFFLE + k * GAP + FLY;
+    const pile = (x, y, a) => `translate(${dx + x}px, ${dy + y - k * 1.5}px) rotate(${a}deg) scale(0.6)`;
+    li.style.zIndex = String(200 - k); // the first card dealt is on top of the pile
+    const anim = li.animate([
+      { transform: pile(0, 0, tilt), offset: 0 },
+      { transform: pile(side * 46, -8, tilt + side * 10), offset: (SHUFFLE * 0.35) / T },
+      { transform: pile(0, 0, tilt * 0.4), offset: (SHUFFLE * 0.7) / T },
+      { transform: pile(0, 0, tilt * 0.4), offset: (SHUFFLE + k * GAP) / T, easing: "cubic-bezier(.2,.85,.25,1.12)" },
+      { transform: "none", offset: 1 },
+    ], { duration: T, fill: "backwards" });
+    anim.finished.then(() => { li.style.zIndex = ""; if (k === cards.length - 1) grid.classList.remove("dealing"); }).catch(() => {});
+  });
+}
+deal();
+
 // unfinished online games in this tab (saved by assets/online.js): offer to jump back in
 function drawResume() {
   const box = $("resume");

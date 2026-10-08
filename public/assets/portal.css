@@ -320,3 +320,8 @@ html[data-saver="on"] .fav-btn { transition: none; }
 .allgames ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .allgames a { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
 .allgames a:hover, .allgames a:focus-visible { color: var(--ink); text-decoration: underline; }
+
+/* while the cards are being dealt (portal.js) */
+.grid.dealing > li { position: relative; animation: none; }
+/* a game that is both featured and new shows both badges, one under the other */
+.flag:not(.fresh):not(.online) ~ .flag.fresh { top: 44px; }

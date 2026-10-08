@@ -786,7 +786,7 @@ export const GAMES = [
 ];
 
 // ---- weekly featured game ----
-// Each week (from Monday, UTC) a different game is featured, in a fixed shuffled order, so everyone sees the same
+// Each week (from Monday, UTC) a different game is featured, picked by a fixed draw, so everyone sees the same
 // one that week and nothing has to be redeployed. A game marked featured: true above wins instead.
 // Games listed here are left out of the rotation (for example while they are being fixed).
 export const NOT_FEATURED = ["abc-123"];
@@ -795,13 +795,28 @@ export function weekNumber(date = new Date()) {
   const MONDAY = Date.UTC(2026, 0, 5); // a Monday
   return Math.floor((date.getTime() - MONDAY) / (7 * 86400000));
 }
-// a steady shuffle: each game gets a fixed number from its id, so adding a game slots it in without reshuffling
-const rank = (id) => { let h = 2166136261; for (const c of id) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+// Each week the game that has waited longest since it was last featured gets its turn (games never featured go
+// first; ties are settled by a fixed draw). The history is replayed from the first week, and a game only joins from
+// the week after its "added" date, so adding games never changes a week that has already started.
+const draw = (week, id) => { let h = 2166136261 ^ week; for (const c of `${week}:${id}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); return (h ^ (h >>> 15)) >>> 0; };
+const weekStart = (w) => Date.UTC(2026, 0, 5) + w * 7 * 86400000;
+const joined = (g, w) => !g.added || Date.parse(`${g.added}T00:00:00Z`) < weekStart(w);
 export function featuredFor(date = new Date()) {
   if (PINNED) return PINNED;
-  const pool = GAMES.filter((g) => !NOT_FEATURED.includes(g.id)).sort((a, b) => rank(a.id) - rank(b.id));
-  const w = weekNumber(date);
-  return pool[((w % pool.length) + pool.length) % pool.length];
+  const pool = GAMES.filter((g) => !NOT_FEATURED.includes(g.id));
+  const target = weekNumber(date);
+  const lastShown = new Map();
+  let pick = pool[0];
+  for (let w = 0; w <= target; w += 1) {
+    const here = pool.filter((g) => joined(g, w));
+    if (!here.length) continue;
+    pick = here.reduce((best, g) => {
+      const a = lastShown.has(g.id) ? lastShown.get(g.id) : -1e9, b = lastShown.has(best.id) ? lastShown.get(best.id) : -1e9;
+      return a < b || (a === b && draw(w, g.id) > draw(w, best.id)) ? g : best;
+    }, here[0]);
+    lastShown.set(pick.id, w);
+  }
+  return pick;
 }
 // put this week's game first and give it the Featured badge
 {
