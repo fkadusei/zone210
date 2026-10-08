@@ -1,0 +1,5 @@
+# Zone 210: everyone is welcome to crawl and index the games.
+User-agent: *
+Allow: /
+
+Sitemap: https://zone210.com/sitemap.xml

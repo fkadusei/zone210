@@ -60,6 +60,10 @@ if (!fs.existsSync(path.join(root, "assets/og/home.jpg"))) bad("assets/og/home.j
 
 const online = GAMES.filter((g) => g.online).length;
 console.log(`${GAMES.length} games (${seen.size} unique ids), ${online} with online play.`);
+// the sitemap (written by tools/seo.mjs) should list every game
+const sm = path.join(root, "sitemap.xml");
+if (fs.existsSync(sm)) { const xml = fs.readFileSync(sm, "utf8"); GAMES.forEach((g) => { if (!xml.includes(`/games/${g.id}/`)) warns.push(`${g.id} is not in sitemap.xml: run node tools/seo.mjs`); }); }
+else warns.push("no sitemap.xml: run node tools/seo.mjs");
 warns.forEach((w) => console.log("warning:", w));
 if (problems.length) { problems.forEach((p) => console.log("PROBLEM:", p)); console.log(`\n${problems.length} problem${problems.length === 1 ? "" : "s"} found.`); process.exit(1); }
 console.log("Catalog OK.");

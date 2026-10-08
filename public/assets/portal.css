@@ -312,3 +312,11 @@ html[data-saver="on"] .fav-btn { transition: none; }
 
 /* the home page sky (assets/sky.js): behind everything, never in the way of taps */
 .sky { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+
+/* the plain list of every game in the footer (written by tools/seo.mjs) */
+.allgames { max-width: 1100px; margin: 0 auto 14px; text-align: left; }
+.allgames summary { font-weight: 800; cursor: pointer; }
+.allgames h2 { margin: 14px 0 6px; font-size: 0.95rem; }
+.allgames ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.allgames a { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+.allgames a:hover, .allgames a:focus-visible { color: var(--ink); text-decoration: underline; }

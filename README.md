@@ -113,6 +113,7 @@ Oware seed conservation over hundreds of random games, scoring checked against a
    (`--surface`, `--ink`, `--muted`, `--line`, `--gold`...) instead of fixed colours so both themes work.
 3. Add an entry to `public/assets/games.js` (`id` must match the folder name). Set `audience` to `kids`, `adults` or `all`.
 4. Optional: drop a 16:10 screenshot at `public/assets/thumbs/my-game.jpg`.
+5. Run `node tools/seo.mjs` so search engines can find it: it updates `sitemap.xml`, `robots.txt`, each page's canonical link and structured data, and the home page's game count and "All games" links. `tools/check-catalog.mjs` warns if you forget.
 
 **Featured game:** a different game is featured each week (from Monday, UTC), in a fixed shuffled order worked out
 in `public/assets/games.js`, so no deploy is needed. Add an id to `NOT_FEATURED` to leave a game out of the rotation,
