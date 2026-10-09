@@ -1,4 +1,4 @@
-/* Zone 210 shared design system: light + dark themes, a calm twilight sky, soft glassy panels, a periwinkle accent (gold stays for the brand). */
+/* Zone 210 shared design system: light + dark themes, hairline borders, layered shadows, one gold accent. */
 
 /* Fonts, hosted here (assets/fonts, SIL Open Font License): Nunito for text, Fredoka for headings and buttons.
    Latin letters only; anything else falls back to the system font. */
@@ -8,19 +8,13 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 :root {
   /* light theme: soft cool grey, never stark white */
-  --bg: #eaf0f8;
-  --bg-grad: radial-gradient(120% 60% at 50% 0%, #e6e4fb 0%, transparent 60%), linear-gradient(180deg, #eef0fb 0%, #eaf1f8 50%, #e6f3f0 100%);
-  /* soft glassy panels, and the calm periwinkle accent for buttons, chips and tabs */
-  --glass: rgba(255, 255, 255, 0.62);
-  --glass-edge: rgba(40, 50, 90, 0.1);
-  --glass-soft: rgba(40, 50, 90, 0.05);
-  --accent: #7d8ef0;
-  --accent-top: #a5b4ff;
-  --accent-deep: #6474d6;
-  --accent-soft: color-mix(in srgb, #8b9cff 20%, transparent);
-  --on-accent: #11173a;
+  --bg: #eef0f5;
+  --bg-grad: linear-gradient(155deg, #e4e9fb 0%, #f2e9f7 48%, #e2f0fa 100%);
   --surface: #ffffff;
   --surface-2: #f5f6fa;
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-edge: rgba(22, 26, 43, 0.1);
+  --glass-soft: rgba(22, 26, 43, 0.05);
   --ink: #161a2b;
   --muted: #5f6680;
   --line: rgba(22, 26, 43, 0.1);
@@ -52,13 +46,13 @@
 
 :root[data-theme="dark"] {
   /* dark theme: deep midnight blue with cool, soft surfaces (not black, not brown) */
-  --bg: #0e1430;
-  --bg-grad: radial-gradient(120% 60% at 50% 0%, #1d2a5a 0%, transparent 60%), linear-gradient(180deg, #0d1330 0%, #121a3d 45%, #0e2233 100%);
+  --bg: #0a0e1a;
+  --bg-grad: linear-gradient(155deg, #0a1030 0%, #14163f 42%, #1b1145 72%, #0b1a33 100%);
+  --surface: #131a2b;
+  --surface-2: #1a2238;
   --glass: rgba(255, 255, 255, 0.045);
   --glass-edge: rgba(255, 255, 255, 0.09);
   --glass-soft: rgba(255, 255, 255, 0.06);
-  --surface: #172046;
-  --surface-2: #1e2853;
   --ink: #eef1fa;
   --muted: #98a1bb;
   --line: rgba(255, 255, 255, 0.08);
@@ -149,26 +143,26 @@ body::after {
 .g-btn {
   font: inherit;
   font-weight: 700;
-  color: var(--on-accent);
-  background: linear-gradient(180deg, var(--accent-top), var(--accent));
-  border: 1px solid transparent;
-  border-radius: 14px;
+  color: var(--on-gold);
+  background: linear-gradient(180deg, #ffc93c, var(--gold));
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
   padding: 10px 18px;
   cursor: pointer;
   touch-action: manipulation;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset, 0 6px 18px -8px color-mix(in srgb, var(--accent) 80%, transparent);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 3px 0 var(--gold-deep), 0 8px 16px rgba(207, 148, 16, 0.25);
   transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.15s ease;
 }
 .g-btn:hover:not(:disabled) { filter: brightness(1.05); transform: translateY(-1px); }
-.g-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset; }
+.g-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 1px 0 var(--gold-deep); }
 .g-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
 .g-btn.ghost {
   color: var(--ink);
-  background: var(--glass-soft);
-  border: 1px solid var(--glass-edge);
-  box-shadow: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 3px 0 var(--line);
 }
-.g-btn.ghost:hover:not(:disabled) { background: var(--accent-soft); }
+.g-btn.ghost:hover:not(:disabled) { background: var(--surface-2); }
 .g-btn:focus-visible, .g-chip:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 @media (pointer: coarse) { .g-btn { min-height: 44px; } }
 
@@ -188,7 +182,7 @@ body::after {
   transition: background 0.15s, border-color 0.15s;
 }
 .g-chip:hover { background: var(--glass-soft); }
-.g-chip[aria-pressed="true"] { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+.g-chip[aria-pressed="true"] { background: var(--gold-soft); border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
 
 /* Status line + overlays */
 .g-status { min-height: 1.6em; margin: 10px 0 0; font-weight: 700; text-align: center; }
@@ -207,8 +201,8 @@ body::after {
   padding: 30px 24px;
   text-align: center;
   background: var(--surface);
-  border: 1px solid var(--glass-edge);
-  border-radius: 26px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
   box-shadow: var(--shadow-lg);
   animation: g-rise 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -225,8 +219,8 @@ body::after {
   align-items: center;
   gap: 6px;
   color: var(--ink);
-  background: color-mix(in srgb, var(--surface) 80%, transparent);
-  border: 1px solid var(--glass-edge);
+  background: var(--surface);
+  border: 1px solid var(--line);
   box-shadow: var(--shadow);
   cursor: pointer;
   text-decoration: none;
