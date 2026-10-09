@@ -1,10 +1,10 @@
 /* The Zone 210 Playbook (assets/book.js). Sizes are in em so the whole book scales with --pw, the width of one page. */
 
 /* ---------- view switch + calmer hero while reading ---------- */
-.view-toggle { display: inline-flex; gap: 2px; padding: 4px; background: color-mix(in srgb, var(--surface) 76%, transparent); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow); }
+.view-toggle { display: inline-flex; gap: 4px; padding: 5px; background: var(--glass); border: 1px solid var(--glass-edge); border-radius: 999px; }
 .vbtn { font: inherit; font-weight: 700; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 7px 14px; cursor: pointer; touch-action: manipulation; white-space: nowrap; transition: color 0.15s, background 0.15s; }
 .vbtn:hover { color: var(--ink); }
-.vbtn[aria-pressed="true"] { color: var(--on-gold); background: linear-gradient(180deg, #ffc93c, var(--gold)); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 2px 8px rgba(207, 148, 16, 0.35); }
+.vbtn[aria-pressed="true"] { color: var(--ink); background: var(--accent-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
 .vbtn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 @media (max-width: 640px) { .tools { flex-wrap: wrap; } }
 
