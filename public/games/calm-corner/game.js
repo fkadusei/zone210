@@ -59,7 +59,7 @@ let cleanup = () => {};
 function setTab(tab) {
   cleanup(); cleanup = () => {};
   data.tab = TABS[tab] ? tab : "breathe"; save();
-  document.querySelectorAll("#tabs .g-chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === data.tab)));
+  document.querySelectorAll("#tabs [data-tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === data.tab)));
   TABS[data.tab]();
 }
 $("tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) setTab(b.dataset.tab); });
@@ -76,11 +76,11 @@ const WORD = { in: "Breathe in", hold: "Hold", out: "Breathe out" };
 function viewBreathe() {
   const p = PATTERNS[data.pattern] || PATTERNS.balloon;
   view.innerHTML = `<div class="g-chips pats" role="group" aria-label="Breathing pattern">${Object.entries(PATTERNS).map(([k, x]) => `<button class="g-chip" data-p="${k}" aria-pressed="${k === data.pattern}">${x.name}</button>`).join("")}</div>
-    <p class="tip">${p.tip}</p>
+    <div class="panel"><p class="tip">${p.tip}</p>
     <div class="breath"><div class="ring" id="ring"><div class="ball" id="ball"></div><div class="say"><b id="phase">Ready?</b><span id="count"></span></div></div><div class="bar" id="bar" aria-hidden="true"><i></i></div></div>
     <p class="rounds" id="rounds" aria-live="polite"></p>
     <div class="row"><button class="g-btn" id="go">▶ Start</button>
-      <label class="len">Breaths <select id="n"><option>3</option><option selected>5</option><option>10</option></select></label></div>`;
+      <label class="len">Breaths <select id="n"><option>3</option><option selected>5</option><option>10</option></select></label></div></div>`;
   view.querySelector(".pats").addEventListener("click", (e) => { const b = e.target.closest("[data-p]"); if (b) { data.pattern = b.dataset.p; save(); cleanup(); viewBreathe(); } });
   let timer = 0, running = false;
   const ball = $("ball"), bar = $("bar").querySelector("i");
@@ -117,8 +117,8 @@ function viewBreathe() {
 // ---------- feelings ----------
 function viewFeel() {
   const recent = data.diary.slice(-7).reverse();
-  view.innerHTML = `<p class="tip">How are you feeling right now? Tap the face that fits. All feelings are okay.</p>
-    <div class="feels">${FEELINGS.map(([e, n], i) => `<button class="feel" data-i="${i}"><span>${e}</span>${n}</button>`).join("")}</div>
+  view.innerHTML = `<div class="panel"><p class="tip">How are you feeling right now? Tap the face that fits. All feelings are okay.</p>
+    <div class="feels">${FEELINGS.map(([e, n], i) => `<button class="feel" data-i="${i}"><span>${e}</span>${n}</button>`).join("")}</div></div>
     <div class="answer" id="answer" hidden aria-live="polite"></div>
     <div class="kind"><span>💛 A kind thought</span><p id="kind">${KIND[Math.floor(Math.random() * KIND.length)]}</p><button class="g-btn ghost" id="nextKind">Another one</button></div>
     ${recent.length ? `<div class="diary"><span>My feelings this week</span><div>${recent.map((d) => `<span title="${new Date(d.t).toLocaleDateString()}">${d.e}</span>`).join("")}</div><small>Saved only on this device. <button class="link" id="clearDiary">Clear</button></small></div>` : ""}`;
@@ -166,6 +166,29 @@ function viewSenses() {
     if (got === 0) talk(`s/${s}`, sensesLine(SENSES[s]));
   };
   draw();
+}
+
+// ---------- the list of things to play, and the "now playing" panel (calm sounds and calm music share them) ----------
+const EQ = '<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>';
+const itemsHTML = (items, now) => items.map((x) => `<button class="item${now === x.id ? " on" : ""}" data-id="${x.id}" aria-pressed="${now === x.id}"><span class="ie" aria-hidden="true">${x.emoji}</span><span class="it"><b>${x.name}</b><small>${x.about}</small></span><span class="ip" aria-hidden="true">${EQ}<span class="ic"></span></span></button>`).join("");
+const groupHTML = (cls, emoji, title, sub, items, now) => `<section class="group ${cls}"><header><span class="ge" aria-hidden="true">${emoji}</span><div><h2>${title}</h2><p>${sub}</p></div></header><div class="items">${itemsHTML(items, now)}</div></section>`;
+function playerHTML({ vol, volId, minsId, mins, def, stopId, statId, now }) {
+  return `<section class="player${now ? " on" : ""}" id="player" aria-label="Now playing">
+    <div class="np"><span class="npe" id="npE" aria-hidden="true">${now ? now.emoji : "🎶"}</span><div><small>Now playing</small><b id="npN">${now ? now.name : "Nothing yet"}</b><span class="stat" id="${statId}" aria-live="polite">${now ? "Playing." : "Choose something above."}</span></div>
+      <button class="stop" id="${stopId}" aria-label="Stop">◼</button></div>
+    <div class="ctl"><label class="vol"><span aria-hidden="true">🔈</span><input type="range" id="${volId}" min="0.05" max="1" step="0.05" value="${vol}" aria-label="Volume"><span aria-hidden="true">🔊</span></label>
+      <label class="len">⏲️ Stop after <select id="${minsId}">${mins.map(([v, t]) => `<option value="${v}"${v === def ? " selected" : ""}>${t}</option>`).join("")}</select></label></div>
+  </section>`;
+}
+// mark which item is playing, and show it in the player
+function paintPlaying(items, id, statId, stat) {
+  view.querySelectorAll(".item").forEach((b) => { const on = b.dataset.id === id; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));  });
+  const it = items.find((x) => x.id === id), pl = $("player");
+  if (!pl) return;
+  pl.classList.toggle("on", !!it);
+  $("npE").textContent = it ? it.emoji : "🎶";
+  $("npN").textContent = it ? it.name : "Nothing yet";
+  if (stat !== undefined && $(statId)) $(statId).textContent = stat;
 }
 
 // ---------- calm sounds (made in the browser) ----------
@@ -217,49 +240,50 @@ function startSound(kind, vol) {
   snd = { kind, master, stop: () => { timers.forEach(clearTimeout); const t = a.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value, t); master.gain.linearRampToValueAtTime(0, t + 1); setTimeout(() => nodes.forEach((n) => { try { n.stop && n.stop(); } catch (err) { /* done */ } try { n.disconnect(); } catch (err) { /* done */ } }), 1100); } };
 }
 function stopSound() { if (snd) { snd.stop(); snd = null; } }
+const SOUNDS = [
+  { id: "rain", emoji: "🌧️", name: "Gentle rain", about: "Soft rain with little drips" },
+  { id: "waves", emoji: "🌊", name: "Ocean waves", about: "Slow waves rolling in and out" },
+  { id: "wind", emoji: "🍃", name: "Soft wind", about: "A breeze moving through the trees" },
+  { id: "chimes", emoji: "🎐", name: "Wind chimes", about: "Bright little chimes, now and then" },
+];
 function viewSounds() {
-  const S = [["rain", "🌧️", "Gentle rain"], ["waves", "🌊", "Ocean waves"], ["wind", "🍃", "Soft wind"], ["chimes", "🎐", "Wind chimes"]];
+  const now = snd ? SOUNDS.find((x) => x.id === snd.kind) : null;
   view.innerHTML = `<p class="tip">Choose a sound, get comfy, and close your eyes if you like. The sounds are made right here on your device.</p>
-    <div class="sounds">${S.map(([k, e, n]) => `<button class="snd${snd && snd.kind === k ? " on" : ""}" data-k="${k}" aria-pressed="${!!(snd && snd.kind === k)}"><span>${e}</span>${n}</button>`).join("")}</div>
-    <div class="row"><label class="len">Volume <input type="range" id="vol" min="0.05" max="1" step="0.05" value="0.5"></label>
-      <label class="len">Stop after <select id="mins"><option value="5">5 minutes</option><option value="10" selected>10 minutes</option><option value="20">20 minutes</option><option value="0">Don't stop</option></select></label>
-      <button class="g-btn ghost" id="stopS">⏹ Stop</button></div><p class="tip small" id="sstat" aria-live="polite"></p>`;
+    <div class="groups">${groupHTML("g-sounds", "🎧", "Nature sounds", "Calm sounds from the world outside", SOUNDS, now && now.id)}</div>
+    ${playerHTML({ vol: 0.5, volId: "vol", minsId: "mins", mins: [[5, "5 minutes"], [10, "10 minutes"], [20, "20 minutes"], [0, "Don't stop"]], def: 10, stopId: "stopS", statId: "sstat", now })}`;
   let endT = 0;
+  const paint = (stat) => paintPlaying(SOUNDS, snd && snd.kind, "sstat", stat);
   const play = (k) => {
     startSound(k, Number($("vol").value) * 0.6);
-    view.querySelectorAll(".snd").forEach((b) => { b.classList.toggle("on", b.dataset.k === k); b.setAttribute("aria-pressed", String(b.dataset.k === k)); });
     clearTimeout(endT);
     const m = Number($("mins").value);
-    if (m) endT = setTimeout(() => { stopSound(); view.querySelectorAll(".snd").forEach((b) => b.classList.remove("on")); $("sstat").textContent = "The sound faded out. 💤"; }, m * 60000);
-    $("sstat").textContent = m ? `Playing. It will fade out after ${m} minutes.` : "Playing.";
+    if (m) endT = setTimeout(() => { stopSound(); if ($("sstat")) paint("The sound faded out. 💤"); }, m * 60000);
+    paint(m ? `It will fade out after ${m} minutes.` : "Playing.");
   };
-  view.querySelector(".sounds").addEventListener("click", (e) => { const b = e.target.closest(".snd"); if (!b) return; if (snd && snd.kind === b.dataset.k) { stopSound(); b.classList.remove("on"); $("sstat").textContent = ""; } else play(b.dataset.k); });
+  view.querySelector(".items").addEventListener("click", (e) => { const b = e.target.closest(".item"); if (!b) return; if (snd && snd.kind === b.dataset.id) { stopSound(); clearTimeout(endT); paint("Choose something above."); } else play(b.dataset.id); });
   $("vol").addEventListener("input", () => { if (snd) { const a = ac(); snd.master.gain.cancelScheduledValues(a.currentTime); snd.master.gain.setValueAtTime(Number($("vol").value) * 0.6, a.currentTime); } });
-  $("stopS").addEventListener("click", () => { stopSound(); clearTimeout(endT); view.querySelectorAll(".snd").forEach((b) => b.classList.remove("on")); $("sstat").textContent = ""; });
+  $("stopS").addEventListener("click", () => { stopSound(); clearTimeout(endT); paint("Choose something above."); });
   // the sound keeps playing if you switch to another part of Calm Corner, and stops when you leave the page
 }
 // ---------- calm music (composed as it plays, music.js) ----------
 let musicEnd = 0;
+const MOODS = [["Meditation", "🧘", "g-med", "Slow, deep and still"], ["Relax", "🌿", "g-relax", "Soft and gentle, for a quiet moment"], ["Sleep", "🌙", "g-sleep", "Quiet music for drifting off"]];
 function viewMusic() {
-  const moods = [["Meditation", "🧘"], ["Relax", "🌿"], ["Sleep", "🌙"]];
-  const now = playingMusic();
+  const id = playingMusic(), now = PIECES.find((p) => p.id === id);
   view.innerHTML = `<p class="tip">Gentle instrumental music, made right here on your device, so it never sounds quite the same twice. It can play along with the calm sounds too.</p>
-    ${moods.map(([m, e]) => `<h3 class="mood">${e} ${m}</h3><div class="pieces">${PIECES.filter((p) => p.mood === m).map((p) => `<button class="piece${now === p.id ? " on" : ""}" data-p="${p.id}" aria-pressed="${now === p.id}"><span class="pe">${p.emoji}</span><b>${p.name}</b><small>${p.about}</small><i class="play" aria-hidden="true">${now === p.id ? "⏸" : "▶"}</i></button>`).join("")}</div>`).join("")}
-    <div class="row"><label class="len">Volume <input type="range" id="mvol" min="0.05" max="1" step="0.05" value="${data.mvol || 0.6}"></label>
-      <label class="len">Stop after <select id="mmins"><option value="10">10 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option><option value="0">Don't stop</option></select></label>
-      <button class="g-btn ghost" id="mstop">⏹ Stop</button></div><p class="tip small" id="mstat" aria-live="polite">${now ? "Playing." : ""}</p>`;
-  const paint = () => { const id = playingMusic(); view.querySelectorAll(".piece").forEach((b) => { const on = b.dataset.p === id; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); b.querySelector(".play").textContent = on ? "⏸" : "▶"; }); };
-  view.querySelectorAll(".piece").forEach((b) => b.addEventListener("click", () => {
+    <div class="groups">${MOODS.map(([m, e, cls, sub]) => groupHTML(cls, e, m, sub, PIECES.filter((p) => p.mood === m), id)).join("")}</div>
+    ${playerHTML({ vol: data.mvol || 0.6, volId: "mvol", minsId: "mmins", mins: [[10, "10 minutes"], [20, "20 minutes"], [30, "30 minutes"], [60, "1 hour"], [0, "Don't stop"]], def: 20, stopId: "mstop", statId: "mstat", now })}`;
+  const paint = (stat) => paintPlaying(PIECES, playingMusic(), "mstat", stat);
+  view.querySelectorAll(".item").forEach((b) => b.addEventListener("click", () => {
     clearTimeout(musicEnd);
-    if (playingMusic() === b.dataset.p) { stopMusic(); paint(); $("mstat").textContent = ""; return; }
-    playMusic(b.dataset.p, Number($("mvol").value) * 0.7, ac());
-    paint();
+    if (playingMusic() === b.dataset.id) { stopMusic(); paint("Choose something above."); return; }
+    playMusic(b.dataset.id, Number($("mvol").value) * 0.7, ac());
     const m = Number($("mmins").value);
-    if (m) musicEnd = setTimeout(() => { stopMusic(8); paint(); const st = $("mstat"); if (st) st.textContent = "The music faded away. 💤"; }, m * 60000);
-    $("mstat").textContent = m ? `Playing. It will gently fade out after ${m >= 60 ? "an hour" : `${m} minutes`}.` : "Playing.";
+    if (m) musicEnd = setTimeout(() => { stopMusic(8); if ($("mstat")) paint("The music faded away. 💤"); }, m * 60000);
+    paint(m ? `It will gently fade out after ${m >= 60 ? "an hour" : `${m} minutes`}.` : "Playing.");
   }));
   $("mvol").addEventListener("input", () => { data.mvol = Number($("mvol").value); save(); setMusicVolume(data.mvol * 0.7); });
-  $("mstop").addEventListener("click", () => { clearTimeout(musicEnd); stopMusic(); paint(); $("mstat").textContent = ""; });
+  $("mstop").addEventListener("click", () => { clearTimeout(musicEnd); stopMusic(); paint("Choose something above."); });
 }
 window.addEventListener("pagehide", () => { stopSound(); stopMusic(0.2); hush(); });
 

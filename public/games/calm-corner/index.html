@@ -31,24 +31,20 @@
     <!-- /seo:head -->
   </head>
   <body>
-    <main class="g-page">
-      <div class="g-head">
-        <div>
-          <h1>Calm Corner</h1>
-          <p>A quiet place to breathe, notice your feelings and relax.</p>
-        </div>
-        <div class="g-bar">
-          <label class="vsel">🗣️ Voice <select id="voice" aria-label="Voice"></select></label>
-        </div>
-      </div>
-      <div class="g-chips tabs" id="tabs" role="tablist" aria-label="Activities">
-        <button class="g-chip" role="tab" data-tab="breathe" aria-pressed="true">🌬️ Breathe</button>
-        <button class="g-chip" role="tab" data-tab="feel" aria-pressed="false">💭 How do I feel?</button>
-        <button class="g-chip" role="tab" data-tab="senses" aria-pressed="false">🖐️ 5-4-3-2-1</button>
-        <button class="g-chip" role="tab" data-tab="sounds" aria-pressed="false">🎧 Calm sounds</button>
-        <button class="g-chip" role="tab" data-tab="music" aria-pressed="false">🎵 Calm music</button>
-      </div>
-      <section id="view"></section>
+    <main class="g-page calm">
+      <header class="calm-head">
+        <h1>Calm Corner</h1>
+        <p>A quiet place to breathe, notice your feelings and relax.</p>
+        <label class="vsel"><span aria-hidden="true">🗣️</span> Voice <select id="voice" aria-label="Voice"></select></label>
+      </header>
+      <nav class="tabs" id="tabs" role="tablist" aria-label="Activities">
+        <button class="tab" role="tab" data-tab="breathe" aria-selected="true"><span aria-hidden="true">🌬️</span>Breathe</button>
+        <button class="tab" role="tab" data-tab="feel" aria-selected="false"><span aria-hidden="true">💭</span>Feelings</button>
+        <button class="tab" role="tab" data-tab="senses" aria-selected="false"><span aria-hidden="true">🖐️</span>5-4-3-2-1</button>
+        <button class="tab" role="tab" data-tab="sounds" aria-selected="false"><span aria-hidden="true">🎧</span>Sounds</button>
+        <button class="tab" role="tab" data-tab="music" aria-selected="false"><span aria-hidden="true">🎵</span>Music</button>
+      </nav>
+      <section id="view" role="tabpanel" aria-labelledby="tabs"></section>
       <p class="foot">If you often feel very sad, worried or scared, please talk to a grown-up you trust. You don't have to handle big feelings alone.</p>
     </main>
     <script src="../../assets/sound.js"></script>
