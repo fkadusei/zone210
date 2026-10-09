@@ -286,6 +286,13 @@ function viewMusic() {
   $("mstop").addEventListener("click", () => { clearTimeout(musicEnd); stopMusic(); paint("Choose something above."); });
 }
 window.addEventListener("pagehide", () => { stopSound(); stopMusic(0.2); hush(); });
+// the phone's audio was stuck and has been replaced (sound.js): what was "playing" can't be heard, so stop it and show it stopped
+window.addEventListener("z210:audio-reset", () => {
+  clearTimeout(musicEnd); stopMusic(0); stopSound();
+  // repaint in place (redrawing now would swallow the tap that is happening), so that tap starts it again with sound
+  if ($("mstat")) paintPlaying(PIECES, null, "mstat", "Choose something above.");
+  if ($("sstat")) paintPlaying(SOUNDS, null, "sstat", "Choose something above.");
+});
 
 voiceBtn();
 setTab(data.tab);
