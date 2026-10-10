@@ -1,0 +1,33 @@
+<!doctype html>
+<!-- Loudness check for the Calm Corner music. Serve the repo root (python3 -m http.server 8124) and open
+     http://localhost:8124/tools/check-music.html  (add ?secs=90 for longer). For each piece it renders the start
+     offline and shows: loudness (RMS, dB), the peak (must stay under 1), and how much of the sound is above 200 Hz,
+     which is roughly what a phone speaker can play. Aim: RMS between about -29 and -23 dB, peak well under 1, phone share above 50%. -->
+<meta charset="utf-8" />
+<title>Calm music check</title>
+<pre id="out">Rendering…</pre>
+<script type="module">
+  import { PIECES, renderMusic } from "../public/games/calm-corner/music.js";
+  const secs = Number(new URLSearchParams(location.search).get("secs")) || 60, SR = 44100, rows = [];
+  for (const p of PIECES) {
+    const ctx = new OfflineAudioContext(2, SR * secs, SR);
+    let err = "";
+    try { renderMusic(p.id, 0.42, ctx, secs); } catch (e) { err = String(e); }
+    const d = (await ctx.startRendering()).getChannelData(0);
+    // skip the first 5 seconds (slow starts), then measure; a one-pole high-pass at 200 Hz stands in for a phone speaker
+    const a = 1 / (1 + (2 * Math.PI * 200) / SR);
+    let sum = 0, hi = 0, peak = 0, y = 0, prev = 0, bad = 0, quiet = 0, run = 0;
+    for (let i = SR * 5; i < d.length; i += 1) {
+      const x = d[i];
+      if (!Number.isFinite(x)) { bad += 1; continue; }
+      y = a * (y + x - prev); prev = x;
+      sum += x * x; hi += y * y; peak = Math.max(peak, Math.abs(x));
+      if (Math.abs(x) < 0.002) { run += 1; quiet = Math.max(quiet, run); } else run = 0;
+    }
+    const n = d.length - SR * 5;
+    rows.push({ id: p.id, mood: p.mood, rms: +(10 * Math.log10(sum / n + 1e-12)).toFixed(1), peak: +peak.toFixed(2), phone: Math.round((hi / (sum + 1e-12)) * 100), gap: +(quiet / SR).toFixed(1), bad, err });
+  }
+  window.RESULT = rows;
+  document.getElementById("out").textContent = "piece            mood        RMS dB  peak  phone%  longest silence (s)\n" +
+    rows.map((r) => `${r.id.padEnd(16)} ${r.mood.padEnd(11)} ${String(r.rms).padStart(6)}  ${String(r.peak).padStart(4)}  ${String(r.phone).padStart(5)}  ${String(r.gap).padStart(6)} ${r.bad ? " BAD SAMPLES " + r.bad : ""}${r.err ? " ERROR " + r.err : ""}`).join("\n");
+</script>
