@@ -1,7 +1,7 @@
 // Calm Corner: breathing with a growing and shrinking circle, a feelings check-in, the 5-4-3-2-1 senses exercise,
 // and calming sounds made right in the browser (rain, waves, wind, chimes). Everything stays on this device.
 import { FEELINGS, KIND, SENSES, CUES, sensesLine } from "./lines.js";
-import { PIECES, playMusic, stopMusic, setMusicVolume, playingMusic } from "./music.js";
+import { PIECES, playMusic, stopMusic, playingMusic } from "./music.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -172,13 +172,49 @@ function viewSenses() {
 const EQ = '<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>';
 const itemsHTML = (items, now) => items.map((x) => `<button class="item${now === x.id ? " on" : ""}" data-id="${x.id}" aria-pressed="${now === x.id}"><span class="ie" aria-hidden="true">${x.emoji}</span><span class="it"><b>${x.name}</b><small>${x.about}</small></span><span class="ip" aria-hidden="true">${EQ}<span class="ic"></span></span></button>`).join("");
 const groupHTML = (cls, emoji, title, sub, items, now) => `<section class="group ${cls}"><header><span class="ge" aria-hidden="true">${emoji}</span><div><h2>${title}</h2><p>${sub}</p></div></header><div class="items">${itemsHTML(items, now)}</div></section>`;
-function playerHTML({ vol, volId, minsId, mins, def, stopId, statId, now }) {
+function playerHTML({ kind, minsId, mins, stopId, statId, now }) {
+  const S = SESS[kind];
   return `<section class="player${now ? " on" : ""}" id="player" aria-label="Now playing">
-    <div class="np"><span class="npe" id="npE" aria-hidden="true">${now ? now.emoji : "🎶"}</span><div><small>Now playing</small><b id="npN">${now ? now.name : "Nothing yet"}</b><span class="stat" id="${statId}" aria-live="polite">${now ? "Playing." : "Choose something above."}</span></div>
+    <div class="np"><span class="npe" id="npE" aria-hidden="true">${now ? now.emoji : "🎶"}</span><div><small>Now playing</small><b id="npN">${now ? now.name : "Nothing yet"}</b><span class="stat" id="${statId}" aria-live="polite">${now ? "" : "Choose something above."}</span></div>
       <button class="stop" id="${stopId}" aria-label="Stop">◼</button></div>
-    <div class="ctl"><label class="vol"><span aria-hidden="true">🔈</span><input type="range" id="${volId}" min="0.05" max="1" step="0.05" value="${vol}" aria-label="Volume"><span aria-hidden="true">🔊</span></label>
-      <label class="len">⏲️ Stop after <select id="${minsId}">${mins.map(([v, t]) => `<option value="${v}"${v === def ? " selected" : ""}>${t}</option>`).join("")}</select></label></div>
+    <div class="prog" id="pProg"><div class="track" aria-hidden="true"><i id="pBar"></i></div><div class="times"><span id="pEl" aria-label="Time played">0:00</span><span id="pLeft"></span></div></div>
+    <div class="ctl"><label class="len">⏲️ Stop after <select id="${minsId}">${mins.map(([v, t]) => `<option value="${v}"${v === S.mins ? " selected" : ""}>${t}</option>`).join("")}</select></label></div>
   </section>`;
+}
+
+// ---------- how long it has played and how long is left (calm sounds and calm music each keep their own clock) ----------
+const SESS = {
+  sounds: { start: 0, mins: data.smins ?? 10, key: "smins", stat: "sstat", over: "The sound faded out. 💤", stop: () => stopSound(), items: () => SOUNDS, now: () => snd && snd.kind },
+  music: { start: 0, mins: data.mmins ?? 20, key: "mmins", stat: "mstat", over: "The music faded away. 💤", stop: () => stopMusic(8), items: () => PIECES, now: () => playingMusic() },
+};
+const clock = (secs) => { const t = Math.max(0, Math.floor(secs)), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), x = String(t % 60).padStart(2, "0"); return h ? `${h}:${String(m).padStart(2, "0")}:${x}` : `${m}:${x}`; };
+const lasts = (m) => (m ? `Stops after ${m >= 60 ? "1 hour" : `${m} minutes`}.` : "Plays until you stop it.");
+let clockT = 0;
+// runs twice a second while anything plays: stops what has reached its time, and shows the time played and the time left
+function tick() {
+  let any = false;
+  for (const [kind, S] of Object.entries(SESS)) {
+    if (!S.now()) { S.start = 0; continue; }
+    const played = (Date.now() - S.start) / 1000, total = S.mins * 60;
+    if (total && played >= total) { S.stop(); S.start = 0; if (data.tab === kind) paintPlaying(S.items(), null, S.stat, S.over); continue; }
+    any = true;
+    if (data.tab !== kind || !$("pEl")) continue;
+    $("pEl").textContent = clock(played);
+    $("pLeft").textContent = total ? `${clock(total - played)} left` : "No time limit";
+    $("pBar").style.width = total ? `${Math.min(100, (played / total) * 100)}%` : "100%";
+    $("pProg").classList.toggle("open", !total);
+  }
+  if (!any) { clearInterval(clockT); clockT = 0; }
+}
+// something has just started playing
+function begin(kind) { SESS[kind].start = Date.now(); if (!clockT) clockT = setInterval(tick, 500); tick(); }
+// the "Stop after" choice: remembered, and it takes effect straight away, even while something is playing
+function watchMins(kind, selId) {
+  const S = SESS[kind];
+  $(selId).addEventListener("change", () => {
+    S.mins = Number($(selId).value); data[S.key] = S.mins; save();
+    if (S.now()) { $(S.stat).textContent = lasts(S.mins); tick(); }
+  });
 }
 // mark which item is playing, and show it in the player
 function paintPlaying(items, id, statId, stat) {
@@ -250,45 +286,45 @@ function viewSounds() {
   const now = snd ? SOUNDS.find((x) => x.id === snd.kind) : null;
   view.innerHTML = `<p class="tip">Choose a sound, get comfy, and close your eyes if you like. The sounds are made right here on your device.</p>
     <div class="groups">${groupHTML("g-sounds", "🎧", "Nature sounds", "Calm sounds from the world outside", SOUNDS, now && now.id)}</div>
-    ${playerHTML({ vol: 0.5, volId: "vol", minsId: "mins", mins: [[5, "5 minutes"], [10, "10 minutes"], [20, "20 minutes"], [0, "Don't stop"]], def: 10, stopId: "stopS", statId: "sstat", now })}`;
-  let endT = 0;
+    ${playerHTML({ kind: "sounds", minsId: "mins", mins: [[5, "5 minutes"], [10, "10 minutes"], [20, "20 minutes"], [60, "1 hour"], [0, "Don't stop"]], stopId: "stopS", statId: "sstat", now })}`;
   const paint = (stat) => paintPlaying(SOUNDS, snd && snd.kind, "sstat", stat);
-  const play = (k) => {
-    startSound(k, Number($("vol").value) * 0.6);
-    clearTimeout(endT);
-    const m = Number($("mins").value);
-    if (m) endT = setTimeout(() => { stopSound(); if ($("sstat")) paint("The sound faded out. 💤"); }, m * 60000);
-    paint(m ? `It will fade out after ${m} minutes.` : "Playing.");
-  };
-  view.querySelector(".items").addEventListener("click", (e) => { const b = e.target.closest(".item"); if (!b) return; if (snd && snd.kind === b.dataset.id) { stopSound(); clearTimeout(endT); paint("Choose something above."); } else play(b.dataset.id); });
-  $("vol").addEventListener("input", () => { if (snd) { const a = ac(); snd.master.gain.cancelScheduledValues(a.currentTime); snd.master.gain.setValueAtTime(Number($("vol").value) * 0.6, a.currentTime); } });
-  $("stopS").addEventListener("click", () => { stopSound(); clearTimeout(endT); paint("Choose something above."); });
+  const halt = () => { stopSound(); SESS.sounds.start = 0; paint("Choose something above."); };
+  view.querySelector(".items").addEventListener("click", (e) => {
+    const b = e.target.closest(".item");
+    if (!b) return;
+    if (snd && snd.kind === b.dataset.id) { halt(); return; }
+    startSound(b.dataset.id, 0.3); // the device's own volume buttons set how loud it is
+    paint(lasts(SESS.sounds.mins));
+    begin("sounds");
+  });
+  $("stopS").addEventListener("click", halt);
+  watchMins("sounds", "mins");
+  if (now) { paint(lasts(SESS.sounds.mins)); tick(); }
   // the sound keeps playing if you switch to another part of Calm Corner, and stops when you leave the page
 }
 // ---------- calm music (composed as it plays, music.js) ----------
-let musicEnd = 0;
 const MOODS = [["Meditation", "🧘", "g-med", "Slow, deep and still"], ["Relax", "🌿", "g-relax", "Soft and gentle, for a quiet moment"], ["Sleep", "🌙", "g-sleep", "Quiet music for drifting off"]];
 function viewMusic() {
   const id = playingMusic(), now = PIECES.find((p) => p.id === id);
   view.innerHTML = `<p class="tip">Gentle instrumental music, made right here on your device, so it never sounds quite the same twice. It can play along with the calm sounds too.</p>
     <div class="groups">${MOODS.map(([m, e, cls, sub]) => groupHTML(cls, e, m, sub, PIECES.filter((p) => p.mood === m), id)).join("")}</div>
-    ${playerHTML({ vol: data.mvol || 0.6, volId: "mvol", minsId: "mmins", mins: [[10, "10 minutes"], [20, "20 minutes"], [30, "30 minutes"], [60, "1 hour"], [0, "Don't stop"]], def: 20, stopId: "mstop", statId: "mstat", now })}`;
+    ${playerHTML({ kind: "music", minsId: "mmins", mins: [[10, "10 minutes"], [20, "20 minutes"], [30, "30 minutes"], [60, "1 hour"], [0, "Don't stop"]], stopId: "mstop", statId: "mstat", now })}`;
   const paint = (stat) => paintPlaying(PIECES, playingMusic(), "mstat", stat);
+  const halt = () => { stopMusic(); SESS.music.start = 0; paint("Choose something above."); };
   view.querySelectorAll(".item").forEach((b) => b.addEventListener("click", () => {
-    clearTimeout(musicEnd);
-    if (playingMusic() === b.dataset.id) { stopMusic(); paint("Choose something above."); return; }
-    playMusic(b.dataset.id, Number($("mvol").value) * 0.7, ac());
-    const m = Number($("mmins").value);
-    if (m) musicEnd = setTimeout(() => { stopMusic(8); if ($("mstat")) paint("The music faded away. 💤"); }, m * 60000);
-    paint(m ? `It will gently fade out after ${m >= 60 ? "an hour" : `${m} minutes`}.` : "Playing.");
+    if (playingMusic() === b.dataset.id) { halt(); return; }
+    playMusic(b.dataset.id, 0.42, ac()); // the device's own volume buttons set how loud it is
+    paint(lasts(SESS.music.mins));
+    begin("music");
   }));
-  $("mvol").addEventListener("input", () => { data.mvol = Number($("mvol").value); save(); setMusicVolume(data.mvol * 0.7); });
-  $("mstop").addEventListener("click", () => { clearTimeout(musicEnd); stopMusic(); paint("Choose something above."); });
+  $("mstop").addEventListener("click", halt);
+  watchMins("music", "mmins");
+  if (now) { paint(lasts(SESS.music.mins)); tick(); }
 }
 window.addEventListener("pagehide", () => { stopSound(); stopMusic(0.2); hush(); });
 // the phone's audio was stuck and has been replaced (sound.js): what was "playing" can't be heard, so stop it and show it stopped
 window.addEventListener("z210:audio-reset", () => {
-  clearTimeout(musicEnd); stopMusic(0); stopSound();
+  stopMusic(0); stopSound(); SESS.music.start = 0; SESS.sounds.start = 0;
   // repaint in place (redrawing now would swallow the tap that is happening), so that tap starts it again with sound
   if ($("mstat")) paintPlaying(PIECES, null, "mstat", "Choose something above.");
   if ($("sstat")) paintPlaying(SOUNDS, null, "sstat", "Choose something above.");

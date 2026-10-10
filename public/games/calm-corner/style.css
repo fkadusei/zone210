@@ -110,7 +110,7 @@
 :root[data-saver="on"] .eq i { animation: none; transform: scaleY(0.6); }
 @media (prefers-reduced-motion: reduce) { .eq i { animation: none; transform: scaleY(0.6); } }
 
-.player { position: sticky; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 5; margin-top: 16px; padding: 14px 16px; border-radius: 24px; background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid var(--calm-edge); box-shadow: 0 10px 34px -12px rgba(0, 0, 0, 0.45); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.player { position: sticky; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 5; margin-top: 16px; padding: 14px 16px; border-radius: 24px; background: color-mix(in srgb, var(--surface) 96%, transparent); border: 1px solid var(--calm-edge); box-shadow: 0 10px 34px -12px rgba(0, 0, 0, 0.45); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 .player .np { display: flex; align-items: center; gap: 12px; }
 .player .npe { display: grid; place-items: center; width: 46px; height: 46px; flex: none; border-radius: 50%; font-size: 1.4rem; background: var(--calm-soft); transition: box-shadow 0.6s ease; }
 .player.on .npe { box-shadow: 0 0 0 3px color-mix(in srgb, #8b9cff 40%, transparent); }
@@ -121,10 +121,14 @@
 .player .stop { width: 42px; height: 42px; flex: none; border-radius: 50%; border: 1px solid var(--calm-edge); background: var(--calm-soft); color: var(--ink); font-size: 0.9rem; cursor: pointer; }
 .player:not(.on) .stop { opacity: 0.45; }
 .player .stop:hover { background: color-mix(in srgb, #8b9cff 20%, transparent); }
-.player .ctl { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--calm-edge); }
-.vol { display: flex; align-items: center; gap: 8px; flex: 1 1 200px; font-size: 0.95rem; }
-.vol input { flex: 1; accent-color: #8b9cff; }
-.len input[type="range"] { accent-color: #8b9cff; }
+.player .ctl { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--calm-edge); }
+/* time played, a thin bar, time left */
+.prog { margin-top: 12px; }
+.player:not(.on) .prog { display: none; }
+.prog .track { height: 6px; border-radius: 999px; background: var(--calm-soft); overflow: hidden; }
+.prog .track i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #8b9cff, #7dd3fc); transition: width 0.5s linear; }
+.prog.open .track i { opacity: 0.35; }
+.prog .times { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.84rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 @media (max-width: 560px) {
   .items { grid-template-columns: 1fr; }
