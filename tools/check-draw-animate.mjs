@@ -110,6 +110,13 @@ check(fl.frames.length >= 6 && fl.frames.every((f) => f.length && f.every(okStro
 
 // the flipbook's background music: every bar of every track has the right number of steps, and every note can be read
 const M = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/music.js")).href);
+const ST = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/stickers.js")).href);
+{ // stickers that move by themselves: small, finite movements, and nothing for a still picture
+  const all = ST.STICKERS.flatMap((k) => k.list), moving = all.filter((ch) => ST.stickerMoves(ch));
+  let bad = "";
+  for (const ch of moving) for (const go of [true, false]) for (let k = 0; k < 12; k += 1) { const m = ST.stickerLife(ch, { t: k * 0.11, go }); if (!m || ![m.x, m.y, m.r, m.sx, m.sy].every(Number.isFinite) || Math.abs(m.x) > 0.1 || Math.abs(m.y) > 0.1 || m.sx < 0.8 || m.sx > 1.2 || m.sy < 0.8 || m.sy > 1.2) bad = ch; }
+  check(!bad && moving.length >= 120 && ST.stickerLife("🐶", null) === null && ST.stickerLife("🏠", { t: 1, go: true }) === null && !ST.stickerMoves("📚"), `stickers: ${moving.length} of ${all.length} move by themselves, gently; houses and books stay still ${bad}`);
+}
 check(M.midi("A4") === 69 && M.midi("C4") === 60 && M.midi("Bb3") === 58 && M.midi("F#5") === 78, "note names are read correctly");
 for (const tune of M.TUNES) {
   const per = tune.bpb * tune.div; let bars = null;

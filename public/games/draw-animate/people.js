@@ -103,74 +103,95 @@ export const CHARACTERS = [
 ];
 export const personById = (id) => PEOPLE.find((x) => x.id === id) || CHARACTERS.find((x) => x.id === id) || ANIMALS.find((x) => x.id === id) || PEOPLE[0];
 
+// `live` is null for a still picture, or { t: seconds, go: is it travelling } while an animation plays.
+const beat = (live, rate, off = 0) => (live ? Math.sin(live.t * Math.PI * 2 * rate + off) : 0);
+const step = (live, way) => (live && live.go ? Math.max(0, way * beat(live, 1.4)) : 0); // how far a foot is lifted
+
 // ---------- characters that are not people (one unit tall, middle at the origin; the dragon faces right) ----------
 const OTHER = {
-  snowman(g, scarf, hat) {
+  snowman(g, scarf, hat, live) {
+    const k = beat(live, 1.2);
+    if (live && live.go) { g.translate(0, 0.46); g.rotate(beat(live, 1.4) * 0.06); g.translate(0, -0.46 - Math.abs(beat(live, 1.4)) * 0.02); } // it shuffles along
     const ball = (x, y, r) => { g.fillStyle = "#ffffff"; g.strokeStyle = "#b6c2d1"; g.lineWidth = 0.012; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.stroke(); };
     const dot = (c, x, y, r) => { g.fillStyle = c; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); };
-    g.strokeStyle = "#7a5230"; g.lineWidth = 0.022; g.beginPath(); // stick arms, behind the body
-    g.moveTo(-0.13, 0.0); g.lineTo(-0.36, -0.14); g.moveTo(-0.3, -0.1); g.lineTo(-0.36, -0.04); g.moveTo(-0.3, -0.1); g.lineTo(-0.31, -0.19);
-    g.moveTo(0.13, 0.0); g.lineTo(0.36, -0.16); g.moveTo(0.3, -0.12); g.lineTo(0.37, -0.07); g.moveTo(0.3, -0.12); g.lineTo(0.3, -0.21); g.stroke();
+    g.strokeStyle = "#7a5230"; g.lineWidth = 0.022; // stick arms, behind the body: they wave
+    g.save(); g.translate(-0.13, 0); g.rotate(k * 0.22); g.translate(0.13, 0); g.beginPath();
+    g.moveTo(-0.13, 0.0); g.lineTo(-0.36, -0.14); g.moveTo(-0.3, -0.1); g.lineTo(-0.36, -0.04); g.moveTo(-0.3, -0.1); g.lineTo(-0.31, -0.19); g.stroke(); g.restore();
+    g.save(); g.translate(0.13, 0); g.rotate(k * 0.3); g.translate(-0.13, 0); g.beginPath();
+    g.moveTo(0.13, 0.0); g.lineTo(0.36, -0.16); g.moveTo(0.3, -0.12); g.lineTo(0.37, -0.07); g.moveTo(0.3, -0.12); g.lineTo(0.3, -0.21); g.stroke(); g.restore();
     ball(0, 0.28, 0.2); ball(0, 0.02, 0.15); ball(0, -0.2, 0.115);
     [0.02 - 0.05, 0.02 + 0.02, 0.02 + 0.09].forEach((y) => dot("#1f2937", 0, y, 0.02)); // buttons
     g.strokeStyle = scarf; g.lineWidth = 0.05; g.beginPath(); g.moveTo(-0.11, -0.11); g.quadraticCurveTo(0, -0.07, 0.11, -0.11); g.stroke(); // scarf
-    g.lineWidth = 0.045; g.beginPath(); g.moveTo(0.07, -0.1); g.lineTo(0.1, 0.06); g.stroke();
+    g.lineWidth = 0.045; g.beginPath(); g.moveTo(0.07, -0.1); g.lineTo(0.1 + k * 0.03, 0.06); g.stroke();
     dot("#1f2937", -0.04, -0.23, 0.016); dot("#1f2937", 0.04, -0.23, 0.016);
     g.fillStyle = "#f97316"; g.beginPath(); g.moveTo(0, -0.205); g.lineTo(0.12, -0.185); g.lineTo(0, -0.17); g.fill(); // carrot nose
     [-0.05, -0.025, 0, 0.025, 0.05].forEach((x, i) => dot("#1f2937", x, -0.145 + (i === 0 || i === 4 ? -0.012 : i === 2 ? 0.004 : 0), 0.009)); // coal smile
     g.fillStyle = hat; g.fillRect(-0.085, -0.46, 0.17, 0.16); g.beginPath(); g.ellipse(0, -0.3, 0.14, 0.022, 0, 0, Math.PI * 2); g.fill(); // top hat
     g.fillStyle = scarf; g.fillRect(-0.085, -0.345, 0.17, 0.03);
   },
-  robot(g, body, light) {
+  robot(g, body, light, live) {
+    const k = beat(live, 1.2), la = step(live, 1) * 0.035, lb = step(live, -1) * 0.035;
     const box = (c, x, y, w, h, r = 0.02) => { g.fillStyle = c; g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.fill(); };
     const dot = (c, x, y, r) => { g.fillStyle = c; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); };
     const rod = (pts, w = 0.045) => { g.strokeStyle = "#6b7280"; g.lineWidth = w; g.lineCap = "round"; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach((q) => g.lineTo(q[0], q[1])); g.stroke(); };
-    rod([[0, -0.38], [0, -0.46]], 0.02); dot(light, 0, -0.47, 0.03); // antenna
-    rod([[-0.17, -0.02], [-0.29, 0.06], [-0.29, 0.18]]); rod([[0.17, -0.02], [0.3, -0.06], [0.33, -0.2]]); dot("#6b7280", -0.29, 0.2, 0.035); dot("#6b7280", 0.33, -0.22, 0.035);
-    rod([[-0.08, 0.26], [-0.08, 0.42]], 0.06); rod([[0.08, 0.26], [0.08, 0.42]], 0.06); box("#4b5563", -0.16, 0.41, 0.14, 0.06); box("#4b5563", 0.02, 0.41, 0.14, 0.06);
+    rod([[0, -0.38], [0, -0.46]], 0.02); g.globalAlpha = live ? 0.35 + 0.65 * Math.abs(beat(live, 0.8)) : 1; dot(light, 0, -0.47, 0.03); g.globalAlpha = 1; // antenna, with a light that blinks
+    g.save(); g.translate(-0.17, -0.02); g.rotate(k * 0.3); g.translate(0.17, 0.02); rod([[-0.17, -0.02], [-0.29, 0.06], [-0.29, 0.18]]); dot("#6b7280", -0.29, 0.2, 0.035); g.restore(); // the arms swing and wave
+    g.save(); g.translate(0.17, -0.02); g.rotate(k * 0.35); g.translate(-0.17, 0.02); rod([[0.17, -0.02], [0.3, -0.06], [0.33, -0.2]]); dot("#6b7280", 0.33, -0.22, 0.035); g.restore();
+    rod([[-0.08, 0.26], [-0.08, 0.42 - la]], 0.06); rod([[0.08, 0.26], [0.08, 0.42 - lb]], 0.06); box("#4b5563", -0.16, 0.41 - la, 0.14, 0.06); box("#4b5563", 0.02, 0.41 - lb, 0.14, 0.06);
     box(body, -0.17, -0.08, 0.34, 0.36, 0.04); box("#e5e7eb", -0.11, 0.0, 0.22, 0.14, 0.02); dot("#ef4444", -0.06, 0.07, 0.025); dot("#facc15", 0, 0.07, 0.025); dot("#22c55e", 0.06, 0.07, 0.025);
     g.fillStyle = "#6b7280"; g.fillRect(-0.04, -0.13, 0.08, 0.06);
     box(body, -0.16, -0.38, 0.32, 0.26, 0.05); box("#1f2937", -0.12, -0.33, 0.24, 0.12, 0.03); dot(light, -0.055, -0.27, 0.032); dot(light, 0.055, -0.27, 0.032);
     g.strokeStyle = "#1f2937"; g.lineWidth = 0.014; g.beginPath(); g.moveTo(-0.06, -0.17); g.lineTo(0.06, -0.17); g.stroke();
     dot("#6b7280", -0.17, -0.25, 0.025); dot("#6b7280", 0.17, -0.25, 0.025);
   },
-  ghost(g, sheet, face) {
+  ghost(g, sheet, face, live) {
+    const r = beat(live, 1.5) * 0.05, k = beat(live, 1.1);
+    g.translate(0, beat(live, 0.7) * 0.025); // it floats
     g.fillStyle = sheet; g.strokeStyle = "#b6c2d1"; g.lineWidth = 0.014; g.beginPath();
     g.moveTo(-0.22, 0.38); g.lineTo(-0.22, -0.14); g.arc(0, -0.14, 0.22, Math.PI, 0); g.lineTo(0.22, 0.38);
-    g.quadraticCurveTo(0.165, 0.3, 0.11, 0.38); g.quadraticCurveTo(0.055, 0.46, 0, 0.38); g.quadraticCurveTo(-0.055, 0.3, -0.11, 0.38); g.quadraticCurveTo(-0.165, 0.46, -0.22, 0.38);
+    g.quadraticCurveTo(0.165, 0.3 - r, 0.11, 0.38); g.quadraticCurveTo(0.055, 0.46 + r, 0, 0.38); g.quadraticCurveTo(-0.055, 0.3 - r, -0.11, 0.38); g.quadraticCurveTo(-0.165, 0.46 + r, -0.22, 0.38); // the hem ripples
     g.fill(); g.stroke();
-    for (const sx of [-1, 1]) { g.fillStyle = sheet; g.beginPath(); g.ellipse(sx * 0.26, 0.02, 0.07, 0.045, sx * -0.5, 0, Math.PI * 2); g.fill(); g.stroke(); }
+    for (const sx of [-1, 1]) { g.fillStyle = sheet; g.beginPath(); g.ellipse(sx * 0.26, 0.02 - k * sx * 0.03, 0.07, 0.045, sx * -0.5 - k * 0.45, 0, Math.PI * 2); g.fill(); g.stroke(); }
     g.fillStyle = sheet; g.fillRect(-0.2, -0.05, 0.4, 0.14);
     g.fillStyle = face; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(sx * 0.08, -0.17, 0.035, 0.05, 0, 0, Math.PI * 2); g.fill(); }
     g.beginPath(); g.ellipse(0, -0.05, 0.04, 0.055, 0, 0, Math.PI * 2); g.fill();
     g.fillStyle = "rgba(244,114,182,0.5)"; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(sx * 0.15, -0.1, 0.03, 0.02, 0, 0, Math.PI * 2); g.fill(); }
   },
-  alien(g, skin2, suit) {
+  alien(g, skin2, suit, live) {
+    const k = beat(live, 1.3), la = step(live, 1) * 0.035, lb = step(live, -1) * 0.035;
     const oval = (c, x, y, rx, ry, turn = 0) => { g.fillStyle = c; g.beginPath(); g.ellipse(x, y, rx, ry, turn, 0, Math.PI * 2); g.fill(); };
     const rod = (c, w, pts) => { g.strokeStyle = c; g.lineWidth = w; g.lineCap = "round"; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach((q) => g.lineTo(q[0], q[1])); g.stroke(); };
-    for (const sx of [-1, 1]) { rod(skin2, 0.018, [[sx * 0.07, -0.36], [sx * 0.14, -0.47]]); oval(skin2, sx * 0.145, -0.475, 0.028, 0.028); }
-    rod(skin2, 0.05, [[-0.11, 0.06], [-0.24, 0.14], [-0.25, 0.2]]); rod(skin2, 0.05, [[0.11, 0.06], [0.25, -0.02], [0.3, -0.14]]);
+    for (const sx of [-1, 1]) { rod(skin2, 0.018, [[sx * 0.07, -0.36], [sx * 0.14 + k * 0.035, -0.47]]); oval(skin2, sx * 0.145 + k * 0.035, -0.475, 0.028, 0.028); }
+    rod(skin2, 0.05, [[-0.11, 0.06], [-0.24, 0.14], [-0.25 - k * 0.03, 0.2]]);
+    g.save(); g.translate(0.11, 0.06); g.rotate(k * 0.3); g.translate(-0.11, -0.06); // the raised arm waves
+    rod(skin2, 0.05, [[0.11, 0.06], [0.25, -0.02], [0.3, -0.14]]);
     for (const dx of [-0.03, 0, 0.03]) rod(skin2, 0.016, [[0.3, -0.14], [0.3 + dx, -0.2]]);
-    rod(suit, 0.07, [[-0.06, 0.28], [-0.07, 0.42]]); rod(suit, 0.07, [[0.06, 0.28], [0.07, 0.42]]); oval(skin2, -0.09, 0.44, 0.07, 0.035); oval(skin2, 0.09, 0.44, 0.07, 0.035);
+    g.restore();
+    rod(suit, 0.07, [[-0.06, 0.28], [-0.07, 0.42 - la]]); rod(suit, 0.07, [[0.06, 0.28], [0.07, 0.42 - lb]]); oval(skin2, -0.09, 0.44 - la, 0.07, 0.035); oval(skin2, 0.09, 0.44 - lb, 0.07, 0.035);
     oval(suit, 0, 0.16, 0.14, 0.17); oval("#fde047", 0, 0.12, 0.04, 0.04);
     oval(skin2, 0, -0.17, 0.24, 0.21);
     for (const sx of [-1, 1]) { oval("#111827", sx * 0.1, -0.17, 0.07, 0.095, sx * 0.35); oval("#ffffff", sx * 0.085, -0.2, 0.018, 0.022); }
     g.strokeStyle = "#365314"; g.lineWidth = 0.014; g.lineCap = "round"; g.beginPath(); g.arc(0, -0.08, 0.055, Math.PI * 0.2, Math.PI * 0.8); g.stroke();
   },
-  dragon(g, body, second) {
+  dragon(g, body, second, live) {
+    const flap = live ? 0.5 + 0.5 * beat(live, 1.6) : 0, sway = beat(live, 0.9) * 0.14, fa = step(live, 1) * 0.03, fb = step(live, -1) * 0.03;
     const fill = (c, draw) => { g.fillStyle = c; g.beginPath(); draw(); g.fill(); };
     const oval = (c, x, y, rx, ry, turn = 0) => fill(c, () => g.ellipse(x, y, rx, ry, turn, 0, Math.PI * 2));
     const tri = (c, a, b, d) => fill(c, () => { g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.lineTo(d[0], d[1]); });
-    // wing, behind the body
+    // wing, behind the body: it beats
+    g.save(); g.translate(-0.04, 0.04); g.rotate(flap * 0.25); g.scale(1, 1 - flap * 0.5); g.translate(0.04, -0.04);
     fill(second, () => { g.moveTo(-0.04, 0.04); g.lineTo(-0.3, -0.36); g.quadraticCurveTo(-0.2, -0.2, -0.24, -0.12); g.quadraticCurveTo(-0.33, -0.18, -0.42, -0.14); g.quadraticCurveTo(-0.28, -0.04, -0.3, 0.06); g.quadraticCurveTo(-0.18, 0.02, -0.1, 0.12); });
     g.strokeStyle = "rgba(0,0,0,0.18)"; g.lineWidth = 0.01; g.beginPath(); g.moveTo(-0.04, 0.04); g.lineTo(-0.3, -0.36); g.moveTo(-0.04, 0.04); g.lineTo(-0.42, -0.14); g.moveTo(-0.04, 0.04); g.lineTo(-0.3, 0.06); g.stroke();
+    g.restore();
+    g.save(); g.translate(-0.14, 0.24); g.rotate(sway); g.translate(0.14, -0.24); // the tail swings
     // tail: thick near the body, thin at the tip, with a pointed end
     g.lineCap = "round"; g.strokeStyle = body; g.lineWidth = 0.1; g.beginPath(); g.moveTo(-0.14, 0.24); g.quadraticCurveTo(-0.34, 0.34, -0.42, 0.22); g.stroke();
     g.lineWidth = 0.055; g.beginPath(); g.moveTo(-0.42, 0.22); g.quadraticCurveTo(-0.47, 0.12, -0.4, 0.05); g.stroke();
     tri(second, [-0.44, 0.02], [-0.33, 0.0], [-0.39, 0.1]);
+    g.restore();
     // back spikes, legs, body, belly
     [[-0.17, 0.0], [-0.08, -0.04], [0.01, -0.05]].forEach(([x, y]) => tri(second, [x - 0.04, y + 0.05], [x, y - 0.05], [x + 0.045, y + 0.04]));
-    oval(body, -0.1, 0.4, 0.075, 0.05); oval(body, 0.1, 0.4, 0.075, 0.05);
+    oval(body, -0.1, 0.4 - fa, 0.075, 0.05); oval(body, 0.1, 0.4 - fb, 0.075, 0.05);
     oval(body, -0.02, 0.17, 0.2, 0.19);
     oval("#fff4c2", 0.04, 0.21, 0.11, 0.13);
     g.strokeStyle = "rgba(0,0,0,0.12)"; g.lineWidth = 0.01; [0.14, 0.2, 0.26].forEach((y) => { g.beginPath(); g.moveTo(-0.05, y); g.quadraticCurveTo(0.04, y + 0.02, 0.13, y); g.stroke(); });
@@ -183,7 +204,8 @@ const OTHER = {
     oval("#ffffff", 0.2, -0.3, 0.04, 0.045); oval("#1f2937", 0.21, -0.295, 0.02, 0.025); oval("#ffffff", 0.216, -0.305, 0.007, 0.008);
     oval("#14532d", 0.4, -0.235, 0.01, 0.012);
     g.strokeStyle = "#14532d"; g.lineWidth = 0.012; g.beginPath(); g.arc(0.3, -0.21, 0.09, Math.PI * 0.12, Math.PI * 0.62); g.stroke(); // smile
-    // a small puff of flame
+    // a small puff of flame, which flickers
+    if (live) { const f = 0.7 + 0.5 * Math.abs(beat(live, 2.6)); g.translate(0.43, -0.2); g.scale(f, f); g.translate(-0.43, 0.2); }
     fill("#f97316", () => { g.moveTo(0.43, -0.2); g.quadraticCurveTo(0.5, -0.27, 0.54, -0.2); g.quadraticCurveTo(0.5, -0.19, 0.53, -0.14); g.quadraticCurveTo(0.47, -0.15, 0.43, -0.2); });
     fill("#fde047", () => { g.moveTo(0.44, -0.2); g.quadraticCurveTo(0.48, -0.23, 0.5, -0.195); g.quadraticCurveTo(0.48, -0.18, 0.44, -0.2); });
   },
@@ -200,7 +222,8 @@ function livePose(base, live) {
   const turn = (e, hand, by) => { const dx = hand[0] - e[0], dy = hand[1] - e[1], ca = Math.cos(by), sa = Math.sin(by); return [e[0] + dx * ca - dy * sa, e[1] + dx * sa + dy * ca]; };
   const arm = (e, hand, k) => { // k runs from -1 to 1 through the step
     if (hand[1] < e[1] - 0.04) return [e, turn(e, hand, 0.32 * k)]; // held up: it waves from the elbow
-    if (!live.go || base.chair) return [e, [hand[0] + 0.025 * k, hand[1]]];
+    if (base.chair) return [e, live.go ? [hand[0] + 0.05 * k, hand[1] + 0.03 * Math.abs(k)] : hand]; // pushing the wheel
+    if (!live.go) return [e, [hand[0] + 0.025 * k, hand[1]]];
     const lift = Math.max(0, k) * (base === P.run ? 0.16 : 0.08); // the figure faces us, so a swinging arm is seen as a hand that comes up and in a little
     return [[e[0], e[1] - lift * 0.2], [hand[0] - Math.sign(e[0] || 1) * lift * 0.35 + 0.02 * k, hand[1] - lift]];
   };
@@ -217,7 +240,7 @@ function livePose(base, live) {
  *  { t, go } while an animation plays, and makes the figure move its arms and legs. */
 export function drawPerson(g, fig, h, live = null) {
   const what = personById(fig.fig);
-  if (what.custom) { g.save(); g.scale(h, h); g.lineCap = "round"; g.lineJoin = "round"; if (what.custom === "animal") drawAnimal(g, what, fig.tc || what.top, fig.bc || what.bot, live); else OTHER[what.custom](g, fig.tc || what.top, fig.bc || what.bot); g.restore(); return; }
+  if (what.custom) { g.save(); g.scale(h, h); g.lineCap = "round"; g.lineJoin = "round"; if (what.custom === "animal") drawAnimal(g, what, fig.tc || what.top, fig.bc || what.bot, live); else OTHER[what.custom](g, fig.tc || what.top, fig.bc || what.bot, live); g.restore(); return; }
   const own = personById(fig.fig), d = { ...own, top: fig.tc || own.top, bot: fig.bc || own.bot }, pose = livePose(P[d.pose], live), skin = (SKINS[fig.sk] || SKINS[2])[0], hair = own.hairc || (HAIRS[fig.hc >= 0 ? fig.hc : d.hc] || HAIRS[0])[0];
   const limb = 0.062, HEAD = [0, -0.34], R = 0.135, sh = [0, -0.17], hipA = [-0.06, 0.1], hipB = [0.06, 0.1];
   g.save(); g.scale(h, h); g.lineCap = "round"; g.lineJoin = "round";
@@ -233,11 +256,11 @@ export function drawPerson(g, fig, h, live = null) {
     else { line(skin, limb, [hip, k, f]); if (d.kind === "short") line(d.bot, limb * 1.25, [hip, [(hip[0] + k[0]) / 2, (hip[1] + k[1]) / 2]]); }
     shoe(f);
   };
-  if (d.back === "cape") poly(d.backc, [[-0.12, -0.2], [0.12, -0.2], [0.24, 0.34], [-0.24, 0.34]]);
-  if (d.back === "wings") { g.fillStyle = d.backc; g.strokeStyle = "#93c5fd"; g.lineWidth = 0.012; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(sx * 0.2, -0.14, 0.11, 0.2, sx * 0.5, 0, Math.PI * 2); g.fill(); g.stroke(); g.beginPath(); g.ellipse(sx * 0.17, 0.06, 0.08, 0.12, sx * -0.4, 0, Math.PI * 2); g.fill(); g.stroke(); } }
+  if (d.back === "cape") { const fl = beat(live, 1.1) * 0.045; poly(d.backc, [[-0.12, -0.2], [0.12, -0.2], [0.24 + fl, 0.34], [-0.24 + fl, 0.34]]); } // the cape flutters
+  if (d.back === "wings") { g.save(); g.scale(1 - Math.abs(beat(live, 2.2)) * 0.3, 1); g.fillStyle = d.backc; g.strokeStyle = "#93c5fd"; g.lineWidth = 0.012; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(sx * 0.2, -0.14, 0.11, 0.2, sx * 0.5, 0, Math.PI * 2); g.fill(); g.stroke(); g.beginPath(); g.ellipse(sx * 0.17, 0.06, 0.08, 0.12, sx * -0.4, 0, Math.PI * 2); g.fill(); g.stroke(); } g.restore(); }
   if (d.hat === "astro") { g.fillStyle = "#f4f4f5"; g.beginPath(); g.arc(HEAD[0], HEAD[1], R * 1.36, 0, Math.PI * 2); g.fill(); g.strokeStyle = "#9ca3af"; g.lineWidth = 0.014; g.stroke(); disc("#bfe3ff", HEAD[0], HEAD[1], R * 1.14); }
   // the wheelchair goes behind the person
-  if (pose.chair) { g.strokeStyle = "#4b5563"; g.lineWidth = 0.022; g.beginPath(); g.arc(-0.03, 0.27, 0.2, 0, Math.PI * 2); g.stroke(); g.lineWidth = 0.012; g.beginPath(); for (let i = 0; i < 6; i += 1) { const a = (i * Math.PI) / 3; g.moveTo(-0.03, 0.27); g.lineTo(-0.03 + Math.cos(a) * 0.2, 0.27 + Math.sin(a) * 0.2); } g.stroke(); line("#4b5563", 0.026, [[-0.15, -0.16], [-0.13, 0.14], [0.17, 0.16]]); line("#4b5563", 0.02, [[0.17, 0.16], [0.21, 0.4]]); g.strokeStyle = "#4b5563"; g.lineWidth = 0.02; g.beginPath(); g.arc(0.2, 0.43, 0.045, 0, Math.PI * 2); g.stroke(); }
+  if (pose.chair) { g.strokeStyle = "#4b5563"; g.lineWidth = 0.022; g.beginPath(); g.arc(-0.03, 0.27, 0.2, 0, Math.PI * 2); g.stroke(); g.lineWidth = 0.012; g.beginPath(); for (let i = 0; i < 6; i += 1) { const a = (i * Math.PI) / 3 + (live && live.go ? live.t * 3.2 : 0); g.moveTo(-0.03, 0.27); g.lineTo(-0.03 + Math.cos(a) * 0.2, 0.27 + Math.sin(a) * 0.2); } g.stroke(); line("#4b5563", 0.026, [[-0.15, -0.16], [-0.13, 0.14], [0.17, 0.16]]); line("#4b5563", 0.02, [[0.17, 0.16], [0.21, 0.4]]); g.strokeStyle = "#4b5563"; g.lineWidth = 0.02; g.beginPath(); g.arc(0.2, 0.43, 0.045, 0, Math.PI * 2); g.stroke(); }
   // long hair and headscarves fall behind the body
   if (d.hair === "long") { g.fillStyle = hair; g.beginPath(); g.moveTo(-0.17, -0.38); g.quadraticCurveTo(-0.2, -0.1, -0.15, -0.06); g.lineTo(0.15, -0.06); g.quadraticCurveTo(0.2, -0.1, 0.17, -0.38); g.fill(); }
   if (d.hair === "scarf") { g.fillStyle = d.scarf; g.beginPath(); g.moveTo(-0.17, -0.36); g.quadraticCurveTo(-0.21, -0.12, -0.14, -0.05); g.lineTo(0.14, -0.05); g.quadraticCurveTo(0.21, -0.12, 0.17, -0.36); g.fill(); }
@@ -247,7 +270,7 @@ export function drawPerson(g, fig, h, live = null) {
   if (d.hair === "locs") { for (let i = 0; i < 7; i += 1) { const lx = -0.15 + i * 0.05; line(hair, 0.034, [[lx, -0.4], [lx * 1.12, -0.2 + Math.abs(lx) * 0.12]]); } }
   if (d.hair === "braids") { line(hair, 0.045, [[-0.13, -0.3], [-0.16, -0.08]]); line(hair, 0.045, [[0.13, -0.3], [0.16, -0.08]]); disc("#e5484d", -0.16, -0.07, 0.022); disc("#e5484d", 0.16, -0.07, 0.022); }
   arm(pose.ea, pose.ha); // the arm on the far side
-  if (d.kind === "tail") { g.fillStyle = d.bot; g.beginPath(); g.moveTo(-0.125, 0.07); g.lineTo(0.125, 0.07); g.quadraticCurveTo(0.12, 0.26, 0.04, 0.37); g.lineTo(0.17, 0.48); g.quadraticCurveTo(0, 0.42, -0.17, 0.48); g.lineTo(-0.04, 0.37); g.quadraticCurveTo(-0.12, 0.26, -0.125, 0.07); g.fill(); g.strokeStyle = "rgba(255,255,255,0.45)"; g.lineWidth = 0.012; for (const yy of [0.14, 0.21, 0.28]) { g.beginPath(); g.arc(0, yy - 0.05, 0.09, Math.PI * 0.2, Math.PI * 0.8); g.stroke(); } }
+  if (d.kind === "tail") { g.save(); g.translate(0, 0.07); g.rotate(beat(live, 1) * 0.14); g.translate(0, -0.07); g.fillStyle = d.bot; g.beginPath(); g.moveTo(-0.125, 0.07); g.lineTo(0.125, 0.07); g.quadraticCurveTo(0.12, 0.26, 0.04, 0.37); g.lineTo(0.17, 0.48); g.quadraticCurveTo(0, 0.42, -0.17, 0.48); g.lineTo(-0.04, 0.37); g.quadraticCurveTo(-0.12, 0.26, -0.125, 0.07); g.fill(); g.strokeStyle = "rgba(255,255,255,0.45)"; g.lineWidth = 0.012; for (const yy of [0.14, 0.21, 0.28]) { g.beginPath(); g.arc(0, yy - 0.05, 0.09, Math.PI * 0.2, Math.PI * 0.8); g.stroke(); } g.restore(); }
   else { leg(hipA, pose.ka, pose.fa); leg(hipB, pose.kb, pose.fb); }
   // body
   if (d.kind === "robe") { g.fillStyle = d.bot; g.beginPath(); g.moveTo(-0.125, 0.07); g.lineTo(0.125, 0.07); g.lineTo(0.19, 0.44); g.lineTo(-0.19, 0.44); g.closePath(); g.fill(); edge(); }
@@ -310,7 +333,8 @@ export function drawPerson(g, fig, h, live = null) {
   if (d.nose) disc("#e5484d", 0, -0.322, 0.03);
   if (d.fangs) { poly("#ffffff", [[-0.03, -0.272], [-0.012, -0.272], [-0.021, -0.245]]); poly("#ffffff", [[0.012, -0.272], [0.03, -0.272], [0.021, -0.245]]); }
   if (d.cane) { line("#f4f4f5", 0.022, [pose.ha, [pose.ha[0] + 0.2, 0.47]]); line("#e5484d", 0.024, [[pose.ha[0] + 0.17, 0.42], [pose.ha[0] + 0.2, 0.47]]); disc(skin, pose.ha[0], pose.ha[1], 0.036); }
-  if (d.ball) { disc("#ffffff", 0.4, 0.37, 0.065); g.strokeStyle = "#1f2937"; g.lineWidth = 0.012; g.beginPath(); g.arc(0.4, 0.37, 0.065, 0, Math.PI * 2); g.stroke(); disc("#1f2937", 0.4, 0.37, 0.022); }
+  if (d.ball) { const by = 0.37 - Math.abs(beat(live, 1.4)) * 0.13; // the ball bounces
+    disc("#ffffff", 0.4, by, 0.065); g.strokeStyle = "#1f2937"; g.lineWidth = 0.012; g.beginPath(); g.arc(0.4, by, 0.065, 0, Math.PI * 2); g.stroke(); disc("#1f2937", 0.4, by, 0.022); }
   if (d.specs) { g.strokeStyle = "#374151"; g.lineWidth = 0.012; g.beginPath(); g.arc(-0.05, -0.345, 0.034, 0, Math.PI * 2); g.moveTo(0.084, -0.345); g.arc(0.05, -0.345, 0.034, 0, Math.PI * 2); g.moveTo(-0.016, -0.345); g.lineTo(0.016, -0.345); g.stroke(); }
   g.restore();
 }

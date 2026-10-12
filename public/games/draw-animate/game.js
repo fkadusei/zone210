@@ -4,7 +4,7 @@
 // Drawings are kept as strokes (lists of points), so they stay small enough to save on the device.
 import { canSharePhotos, onTouchDevice, toPhotos, download } from "../../assets/save-image.js";
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
-import { STICKERS } from "./stickers.js";
+import { STICKERS, stickerLife, stickerMoves } from "./stickers.js";
 import { PEOPLE, CHARACTERS, ANIMALS, SKINS, HAIRS, drawPerson } from "./people.js";
 import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, exampleScene, exampleFlip } from "./engine.js";
 
@@ -63,6 +63,8 @@ function strokeOn(g, s, live = null) {
   if (s.fig) { g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1); if (s.r) g.rotate(s.r); drawPerson(g, s, s.w, live); g.restore(); return; } // a hand-drawn person
   if (s.ch) { // a sticker
     g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1); if (s.r) g.rotate(s.r);
+    const life = live && stickerLife(s.ch, live); // while playing, the sticker waddles, flaps, sways… by itself
+    if (life) { const foot = life.base ? s.w * 0.5 : 0; g.translate(life.x * s.w, life.y * s.w + foot); g.rotate(life.r); g.scale(life.sx, life.sy); g.translate(0, -foot); }
     g.font = `${s.w}px ${EMOJI}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#000"; g.fillText(s.ch, 0, s.w * 0.07);
     g.restore(); return;
   }
@@ -79,12 +81,13 @@ const A = mkLayer(), B = mkLayer(), C = mkLayer(); // C is scratch
 function paintLayer(L, list) { L.g.clearRect(0, 0, W, H); list.forEach((s) => strokeOn(L.g, s)); }
 
 // each thing is drawn once onto its own small canvas, then that picture is moved, turned and stretched.
-// A thing with hand-drawn people or animals in it is drawn again for every moment of an animation, so their limbs move.
+// A thing with hand-drawn figures or stickers that move in it is drawn again for every moment of an animation,
+// so their limbs move.
 const layers = new WeakMap();
 function layer(thing, live = null) {
   let L = layers.get(thing);
   if (!L) {
-    const figs = thing.s.filter((s) => s.fig), pad = 4 + Math.round(figs.reduce((m, s) => Math.max(m, s.w), 0) * 0.14); // room for a swinging arm or leg
+    const figs = thing.s.filter((s) => s.fig || (s.ch && stickerMoves(s.ch))), pad = 4 + Math.round(figs.reduce((m, s) => Math.max(m, s.w), 0) * 0.16); // room for a swinging arm or leg
     const b = bbox(thing.s) || { x0: -1, y0: -1, x1: 1, y1: 1, w: 2, h: 2 }, c = document.createElement("canvas");
     c.width = Math.max(2, Math.ceil((b.w + pad * 2) * 2)); c.height = Math.max(2, Math.ceil((b.h + pad * 2) * 2));
     L = { cv: c, g: c.getContext("2d"), b, pad, alive: figs.length > 0, at: undefined };
