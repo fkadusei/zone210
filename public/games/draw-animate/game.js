@@ -13,6 +13,10 @@ const store = {
 const KEY = "zone210_drawanim";
 const data = { mode: "scene", color: "#1f2430", size: 10, scene: { bg: "paper", things: [] }, flip: { frames: [[]], fps: 6, onion: true }, ...store.get(KEY, {}) };
 if (!Array.isArray(data.flip.frames) || !data.flip.frames.length) data.flip.frames = [[]];
+// each flipbook page has its own background: data.flip.bgs runs alongside data.flip.frames (older saves had one for the whole book)
+function evenBgs() { const f = data.flip, old = Array.isArray(f.bgs) ? f.bgs : []; f.bgs = f.frames.map((_, i) => old[i] || f.bg || "paper"); delete f.bg; }
+evenBgs();
+const bgOf = (i) => data.flip.bgs[i] || "paper";
 let saveT = 0;
 const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { if (!store.set(KEY, data)) note("This device is out of space to save more. Your animation still plays."); }, 400); };
 
@@ -148,7 +152,7 @@ function drawBg(g, bg) {
   } else { g.fillStyle = "#fffdf6"; g.fillRect(0, 0, W, H); }
 }
 
-// a background is painted once and kept (the two used most recently), so playing does not redraw it every frame
+// a background is painted once and kept (the last few used), so playing does not redraw it every frame
 const bgKept = new Map();
 function putBg(g, bg) {
   let c = bgKept.get(bg);
@@ -156,7 +160,7 @@ function putBg(g, bg) {
     c = document.createElement("canvas"); c.width = W * 2; c.height = H * 2;
     const q = c.getContext("2d"); q.scale(2, 2); drawBg(q, bg);
     bgKept.set(bg, c);
-    if (bgKept.size > 2) bgKept.delete(bgKept.keys().next().value);
+    if (bgKept.size > 4) bgKept.delete(bgKept.keys().next().value);
   }
   g.drawImage(c, 0, 0, W, H);
 }
@@ -179,7 +183,7 @@ function render(t = null) {
     }
     if (ui.state === "path" && ui.pathPts) { ctx.save(); ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.setLineDash([2, 12]); ctx.strokeStyle = "#f5a623"; ctx.beginPath(); ctx.moveTo(ui.pathPts[0], ui.pathPts[1]); for (let i = 2; i < ui.pathPts.length; i += 2) ctx.lineTo(ui.pathPts[i], ui.pathPts[i + 1]); ctx.stroke(); ctx.restore(); }
   } else {
-    putBg(ctx, data.flip.bg || "paper");
+    putBg(ctx, bgOf(ui.frame));
     if (ui.state === "play") drawBook();
     else {
       if (data.flip.onion && ui.frame > 0 && !ui.clean) { ctx.globalAlpha = 0.22; ctx.drawImage(B.cv, 0, 0, W, H); ctx.globalAlpha = 1; }
@@ -193,7 +197,7 @@ window.addEventListener("z210:saver", fit);
 // ---------- playing ----------
 // ---------- the flipbook as a real book: whole pages (background and drawing) that turn over ----------
 let cur = A, oth = B; // the page showing, and the page being turned to
-function wholePage(L, n) { paintLayer(C, data.flip.frames[n]); L.g.clearRect(0, 0, W, H); putBg(L.g, data.flip.bg || "paper"); L.g.drawImage(C.cv, 0, 0, W, H); }
+function wholePage(L, n) { paintLayer(C, data.flip.frames[n]); L.g.clearRect(0, 0, W, H); putBg(L.g, bgOf(n)); L.g.drawImage(C.cv, 0, 0, W, H); }
 const calm = () => saverOn() || matchMedia("(prefers-reduced-motion: reduce)").matches;
 /** Turn to page n. Forward: the page lifts at its right edge and folds over to the binding. Back: it comes back down. */
 function turnTo(n, forward, ms) {
@@ -281,7 +285,7 @@ function paint() {
   press("sizes", "size", data.size);
   document.querySelectorAll("#penKind .g-chip").forEach((b) => b.setAttribute("aria-pressed", String((b.dataset.erase === "1") === ui.erase)));
   press("bgs", "bg", data.scene.bg);
-  press("fbgs", "bg", data.flip.bg || "paper");
+  press("fbgs", "bg", bgOf(ui.frame));
   press("fps", "fps", data.flip.fps);
   $("onion").checked = !!data.flip.onion;
   if (th) { press("moves", "move", th.move); press("acts", "act", th.act); press("speeds", "speed", th.speed); $("face").checked = !!th.face; }
@@ -419,7 +423,7 @@ function thumb(i) {
   const g = c.getContext("2d");
   g.setTransform(c.width / W, 0, 0, c.width / W, 0, 0);
   paintLayer(C, data.flip.frames[i]); // on its own layer first, so the eraser shows the background and not a hole
-  putBg(g, data.flip.bg || "paper"); g.drawImage(C.cv, 0, 0, W, H);
+  putBg(g, bgOf(i)); g.drawImage(C.cv, 0, 0, W, H);
 }
 function strip() {
   $("strip").innerHTML = data.flip.frames.map((_, i) => `<button class="fr" data-f="${i}" aria-pressed="${i === ui.frame}" aria-label="Page ${i + 1}"><canvas width="184" height="138"></canvas><span>${i + 1}</span></button>`).join("");
@@ -436,29 +440,31 @@ function syncFlip() {
 function addFrame(copy) {
   if (data.flip.frames.length >= MAX_FRAMES) { note(`That's ${MAX_FRAMES} pages, the most a flipbook can hold.`); return; }
   data.flip.frames.splice(ui.frame + 1, 0, copy ? JSON.parse(JSON.stringify(data.flip.frames[ui.frame])) : []);
+  data.flip.bgs.splice(ui.frame + 1, 0, bgOf(ui.frame)); // a new page starts with the background of the page before it
   ui.frame += 1; note(""); save(); syncFlip(); paint(); render();
 }
 $("strip").addEventListener("click", (e) => { const b = e.target.closest(".fr"); if (b) { ui.frame = Number(b.dataset.f); syncFlip(); paint(); render(); } });
 // deleting a page that has a drawing on it can be undone straight away
 function delFrame() {
-  const i = ui.frame, gone = data.flip.frames[i], only = data.flip.frames.length === 1;
-  if (only) data.flip.frames[0] = []; else data.flip.frames.splice(i, 1);
+  const i = ui.frame, gone = data.flip.frames[i], goneBg = bgOf(i), only = data.flip.frames.length === 1;
+  if (only) data.flip.frames[0] = []; else { data.flip.frames.splice(i, 1); data.flip.bgs.splice(i, 1); }
   save(); syncFlip(); paint(); render();
   if (!gone.length) { note(only ? "" : `Page ${i + 1} deleted.`); return; }
   $("note").innerHTML = `${only ? "Page cleared." : `Page ${i + 1} deleted.`} <button class="g-btn ghost" id="undoDel">↶ Put it back</button>`;
   $("undoDel").addEventListener("click", () => {
     if (only) data.flip.frames[0] = gone;
-    else { if (data.flip.frames.length >= MAX_FRAMES) { note(`There is no room: the book already has ${MAX_FRAMES} pages.`); return; } data.flip.frames.splice(Math.min(i, data.flip.frames.length), 0, gone); }
+    else { if (data.flip.frames.length >= MAX_FRAMES) { note(`There is no room: the book already has ${MAX_FRAMES} pages.`); return; } const at2 = Math.min(i, data.flip.frames.length); data.flip.frames.splice(at2, 0, gone); data.flip.bgs.splice(at2, 0, goneBg); }
     ui.frame = only ? 0 : Math.min(i, data.flip.frames.length - 1);
     note("Page put back."); save(); syncFlip(); paint(); render();
   });
 }
-$("fbgs").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.flip.bg = b.dataset.bg; save(); strip(); paint(); render(); } });
+$("fbgs").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.flip.bgs[ui.frame] = b.dataset.bg; note(""); save(); thumb(ui.frame); paint(); render(); } });
+$("bgAll").addEventListener("click", () => { data.flip.bgs = data.flip.frames.map(() => bgOf(ui.frame)); save(); strip(); paint(); render(); note(data.flip.frames.length > 1 ? `All ${data.flip.frames.length} pages now have this background.` : ""); });
 $("thumb").addEventListener("input", () => { const n = Number($("thumb").value); if (ui.state !== "play") return; if (ui.auto) { ui.auto = false; paint(); } turnTo(n, n > ui.page, 150); });
 $("fps").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.flip.fps = Number(b.dataset.fps); save(); paint(); } });
 $("onion").addEventListener("change", () => { data.flip.onion = $("onion").checked; save(); render(); });
-$("exFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Swap your flipbook for the example? Your pages here will be removed.")) return; data.flip = exampleFlip(); ui.frame = 0; save(); syncFlip(); paint(); render(); note("Press Play! Then look through the pages to see how each one changes."); });
-$("newFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Clear this flipbook and start again?")) return; data.flip = { frames: [[]], fps: data.flip.fps, onion: data.flip.onion, bg: data.flip.bg || "paper" }; ui.frame = 0; save(); syncFlip(); paint(); render(); });
+$("exFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Swap your flipbook for the example? Your pages here will be removed.")) return; data.flip = exampleFlip(); evenBgs(); ui.frame = 0; save(); syncFlip(); paint(); render(); note("Press Play! Then look through the pages to see how each one changes."); });
+$("newFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Clear this flipbook and start again?")) return; data.flip = { frames: [[]], fps: data.flip.fps, onion: data.flip.onion, bgs: [bgOf(ui.frame)] }; ui.frame = 0; save(); syncFlip(); paint(); render(); });
 
 $("modes").addEventListener("click", (e) => {
   const b = e.target.closest(".g-chip");
