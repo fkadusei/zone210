@@ -5,8 +5,8 @@
 import { canSharePhotos, toPhotos, download } from "../../assets/save-image.js";
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS } from "./stickers.js";
-import { PEOPLE, SKINS, HAIRS, drawPerson } from "./people.js";
-import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, scaled, itemAt, exampleScene, exampleFlip } from "./engine.js";
+import { PEOPLE, CHARACTERS, SKINS, HAIRS, drawPerson } from "./people.js";
+import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -60,9 +60,9 @@ function trace(g, p, sharp) {
 }
 function strokeOn(g, s) {
   const p = s.p;
-  if (s.fig) { g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1); drawPerson(g, s, s.w); g.restore(); return; } // a hand-drawn person
+  if (s.fig) { g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1); if (s.r) g.rotate(s.r); drawPerson(g, s, s.w); g.restore(); return; } // a hand-drawn person
   if (s.ch) { // a sticker
-    g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1);
+    g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1); if (s.r) g.rotate(s.r);
     g.font = `${s.w}px ${EMOJI}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#000"; g.fillText(s.ch, 0, s.w * 0.07);
     g.restore(); return;
   }
@@ -304,9 +304,16 @@ function chosenBox(b, light) {
   ctx.strokeRect(b.x0 - 6, b.y0 - 6, b.w + 12, b.h + 12); ctx.setLineDash([]);
   ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(b.x1 + 6, b.y1 + 6, HANDLE, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.strokeStyle = "#8a6208"; ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(b.x1 + 1, b.y1 + 1); ctx.lineTo(b.x1 + 11, b.y1 + 11); ctx.moveTo(b.x1 + 11, b.y1 + 5); ctx.lineTo(b.x1 + 11, b.y1 + 11); ctx.lineTo(b.x1 + 5, b.y1 + 11); ctx.stroke();
+  // the turning handle, on a short stalk above the box
+  const tx = b.x0 + b.w / 2, ty = b.y0 - 6 - 30;
+  ctx.strokeStyle = light ? "#ffd15a" : "#cf9410"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(tx, b.y0 - 6); ctx.lineTo(tx, ty + HANDLE); ctx.stroke();
+  ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(tx, ty, HANDLE, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = "#8a6208"; ctx.lineCap = "round"; ctx.beginPath(); ctx.arc(tx, ty, 7, Math.PI * 0.2, Math.PI * 1.7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx + 1, ty - 11); ctx.lineTo(tx + 6, ty - 6.5); ctx.lineTo(tx + 0.5, ty - 3); ctx.stroke();
   ctx.restore();
 }
 const onHandle = (b, x, y) => !!b && Math.hypot(x - (b.x1 + 6), y - (b.y1 + 6)) <= HANDLE + 12;
+const onTurn = (b, x, y) => !!b && Math.hypot(x - (b.x0 + (b.x1 - b.x0) / 2), y - (b.y0 - 36)) <= HANDLE + 12;
 // the Move tool's choice: places in the list being drawn (all of them when "Everything on the page" is ticked)
 const picked = () => { const list = strokes(); return (ui.all ? list.map((_, i) => i) : ui.pick).filter((i) => i < list.length); };
 const pickBox = () => { const list = strokes(), idx = picked(); return idx.length ? bbox(idx.map((i) => list[i])) : null; };
@@ -492,8 +499,8 @@ function paint() {
   $("sizes").hidden = ui.tool === "move" || ui.tool === "fill";
   $("moveAll").checked = ui.all;
   const none = ui.tool !== "move" || !picked().length;
-  ["mSmaller", "mBigger", "mCopy", "mRemove"].forEach((id) => { $(id).disabled = none; });
-  const drawnSet = ui.set === "drawn";
+  ["mSmaller", "mBigger", "mLeft", "mRight", "mCopy", "mRemove"].forEach((id) => { $(id).disabled = none; });
+  const drawnSet = !!(STICKERS.find((k) => k.id === ui.set) || {}).drawn;
   document.querySelectorAll("#stickGrid .stk").forEach((b) => b.setAttribute("aria-pressed", String(drawnSet ? b.dataset.fig === ui.person : b.dataset.ch === ui.sticker)));
   $("toneRows").hidden = !drawnSet;
   document.querySelectorAll("#skins .sw").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.sk) === (data.skin ?? 2))));
@@ -536,7 +543,8 @@ cv.addEventListener("pointerdown", (e) => {
   else if (ui.state === "path") { ui.pathPts = [x, y]; render(); }
   else if (scene()) {
     const cur2 = data.scene.things[ui.sel];
-    if (cur2) { const { b } = layer(cur2), box = { x1: cur2.x + b.x1, y1: cur2.y + b.y1 }; if (onHandle(box, x, y)) { ui.drag = { size: true, from: Math.max(20, Math.hypot(x - cur2.x, y - cur2.y)), was: cur2.s }; return; } } // the corner handle: resize
+    if (cur2) { const { b } = layer(cur2), box = { x1: cur2.x + b.x1, y1: cur2.y + b.y1 }; if (onHandle(box, x, y)) { ui.drag = { size: true, from: Math.max(20, Math.hypot(x - cur2.x, y - cur2.y)), was: cur2.s }; return; } // the corner handle: resize
+      if (onTurn({ x0: cur2.x + b.x0, y0: cur2.y + b.y0, x1: cur2.x + b.x1 }, x, y)) { ui.drag = { turn: true, a0: Math.atan2(y - cur2.y, x - cur2.x), was: cur2.s }; return; } } // the top handle: turn
     const i = hit(x, y); if (i !== ui.sel) { ui.sel = i; paint(); } if (i >= 0) ui.drag = { x, y }; render();
   }
 });
@@ -567,6 +575,7 @@ cv.addEventListener("pointermove", (e) => {
     const th = data.scene.things[ui.sel], dx = x - ui.drag.x, dy = y - ui.drag.y;
     if (!th) return;
     if (ui.drag.size) { resizeThing(th, ui.drag.was, Math.hypot(x - th.x, y - th.y) / ui.drag.from); render(); return; }
+    if (ui.drag.turn) { turnThing(th, ui.drag.was, Math.atan2(y - th.y, x - th.x) - ui.drag.a0); render(); return; }
     th.x = Math.max(0, Math.min(W, th.x + dx)); th.y = Math.max(0, Math.min(H, th.y + dy));
     if (th.path) th.path = th.path.map((v, i) => v + (i % 2 ? dy : dx)); // its path comes with it
     ui.drag = { x, y };
@@ -659,6 +668,8 @@ function resizeThing(th, from, k) {
   th.s = scaled(from, Math.max(least, Math.min(most, k)));
   layers.delete(th);
 }
+function turnThing(th, from, angle) { th.s = turned(from, angle); layers.delete(th); }
+for (const [id, a] of [["tLeft", -Math.PI / 12], ["tRight", Math.PI / 12]]) $(id).addEventListener("click", () => { const th = sel(); if (!th) return; turnThing(th, th.s, a); save(); render(); });
 for (const [id, k] of [["tSmaller", 1 / 1.2], ["tBigger", 1.2]]) $(id).addEventListener("click", () => { const th = sel(); if (!th) return; resizeThing(th, th.s, k); save(); render(); });
 $("addTo").addEventListener("click", () => { if (sel()) startDraw(ui.sel); });
 $("toFront").addEventListener("click", () => { const th = sel(); if (!th) return; data.scene.things.splice(ui.sel, 1); data.scene.things.push(th); ui.sel = data.scene.things.length - 1; save(); render(); });
@@ -681,7 +692,7 @@ $("palette").addEventListener("click", (e) => { const b = e.target.closest(".sw"
 $("sizes").innerHTML = SIZES.map(([v, label]) => `<button class="g-chip sz" data-size="${v}" aria-label="${label}"><i style="width:${Math.min(26, v + 2)}px;height:${Math.min(26, v + 2)}px"></i></button>`).join("");
 $("sizes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.size = Number(b.dataset.size); save(); paint(); } });
 chips("tools", TOOLS, "tool");
-$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a sticker, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a sticker or a person to take it away." : ui.tool === "move" ? "Tap something to pick it up, then drag it. Drag the round handle to make it bigger or smaller." : "");
+$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a sticker, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a sticker or a person to take it away." : ui.tool === "move" ? "Tap something to pick it up, then drag it. The corner handle makes it bigger or smaller; the top handle turns it." : "");
   ui.pick = []; paint(); });
 $("shapes").innerHTML = SHAPES.map(([v, label]) => `<button class="g-chip shp" data-shape="${v}" aria-label="${label}"><span aria-hidden="true">${SHAPE_ICON[v]}</span></button>`).join("");
 $("shapes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.shape = b.dataset.shape; paint(); } });
@@ -693,8 +704,10 @@ const sticker = (x, y) => {
 };
 function stickerGrid() {
   const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0];
-  if (set.drawn) { // hand-drawn people: a little picture of each, in the chosen skin tone and hair colour
-    $("stickGrid").innerHTML = PEOPLE.map((d) => `<button class="stk person" data-fig="${d.id}" aria-label="${d.name}" aria-pressed="false"><canvas width="112" height="140" aria-hidden="true"></canvas></button>`).join("");
+  if (set.drawn) { // hand-drawn people and characters: a little picture of each, in the chosen skin tone and colours
+    const figures = set.drawn === "characters" ? CHARACTERS : PEOPLE;
+    if (!figures.some((d) => d.id === ui.person)) ui.person = figures[0].id;
+    $("stickGrid").innerHTML = figures.map((d) => `<button class="stk person" data-fig="${d.id}" aria-label="${d.name}" aria-pressed="false"><canvas width="112" height="140" aria-hidden="true"></canvas></button>`).join("");
     $("stickGrid").querySelectorAll(".stk").forEach((b) => { const g = b.querySelector("canvas").getContext("2d"); g.translate(56, 70); drawPerson(g, { fig: b.dataset.fig, sk: data.skin ?? 2, hc: data.hair ?? -1, tc: data.top, bc: data.bot }, 128); });
   } else {
     $("stickGrid").innerHTML = set.list.map((ch) => `<button class="stk" data-ch="${ch}" aria-pressed="false">${ch}</button>`).join("");
@@ -717,10 +730,12 @@ $("stickGrid").addEventListener("click", (e) => { const b = e.target.closest(".s
 $("stickFlip").addEventListener("change", () => { ui.flip = $("stickFlip").checked; });
 stickerGrid();
 // ---------- the Move tool: pick up a line, shape, sticker or person; drag it, or drag its corner handle to resize ----------
-const keep = (idx) => idx.map((i) => { const s2 = strokes()[i]; return { s: s2, p: s2.p.slice(), w: s2.w }; });
+const keep = (idx) => idx.map((i) => { const s2 = strokes()[i]; return { s: s2, p: s2.p.slice(), w: s2.w, r: s2.r }; });
+const putBack = (o, n) => { o.s.p = n.p; o.s.w = n.w; if (n.r) o.s.r = n.r; else delete o.s.r; };
 function redraw() { paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } render(); }
 function grabAt(x, y) {
   const list = strokes(), box = pickBox();
+  if (box && onTurn(box, x, y)) { ui.grab = { turn: true, cx: box.cx, cy: box.cy, a0: Math.atan2(y - box.cy, x - box.cx), was: keep(picked()), moved: false }; return; }
   if (box && onHandle(box, x, y)) { ui.grab = { size: true, ax: box.x0, ay: box.y0, from: Math.max(20, Math.hypot(x - box.x0, y - box.y0)), was: keep(picked()), moved: false }; return; }
   const i = itemAt(list, x, y);
   if (!ui.all) { ui.pick = i >= 0 ? [i] : []; paint(); }
@@ -729,7 +744,10 @@ function grabAt(x, y) {
 }
 function grabMove(x, y) {
   const gr = ui.grab;
-  if (gr.size) {
+  if (gr.turn) {
+    const a = Math.atan2(y - gr.cy, x - gr.cx) - gr.a0;
+    gr.was.forEach((o) => { const [n] = turned([{ ...o.s, p: o.p, w: o.w, r: o.r }], a, gr.cx, gr.cy); putBack(o, n); });
+  } else if (gr.size) {
     const k = Math.max(0.15, Math.min(8, Math.hypot(x - gr.ax, y - gr.ay) / gr.from));
     gr.was.forEach((o) => { const [n] = scaled([{ ...o.s, p: o.p, w: o.w }], k, gr.ax, gr.ay); o.s.p = n.p; o.s.w = n.w; });
   } else { const dx = x - gr.x, dy = y - gr.y; gr.was.forEach((o) => { o.s.p = o.p.map((v, i) => Math.round((v + (i % 2 ? dy : dx)) * 10) / 10); }); }
@@ -748,6 +766,15 @@ function resizePicked(k) {
   was.forEach((o) => { const [n] = scaled([o.s], k, box.cx, box.cy); o.s.p = n.p; o.s.w = n.w; });
   did({ k: "edit", was }); redraw();
 }
+function turnPicked(a) {
+  const idx = picked(), box = pickBox();
+  if (!box) return;
+  const was = keep(idx);
+  was.forEach((o) => { const [n] = turned([o.s], a, box.cx, box.cy); putBack(o, n); });
+  did({ k: "edit", was }); redraw();
+}
+$("mLeft").addEventListener("click", () => turnPicked(-Math.PI / 12));
+$("mRight").addEventListener("click", () => turnPicked(Math.PI / 12));
 $("mSmaller").addEventListener("click", () => resizePicked(1 / 1.2));
 $("mBigger").addEventListener("click", () => resizePicked(1.2));
 $("mCopy").addEventListener("click", () => {
@@ -782,7 +809,7 @@ function undo() {
   const list = strokes(), step = past.pop();
   ui.pick = [];
   if (step && step.k === "fill" && list.includes(step.s)) { if (step.was) step.s.ff = step.was; else delete step.s.ff; }
-  else if (step && step.k === "edit") step.was.forEach((o) => { o.s.p = o.p; o.s.w = o.w; }); // put back where (and the size) it was
+  else if (step && step.k === "edit") step.was.forEach((o) => putBack(o, o)); // put back where, the size and the way round it was
   else if (step && step.k === "rub") { if (step.added && list.length) list.pop(); step.gone.forEach(({ i, s: back }) => list.splice(Math.min(i, list.length), 0, back)); } // stickers the eraser took come back
   else if (list.length) list.pop();
   else return;

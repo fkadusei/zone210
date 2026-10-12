@@ -4,6 +4,7 @@
 //   ff    a colour its inside is filled with (the Fill tool)
 //   ch    a sticker: one emoji drawn w pixels tall at its single point, m: 1 if it is mirrored to face right
 //   fig   a hand-drawn person (people.js) w pixels tall at its single point, with sk (skin tone) and hc (hair colour)
+//   r     how far a sticker or person has been turned (radians)
 // A "thing" is a little drawing with its own movement: { s: strokes (measured from its middle), x, y (where its middle
 // sits), move, act, speed, face, path }.
 export const W = 800, H = 600;
@@ -11,15 +12,23 @@ export const MOVES = [["stay", "Stay put"], ["side", "Side to side"], ["updown",
 export const ACTS = [["none", "Nothing else"], ["bounce", "Bounce"], ["spin", "Spin"], ["wiggle", "Wiggle"], ["pulse", "Grow and shrink"]];
 export const SPEEDS = [[0.5, "Slow"], [1, "Medium"], [2, "Fast"]];
 
-/** The box around some strokes, allowing for how thick the lines are. */
+/** The box around some strokes, allowing for how thick the lines are (a turned sticker or person needs more room). */
 export function bbox(strokes) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-  for (const s of strokes) { if (s.e) continue; const h = s.ch ? s.w * 0.62 : s.fig ? s.w * 0.54 : s.w / 2; for (let i = 0; i < s.p.length; i += 2) { x0 = Math.min(x0, s.p[i] - h); x1 = Math.max(x1, s.p[i] + h); y0 = Math.min(y0, s.p[i + 1] - h); y1 = Math.max(y1, s.p[i + 1] + h); } }
+  for (const s of strokes) { if (s.e) continue; const h = s.ch ? s.w * (s.r ? 0.72 : 0.62) : s.fig ? s.w * (s.r ? 0.6 : 0.56) : s.w / 2; for (let i = 0; i < s.p.length; i += 2) { x0 = Math.min(x0, s.p[i] - h); x1 = Math.max(x1, s.p[i] + h); y0 = Math.min(y0, s.p[i + 1] - h); y1 = Math.max(y1, s.p[i + 1] + h); } }
   return x0 === Infinity ? null : { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
 }
 export const shift = (strokes, dx, dy) => strokes.map((s) => ({ ...s, p: s.p.map((v, i) => Math.round((v + (i % 2 ? dy : dx)) * 10) / 10) }));
 /** Strokes made k times bigger (or smaller) about the point (ox, oy): their lines get thicker or thinner to match. */
 export const scaled = (strokes, k, ox = 0, oy = 0) => strokes.map((s) => ({ ...s, w: Math.max(s.ch || s.fig ? 14 : 1, Math.round(s.w * k * 10) / 10), p: s.p.map((v, i) => Math.round(((i % 2 ? oy : ox) + (v - (i % 2 ? oy : ox)) * k) * 10) / 10) }));
+/** Strokes turned by `angle` (radians, clockwise on screen) about the point (ox, oy). A sticker or person keeps its own turn in `r`. */
+export function turned(strokes, angle, ox = 0, oy = 0) {
+  const c = Math.cos(angle), n = Math.sin(angle), r1 = (v) => Math.round(v * 10) / 10;
+  return strokes.map((s) => {
+    const p = []; for (let i = 0; i < s.p.length; i += 2) { const dx = s.p[i] - ox, dy = s.p[i + 1] - oy; p.push(r1(ox + dx * c - dy * n), r1(oy + dx * n + dy * c)); }
+    return s.ch || s.fig ? { ...s, p, r: Math.round(((s.r || 0) + (s.m ? -angle : angle)) * 1000) / 1000 } : { ...s, p };
+  });
+}
 /** The top-most stroke, shape, sticker or person at a point (its place in the list), or -1. Erasing is passed over. */
 export function itemAt(strokes, x, y, slack = 10) {
   for (let i = strokes.length - 1; i >= 0; i -= 1) { if (strokes[i].e) continue; const b = bbox([strokes[i]]); if (b && x >= b.x0 - slack && x <= b.x1 + slack && y >= b.y0 - slack && y <= b.y1 + slack) return i; }
