@@ -2,7 +2,7 @@
 //  - "Bring it to life": each drawing is a thing with its own movement (engine.js works out where it is at any moment)
 //  - "Flipbook": pages drawn one by one and flipped through
 // Drawings are kept as strokes (lists of points), so they stay small enough to save on the device.
-import { canSharePhotos, toPhotos, download } from "../../assets/save-image.js";
+import { canSharePhotos, onTouchDevice, toPhotos, download } from "../../assets/save-image.js";
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS } from "./stickers.js";
 import { PEOPLE, CHARACTERS, SKINS, HAIRS, drawPerson } from "./people.js";
@@ -901,7 +901,8 @@ $("modes").addEventListener("click", (e) => {
 $("savePic").addEventListener("click", async () => {
   ui.clean = true; render(ui.state === "play" ? (performance.now() - ui.t0) / 1000 : null);
   if (canSharePhotos()) { const r = await toPhotos(cv, "draw-and-animate.png"); if (r === "unsupported") await download(cv, "draw-and-animate.png"); note(r === "shared" ? "Done! If you chose Save Image, it is in your Photos." : r === "cancelled" ? "" : "Saved to your Downloads."); }
-  else { await download(cv, "draw-and-animate.png"); note("Saved to your Downloads."); }
+  else { await download(cv, "draw-and-animate.png"); note("Your picture has been saved to your Downloads as draw-and-animate.png."); }
+  $("note").scrollIntoView({ block: "nearest", behavior: "smooth" });
   ui.clean = false; if (ui.state !== "play") render();
 });
 let recording = false;
@@ -925,7 +926,7 @@ $("saveVid").addEventListener("click", () => {
   } catch (err) { note("This browser could not record a video."); return; }
   const parts = [];
   recording = true; recTap = tap; $("saveVid").disabled = true;
-  const done = () => { recording = false; recTap = null; $("saveVid").disabled = false; stop(); };
+  const done = () => { recording = false; recTap = null; $("saveVid").disabled = false; $("saveVid").textContent = "🎬 Save video"; stop(); };
   rec.ondataavailable = (ev) => { if (ev.data && ev.data.size) parts.push(ev.data); };
   rec.onerror = () => { done(); note("The recording stopped unexpectedly. Please try again."); };
   rec.onstop = () => {
@@ -933,19 +934,28 @@ $("saveVid").addEventListener("click", () => {
     const type = VIDEO.split(";")[0], file = new File([new Blob(parts, { type })], `my-animation.${type === "video/mp4" ? "mp4" : "webm"}`, { type });
     if (!file.size) { note("The video came out empty. Please try again."); return; }
     window.__da.video = file;
-    // a second tap is needed: phones only let a page share or save a file straight after a tap
-    $("note").innerHTML = `Your video is ready${tap ? ", with its sound" : ""}. <button class="g-btn" id="keepVid">📥 Save or share it</button>`;
-    $("keepVid").addEventListener("click", async () => {
-      try { if (navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia("(pointer: coarse)").matches) { await navigator.share({ files: [file], title: "My animation from Zone 210" }); note("Done!"); return; } } catch (err) { if (err && err.name === "AbortError") return; }
-      const url = URL.createObjectURL(file), a = document.createElement("a");
-      a.download = file.name; a.href = url; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
-      note("Saved to your Downloads.");
-    });
+    const keepFile = () => { const url = URL.createObjectURL(file), a = document.createElement("a"); a.download = file.name; a.href = url; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); };
+    if (!onTouchDevice()) {
+      // a desktop or laptop: the video simply downloads, with a button in case the browser held it back
+      keepFile();
+      $("note").innerHTML = `Your video${tap ? ", with its sound," : ""} has been saved to your Downloads as <b>${file.name}</b>. <button class="g-btn ghost" id="keepVid">📥 Download again</button>`;
+      $("keepVid").addEventListener("click", keepFile);
+    } else {
+      // a phone or tablet: a second tap is needed, because a page may only share or save a file straight after a tap
+      $("note").innerHTML = `Your video is ready${tap ? ", with its sound" : ""}. <button class="g-btn" id="keepVid">📥 Save or share it</button>`;
+      $("keepVid").addEventListener("click", async () => {
+        try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: "My animation from Zone 210" }); note("Done!"); return; } } catch (err) { if (err && err.name === "AbortError") return; }
+        keepFile(); note("Saved to your Downloads.");
+      });
+    }
+    $("note").scrollIntoView({ block: "nearest", behavior: "smooth" }); // the message is below the tools, so bring it into view
   };
   play(); rec.start();
   let left = Math.ceil(secs);
-  note(`Recording… ${left}`);
-  const count = setInterval(() => { left -= 1; if (left > 0 && recording) note(`Recording… ${left}`); else clearInterval(count); }, 1000);
+  // the countdown shows on the button itself (at the top, where it was pressed) as well as in the message below
+  const tell = () => { note(`Recording your video… ${left}`); $("saveVid").textContent = `⏺ Recording… ${left}`; };
+  tell();
+  const count = setInterval(() => { left -= 1; if (left > 0 && recording) tell(); else clearInterval(count); }, 1000);
   // the tune fades out just before the recording ends, so the video does not cut off mid-note
   setTimeout(() => { stopTune(); setTimeout(() => { try { rec.stop(); } catch (err) { done(); } }, 350); }, secs * 1000);
 });

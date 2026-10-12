@@ -2,14 +2,21 @@
  * Saving a picture from a canvas.
  *  - canSharePhotos(): true on phones and tablets whose browser can hand an image to the share sheet
  *    (iPhone/iPad: choose "Save Image" to put it in Photos; Android: Photos / Gallery / Files).
+ *    Never on a desktop or laptop: there the share sheet offers Messages and Mail, not a place to save, so those
+ *    get the plain download. onTouchDevice() is that test, for anything else that shares a file.
  *  - toPhotos(canvas, name): opens the share sheet with the picture. Resolves "shared", "cancelled" or "unsupported".
  *  - download(canvas, name): the plain file download (desktop, and a fallback).
  */
 const blobOf = (canvas) => new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
 
+/** A phone or tablet: the main way of pointing is a finger. (A laptop with a touch screen still counts as a desktop.) */
+export function onTouchDevice() {
+  try { return navigator.maxTouchPoints > 0 && matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches; } catch (err) { return false; }
+}
+
 export function canSharePhotos() {
   try {
-    if (!navigator.share || !navigator.canShare) return false;
+    if (!onTouchDevice() || !navigator.share || !navigator.canShare) return false;
     const probe = new File([new Blob(["x"], { type: "image/png" })], "probe.png", { type: "image/png" });
     return navigator.canShare({ files: [probe] });
   } catch (err) {
