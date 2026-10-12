@@ -80,12 +80,67 @@ export const CHARACTERS = [
   { id: "ninja", name: "Ninja", pose: "kick", hair: "none", hc: 0, top: "#1f2937", bot: "#1f2937", kind: "long", hat: "ninja", belt: "#d62839", nomouth: true },
   { id: "cowboy", name: "Cowboy", pose: "hips", hair: "short", hc: 2, top: "#b45309", bot: "#1e40af", kind: "long", hat: "cowboy", bow: "#d62839", belt: true, fit: 0.94 },
   { id: "angel", name: "Angel", pose: "cheer", hair: "long", hc: 3, top: "#f8fafc", bot: "#f8fafc", kind: "robe", hat: "halo", back: "wings", backc: "#ffffff", outline: true, fit: 0.9 },
+  // not people: drawn by their own code below. The "top" colour is the snowman's scarf or the dragon's body; "bottom" is the hat or the wings.
+  { id: "snowman", name: "Snowman", custom: "snowman", top: "#d62839", bot: "#1f2937" },
+  { id: "dragon", name: "Dragon", custom: "dragon", top: "#22a55b", bot: "#f5c518" },
   { id: "chef", name: "Chef", pose: "point", hair: "short", hc: 1, top: "#f8fafc", bot: "#374151", kind: "long", hat: "chef", apron: true, outline: true, fit: 0.84 },
 ];
 export const personById = (id) => PEOPLE.find((x) => x.id === id) || CHARACTERS.find((x) => x.id === id) || PEOPLE[0];
 
+// ---------- characters that are not people (one unit tall, middle at the origin; the dragon faces right) ----------
+const OTHER = {
+  snowman(g, scarf, hat) {
+    const ball = (x, y, r) => { g.fillStyle = "#ffffff"; g.strokeStyle = "#b6c2d1"; g.lineWidth = 0.012; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.stroke(); };
+    const dot = (c, x, y, r) => { g.fillStyle = c; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); };
+    g.strokeStyle = "#7a5230"; g.lineWidth = 0.022; g.beginPath(); // stick arms, behind the body
+    g.moveTo(-0.13, 0.0); g.lineTo(-0.36, -0.14); g.moveTo(-0.3, -0.1); g.lineTo(-0.36, -0.04); g.moveTo(-0.3, -0.1); g.lineTo(-0.31, -0.19);
+    g.moveTo(0.13, 0.0); g.lineTo(0.36, -0.16); g.moveTo(0.3, -0.12); g.lineTo(0.37, -0.07); g.moveTo(0.3, -0.12); g.lineTo(0.3, -0.21); g.stroke();
+    ball(0, 0.28, 0.2); ball(0, 0.02, 0.15); ball(0, -0.2, 0.115);
+    [0.02 - 0.05, 0.02 + 0.02, 0.02 + 0.09].forEach((y) => dot("#1f2937", 0, y, 0.02)); // buttons
+    g.strokeStyle = scarf; g.lineWidth = 0.05; g.beginPath(); g.moveTo(-0.11, -0.11); g.quadraticCurveTo(0, -0.07, 0.11, -0.11); g.stroke(); // scarf
+    g.lineWidth = 0.045; g.beginPath(); g.moveTo(0.07, -0.1); g.lineTo(0.1, 0.06); g.stroke();
+    dot("#1f2937", -0.04, -0.23, 0.016); dot("#1f2937", 0.04, -0.23, 0.016);
+    g.fillStyle = "#f97316"; g.beginPath(); g.moveTo(0, -0.205); g.lineTo(0.12, -0.185); g.lineTo(0, -0.17); g.fill(); // carrot nose
+    [-0.05, -0.025, 0, 0.025, 0.05].forEach((x, i) => dot("#1f2937", x, -0.145 + (i === 0 || i === 4 ? -0.012 : i === 2 ? 0.004 : 0), 0.009)); // coal smile
+    g.fillStyle = hat; g.fillRect(-0.085, -0.46, 0.17, 0.16); g.beginPath(); g.ellipse(0, -0.3, 0.14, 0.022, 0, 0, Math.PI * 2); g.fill(); // top hat
+    g.fillStyle = scarf; g.fillRect(-0.085, -0.345, 0.17, 0.03);
+  },
+  dragon(g, body, second) {
+    const fill = (c, draw) => { g.fillStyle = c; g.beginPath(); draw(); g.fill(); };
+    const oval = (c, x, y, rx, ry, turn = 0) => fill(c, () => g.ellipse(x, y, rx, ry, turn, 0, Math.PI * 2));
+    const tri = (c, a, b, d) => fill(c, () => { g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.lineTo(d[0], d[1]); });
+    // wing, behind the body
+    fill(second, () => { g.moveTo(-0.04, 0.04); g.lineTo(-0.3, -0.36); g.quadraticCurveTo(-0.2, -0.2, -0.24, -0.12); g.quadraticCurveTo(-0.33, -0.18, -0.42, -0.14); g.quadraticCurveTo(-0.28, -0.04, -0.3, 0.06); g.quadraticCurveTo(-0.18, 0.02, -0.1, 0.12); });
+    g.strokeStyle = "rgba(0,0,0,0.18)"; g.lineWidth = 0.01; g.beginPath(); g.moveTo(-0.04, 0.04); g.lineTo(-0.3, -0.36); g.moveTo(-0.04, 0.04); g.lineTo(-0.42, -0.14); g.moveTo(-0.04, 0.04); g.lineTo(-0.3, 0.06); g.stroke();
+    // tail: thick near the body, thin at the tip, with a pointed end
+    g.lineCap = "round"; g.strokeStyle = body; g.lineWidth = 0.1; g.beginPath(); g.moveTo(-0.14, 0.24); g.quadraticCurveTo(-0.34, 0.34, -0.42, 0.22); g.stroke();
+    g.lineWidth = 0.055; g.beginPath(); g.moveTo(-0.42, 0.22); g.quadraticCurveTo(-0.47, 0.12, -0.4, 0.05); g.stroke();
+    tri(second, [-0.44, 0.02], [-0.33, 0.0], [-0.39, 0.1]);
+    // back spikes, legs, body, belly
+    [[-0.17, 0.0], [-0.08, -0.04], [0.01, -0.05]].forEach(([x, y]) => tri(second, [x - 0.04, y + 0.05], [x, y - 0.05], [x + 0.045, y + 0.04]));
+    oval(body, -0.1, 0.4, 0.075, 0.05); oval(body, 0.1, 0.4, 0.075, 0.05);
+    oval(body, -0.02, 0.17, 0.2, 0.19);
+    oval("#fff4c2", 0.04, 0.21, 0.11, 0.13);
+    g.strokeStyle = "rgba(0,0,0,0.12)"; g.lineWidth = 0.01; [0.14, 0.2, 0.26].forEach((y) => { g.beginPath(); g.moveTo(-0.05, y); g.quadraticCurveTo(0.04, y + 0.02, 0.13, y); g.stroke(); });
+    oval(body, 0.17, 0.12, 0.04, 0.085, -0.5); // a little arm
+    // neck, spikes on it, head, snout
+    g.strokeStyle = body; g.lineWidth = 0.13; g.beginPath(); g.moveTo(0.08, 0.04); g.quadraticCurveTo(0.1, -0.12, 0.2, -0.22); g.stroke();
+    tri(second, [0.03, -0.1], [0.045, -0.2], [0.1, -0.13]);
+    tri("#fff4c2", [0.12, -0.33], [0.1, -0.44], [0.18, -0.36]); tri("#fff4c2", [0.2, -0.35], [0.22, -0.46], [0.27, -0.35]); // horns
+    oval(body, 0.21, -0.26, 0.14, 0.11); oval(body, 0.34, -0.21, 0.1, 0.075);
+    oval("#ffffff", 0.2, -0.3, 0.04, 0.045); oval("#1f2937", 0.21, -0.295, 0.02, 0.025); oval("#ffffff", 0.216, -0.305, 0.007, 0.008);
+    oval("#14532d", 0.4, -0.235, 0.01, 0.012);
+    g.strokeStyle = "#14532d"; g.lineWidth = 0.012; g.beginPath(); g.arc(0.3, -0.21, 0.09, Math.PI * 0.12, Math.PI * 0.62); g.stroke(); // smile
+    // a small puff of flame
+    fill("#f97316", () => { g.moveTo(0.43, -0.2); g.quadraticCurveTo(0.5, -0.27, 0.54, -0.2); g.quadraticCurveTo(0.5, -0.19, 0.53, -0.14); g.quadraticCurveTo(0.47, -0.15, 0.43, -0.2); });
+    fill("#fde047", () => { g.moveTo(0.44, -0.2); g.quadraticCurveTo(0.48, -0.23, 0.5, -0.195); g.quadraticCurveTo(0.48, -0.18, 0.44, -0.2); });
+  },
+};
+
 /** Draws a person `h` pixels tall with its middle at the origin. `fig` is { fig: id, sk, hc }. */
 export function drawPerson(g, fig, h) {
+  const what = personById(fig.fig);
+  if (what.custom) { g.save(); g.scale(h, h); g.lineCap = "round"; g.lineJoin = "round"; OTHER[what.custom](g, fig.tc || what.top, fig.bc || what.bot); g.restore(); return; }
   const own = personById(fig.fig), d = { ...own, top: fig.tc || own.top, bot: fig.bc || own.bot }, pose = P[d.pose], skin = (SKINS[fig.sk] || SKINS[2])[0], hair = own.hairc || (HAIRS[fig.hc >= 0 ? fig.hc : d.hc] || HAIRS[0])[0];
   const limb = 0.062, HEAD = [0, -0.34], R = 0.135, sh = [0, -0.17], hipA = [-0.06, 0.1], hipB = [0.06, 0.1];
   g.save(); g.scale(h, h); g.lineCap = "round"; g.lineJoin = "round";
