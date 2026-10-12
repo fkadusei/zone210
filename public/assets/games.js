@@ -822,6 +822,18 @@ export const GAMES = [
     emoji: "📝",
     colors: ["#f59e0b", "#ec4899"],
   },
+  {
+    id: "draw-animate",
+    title: "Draw & Animate",
+    tagline: "Draw anything, then make it move. Give each drawing a movement, like bounce, spin, wiggle or a path you trace with your finger, or make a flipbook page by page. Save your animation as a video.",
+    audience: "all",
+    cat: "fun",
+    added: "2026-10-12",
+    tags: ["Creative", "Drawing", "Animation"],
+    players: "1 player",
+    emoji: "🎞️",
+    colors: ["#f59e0b", "#ec4899"],
+  },
 ];
 
 // ---- weekly featured game ----
