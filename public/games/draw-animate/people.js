@@ -1,6 +1,7 @@
 // Draw & Animate: hand-drawn people. Each is a simple cartoon figure drawn by drawPerson() from a few choices:
 // a pose, a hairstyle, clothes, and (chosen by the child) one of six skin tones and a hair colour.
-// A person on a drawing is stored as { fig: id, sk: skin index, hc: hair index or -1 for the figure's own, w: height, p: [x, y] }.
+// A person on a drawing is stored as { fig: id, sk: skin index, hc: hair index or -1 for the figure's own, w: height, p: [x, y] },
+// with tc and bc (top and bottom clothing colours) when the child chose their own.
 // Figures that move (walking, running, the wheelchair) are drawn facing right.
 
 export const SKINS = [["#ffe0bd", "Light"], ["#f6cfa0", "Light medium"], ["#e0ac69", "Medium"], ["#c68642", "Medium deep"], ["#8d5524", "Deep"], ["#5a3620", "Very deep"]];
@@ -40,7 +41,7 @@ export const personById = (id) => PEOPLE.find((x) => x.id === id) || PEOPLE[0];
 
 /** Draws a person `h` pixels tall with its middle at the origin. `fig` is { fig: id, sk, hc }. */
 export function drawPerson(g, fig, h) {
-  const d = personById(fig.fig), pose = P[d.pose], skin = (SKINS[fig.sk] || SKINS[2])[0], hair = (HAIRS[fig.hc >= 0 ? fig.hc : d.hc] || HAIRS[0])[0];
+  const own = personById(fig.fig), d = { ...own, top: fig.tc || own.top, bot: fig.bc || own.bot }, pose = P[d.pose], skin = (SKINS[fig.sk] || SKINS[2])[0], hair = (HAIRS[fig.hc >= 0 ? fig.hc : d.hc] || HAIRS[0])[0];
   const limb = 0.062, HEAD = [0, -0.34], R = 0.135, sh = [0, -0.17], hipA = [-0.06, 0.1], hipB = [0.06, 0.1];
   g.save(); g.scale(h, h); g.lineCap = "round"; g.lineJoin = "round";
   const line = (c, w, pts) => { g.strokeStyle = c; g.lineWidth = w; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i += 1) g.lineTo(pts[i][0], pts[i][1]); g.stroke(); };

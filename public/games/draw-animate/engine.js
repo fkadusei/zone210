@@ -55,6 +55,25 @@ export function fillTarget(strokes, x, y) {
   return -1;
 }
 
+/**
+ * Which stickers and drawn people an eraser stroke removes whole: those whose middle the eraser (points `pts`, `width`
+ * wide) passes over. Returns their places in the list, lowest first. Rubbing only an edge leaves the sticker alone.
+ */
+export function stickersUnder(strokes, pts, width) {
+  const out = [];
+  strokes.forEach((s, i) => {
+    if (!s.ch && !s.fig) return;
+    const reach = s.w * 0.3 + width / 2;
+    const [cx, cy] = s.p;
+    if (pts.length === 2 && Math.hypot(pts[0] - cx, pts[1] - cy) <= reach) { out.push(i); return; }
+    for (let k = 2; k < pts.length; k += 2) { // how near each stretch of the stroke comes (a fast swipe has few points)
+      const ax = pts[k - 2], ay = pts[k - 1], bx = pts[k], by = pts[k + 1], len = (bx - ax) ** 2 + (by - ay) ** 2, u = len ? Math.max(0, Math.min(1, ((cx - ax) * (bx - ax) + (cy - ay) * (by - ay)) / len)) : 0;
+      if (Math.hypot(ax + u * (bx - ax) - cx, ay + u * (by - ay) - cy) <= reach) { out.push(i); return; }
+    }
+  });
+  return out;
+}
+
 /** Drop points that are closer than `gap` to the one before (keeps saved drawings small). */
 export function thin(points, gap = 3) {
   const out = [points[0], points[1]];

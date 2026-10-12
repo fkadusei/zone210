@@ -66,6 +66,15 @@ check(PP.PEOPLE.every((d) => d.name && /^#[0-9a-f]{6}$/.test(d.top) && /^#[0-9a-
   for (const d of PP.PEOPLE) for (let sk = 0; sk < 6; sk += 1) { try { PP.drawPerson(stub, { fig: d.id, sk, hc: -1 }, 100); } catch (err) { threw = `${d.id}: ${err.message}`; } }
   check(!threw, `people: every figure can be drawn in every skin tone (${threw})`);
 }
+{ // the eraser takes away a sticker it passes over the middle of, and leaves one it only brushes
+  const three = [{ ch: "🐶", w: 100, p: [100, 100] }, { c: "#000", w: 8, p: [0, 0, 50, 50] }, { fig: "wave1", sk: 1, hc: -1, w: 200, p: [400, 300] }, { ch: "🚗", w: 100, p: [700, 100] }];
+  check(E.stickersUnder(three, [100, 100], 18).join() === "0", "a tap on a sticker removes it");
+  check(E.stickersUnder(three, [380, 290, 420, 310], 30).join() === "2", "rubbing across a person removes that person");
+  check(E.stickersUnder(three, [0, 300, 800, 300], 18).join() === "2", "a fast swipe with only two points still removes what it crosses");
+  check(E.stickersUnder(three, [0, 500, 800, 500], 18).join() === "", "a swipe that crosses nothing removes nothing");
+  check(E.stickersUnder(three, [100, 160], 18).join() === "", "brushing a sticker's edge leaves it");
+  check(E.stickersUnder(three, [100, 100, 400, 300, 700, 100], 18).join() === "0,2,3", "one stroke can remove several");
+}
 const who = E.bbox([{ fig: "wave1", sk: 3, hc: -1, w: 200, p: [300, 300] }]); check(who && who.h >= 200 && who.cy === 300, "a drawn person has a box around it");
 check(E.fillTarget([{ fig: "wave1", sk: 3, hc: -1, w: 400, p: [300, 300] }], 300, 300) === -1, "the Fill tool passes over a drawn person");
 

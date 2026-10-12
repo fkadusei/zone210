@@ -6,7 +6,7 @@ import { canSharePhotos, toPhotos, download } from "../../assets/save-image.js";
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS } from "./stickers.js";
 import { PEOPLE, SKINS, HAIRS, drawPerson } from "./people.js";
-import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, exampleScene, exampleFlip } from "./engine.js";
+import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -478,6 +478,8 @@ function paint() {
   $("toneRows").hidden = !drawnSet;
   document.querySelectorAll("#skins .sw").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.sk) === (data.skin ?? 2))));
   document.querySelectorAll("#hairs .sw").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.hc) === (data.hair ?? -1))));
+  document.querySelectorAll("#tops .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === (data.top || ""))));
+  document.querySelectorAll("#bots .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === (data.bot || ""))));
   $("stickFlip").checked = ui.flip;
   press("sizes", "size", data.size);
   press("bgs", "bg", data.scene.bg);
@@ -551,6 +553,16 @@ function lift() {
     ui.from = null; ui.live = null; ui.reach = 0;
     if (big) { strokes().push(s2); did({ k: "add" }); paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } }
     else if (s2 || ui.tool === "shape") note("Press and drag to draw the shape.");
+  } else if (ui.live && ui.live.e) {
+    // the eraser: a sticker or person it passes over the middle of is taken away whole (rubbing leaves no scraps)
+    const list = strokes(), rub = ui.live, gone = stickersUnder(list, rub.p, rub.w).map((i) => ({ i, s: list[i] }));
+    for (let k = gone.length - 1; k >= 0; k -= 1) list.splice(gone[k].i, 1);
+    const tap = rub.p.length <= 4 && gone.length; // just a tap on a sticker: nothing else to rub out
+    rub.p = thin(rub.p); ui.live = null;
+    if (!tap) list.push(rub);
+    did({ k: "rub", gone, added: !tap });
+    paintLayer(A, list);
+    if (!scene()) { thumb(ui.frame); save(); }
   } else if (ui.live) {
     ui.live.p = thin(ui.live.p);
     strokes().push(ui.live); ui.live = null; did({ k: "add" });
@@ -633,20 +645,20 @@ $("palette").addEventListener("click", (e) => { const b = e.target.closest(".sw"
 $("sizes").innerHTML = SIZES.map(([v, label]) => `<button class="g-chip sz" data-size="${v}" aria-label="${label}"><i style="width:${Math.min(26, v + 2)}px;height:${Math.min(26, v + 2)}px"></i></button>`).join("");
 $("sizes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.size = Number(b.dataset.size); save(); paint(); } });
 chips("tools", TOOLS, "tool");
-$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a sticker, then tap where it should go." : ""); paint(); });
+$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a sticker, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a sticker or a person to take it away." : ""); paint(); });
 $("shapes").innerHTML = SHAPES.map(([v, label]) => `<button class="g-chip shp" data-shape="${v}" aria-label="${label}"><span aria-hidden="true">${SHAPE_ICON[v]}</span></button>`).join("");
 $("shapes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.shape = b.dataset.shape; paint(); } });
 // stickers: pick a set, then a sticker; sets that usually face left are mirrored so they face right
 const sticker = (x, y) => {
   const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0], mirror = !!set.turn !== ui.flip, at2 = [Math.round(x), Math.round(y)];
-  if (set.drawn) return { fig: ui.person, sk: data.skin ?? 2, hc: data.hair ?? -1, w: PERSON_SIZE[data.size] || 130, p: at2, ...(mirror ? { m: 1 } : {}) };
+  if (set.drawn) return { fig: ui.person, sk: data.skin ?? 2, hc: data.hair ?? -1, ...(data.top ? { tc: data.top } : {}), ...(data.bot ? { bc: data.bot } : {}), w: PERSON_SIZE[data.size] || 130, p: at2, ...(mirror ? { m: 1 } : {}) };
   return { ch: ui.sticker, w: STICKER_SIZE[data.size] || 72, p: at2, ...(mirror ? { m: 1 } : {}) };
 };
 function stickerGrid() {
   const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0];
   if (set.drawn) { // hand-drawn people: a little picture of each, in the chosen skin tone and hair colour
     $("stickGrid").innerHTML = PEOPLE.map((d) => `<button class="stk person" data-fig="${d.id}" aria-label="${d.name}" aria-pressed="false"><canvas width="112" height="140" aria-hidden="true"></canvas></button>`).join("");
-    $("stickGrid").querySelectorAll(".stk").forEach((b) => { const g = b.querySelector("canvas").getContext("2d"); g.translate(56, 70); drawPerson(g, { fig: b.dataset.fig, sk: data.skin ?? 2, hc: data.hair ?? -1 }, 128); });
+    $("stickGrid").querySelectorAll(".stk").forEach((b) => { const g = b.querySelector("canvas").getContext("2d"); g.translate(56, 70); drawPerson(g, { fig: b.dataset.fig, sk: data.skin ?? 2, hc: data.hair ?? -1, tc: data.top, bc: data.bot }, 128); });
   } else {
     $("stickGrid").innerHTML = set.list.map((ch) => `<button class="stk" data-ch="${ch}" aria-pressed="false">${ch}</button>`).join("");
     if (!set.list.includes(ui.sticker)) ui.sticker = set.list[0];
@@ -655,6 +667,11 @@ function stickerGrid() {
 }
 $("skins").innerHTML = SKINS.map(([c, name], i) => `<button class="sw" data-sk="${i}" style="background:${c}" aria-label="${name} skin"></button>`).join("");
 $("hairs").innerHTML = `<button class="sw mixed" data-hc="-1" aria-label="Mixed hair colours"></button>` + HAIRS.map(([c, name], i) => `<button class="sw" data-hc="${i}" style="background:${c}" aria-label="${name} hair"></button>`).join("");
+// clothes: the figure's own colours, or one the child picks for the top and one for the bottom
+for (const [id, key, word] of [["tops", "top", "top"], ["bots", "bot", "bottom"]]) {
+  $(id).innerHTML = `<button class="sw mixed own" data-c="" aria-label="Each figure's own ${word}"></button>` + COLORS.map((c, i) => `<button class="sw" data-c="${c}" style="background:${c}" aria-label="${COLOR_NAMES[i]} ${word}"></button>`).join("");
+  $(id).addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data[key] = b.dataset.c || null; save(); stickerGrid(); paint(); } });
+}
 $("skins").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data.skin = Number(b.dataset.sk); save(); stickerGrid(); paint(); } });
 $("hairs").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data.hair = Number(b.dataset.hc); save(); stickerGrid(); paint(); } });
 $("stickSets").innerHTML = STICKERS.map((k) => `<button class="g-chip" data-set="${k.id}"><span aria-hidden="true">${k.icon}</span> ${k.name}</button>`).join("");
@@ -676,6 +693,7 @@ function did(step) { past.push(step); if (past.length > 60) past.shift(); }
 function undo() {
   const list = strokes(), step = past.pop();
   if (step && step.k === "fill" && list.includes(step.s)) { if (step.was) step.s.ff = step.was; else delete step.s.ff; }
+  else if (step && step.k === "rub") { if (step.added && list.length) list.pop(); step.gone.forEach(({ i, s: back }) => list.splice(Math.min(i, list.length), 0, back)); } // stickers the eraser took come back
   else if (list.length) list.pop();
   else return;
   paintLayer(A, list); if (!scene()) { thumb(ui.frame); save(); } render();
