@@ -41,4 +41,5 @@
 .fr[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
 .rules { margin-top: 18px; color: var(--muted); }
 .rules li { margin: 4px 0; line-height: 1.5; }
-@media (max-width: 520px) { .lbl { min-width: 0; width: 100%; } .sw { width: 34px; height: 34px; } .row.main .g-btn { flex: 1 1 auto; } }
+@media (max-width: 520px) { .lbl { min-width: 0; width: 100%; } .sw { width: 34px; height: 34px; } .row.main .g-btn { flex: 1 1 auto; padding: 11px 12px; font-size: 0.98rem; } }
+.note .g-btn { margin-left: 6px; padding: 6px 12px; }

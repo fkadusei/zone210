@@ -261,7 +261,7 @@ function paint() {
   let row, hint;
   if (playing && !scene()) { row = btn("stop", "⏹ Stop") + btn("auto", ui.auto ? "⏸ Pause" : "▶ Flip by itself", "ghost"); hint = "Drag across the book to flip the pages yourself, or use the slider like a thumb on the edge."; }
   else if (playing) { row = btn("stop", "⏹ Stop"); hint = "Playing. Press Stop to change things."; }
-  else if (!scene()) { row = btn("addFrame", "＋ New page", "ghost") + btn("play", "▶ Play", "", data.flip.frames.length < 2); hint = data.flip.frames.length < 2 ? "Draw the first page, then tap New page and draw it again, a little different." : `Page ${ui.frame + 1} of ${data.flip.frames.length}. Change each page a little, then press Play.`; }
+  else if (!scene()) { row = btn("addFrame", "＋ New page", "ghost") + btn("copyFrame", "⧉ Copy page", "ghost") + btn("delFrame", "🗑 Delete page", "ghost") + btn("play", "▶ Play", "", data.flip.frames.length < 2); hint = data.flip.frames.length < 2 ? "Draw the first page, then tap New page and draw it again, a little different." : `Page ${ui.frame + 1} of ${data.flip.frames.length}. Change each page a little, then press Play.`; }
   else if (ui.state === "draw") { row = btn("done", "✓ Done") + btn("cancel", "✕ Cancel", "ghost"); hint = ui.edit >= 0 ? "Add to your drawing, then tap Done." : "Draw one thing, like a fish, a ball or a cloud. Then tap Done."; }
   else if (ui.state === "path") { row = btn("cancel", "✕ Cancel", "ghost"); hint = "Trace a line with your finger to show where it should go."; }
   else { row = btn("new", "✏️ Draw a new thing") + btn("play", "▶ Play", things.length ? "" : "ghost", !things.length); hint = !things.length ? "Tap “Draw a new thing” to begin, or try the example below." : th ? "Choose how this drawing moves, then press Play." : "Tap a drawing to choose how it moves. Drag it to put it somewhere else."; }
@@ -375,6 +375,8 @@ $("mainRow").addEventListener("click", (e) => {
   else if (act === "auto") { ui.auto = !ui.auto; ui.lastTurn = performance.now(); paint(); }
   else if (act === "stop") stop();
   else if (act === "addFrame") addFrame(false);
+  else if (act === "copyFrame") addFrame(true);
+  else if (act === "delFrame") delFrame();
 });
 const sel = () => data.scene.things[ui.sel];
 $("moves").addEventListener("click", (e) => {
@@ -437,8 +439,20 @@ function addFrame(copy) {
   ui.frame += 1; note(""); save(); syncFlip(); paint(); render();
 }
 $("strip").addEventListener("click", (e) => { const b = e.target.closest(".fr"); if (b) { ui.frame = Number(b.dataset.f); syncFlip(); paint(); render(); } });
-$("copyFrame").addEventListener("click", () => addFrame(true));
-$("delFrame").addEventListener("click", () => { if (data.flip.frames.length > 1) data.flip.frames.splice(ui.frame, 1); else data.flip.frames[0] = []; save(); syncFlip(); paint(); render(); });
+// deleting a page that has a drawing on it can be undone straight away
+function delFrame() {
+  const i = ui.frame, gone = data.flip.frames[i], only = data.flip.frames.length === 1;
+  if (only) data.flip.frames[0] = []; else data.flip.frames.splice(i, 1);
+  save(); syncFlip(); paint(); render();
+  if (!gone.length) { note(only ? "" : `Page ${i + 1} deleted.`); return; }
+  $("note").innerHTML = `${only ? "Page cleared." : `Page ${i + 1} deleted.`} <button class="g-btn ghost" id="undoDel">↶ Put it back</button>`;
+  $("undoDel").addEventListener("click", () => {
+    if (only) data.flip.frames[0] = gone;
+    else { if (data.flip.frames.length >= MAX_FRAMES) { note(`There is no room: the book already has ${MAX_FRAMES} pages.`); return; } data.flip.frames.splice(Math.min(i, data.flip.frames.length), 0, gone); }
+    ui.frame = only ? 0 : Math.min(i, data.flip.frames.length - 1);
+    note("Page put back."); save(); syncFlip(); paint(); render();
+  });
+}
 $("fbgs").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.flip.bg = b.dataset.bg; save(); strip(); paint(); render(); } });
 $("thumb").addEventListener("input", () => { const n = Number($("thumb").value); if (ui.state !== "play") return; if (ui.auto) { ui.auto = false; paint(); } turnTo(n, n > ui.page, 150); });
 $("fps").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.flip.fps = Number(b.dataset.fps); save(); paint(); } });
