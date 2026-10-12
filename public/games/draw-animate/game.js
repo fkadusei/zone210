@@ -3,6 +3,7 @@
 //  - "Flipbook": pages drawn one by one and flipped through
 // Drawings are kept as strokes (lists of points), so they stay small enough to save on the device.
 import { canSharePhotos, toPhotos, download } from "../../assets/save-image.js";
+import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { W, H, MOVES, ACTS, SPEEDS, bbox, makeThing, stageStrokes, thin, pose, pathLength, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
@@ -194,8 +195,9 @@ function render(t = null) {
 }
 function fit() { SCALE = saverOn() ? 1 : 2; cv.width = W * SCALE; cv.height = H * SCALE; render(); }
 window.addEventListener("z210:saver", fit);
+window.addEventListener("pagehide", () => stopTune());
+window.addEventListener("z210:audio-reset", () => { stopTune(); if (ui.state === "play" && !scene()) startMusic(); }); // the phone's audio was restarted (sound.js)
 
-// ---------- playing ----------
 // ---------- the sound of a page flicking over: a short hiss of paper, brighter when the pages go by fast ----------
 let paper = null;
 function flick(quick) {
@@ -211,25 +213,57 @@ function flick(quick) {
   if (!quick) { const o = ac.createOscillator(), og = ac.createGain(); o.frequency.setValueAtTime(190, t + len * 0.75); o.frequency.exponentialRampToValueAtTime(90, t + len + 0.05); og.gain.setValueAtTime(0.0001, t + len * 0.75); og.gain.exponentialRampToValueAtTime(0.05, t + len * 0.8); og.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.06); o.connect(og).connect(ac.destination); o.start(t + len * 0.75); o.stop(t + len + 0.08); } // a soft pat as it lands
 }
 
+// ---------- background music for the flipbook (music.js): the tune the child picked plays while the book does ----------
+function startMusic() {
+  const id = data.flip.music;
+  if (data.muted || !id || id === "none") { stopTune(); return; }
+  playTune(id, window.z210Audio && window.z210Audio.get(), 0.5);
+}
+
 // ---------- the flipbook as a real book: whole pages (background and drawing) that turn over ----------
 let cur = A, oth = B; // the page showing, and the page being turned to
 function wholePage(L, n) { paintLayer(C, data.flip.frames[n]); L.g.clearRect(0, 0, W, H); putBg(L.g, bgOf(n)); L.g.drawImage(C.cv, 0, 0, W, H); }
 const calm = () => saverOn() || matchMedia("(prefers-reduced-motion: reduce)").matches;
 /** Turn to page n. Forward: the page lifts at its right edge and folds over to the binding. Back: it comes back down. */
+function endTurn() { // the turn in progress lands (or, if it was let go too early, falls back)
+  const tn = ui.turn;
+  if (!tn) return;
+  if (!tn.cancel) { [cur, oth] = [oth, cur]; if (tn.to !== undefined) ui.page = tn.to; }
+  ui.turn = null; ui.landed = performance.now();
+  if ($("thumb")) $("thumb").value = ui.page;
+}
 function turnTo(n, forward, ms) {
-  if (ui.turn) { [cur, oth] = [oth, cur]; ui.turn = null; } // a turn already under way simply finishes
+  endTurn(); // a turn already under way simply finishes
   if (n === ui.page) return;
   wholePage(oth, n);
   flick(ms < 150);
   ui.page = n; ui.lastTurn = performance.now();
-  if ($("thumb") && (ui.auto || ui.scrub)) $("thumb").value = n; // (left alone while a thumb is on the slider itself)
+  if ($("thumb") && ui.auto) $("thumb").value = n; // (left alone while a thumb is on the slider itself)
   if (calm() || ms <= 0) { [cur, oth] = [oth, cur]; ui.landed = performance.now(); render(); return; } // Battery saver and reduced motion: just swap pages
   ui.turn = { forward, t0: performance.now(), ms };
+}
+// turning a page by hand: the page follows the finger, and is let go to land or to fall back
+function handTurn(forward) {
+  const to = ui.page + (forward ? 1 : -1);
+  if (to < 0 || to >= data.flip.frames.length) return false;
+  endTurn();
+  wholePage(oth, to);
+  ui.turn = { forward, to, hand: true, p: 0 };
+  return true;
+}
+function letGo(fast) {
+  const tn = ui.turn;
+  if (!tn || !tn.hand) return;
+  tn.hand = false; tn.settle = true; tn.p0 = tn.p; tn.cancel = tn.p < 0.3 && !fast; tn.t0 = performance.now();
+  tn.ms = 90 + 260 * (tn.cancel ? tn.p0 : 1 - tn.p0);
+  if (!tn.cancel) flick(false);
 }
 function drawBook() {
   const tn = ui.turn;
   if (!tn) { ctx.drawImage(cur.cv, 0, 0, W, H); return; }
-  const p = Math.min(1, (performance.now() - tn.t0) / tn.ms), e = p * p * (3 - 2 * p);
+  let e, done = false; // e: how far the page has turned, 0 to 1
+  if (tn.hand) e = tn.p;
+  else { const u = Math.min(1, (performance.now() - tn.t0) / tn.ms); done = u >= 1; e = tn.settle ? (tn.cancel ? tn.p0 * (1 - u) : tn.p0 + (1 - tn.p0) * u) : u * u * (3 - 2 * u); }
   const under = tn.forward ? oth : cur, over = tn.forward ? cur : oth, k = tn.forward ? 1 - e : e; // k: how wide the turning page looks
   ctx.drawImage(under.cv, 0, 0, W, H);
   const lift = Math.sin(Math.PI * k), edge = W * k;
@@ -241,7 +275,7 @@ function drawBook() {
   const dim = ctx.createLinearGradient(0, 0, W, 0); dim.addColorStop(0, `rgba(0,0,0,${0.05 * lift})`); dim.addColorStop(1, `rgba(0,0,0,${0.38 * (1 - k)})`);
   ctx.fillStyle = dim; ctx.fillRect(0, 0, W, H);
   ctx.restore();
-  if (p >= 1) { [cur, oth] = [oth, cur]; ui.turn = null; ui.landed = performance.now(); }
+  if (done) endTurn();
 }
 
 // ---------- playing ----------
@@ -249,6 +283,7 @@ function play() {
   if (ui.state === "draw" || ui.state === "path") return;
   if (scene() && !data.scene.things.length) { note("Draw something first, then press Play."); return; }
   ui.state = "play"; ui.t0 = performance.now();
+  if (!scene()) startMusic();
   if (!scene()) { cur = A; oth = B; ui.turn = null; ui.auto = true; ui.want = null; ui.page = 0; ui.lastTurn = performance.now(); wholePage(cur, 0); $("thumb").max = data.flip.frames.length - 1; $("thumb").value = 0; }
   let skip = false;
   const tick = (now) => {
@@ -257,9 +292,8 @@ function play() {
     if (scene()) { skip = !skip; if (saverOn() && skip) return; render((now - ui.t0) / 1000); return; } // Battery saver: half the frames
     const gap = 1000 / data.flip.fps;
     if (ui.auto && !ui.scrub && now - ui.lastTurn >= gap) turnTo((ui.page + 1) % data.flip.frames.length, true, Math.min(320, gap * 0.75));
-    // flipping by hand: one page at a time towards where the finger is, and every page rests in view for a moment,
-    // so no page is skipped however fast the finger moves
-    if (!ui.auto && !ui.turn && ui.want !== null && ui.want !== ui.page && now - ui.landed >= (calm() ? 380 : 200)) turnTo(ui.page + Math.sign(ui.want - ui.page), ui.want > ui.page, 220);
+    // the thumb slider: one page at a time towards where the thumb is, and every page rests in view for a moment
+    if (!ui.auto && !ui.turn && ui.want !== null && ui.want !== ui.page && now - ui.landed >= (calm() ? 600 : 380)) turnTo(ui.page + Math.sign(ui.want - ui.page), ui.want > ui.page, 280);
     if (ui.turn) render();
   };
   ui.raf = requestAnimationFrame(tick);
@@ -268,6 +302,7 @@ function play() {
 function stop() {
   if (ui.state !== "play") return;
   cancelAnimationFrame(ui.raf); ui.state = "idle"; ui.turn = null; ui.scrub = null;
+  stopTune();
   if (!scene()) syncFlip();
   paint(); render();
 }
@@ -283,7 +318,7 @@ function paint() {
   $("stage").classList.toggle("playing", playing);
   const btn = (act, label, cls = "", off = false) => `<button class="g-btn ${cls}" data-act="${act}" ${off ? "disabled" : ""}>${label}</button>`;
   let row, hint;
-  if (playing && !scene()) { row = btn("stop", "⏹ Stop") + btn("auto", ui.auto ? "⏸ Pause" : "▶ Flip by itself", "ghost"); hint = "Drag across the book to flip the pages yourself, or use the slider like a thumb on the edge."; }
+  if (playing && !scene()) { row = btn("stop", "⏹ Stop") + btn("auto", ui.auto ? "⏸ Pause" : "▶ Flip by itself", "ghost"); hint = "Drag a page across to turn it yourself: left to go on, right to go back. Or use the thumb slider."; }
   else if (playing) { row = btn("stop", "⏹ Stop"); hint = "Playing. Press Stop to change things."; }
   else if (!scene()) { row = btn("addFrame", "＋ New page", "ghost") + btn("copyFrame", "⧉ Copy page", "ghost") + btn("delFrame", "🗑 Delete page", "ghost") + btn("play", "▶ Play", "", data.flip.frames.length < 2); hint = data.flip.frames.length < 2 ? "Draw the first page, then tap New page and draw it again, a little different." : `Page ${ui.frame + 1} of ${data.flip.frames.length}. Change each page a little, then press Play.`; }
   else if (ui.state === "draw") { row = btn("done", "✓ Done") + btn("cancel", "✕ Cancel", "ghost"); hint = ui.edit >= 0 ? "Add to your drawing, then tap Done." : "Draw one thing, like a fish, a ball or a cloud. Then tap Done."; }
@@ -307,6 +342,9 @@ function paint() {
   press("bgs", "bg", data.scene.bg);
   press("fbgs", "bg", bgOf(ui.frame));
   press("fps", "fps", data.flip.fps);
+  $("tune").value = data.flip.music && TUNES.some((t) => t.id === data.flip.music) ? data.flip.music : "none";
+  $("listen").disabled = $("tune").value === "none";
+  $("listen").textContent = playingTune() && ui.state !== "play" ? "⏹ Stop" : "🎧 Listen";
   $("mute").textContent = data.muted ? "🔇 Sound off" : "🔊 Sound on"; $("mute").setAttribute("aria-pressed", String(!data.muted));
   $("onion").checked = !!data.flip.onion;
   if (th) { press("moves", "move", th.move); press("acts", "act", th.act); press("speeds", "speed", th.speed); $("face").checked = !!th.face; }
@@ -323,7 +361,7 @@ cv.addEventListener("pointerdown", (e) => {
   e.preventDefault();
   try { cv.setPointerCapture(e.pointerId); } catch (err) { /* older browsers */ }
   const [x, y] = at(e);
-  if (ui.state === "play") { ui.scrub = { x, page: ui.page }; ui.want = ui.page; if (ui.auto) { ui.auto = false; paint(); } return; } // take hold of the book
+  if (ui.state === "play") { endTurn(); ui.scrub = { x, lastX: x, lastT: performance.now(), v: 0 }; ui.want = null; if (ui.auto) { ui.auto = false; paint(); } return; } // take hold of the book
   if (drawing()) { ui.live = { c: data.color, w: ui.erase ? Math.max(18, data.size * 1.8) : data.size, e: ui.erase ? 1 : 0, p: [x, y] }; strokeOn(A.g, ui.live); render(); }
   else if (ui.state === "path") { ui.pathPts = [x, y]; render(); }
   else if (scene()) { const i = hit(x, y); if (i !== ui.sel) { ui.sel = i; paint(); } if (i >= 0) ui.drag = { x, y }; render(); }
@@ -331,8 +369,14 @@ cv.addEventListener("pointerdown", (e) => {
 cv.addEventListener("pointermove", (e) => {
   if (!ui.live && !ui.pathPts && !ui.drag && !ui.scrub) return;
   const [x, y] = at(e);
-  if (ui.scrub) { // about an eighth of the way across is one page: drag left to go on, right to go back
-    ui.want = Math.max(0, Math.min(data.flip.frames.length - 1, ui.scrub.page + Math.round((ui.scrub.x - x) / 100)));
+  if (ui.scrub) { // the page follows the finger: drag left to turn on, right to turn back; half the book's width is a whole turn
+    const sc = ui.scrub, dx = sc.x - x, now = performance.now();
+    if (now > sc.lastT) sc.v = (sc.lastX - x) / (now - sc.lastT);
+    sc.lastX = x; sc.lastT = now;
+    if (ui.turn && ui.turn.hand && (ui.turn.forward ? dx : -dx) < -10) { ui.turn.cancel = true; endTurn(); } // changed direction: put that page down
+    if (!ui.turn && Math.abs(dx) > 10) handTurn(dx > 0);
+    const tn = ui.turn;
+    if (tn && tn.hand) tn.p = Math.max(0, Math.min(1, ((tn.forward ? dx : -dx) - 10) / (W * 0.5)));
     return;
   }
   if (ui.live) {
@@ -351,7 +395,7 @@ cv.addEventListener("pointermove", (e) => {
   render();
 });
 function lift() {
-  if (ui.scrub) { ui.scrub = null; return; }
+  if (ui.scrub) { const tn = ui.turn; letGo(!!tn && tn.hand && (tn.forward ? ui.scrub.v : -ui.scrub.v) > 0.5 && performance.now() - ui.scrub.lastT < 120); ui.scrub = null; return; } // a quick flick finishes the turn too
   if (ui.live) {
     ui.live.p = thin(ui.live.p);
     strokes().push(ui.live); ui.live = null;
@@ -483,14 +527,28 @@ $("bgAll").addEventListener("click", () => { data.flip.bgs = data.flip.frames.ma
 $("thumb").addEventListener("input", () => { if (ui.state !== "play") return; if (ui.auto) { ui.auto = false; paint(); } ui.want = Number($("thumb").value); });
 $("fps").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.flip.fps = Number(b.dataset.fps); save(); paint(); } });
 $("onion").addEventListener("change", () => { data.flip.onion = $("onion").checked; save(); render(); });
-$("exFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Swap your flipbook for the example? Your pages here will be removed.")) return; data.flip = exampleFlip(); evenBgs(); ui.frame = 0; save(); syncFlip(); paint(); render(); note("Press Play! Then look through the pages to see how each one changes."); });
-$("newFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Clear this flipbook and start again?")) return; data.flip = { frames: [[]], fps: data.flip.fps, onion: data.flip.onion, bgs: [bgOf(ui.frame)] }; ui.frame = 0; save(); syncFlip(); paint(); render(); });
+$("exFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Swap your flipbook for the example? Your pages here will be removed.")) return; data.flip = { ...exampleFlip(), music: data.flip.music }; evenBgs(); ui.frame = 0; save(); syncFlip(); paint(); render(); note("Press Play! Then look through the pages to see how each one changes."); });
+$("newFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Clear this flipbook and start again?")) return; data.flip = { frames: [[]], fps: data.flip.fps, onion: data.flip.onion, bgs: [bgOf(ui.frame)], music: data.flip.music }; ui.frame = 0; save(); syncFlip(); paint(); render(); });
 
-$("mute").addEventListener("click", () => { data.muted = !data.muted; save(); paint(); if (!data.muted) flick(false); });
+$("mute").addEventListener("click", () => { data.muted = !data.muted; save(); if (data.muted) stopTune(); else if (ui.state === "play" && !scene()) startMusic(); else flick(false); paint(); });
+$("tune").innerHTML = `<option value="none">No music</option>` + [...new Set(TUNES.map((t) => t.group))].map((g) => `<optgroup label="${g}">${TUNES.filter((t) => t.group === g).map((t) => `<option value="${t.id}">${t.emoji} ${t.name}</option>`).join("")}</optgroup>`).join("");
+$("tune").addEventListener("change", () => {
+  data.flip.music = $("tune").value; save();
+  if (playingTune()) { if (ui.state === "play") startMusic(); else listen(true); } // already sounding: switch to the new tune
+  paint();
+});
+// "Listen" tries the tune without playing the book
+function listen(on) {
+  const id = data.flip.music;
+  if (!on || !id || id === "none") { stopTune(); paint(); return; }
+  if (data.muted) { note("Sound is off. Tap “Sound off” at the top to turn it on."); return; }
+  playTune(id, window.z210Audio && window.z210Audio.get(), 0.5); paint();
+}
+$("listen").addEventListener("click", () => listen(!playingTune()));
 $("modes").addEventListener("click", (e) => {
   const b = e.target.closest(".g-chip");
   if (!b || b.dataset.mode === data.mode) return;
-  stop();
+  stop(); stopTune();
   if (ui.state !== "idle") { ui.state = "idle"; ui.edit = -1; ui.draft = []; ui.pathPts = null; }
   data.mode = b.dataset.mode; ui.sel = -1; note(""); save();
   if (!scene()) syncFlip();

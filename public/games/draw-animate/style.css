@@ -43,3 +43,4 @@
 .rules li { margin: 4px 0; line-height: 1.5; }
 @media (max-width: 520px) { .lbl { min-width: 0; width: 100%; } .sw { width: 34px; height: 34px; } .row.main .g-btn { flex: 1 1 auto; padding: 11px 12px; font-size: 0.98rem; } }
 .note .g-btn { margin-left: 6px; padding: 6px 12px; }
+.pick { font: 700 1rem var(--font); color: var(--ink); background: var(--surface-2); border: 1.5px solid var(--line-strong); border-radius: 12px; padding: 9px 12px; max-width: 100%; }

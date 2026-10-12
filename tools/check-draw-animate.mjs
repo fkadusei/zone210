@@ -5,6 +5,7 @@
  *  - a thing following a path stays on the path; an open path goes there and back, a closed one goes round
  *  - turning strokes into a thing re-centres them, and thinning a line keeps its two ends
  *  - the two built-in examples are well formed and fit on the stage
+ *  - the flipbook tunes (music.js): every bar has the right number of steps and every note can be read
  */
 import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
@@ -49,5 +50,19 @@ check(sc.things.length >= 3 && sc.things.every((th) => th.s.every(okStroke) && t
 check(sc.things.some((th) => th.move === "path" && th.path.length >= 4), "the example scene shows a path");
 const fl = E.exampleFlip();
 check(fl.frames.length >= 6 && fl.frames.every((f) => f.length && f.every(okStroke) && f.every((s) => s.p.every((v, i) => v >= 0 && v <= (i % 2 ? E.H : E.W)))), "the example flipbook is well formed and fits the page");
-console.log(bad ? `\n${bad} problem(s).` : "Draw & Animate: all motion checks pass.");
+
+// the flipbook's background music: every bar of every track has the right number of steps, and every note can be read
+const M = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/music.js")).href);
+check(M.midi("A4") === 69 && M.midi("C4") === 60 && M.midi("Bb3") === 58 && M.midi("F#5") === 78, "note names are read correctly");
+for (const tune of M.TUNES) {
+  const per = tune.bpb * tune.div; let bars = null;
+  tune.tracks.forEach((tr, k) => {
+    const r = M.readTrack(tr);
+    r.bars.forEach((b, i) => check(b.length === per, `${tune.name}: track ${k + 1} (${tr.inst}) bar ${i + 1} has ${b.length} steps, not ${per}`));
+    check(r.steps.every((st) => !st || (st.hits ? /^[kshcw]+$/.test(st.hits) : st.notes.every((n) => Number.isFinite(n) && n >= 24 && n <= 96) && st.len >= 1)), `${tune.name}: track ${k + 1} (${tr.inst}) has a note that cannot be read`);
+    if (bars === null) bars = r.bars.length; else check(r.bars.length === bars, `${tune.name}: track ${k + 1} (${tr.inst}) has ${r.bars.length} bars, the first track has ${bars}`);
+  });
+}
+check(new Set(M.TUNES.map((x) => x.id)).size === M.TUNES.length && M.TUNES.length >= 10, "tunes have different ids");
+console.log(bad ? `\n${bad} problem(s).` : `Draw & Animate: all motion checks pass, and all ${M.TUNES.length} tunes line up.`);
 process.exit(bad ? 1 : 0);
