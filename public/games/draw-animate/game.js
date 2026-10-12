@@ -16,6 +16,7 @@ if (!Array.isArray(data.flip.frames) || !data.flip.frames.length) data.flip.fram
 // each flipbook page has its own background: data.flip.bgs runs alongside data.flip.frames (older saves had one for the whole book)
 function evenBgs() { const f = data.flip, old = Array.isArray(f.bgs) ? f.bgs : []; f.bgs = f.frames.map((_, i) => old[i] || f.bg || "paper"); delete f.bg; }
 evenBgs();
+if (data.flip.fps === 3) data.flip.fps = 2; // "Slow" used to be 3 pages a second
 const bgOf = (i) => data.flip.bgs[i] || "paper";
 let saveT = 0;
 const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { if (!store.set(KEY, data)) note("This device is out of space to save more. Your animation still plays."); }, 400); };
@@ -26,7 +27,7 @@ const SIZES = [[4, "Thin"], [10, "Medium"], [22, "Thick"], [44, "Huge"]];
 const BGS = [["paper", "📄 Paper"], ["grid", "📐 Squared paper"], ["chalk", "🟩 Chalkboard"], ["sky", "🌤️ Sky"], ["sea", "🌊 Under the sea"], ["beach", "🏖️ Beach"], ["desert", "🏜️ Desert"], ["snow", "❄️ Snow"],
   ["forest", "🌲 Forest"], ["mountains", "⛰️ Mountains"], ["road", "🛣️ Road"], ["city", "🏙️ City"], ["sunset", "🌇 Sunset"], ["night", "🌙 Night"], ["space", "🚀 Space"]];
 const DARK = new Set(["space", "night", "chalk", "sunset"]); // backgrounds where the outline round a chosen drawing needs to be light
-const FPS = [[3, "Slow"], [6, "Medium"], [10, "Fast"]];
+const FPS = [[2, "Slow"], [6, "Medium"], [10, "Fast"]];
 const MAX_THINGS = 12, MAX_FRAMES = 24;
 
 const cv = $("cv"), ctx = cv.getContext("2d");
@@ -195,6 +196,21 @@ function fit() { SCALE = saverOn() ? 1 : 2; cv.width = W * SCALE; cv.height = H 
 window.addEventListener("z210:saver", fit);
 
 // ---------- playing ----------
+// ---------- the sound of a page flicking over: a short hiss of paper, brighter when the pages go by fast ----------
+let paper = null;
+function flick(quick) {
+  if (data.muted) return;
+  const ac = window.z210Audio && window.z210Audio.get();
+  if (!ac) return;
+  if (!paper || paper.sampleRate !== ac.sampleRate) { paper = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.25), ac.sampleRate); const d = paper.getChannelData(0); for (let i = 0; i < d.length; i += 1) d[i] = Math.random() * 2 - 1; }
+  const t = ac.currentTime, len = quick ? 0.07 : 0.16, src = ac.createBufferSource(), bp = ac.createBiquadFilter(), g = ac.createGain();
+  src.buffer = paper; src.playbackRate.value = 0.9 + Math.random() * 0.25; // never quite the same twice
+  bp.type = "bandpass"; bp.Q.value = 0.8; bp.frequency.setValueAtTime(quick ? 3400 : 2600, t); bp.frequency.exponentialRampToValueAtTime(900, t + len); // the pitch falls as the page lands
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(quick ? 0.1 : 0.16, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  src.connect(bp).connect(g).connect(ac.destination); src.start(t); src.stop(t + len + 0.02);
+  if (!quick) { const o = ac.createOscillator(), og = ac.createGain(); o.frequency.setValueAtTime(190, t + len * 0.75); o.frequency.exponentialRampToValueAtTime(90, t + len + 0.05); og.gain.setValueAtTime(0.0001, t + len * 0.75); og.gain.exponentialRampToValueAtTime(0.05, t + len * 0.8); og.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.06); o.connect(og).connect(ac.destination); o.start(t + len * 0.75); o.stop(t + len + 0.08); } // a soft pat as it lands
+}
+
 // ---------- the flipbook as a real book: whole pages (background and drawing) that turn over ----------
 let cur = A, oth = B; // the page showing, and the page being turned to
 function wholePage(L, n) { paintLayer(C, data.flip.frames[n]); L.g.clearRect(0, 0, W, H); putBg(L.g, bgOf(n)); L.g.drawImage(C.cv, 0, 0, W, H); }
@@ -204,6 +220,7 @@ function turnTo(n, forward, ms) {
   if (ui.turn) { [cur, oth] = [oth, cur]; ui.turn = null; } // a turn already under way simply finishes
   if (n === ui.page) return;
   wholePage(oth, n);
+  flick(ms < 150);
   ui.page = n; ui.lastTurn = performance.now();
   if ($("thumb") && (ui.auto || ui.scrub)) $("thumb").value = n; // (left alone while a thumb is on the slider itself)
   if (calm() || ms <= 0) { [cur, oth] = [oth, cur]; ui.landed = performance.now(); render(); return; } // Battery saver and reduced motion: just swap pages
@@ -290,6 +307,7 @@ function paint() {
   press("bgs", "bg", data.scene.bg);
   press("fbgs", "bg", bgOf(ui.frame));
   press("fps", "fps", data.flip.fps);
+  $("mute").textContent = data.muted ? "🔇 Sound off" : "🔊 Sound on"; $("mute").setAttribute("aria-pressed", String(!data.muted));
   $("onion").checked = !!data.flip.onion;
   if (th) { press("moves", "move", th.move); press("acts", "act", th.act); press("speeds", "speed", th.speed); $("face").checked = !!th.face; }
 }
@@ -468,6 +486,7 @@ $("onion").addEventListener("change", () => { data.flip.onion = $("onion").check
 $("exFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Swap your flipbook for the example? Your pages here will be removed.")) return; data.flip = exampleFlip(); evenBgs(); ui.frame = 0; save(); syncFlip(); paint(); render(); note("Press Play! Then look through the pages to see how each one changes."); });
 $("newFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Clear this flipbook and start again?")) return; data.flip = { frames: [[]], fps: data.flip.fps, onion: data.flip.onion, bgs: [bgOf(ui.frame)] }; ui.frame = 0; save(); syncFlip(); paint(); render(); });
 
+$("mute").addEventListener("click", () => { data.muted = !data.muted; save(); paint(); if (!data.muted) flick(false); });
 $("modes").addEventListener("click", (e) => {
   const b = e.target.closest(".g-chip");
   if (!b || b.dataset.mode === data.mode) return;
