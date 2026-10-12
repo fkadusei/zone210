@@ -75,6 +75,16 @@ check(PP.PEOPLE.every((d) => d.name && /^#[0-9a-f]{6}$/.test(d.top) && /^#[0-9a-
   check(E.stickersUnder(three, [100, 160], 18).join() === "", "brushing a sticker's edge leaves it");
   check(E.stickersUnder(three, [100, 100, 400, 300, 700, 100], 18).join() === "0,2,3", "one stroke can remove several");
 }
+{ // moving and resizing
+  const sq = [{ c: "#000", w: 10, k: 1, p: E.shapePoints("rect", 100, 100, 200, 200) }, { ch: "🐶", w: 80, p: [400, 300] }];
+  const twice = E.scaled(sq, 2, 100, 100), b2 = E.bbox([twice[0]]);
+  check(Math.abs(b2.w - (200 + 20)) < 0.5 && twice[0].w === 20 && twice[0].p[0] === 100 && twice[0].p[1] === 100, "doubling a shape about its corner doubles its size and its line, and keeps that corner still");
+  check(twice[1].w === 160 && twice[1].p[0] === 700 && twice[1].p[1] === 500, "a sticker grows and moves away from the fixed corner");
+  check(E.scaled(sq, 0.001)[1].w === 14 && E.scaled(sq, 0.001)[0].w === 1, "nothing shrinks to nothing");
+  const back = E.scaled(E.scaled(sq, 1.2, 150, 150), 1 / 1.2, 150, 150); check(Math.abs(back[0].p[0] - 100) < 0.2 && Math.abs(back[0].w - 10) < 0.2, "bigger then smaller comes back to the same size");
+  check(E.itemAt(sq, 150, 150) === 0 && E.itemAt(sq, 400, 300) === 1 && E.itemAt(sq, 700, 550) === -1, "tapping picks the thing under the finger");
+  check(E.itemAt([...sq, { c: "#000", w: 40, e: 1, p: [400, 300] }], 400, 300) === 1, "erasing is never picked up");
+}
 const who = E.bbox([{ fig: "wave1", sk: 3, hc: -1, w: 200, p: [300, 300] }]); check(who && who.h >= 200 && who.cy === 300, "a drawn person has a box around it");
 check(E.fillTarget([{ fig: "wave1", sk: 3, hc: -1, w: 400, p: [300, 300] }], 300, 300) === -1, "the Fill tool passes over a drawn person");
 

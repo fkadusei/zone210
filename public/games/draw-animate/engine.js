@@ -18,6 +18,13 @@ export function bbox(strokes) {
   return x0 === Infinity ? null : { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
 }
 export const shift = (strokes, dx, dy) => strokes.map((s) => ({ ...s, p: s.p.map((v, i) => Math.round((v + (i % 2 ? dy : dx)) * 10) / 10) }));
+/** Strokes made k times bigger (or smaller) about the point (ox, oy): their lines get thicker or thinner to match. */
+export const scaled = (strokes, k, ox = 0, oy = 0) => strokes.map((s) => ({ ...s, w: Math.max(s.ch || s.fig ? 14 : 1, Math.round(s.w * k * 10) / 10), p: s.p.map((v, i) => Math.round(((i % 2 ? oy : ox) + (v - (i % 2 ? oy : ox)) * k) * 10) / 10) }));
+/** The top-most stroke, shape, sticker or person at a point (its place in the list), or -1. Erasing is passed over. */
+export function itemAt(strokes, x, y, slack = 10) {
+  for (let i = strokes.length - 1; i >= 0; i -= 1) { if (strokes[i].e) continue; const b = bbox([strokes[i]]); if (b && x >= b.x0 - slack && x <= b.x1 + slack && y >= b.y0 - slack && y <= b.y1 + slack) return i; }
+  return -1;
+}
 /** Strokes drawn on the stage become a thing: its strokes are re-measured from the middle of its box. */
 export function makeThing(strokes, old = {}) {
   const b = bbox(strokes);

@@ -6,7 +6,7 @@ import { canSharePhotos, toPhotos, download } from "../../assets/save-image.js";
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS } from "./stickers.js";
 import { PEOPLE, SKINS, HAIRS, drawPerson } from "./people.js";
-import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, exampleScene, exampleFlip } from "./engine.js";
+import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, scaled, itemAt, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -29,7 +29,7 @@ const COLOR_NAMES = ["Black", "Red", "Orange", "Yellow", "Green", "Blue", "Purpl
 const SIZES = [[4, "Small"], [10, "Medium"], [22, "Big"], [44, "Huge"]];
 const STICKER_SIZE = { 4: 46, 10: 72, 22: 112, 44: 170 }; // how tall a sticker is at each size button
 const PERSON_SIZE = { 4: 80, 10: 130, 22: 200, 44: 300 }; // and a hand-drawn person
-const TOOLS = [["pen", "✏️ Pen"], ["shape", "🔷 Shapes"], ["fill", "🪣 Fill"], ["stamp", "😀 Stickers"], ["erase", "🧽 Eraser"]];
+const TOOLS = [["pen", "✏️ Pen"], ["shape", "🔷 Shapes"], ["fill", "🪣 Fill"], ["stamp", "😀 Stickers"], ["move", "✋ Move"], ["erase", "🧽 Eraser"]];
 const SHAPE_ICON = { line: "╱", rect: "▭", oval: "◯", tri: "△", diamond: "◇", star: "☆", heart: "♡" };
 const BGS = [["paper", "Paper"], ["grid", "Squared paper"], ["lined", "Lined paper"], ["chalk", "Chalkboard"], ["sky", "Sky"], ["meadow", "Meadow"], ["rainbow", "Rainbow"], ["rainy", "Rainy day"],
   ["park", "Park"], ["farm", "Farm"], ["forest", "Forest"], ["jungle", "Jungle"], ["mountains", "Mountains"], ["volcano", "Volcano"], ["desert", "Desert"], ["snow", "Snow"], ["arctic", "Arctic"],
@@ -43,7 +43,7 @@ const cv = $("cv"), ctx = cv.getContext("2d");
 const saverOn = () => !!(window.z210Saver && window.z210Saver.on);
 let SCALE = 2;
 // state: "idle" | "draw" (drawing a thing) | "path" (tracing a path) | "play"
-const ui = { state: "idle", sel: -1, edit: -1, draft: [], frame: 0, tool: "pen", shape: "rect", set: "drawn", sticker: "🧍", person: "stand1", flip: false, from: null, live: null, drag: null, pathPts: null, t0: 0, raf: 0, clean: false,
+const ui = { state: "idle", sel: -1, edit: -1, draft: [], frame: 0, tool: "pen", shape: "rect", set: "drawn", sticker: "🧍", person: "stand1", flip: false, from: null, live: null, pick: [], all: false, grab: null, drag: null, pathPts: null, t0: 0, raf: 0, clean: false,
   page: 0, turn: null, auto: true, lastTurn: 0, scrub: null, want: null, landed: 0 }; // want: the page a finger or the slider is heading for // the flipbook being flipped: the page showing, the page turn in progress, whether it flips by itself
 const scene = () => data.mode === "scene";
 const drawing = () => (scene() ? ui.state === "draw" : ui.state === "idle");
@@ -297,6 +297,20 @@ function putBg(g, bg) {
   g.drawImage(c, 0, 0, W, H);
 }
 
+// a dashed box round what is chosen, with a round handle at its corner for resizing
+const HANDLE = 15;
+function chosenBox(b, light) {
+  ctx.save(); ctx.lineWidth = 2.5; ctx.strokeStyle = light ? "#ffd15a" : "#cf9410"; ctx.setLineDash([8, 6]);
+  ctx.strokeRect(b.x0 - 6, b.y0 - 6, b.w + 12, b.h + 12); ctx.setLineDash([]);
+  ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(b.x1 + 6, b.y1 + 6, HANDLE, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = "#8a6208"; ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(b.x1 + 1, b.y1 + 1); ctx.lineTo(b.x1 + 11, b.y1 + 11); ctx.moveTo(b.x1 + 11, b.y1 + 5); ctx.lineTo(b.x1 + 11, b.y1 + 11); ctx.lineTo(b.x1 + 5, b.y1 + 11); ctx.stroke();
+  ctx.restore();
+}
+const onHandle = (b, x, y) => !!b && Math.hypot(x - (b.x1 + 6), y - (b.y1 + 6)) <= HANDLE + 12;
+// the Move tool's choice: places in the list being drawn (all of them when "Everything on the page" is ticked)
+const picked = () => { const list = strokes(); return (ui.all ? list.map((_, i) => i) : ui.pick).filter((i) => i < list.length); };
+const pickBox = () => { const list = strokes(), idx = picked(); return idx.length ? bbox(idx.map((i) => list[i])) : null; };
+
 // ---------- the picture on screen ----------
 function render(t = null) {
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
@@ -304,14 +318,15 @@ function render(t = null) {
     const playing = ui.state === "play";
     putBg(ctx, data.scene.bg);
     data.scene.things.forEach((th, i) => { if (ui.state === "draw" && i === ui.edit) return; drawThing(th, pose(th, playing ? t : null, i)); });
-    if (ui.state === "draw") { ctx.drawImage(A.cv, 0, 0, W, H); if (ui.from && ui.live) strokeOn(ctx, ui.live); }
+    if (ui.state === "draw") { ctx.drawImage(A.cv, 0, 0, W, H); if (ui.from && ui.live) strokeOn(ctx, ui.live); if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(data.scene.bg)); } }
     const th = data.scene.things[ui.sel];
     if (th && !playing && ui.state !== "draw" && !ui.clean) {
       const light = DARK.has(data.scene.bg);
       ctx.save(); ctx.lineWidth = 2.5; ctx.setLineDash([8, 6]); ctx.strokeStyle = light ? "#ffd15a" : "#cf9410";
       if (th.move === "path" && th.path && ui.state !== "path") { ctx.beginPath(); ctx.moveTo(th.path[0], th.path[1]); for (let i = 2; i < th.path.length; i += 2) ctx.lineTo(th.path[i], th.path[i + 1]); ctx.stroke(); }
-      const { b } = layer(th); ctx.setLineDash([]); ctx.strokeRect(th.x + b.x0 - 6, th.y + b.y0 - 6, b.w + 12, b.h + 12);
       ctx.restore();
+      const { b } = layer(th);
+      if (ui.state === "idle") chosenBox({ x0: th.x + b.x0, y0: th.y + b.y0, x1: th.x + b.x1, y1: th.y + b.y1, w: b.w, h: b.h }, light);
     }
     if (ui.state === "path" && ui.pathPts) { ctx.save(); ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.setLineDash([2, 12]); ctx.strokeStyle = "#f5a623"; ctx.beginPath(); ctx.moveTo(ui.pathPts[0], ui.pathPts[1]); for (let i = 2; i < ui.pathPts.length; i += 2) ctx.lineTo(ui.pathPts[i], ui.pathPts[i + 1]); ctx.stroke(); ctx.restore(); }
   } else {
@@ -321,6 +336,7 @@ function render(t = null) {
       if (data.flip.onion && ui.frame > 0 && !ui.clean) { ctx.globalAlpha = 0.22; ctx.drawImage(B.cv, 0, 0, W, H); ctx.globalAlpha = 1; }
       ctx.drawImage(A.cv, 0, 0, W, H);
       if (ui.from && ui.live) strokeOn(ctx, ui.live);
+      if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(bgOf(ui.frame))); }
     }
   }
 }
@@ -471,8 +487,12 @@ function paint() {
   cv.style.boxShadow = scene() ? "" : Array.from({ length: thick }, (_, i) => `${(i + 1) * 3}px ${(i + 1) * 3}px 0 ${i % 2 ? "#cfc8b6" : "#ebe5d5"}`).join(", ") + `, ${thick * 3 + 6}px ${thick * 3 + 10}px 22px rgba(0,0,0,0.35)`;
   document.querySelectorAll("#palette .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === data.color)));
   press("tools", "tool", ui.tool); press("shapes", "shape", ui.shape); press("stickSets", "set", ui.set);
-  $("shapeRow").hidden = ui.tool !== "shape"; $("stickRow").hidden = ui.tool !== "stamp";
-  $("palette").hidden = ui.tool === "stamp" || ui.tool === "erase";
+  $("shapeRow").hidden = ui.tool !== "shape"; $("stickRow").hidden = ui.tool !== "stamp"; $("moveRow").hidden = ui.tool !== "move";
+  $("palette").hidden = ui.tool === "stamp" || ui.tool === "erase" || ui.tool === "move";
+  $("sizes").hidden = ui.tool === "move" || ui.tool === "fill";
+  $("moveAll").checked = ui.all;
+  const none = ui.tool !== "move" || !picked().length;
+  ["mSmaller", "mBigger", "mCopy", "mRemove"].forEach((id) => { $(id).disabled = none; });
   const drawnSet = ui.set === "drawn";
   document.querySelectorAll("#stickGrid .stk").forEach((b) => b.setAttribute("aria-pressed", String(drawnSet ? b.dataset.fig === ui.person : b.dataset.ch === ui.sticker)));
   $("toneRows").hidden = !drawnSet;
@@ -507,17 +527,23 @@ cv.addEventListener("pointerdown", (e) => {
   if (ui.state === "play") { endTurn(); ui.scrub = { x, lastX: x, lastT: performance.now(), v: 0 }; ui.want = null; if (ui.auto) { ui.auto = false; paint(); } return; } // take hold of the book
   if (drawing()) {
     if (ui.tool === "fill") { fillAt(x, y); return; }
+    if (ui.tool === "move") { grabAt(x, y); return; }
     if (ui.tool === "shape") { ui.from = [x, y]; ui.live = null; ui.reach = 0; return; }
     if (ui.tool === "stamp") { ui.from = [x, y]; ui.live = sticker(x, y); render(); return; }
     const erase = ui.tool === "erase";
     ui.live = { c: data.color, w: erase ? Math.max(18, data.size * 1.8) : data.size, e: erase ? 1 : 0, p: [x, y] }; strokeOn(A.g, ui.live); render();
   }
   else if (ui.state === "path") { ui.pathPts = [x, y]; render(); }
-  else if (scene()) { const i = hit(x, y); if (i !== ui.sel) { ui.sel = i; paint(); } if (i >= 0) ui.drag = { x, y }; render(); }
+  else if (scene()) {
+    const cur2 = data.scene.things[ui.sel];
+    if (cur2) { const { b } = layer(cur2), box = { x1: cur2.x + b.x1, y1: cur2.y + b.y1 }; if (onHandle(box, x, y)) { ui.drag = { size: true, from: Math.max(20, Math.hypot(x - cur2.x, y - cur2.y)), was: cur2.s }; return; } } // the corner handle: resize
+    const i = hit(x, y); if (i !== ui.sel) { ui.sel = i; paint(); } if (i >= 0) ui.drag = { x, y }; render();
+  }
 });
 cv.addEventListener("pointermove", (e) => {
-  if (!ui.live && !ui.pathPts && !ui.drag && !ui.scrub && !ui.from) return;
+  if (!ui.live && !ui.pathPts && !ui.drag && !ui.scrub && !ui.from && !ui.grab) return;
   const [x, y] = at(e);
+  if (ui.grab) { grabMove(x, y); return; }
   if (ui.scrub) { // the page follows the finger: drag left to turn on, right to turn back; half the book's width is a whole turn
     const sc = ui.scrub, dx = sc.x - x, now = performance.now();
     if (now > sc.lastT) sc.v = (sc.lastX - x) / (now - sc.lastT);
@@ -540,6 +566,7 @@ cv.addEventListener("pointermove", (e) => {
   else {
     const th = data.scene.things[ui.sel], dx = x - ui.drag.x, dy = y - ui.drag.y;
     if (!th) return;
+    if (ui.drag.size) { resizeThing(th, ui.drag.was, Math.hypot(x - th.x, y - th.y) / ui.drag.from); render(); return; }
     th.x = Math.max(0, Math.min(W, th.x + dx)); th.y = Math.max(0, Math.min(H, th.y + dy));
     if (th.path) th.path = th.path.map((v, i) => v + (i % 2 ? dy : dx)); // its path comes with it
     ui.drag = { x, y };
@@ -547,6 +574,7 @@ cv.addEventListener("pointermove", (e) => {
   render();
 });
 function lift() {
+  if (ui.grab) { grabEnd(); return; }
   if (ui.scrub) { const tn = ui.turn; letGo(!!tn && tn.hand && (tn.forward ? ui.scrub.v : -ui.scrub.v) > 0.5 && performance.now() - ui.scrub.lastT < 120); ui.scrub = null; return; } // a quick flick finishes the turn too
   if (ui.from) { // a shape or a sticker is put down
     const s2 = ui.live, big = s2 && (s2.ch || s2.fig || ui.reach > 8);
@@ -583,6 +611,7 @@ cv.addEventListener("pointercancel", lift);
 function startDraw(edit = -1) {
   if (edit < 0 && data.scene.things.length >= MAX_THINGS) { note(`That's ${MAX_THINGS} drawings, the most a scene can hold. Delete one to add another.`); return; }
   stopTune(); // a tune being tried stops when drawing starts (its Stop button is about to be hidden)
+  ui.pick = []; past = [];
   ui.state = "draw"; ui.edit = edit; ui.draft = edit >= 0 ? stageStrokes(data.scene.things[edit]) : [];
   paintLayer(A, ui.draft); note(""); paint(); render();
   if (matchMedia("(max-width: 700px)").matches) $("hint").scrollIntoView({ block: "start", behavior: "smooth" });
@@ -597,7 +626,7 @@ function endDraw(keep) {
     note(ui.edit >= 0 ? "" : "Now choose how it moves.");
     save();
   }
-  ui.state = "idle"; ui.edit = -1; ui.draft = [];
+  ui.state = "idle"; ui.edit = -1; ui.draft = []; ui.pick = [];
   paint(); render();
 }
 $("mainRow").addEventListener("click", (e) => {
@@ -624,6 +653,13 @@ $("moves").addEventListener("click", (e) => {
 $("acts").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"), th = sel(); if (b && th) { th.act = b.dataset.act; save(); paint(); } });
 $("speeds").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"), th = sel(); if (b && th) { th.speed = Number(b.dataset.speed); save(); paint(); } });
 $("face").addEventListener("change", () => { const th = sel(); if (th) { th.face = $("face").checked; save(); } });
+// a whole drawing grows or shrinks about its middle (its strokes are re-made, so it stays sharp)
+function resizeThing(th, from, k) {
+  const b = bbox(from), most = Math.min(8, 1500 / Math.max(b.w, b.h)), least = 24 / Math.max(b.w, b.h, 24);
+  th.s = scaled(from, Math.max(least, Math.min(most, k)));
+  layers.delete(th);
+}
+for (const [id, k] of [["tSmaller", 1 / 1.2], ["tBigger", 1.2]]) $(id).addEventListener("click", () => { const th = sel(); if (!th) return; resizeThing(th, th.s, k); save(); render(); });
 $("addTo").addEventListener("click", () => { if (sel()) startDraw(ui.sel); });
 $("toFront").addEventListener("click", () => { const th = sel(); if (!th) return; data.scene.things.splice(ui.sel, 1); data.scene.things.push(th); ui.sel = data.scene.things.length - 1; save(); render(); });
 $("copyThing").addEventListener("click", () => {
@@ -645,7 +681,8 @@ $("palette").addEventListener("click", (e) => { const b = e.target.closest(".sw"
 $("sizes").innerHTML = SIZES.map(([v, label]) => `<button class="g-chip sz" data-size="${v}" aria-label="${label}"><i style="width:${Math.min(26, v + 2)}px;height:${Math.min(26, v + 2)}px"></i></button>`).join("");
 $("sizes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.size = Number(b.dataset.size); save(); paint(); } });
 chips("tools", TOOLS, "tool");
-$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a sticker, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a sticker or a person to take it away." : ""); paint(); });
+$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a sticker, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a sticker or a person to take it away." : ui.tool === "move" ? "Tap something to pick it up, then drag it. Drag the round handle to make it bigger or smaller." : "");
+  ui.pick = []; paint(); });
 $("shapes").innerHTML = SHAPES.map(([v, label]) => `<button class="g-chip shp" data-shape="${v}" aria-label="${label}"><span aria-hidden="true">${SHAPE_ICON[v]}</span></button>`).join("");
 $("shapes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.shape = b.dataset.shape; paint(); } });
 // stickers: pick a set, then a sticker; sets that usually face left are mirrored so they face right
@@ -679,6 +716,57 @@ $("stickSets").addEventListener("click", (e) => { const b = e.target.closest(".g
 $("stickGrid").addEventListener("click", (e) => { const b = e.target.closest(".stk"); if (!b) return; if (b.dataset.fig) ui.person = b.dataset.fig; else ui.sticker = b.dataset.ch; paint(); });
 $("stickFlip").addEventListener("change", () => { ui.flip = $("stickFlip").checked; });
 stickerGrid();
+// ---------- the Move tool: pick up a line, shape, sticker or person; drag it, or drag its corner handle to resize ----------
+const keep = (idx) => idx.map((i) => { const s2 = strokes()[i]; return { s: s2, p: s2.p.slice(), w: s2.w }; });
+function redraw() { paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } render(); }
+function grabAt(x, y) {
+  const list = strokes(), box = pickBox();
+  if (box && onHandle(box, x, y)) { ui.grab = { size: true, ax: box.x0, ay: box.y0, from: Math.max(20, Math.hypot(x - box.x0, y - box.y0)), was: keep(picked()), moved: false }; return; }
+  const i = itemAt(list, x, y);
+  if (!ui.all) { ui.pick = i >= 0 ? [i] : []; paint(); }
+  if (i >= 0 || (ui.all && list.length)) ui.grab = { x, y, was: keep(picked()), moved: false };
+  render();
+}
+function grabMove(x, y) {
+  const gr = ui.grab;
+  if (gr.size) {
+    const k = Math.max(0.15, Math.min(8, Math.hypot(x - gr.ax, y - gr.ay) / gr.from));
+    gr.was.forEach((o) => { const [n] = scaled([{ ...o.s, p: o.p, w: o.w }], k, gr.ax, gr.ay); o.s.p = n.p; o.s.w = n.w; });
+  } else { const dx = x - gr.x, dy = y - gr.y; gr.was.forEach((o) => { o.s.p = o.p.map((v, i) => Math.round((v + (i % 2 ? dy : dx)) * 10) / 10); }); }
+  gr.moved = true;
+  paintLayer(A, strokes()); render();
+}
+function grabEnd() {
+  const gr = ui.grab; ui.grab = null;
+  if (gr.moved) { did({ k: "edit", was: gr.was }); if (!scene()) { thumb(ui.frame); save(); } }
+  render();
+}
+function resizePicked(k) {
+  const idx = picked(), box = pickBox();
+  if (!box) return;
+  const was = keep(idx);
+  was.forEach((o) => { const [n] = scaled([o.s], k, box.cx, box.cy); o.s.p = n.p; o.s.w = n.w; });
+  did({ k: "edit", was }); redraw();
+}
+$("mSmaller").addEventListener("click", () => resizePicked(1 / 1.2));
+$("mBigger").addEventListener("click", () => resizePicked(1.2));
+$("mCopy").addEventListener("click", () => {
+  const list = strokes(), idx = picked();
+  if (!idx.length) return;
+  const copies = idx.map((i) => { const c = JSON.parse(JSON.stringify(list[i])); c.p = c.p.map((v) => v + 30); return c; });
+  list.push(...copies); copies.forEach(() => did({ k: "add" }));
+  ui.all = false; ui.pick = copies.map((_, k) => list.length - copies.length + k);
+  paint(); redraw();
+});
+$("mRemove").addEventListener("click", () => {
+  const list = strokes(), gone = picked().map((i) => ({ i, s: list[i] }));
+  if (!gone.length) return;
+  for (let k = gone.length - 1; k >= 0; k -= 1) list.splice(gone[k].i, 1);
+  did({ k: "rub", gone, added: false }); ui.pick = [];
+  paint(); redraw();
+});
+$("moveAll").addEventListener("change", () => { ui.all = $("moveAll").checked; ui.pick = []; paint(); render(); });
+
 // Fill: colour in the top-most outline the tap is inside
 function fillAt(x, y) {
   const list = strokes(), i = fillTarget(list, x, y);
@@ -692,14 +780,16 @@ let past = [];
 function did(step) { past.push(step); if (past.length > 60) past.shift(); }
 function undo() {
   const list = strokes(), step = past.pop();
+  ui.pick = [];
   if (step && step.k === "fill" && list.includes(step.s)) { if (step.was) step.s.ff = step.was; else delete step.s.ff; }
+  else if (step && step.k === "edit") step.was.forEach((o) => { o.s.p = o.p; o.s.w = o.w; }); // put back where (and the size) it was
   else if (step && step.k === "rub") { if (step.added && list.length) list.pop(); step.gone.forEach(({ i, s: back }) => list.splice(Math.min(i, list.length), 0, back)); } // stickers the eraser took come back
   else if (list.length) list.pop();
   else return;
   paintLayer(A, list); if (!scene()) { thumb(ui.frame); save(); } render();
 }
 $("undo").addEventListener("click", undo);
-$("clear").addEventListener("click", () => { past = []; strokes().length = 0; paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } render(); });
+$("clear").addEventListener("click", () => { past = []; ui.pick = []; strokes().length = 0; paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } render(); });
 
 // ---------- flipbook ----------
 function thumb(i) {
@@ -717,6 +807,7 @@ function strip() {
   if (on) box.scrollLeft = Math.max(0, on.offsetLeft - box.clientWidth / 2 + on.offsetWidth / 2); // keep the open page in view without moving the whole screen
 }
 function syncFlip() {
+  ui.pick = []; past = [];
   ui.frame = Math.max(0, Math.min(ui.frame, data.flip.frames.length - 1));
   paintLayer(A, data.flip.frames[ui.frame]);
   if (ui.frame > 0) paintLayer(B, data.flip.frames[ui.frame - 1]);
