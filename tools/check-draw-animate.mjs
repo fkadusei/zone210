@@ -110,6 +110,20 @@ check(fl.frames.length >= 6 && fl.frames.every((f) => f.length && f.every(okStro
 
 // the flipbook's background music: every bar of every track has the right number of steps, and every note can be read
 const M = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/music.js")).href);
+{ // joints: a pinned stroke swings about its pin, and the pin goes with the stroke when it is moved, resized or turned
+  const arm = { c: "#000", w: 6, p: [100, 100, 100, 160], j: [100, 100], ja: 2 }, leg2 = { ...arm, jn: 1 };
+  const a0 = E.jointAngle(arm, 0.1), big = Math.max(...Array.from({ length: 40 }, (_, k) => Math.abs(E.jointAngle(arm, k / 40))));
+  check(Math.abs(big - E.JOINTS[2][1]) < 0.02 && Math.abs(E.jointAngle(leg2, 0.1) + a0) < 1e-9 && E.JOINTS.length === 3, "joints: a part swings as far as it is set to, and an opposite one swings the other way");
+  const [m] = E.shift([arm], 10, -20), [z] = E.scaled([arm], 2, 0, 0), [t] = E.turned([arm], Math.PI / 2, 100, 160);
+  check(m.j[0] === 110 && m.j[1] === 80 && z.j[0] === 200 && z.j[1] === 200 && Math.abs(t.j[0] - 160) < 0.2 && Math.abs(t.j[1] - 160) < 0.2 && !E.shift([{ c: "#000", w: 6, p: [0, 0] }], 1, 1)[0].j, "joints: the pin moves, grows and turns with its stroke");
+  const body = { c: "#000", w: 6, p: [100, 40, 100, 100] }, rub = { c: "#000", w: 30, e: 1, p: [100, 130, 101, 130] };
+  check(E.strokeNear([body, arm, rub], 103, 140) === 1 && E.strokeNear([body, arm], 100, 60) === 0 && E.strokeNear([body, arm], 300, 300) === -1 && E.jointReach(arm) > 30 && E.jointReach(body) === 0, "joints: a tap finds the nearest line, not the eraser, and a swinging part is given room");
+  const limb = { c: "#000", w: 6, p: [160, 130, 130, 115, 101, 99] }, tail = { c: "#000", w: 6, p: [100, 100, 60, 90, 20, 120] };
+  const h1 = E.hingeOf([body, limb, tail], 1), h2 = E.hingeOf([body, limb, tail], 2), h3 = E.hingeOf([limb], 0);
+  check(h1[0] === 101 && h1[1] === 99 && h2[0] === 100 && h2[1] === 100 && h3[0] === 160 && h3[1] === 130, "joints: the pin lands on the end of the part that touches the body, whichever way the part was drawn");
+  const th = E.makeThing([body, arm]);
+  check(th.s[1].j && Math.abs(th.s[1].j[0] - th.s[1].p[0]) < 0.01 && Math.abs(th.s[1].j[1] - th.s[1].p[1]) < 0.01, "joints: the pin stays on its part when the drawing becomes a thing");
+}
 const ST = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/stickers.js")).href);
 { // stickers that move by themselves: small, finite movements, and nothing for a still picture
   const all = ST.STICKERS.flatMap((k) => k.list), moving = all.filter((ch) => ST.stickerMoves(ch));

@@ -81,3 +81,6 @@
 #toneRows .palette { gap: 6px; }
 .sw.mixed.own { background: conic-gradient(#e5484d 0 17%, #f5a623 0 33%, #f5d90a 0 50%, #2fb36d 0 67%, #3b82f6 0 83%, #8a5ce0 0); }
 @media (max-width: 520px) { #toneRows .sw { width: 25px; height: 25px; } #toneRows .palette { gap: 5px; flex-wrap: nowrap; } }
+/* the Joints tool */
+#jointRow { display: grid; gap: 10px; }
+#jAdd[aria-pressed="true"] { border-color: var(--gold); background: var(--gold-soft); }

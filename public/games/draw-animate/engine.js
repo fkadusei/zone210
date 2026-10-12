@@ -7,6 +7,7 @@
 //   r     how far a sticker or person has been turned (radians)
 // A "thing" is a little drawing with its own movement: { s: strokes (measured from its middle), x, y (where its middle
 // sits), move, act, speed, face, path }.
+const TAU = Math.PI * 2;
 export const W = 800, H = 600;
 export const MOVES = [["stay", "Stay put"], ["side", "Side to side"], ["updown", "Up and down"], ["circle", "Round in a circle"], ["path", "Follow my path"]];
 export const ACTS = [["none", "Nothing else"], ["bounce", "Bounce"], ["spin", "Spin"], ["wiggle", "Wiggle"], ["pulse", "Grow and shrink"]];
@@ -18,15 +19,18 @@ export function bbox(strokes) {
   for (const s of strokes) { if (s.e) continue; const h = s.ch ? s.w * (s.r ? 0.72 : 0.62) : s.fig ? s.w * (s.r ? 0.6 : 0.56) : s.w / 2; for (let i = 0; i < s.p.length; i += 2) { x0 = Math.min(x0, s.p[i] - h); x1 = Math.max(x1, s.p[i] + h); y0 = Math.min(y0, s.p[i + 1] - h); y1 = Math.max(y1, s.p[i + 1] + h); } }
   return x0 === Infinity ? null : { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
 }
-export const shift = (strokes, dx, dy) => strokes.map((s) => ({ ...s, p: s.p.map((v, i) => Math.round((v + (i % 2 ? dy : dx)) * 10) / 10) }));
+const r1 = (v) => Math.round(v * 10) / 10;
+// a stroke's joint (the pin it swings from, see JOINTS below) goes wherever the stroke goes
+export const shift = (strokes, dx, dy) => strokes.map((s) => ({ ...s, p: s.p.map((v, i) => r1(v + (i % 2 ? dy : dx))), ...(s.j ? { j: [r1(s.j[0] + dx), r1(s.j[1] + dy)] } : {}) }));
 /** Strokes made k times bigger (or smaller) about the point (ox, oy): their lines get thicker or thinner to match. */
-export const scaled = (strokes, k, ox = 0, oy = 0) => strokes.map((s) => ({ ...s, w: Math.max(s.ch || s.fig ? 14 : 1, Math.round(s.w * k * 10) / 10), p: s.p.map((v, i) => Math.round(((i % 2 ? oy : ox) + (v - (i % 2 ? oy : ox)) * k) * 10) / 10) }));
+export const scaled = (strokes, k, ox = 0, oy = 0) => strokes.map((s) => ({ ...s, w: Math.max(s.ch || s.fig ? 14 : 1, Math.round(s.w * k * 10) / 10), p: s.p.map((v, i) => Math.round(((i % 2 ? oy : ox) + (v - (i % 2 ? oy : ox)) * k) * 10) / 10), ...(s.j ? { j: [r1(ox + (s.j[0] - ox) * k), r1(oy + (s.j[1] - oy) * k)] } : {}) }));
 /** Strokes turned by `angle` (radians, clockwise on screen) about the point (ox, oy). A sticker or person keeps its own turn in `r`. */
 export function turned(strokes, angle, ox = 0, oy = 0) {
   const c = Math.cos(angle), n = Math.sin(angle), r1 = (v) => Math.round(v * 10) / 10;
   return strokes.map((s) => {
     const p = []; for (let i = 0; i < s.p.length; i += 2) { const dx = s.p[i] - ox, dy = s.p[i + 1] - oy; p.push(r1(ox + dx * c - dy * n), r1(oy + dx * n + dy * c)); }
-    return s.ch || s.fig ? { ...s, p, r: Math.round(((s.r || 0) + (s.m ? -angle : angle)) * 1000) / 1000 } : { ...s, p };
+    const j = s.j ? { j: [r1(ox + (s.j[0] - ox) * c - (s.j[1] - oy) * n), r1(oy + (s.j[0] - ox) * n + (s.j[1] - oy) * c)] } : {};
+    return s.ch || s.fig ? { ...s, p, ...j, r: Math.round(((s.r || 0) + (s.m ? -angle : angle)) * 1000) / 1000 } : { ...s, p, ...j };
   });
 }
 /** The top-most stroke, shape, sticker or person at a point (its place in the list), or -1. Erasing is passed over. */
@@ -34,6 +38,50 @@ export function itemAt(strokes, x, y, slack = 10) {
   for (let i = strokes.length - 1; i >= 0; i -= 1) { if (strokes[i].e) continue; const b = bbox([strokes[i]]); if (b && x >= b.x0 - slack && x <= b.x1 + slack && y >= b.y0 - slack && y <= b.y1 + slack) return i; }
   return -1;
 }
+
+// ---------- joints: parts of a pen drawing that bend ----------
+// A stroke with a joint has j: [x, y] (the pin it swings from), ja (how far: an index into JOINTS), jn (1 if it
+// swings the opposite way to the others, as a second leg does) and jg, the number of its joint: strokes with the
+// same jg share a pin and swing together.
+export const JOINTS = [["A little", 0.2], ["Some", 0.42], ["A lot", 0.75]];
+/** The angle (radians) a jointed stroke is turned by at time t seconds. */
+export const jointAngle = (s, t) => (JOINTS[s.ja] || JOINTS[1])[1] * Math.sin(t * TAU * 1.4 + (s.jn ? Math.PI : 0));
+/** How far outside its resting box a jointed stroke can reach as it swings. */
+export function jointReach(s) {
+  if (!s.j) return 0;
+  let far = 0; for (let i = 0; i < s.p.length; i += 2) far = Math.max(far, Math.hypot(s.p[i] - s.j[0], s.p[i + 1] - s.j[1]));
+  return (far + (s.ch || s.fig ? s.w * 0.6 : s.w / 2)) * Math.min(1, (JOINTS[s.ja] || JOINTS[1])[1] * 1.1);
+}
+/**
+ * Where a part joins the rest of the drawing: the point of stroke `i` that is nearest to any other stroke.
+ * An arm's is its shoulder, a leg's its hip. `skip(stroke)` leaves strokes out (the part's own hand or foot).
+ */
+export function hingeOf(strokes, i, skip = () => false) {
+  const s = strokes[i]; let best = [s.p[0], s.p[1]], bestD = Infinity;
+  const some = (p) => { const step = Math.max(2, Math.ceil(p.length / 160) * 2), at = []; for (let a = 0; a < p.length; a += step) at.push(a); if (at[at.length - 1] !== p.length - 2) at.push(p.length - 2); return at; }; // a long stroke is sampled, always with both its ends
+  const others = strokes.filter((o, k) => k !== i && !o.e && !skip(o)).map((o) => [o, some(o.p)]);
+  for (const a of some(s.p)) for (const [o, at] of others) for (const b of at) { const d = Math.hypot(s.p[a] - o.p[b], s.p[a + 1] - o.p[b + 1]); if (d < bestD) { bestD = d; best = [s.p[a], s.p[a + 1]]; } }
+  return [Math.round(best[0]), Math.round(best[1])];
+}
+/** The stroke nearest a point (its place in the list) if it is within reach, or -1. A tap inside a coloured-in shape, a sticker or a person counts as touching it. */
+export function strokeNear(strokes, x, y, reach = 22) {
+  let best = -1, bestD = Infinity;
+  strokes.forEach((s, i) => {
+    if (s.e) return;
+    let d = Infinity;
+    if (s.ch || s.fig) { const b = bbox([s]); d = x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1 ? 0 : Infinity; }
+    else if (s.ff && s.p.length >= 6 && inside(s.p, x, y)) d = 0;
+    else if (s.p.length === 2) d = Math.hypot(x - s.p[0], y - s.p[1]) - s.w / 2;
+    else for (let k = 0; k < s.p.length - 2; k += 2) {
+      const ax = s.p[k], ay = s.p[k + 1], bx = s.p[k + 2], by = s.p[k + 3], len = (bx - ax) ** 2 + (by - ay) ** 2;
+      const u = len ? Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / len)) : 0;
+      d = Math.min(d, Math.hypot(x - ax - u * (bx - ax), y - ay - u * (by - ay)) - s.w / 2);
+    }
+    if (d <= reach && d <= bestD) { best = i; bestD = d; } // <= so that, of two equally near, the one on top wins
+  });
+  return best;
+}
+
 /** Strokes drawn on the stage become a thing: its strokes are re-measured from the middle of its box. */
 export function makeThing(strokes, old = {}) {
   const b = bbox(strokes);
@@ -111,7 +159,6 @@ export function pointAt(p, d) {
 /** A path whose end is near its start goes round and round; any other path goes there and back. */
 export const isLoop = (p) => p.length >= 8 && Math.hypot(p[0] - p[p.length - 2], p[1] - p[p.length - 1]) < 45;
 
-const TAU = Math.PI * 2;
 /**
  * Where a thing is at time t (seconds): { x, y, rot, sx, sy, flip }. `i` is its place in the list, used to start each
  * thing at a slightly different moment so they don't all move in step. At t = null it is at rest.
