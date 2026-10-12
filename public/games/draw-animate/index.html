@@ -84,6 +84,9 @@
 
       <section class="g-panel" id="scenePanel" aria-label="Scene">
         <div class="opt"><span class="lbl">Background</span><div class="g-chips" id="bgs" role="group" aria-label="Background"></div></div>
+        <div class="opt"><span class="lbl">Music</span>
+          <select id="stune" class="pick tunepick" aria-label="Background music for the scene"></select>
+          <button class="g-btn ghost listenbtn" id="slisten">🎧 Listen</button></div>
         <div class="row left"><button class="g-btn ghost" id="exScene">🎁 Show me an example</button><button class="g-btn ghost" id="newScene">Start again</button></div>
       </section>
 
@@ -91,8 +94,8 @@
         <div class="opt"><span class="lbl">This page's background</span><div class="g-chips" id="fbgs" role="group" aria-label="Background of this page"></div>
           <button class="g-btn ghost" id="bgAll">Use on every page</button></div>
         <div class="opt"><span class="lbl">Music</span>
-          <select id="tune" class="pick" aria-label="Background music"></select>
-          <button class="g-btn ghost" id="listen">🎧 Listen</button></div>
+          <select id="tune" class="pick tunepick" aria-label="Background music for the flipbook"></select>
+          <button class="g-btn ghost listenbtn" id="listen">🎧 Listen</button></div>
         <div class="opt"><span class="lbl">Speed</span><div class="g-chips" id="fps" role="group" aria-label="Playback speed"></div>
           <label class="tick"><input type="checkbox" id="onion"> Show the page before, faintly</label></div>
         <div class="row left"><button class="g-btn ghost" id="exFlip">🎁 Show me an example</button><button class="g-btn ghost" id="newFlip">Start again</button></div>
@@ -108,7 +111,7 @@
           <li><b>Flipbook:</b> draw a page, tap <b>New page</b>, and draw the next one a tiny bit different. The faint picture shows the page before. Press Play to flip through them.</li>
           <li><b>Copy page</b> is the quick way: copy, then change just one small thing. <b>Delete page</b> removes the page you are on; you can put it straight back if you change your mind.</li>
           <li>Each page can have its own background. Pick one for the page you are on, or tap <b>Use on every page</b> to give them all the same one. A new page starts with the background of the page before it.</li>
-          <li><b>Music:</b> choose a tune for your flipbook, such as Adventure, Spooky or Chase. It plays while the book plays. Tap Listen to try one first.</li>
+          <li><b>Music:</b> choose a tune, such as Adventure, Spooky or Chase. It plays while your animation plays. Tap Listen to try one first. Your scene and your flipbook each keep their own tune.</li>
           <li>Press Play and your pages become a little book that flips by itself. To turn a page yourself, drag it across: left to go on, right to go back. Let go and it lands. Or slide the thumb slider to go through the pages one by one.</li>
           <li>Your work is saved on this device. <b>Save video</b> records a few seconds of your animation to keep or share.</li>
         </ul>

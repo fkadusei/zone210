@@ -196,7 +196,7 @@ function render(t = null) {
 function fit() { SCALE = saverOn() ? 1 : 2; cv.width = W * SCALE; cv.height = H * SCALE; render(); }
 window.addEventListener("z210:saver", fit);
 window.addEventListener("pagehide", () => stopTune());
-window.addEventListener("z210:audio-reset", () => { stopTune(); if (ui.state === "play" && !scene()) startMusic(); }); // the phone's audio was restarted (sound.js)
+window.addEventListener("z210:audio-reset", () => { stopTune(); if (ui.state === "play") startMusic(); }); // the phone's audio was restarted (sound.js)
 
 // ---------- the sound of a page flicking over: a short hiss of paper, brighter when the pages go by fast ----------
 let paper = null;
@@ -213,9 +213,10 @@ function flick(quick) {
   if (!quick) { const o = ac.createOscillator(), og = ac.createGain(); o.frequency.setValueAtTime(190, t + len * 0.75); o.frequency.exponentialRampToValueAtTime(90, t + len + 0.05); og.gain.setValueAtTime(0.0001, t + len * 0.75); og.gain.exponentialRampToValueAtTime(0.05, t + len * 0.8); og.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.06); o.connect(og).connect(ac.destination); o.start(t + len * 0.75); o.stop(t + len + 0.08); } // a soft pat as it lands
 }
 
-// ---------- background music for the flipbook (music.js): the tune the child picked plays while the book does ----------
+// ---------- background music (music.js): the scene and the flipbook each remember their own tune, which plays while they play ----------
+const work = () => (scene() ? data.scene : data.flip);
 function startMusic() {
-  const id = data.flip.music;
+  const id = work().music;
   if (data.muted || !id || id === "none") { stopTune(); return; }
   playTune(id, window.z210Audio && window.z210Audio.get(), 0.5);
 }
@@ -283,7 +284,7 @@ function play() {
   if (ui.state === "draw" || ui.state === "path") return;
   if (scene() && !data.scene.things.length) { note("Draw something first, then press Play."); return; }
   ui.state = "play"; ui.t0 = performance.now();
-  if (!scene()) startMusic();
+  startMusic();
   if (!scene()) { cur = A; oth = B; ui.turn = null; ui.auto = true; ui.want = null; ui.page = 0; ui.lastTurn = performance.now(); wholePage(cur, 0); $("thumb").max = data.flip.frames.length - 1; $("thumb").value = 0; }
   let skip = false;
   const tick = (now) => {
@@ -342,9 +343,9 @@ function paint() {
   press("bgs", "bg", data.scene.bg);
   press("fbgs", "bg", bgOf(ui.frame));
   press("fps", "fps", data.flip.fps);
-  $("tune").value = data.flip.music && TUNES.some((t) => t.id === data.flip.music) ? data.flip.music : "none";
-  $("listen").disabled = $("tune").value === "none";
-  $("listen").textContent = playingTune() && ui.state !== "play" ? "⏹ Stop" : "🎧 Listen";
+  const tuneId = TUNES.some((t) => t.id === work().music) ? work().music : "none";
+  document.querySelectorAll(".tunepick").forEach((el) => { el.value = tuneId; });
+  document.querySelectorAll(".listenbtn").forEach((el) => { el.disabled = tuneId === "none"; el.textContent = playingTune() && ui.state !== "play" ? "⏹ Stop" : "🎧 Listen"; });
   $("mute").textContent = data.muted ? "🔇 Sound off" : "🔊 Sound on"; $("mute").setAttribute("aria-pressed", String(!data.muted));
   $("onion").checked = !!data.flip.onion;
   if (th) { press("moves", "move", th.move); press("acts", "act", th.act); press("speeds", "speed", th.speed); $("face").checked = !!th.face; }
@@ -415,6 +416,7 @@ cv.addEventListener("pointercancel", lift);
 // ---------- bring it to life ----------
 function startDraw(edit = -1) {
   if (edit < 0 && data.scene.things.length >= MAX_THINGS) { note(`That's ${MAX_THINGS} drawings, the most a scene can hold. Delete one to add another.`); return; }
+  stopTune(); // a tune being tried stops when drawing starts (its Stop button is about to be hidden)
   ui.state = "draw"; ui.edit = edit; ui.draft = edit >= 0 ? stageStrokes(data.scene.things[edit]) : [];
   paintLayer(A, ui.draft); note(""); paint(); render();
   if (matchMedia("(max-width: 700px)").matches) $("hint").scrollIntoView({ block: "start", behavior: "smooth" });
@@ -450,7 +452,7 @@ const sel = () => data.scene.things[ui.sel];
 $("moves").addEventListener("click", (e) => {
   const b = e.target.closest(".g-chip"), th = sel();
   if (!b || !th) return;
-  if (b.dataset.move === "path") { ui.state = "path"; ui.pathPts = null; note(""); paint(); render(); return; }
+  if (b.dataset.move === "path") { stopTune(); ui.state = "path"; ui.pathPts = null; note(""); paint(); render(); return; }
   th.move = b.dataset.move; save(); paint(); render();
 });
 $("acts").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"), th = sel(); if (b && th) { th.act = b.dataset.act; save(); paint(); } });
@@ -468,8 +470,8 @@ $("copyThing").addEventListener("click", () => {
 });
 $("delThing").addEventListener("click", () => { if (!sel()) return; data.scene.things.splice(ui.sel, 1); ui.sel = -1; save(); paint(); render(); });
 $("bgs").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.scene.bg = b.dataset.bg; save(); paint(); render(); } });
-$("exScene").addEventListener("click", () => { if (data.scene.things.length && !confirm("Swap your scene for the example? Your drawings here will be removed.")) return; data.scene = exampleScene(); ui.sel = -1; save(); paint(); render(); note("Press Play! Then tap a drawing to see how it was set up."); });
-$("newScene").addEventListener("click", () => { if (data.scene.things.length && !confirm("Clear this scene and start again?")) return; data.scene = { bg: data.scene.bg, things: [] }; ui.sel = -1; save(); paint(); render(); });
+$("exScene").addEventListener("click", () => { if (data.scene.things.length && !confirm("Swap your scene for the example? Your drawings here will be removed.")) return; data.scene = { ...exampleScene(), music: data.scene.music }; ui.sel = -1; save(); paint(); render(); note("Press Play! Then tap a drawing to see how it was set up."); });
+$("newScene").addEventListener("click", () => { if (data.scene.things.length && !confirm("Clear this scene and start again?")) return; data.scene = { bg: data.scene.bg, things: [], music: data.scene.music }; ui.sel = -1; save(); paint(); render(); });
 
 // ---------- drawing tools ----------
 $("palette").innerHTML = COLORS.map((c, i) => `<button class="sw" data-c="${c}" style="background:${c}" aria-label="${COLOR_NAMES[i]}"></button>`).join("");
@@ -530,21 +532,24 @@ $("onion").addEventListener("change", () => { data.flip.onion = $("onion").check
 $("exFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Swap your flipbook for the example? Your pages here will be removed.")) return; data.flip = { ...exampleFlip(), music: data.flip.music }; evenBgs(); ui.frame = 0; save(); syncFlip(); paint(); render(); note("Press Play! Then look through the pages to see how each one changes."); });
 $("newFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Clear this flipbook and start again?")) return; data.flip = { frames: [[]], fps: data.flip.fps, onion: data.flip.onion, bgs: [bgOf(ui.frame)], music: data.flip.music }; ui.frame = 0; save(); syncFlip(); paint(); render(); });
 
-$("mute").addEventListener("click", () => { data.muted = !data.muted; save(); if (data.muted) stopTune(); else if (ui.state === "play" && !scene()) startMusic(); else flick(false); paint(); });
-$("tune").innerHTML = `<option value="none">No music</option>` + [...new Set(TUNES.map((t) => t.group))].map((g) => `<optgroup label="${g}">${TUNES.filter((t) => t.group === g).map((t) => `<option value="${t.id}">${t.emoji} ${t.name}</option>`).join("")}</optgroup>`).join("");
-$("tune").addEventListener("change", () => {
-  data.flip.music = $("tune").value; save();
-  if (playingTune()) { if (ui.state === "play") startMusic(); else listen(true); } // already sounding: switch to the new tune
-  paint();
-});
-// "Listen" tries the tune without playing the book
+$("mute").addEventListener("click", () => { data.muted = !data.muted; save(); if (data.muted) stopTune(); else if (ui.state === "play") startMusic(); else flick(false); paint(); });
+const tuneMenu = `<option value="none">No music</option>` + [...new Set(TUNES.map((t) => t.group))].map((g) => `<optgroup label="${g}">${TUNES.filter((t) => t.group === g).map((t) => `<option value="${t.id}">${t.emoji} ${t.name}</option>`).join("")}</optgroup>`).join("");
+// "Listen" tries the tune without playing the animation
 function listen(on) {
-  const id = data.flip.music;
+  const id = work().music;
   if (!on || !id || id === "none") { stopTune(); paint(); return; }
   if (data.muted) { note("Sound is off. Tap “Sound off” at the top to turn it on."); return; }
   playTune(id, window.z210Audio && window.z210Audio.get(), 0.5); paint();
 }
-$("listen").addEventListener("click", () => listen(!playingTune()));
+document.querySelectorAll(".tunepick").forEach((el) => {
+  el.innerHTML = tuneMenu;
+  el.addEventListener("change", () => {
+    work().music = el.value; save();
+    if (playingTune()) { if (ui.state === "play") startMusic(); else listen(true); } // already sounding: switch to the new tune
+    paint();
+  });
+});
+document.querySelectorAll(".listenbtn").forEach((el) => el.addEventListener("click", () => listen(!playingTune())));
 $("modes").addEventListener("click", (e) => {
   const b = e.target.closest(".g-chip");
   if (!b || b.dataset.mode === data.mode) return;
