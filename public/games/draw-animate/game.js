@@ -5,7 +5,7 @@
 import { canSharePhotos, onTouchDevice, toPhotos, download } from "../../assets/save-image.js";
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS } from "./stickers.js";
-import { PEOPLE, CHARACTERS, SKINS, HAIRS, drawPerson } from "./people.js";
+import { PEOPLE, CHARACTERS, ANIMALS, SKINS, HAIRS, drawPerson } from "./people.js";
 import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
@@ -503,6 +503,9 @@ function paint() {
   const drawnSet = !!(STICKERS.find((k) => k.id === ui.set) || {}).drawn;
   document.querySelectorAll("#stickGrid .stk").forEach((b) => b.setAttribute("aria-pressed", String(drawnSet ? b.dataset.fig === ui.person : b.dataset.ch === ui.sticker)));
   $("toneRows").hidden = !drawnSet;
+  const beasts = (STICKERS.find((k) => k.id === ui.set) || {}).drawn === "animals";
+  $("skinRow").hidden = beasts; $("hairRow").hidden = beasts;
+  $("topLbl").textContent = beasts ? "Colour" : "Top"; $("botLbl").textContent = beasts ? "Second" : "Bottom";
   document.querySelectorAll("#skins .sw").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.sk) === (data.skin ?? 2))));
   document.querySelectorAll("#hairs .sw").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.hc) === (data.hair ?? -1))));
   document.querySelectorAll("#tops .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === (data.top || ""))));
@@ -705,10 +708,10 @@ const sticker = (x, y) => {
 function stickerGrid() {
   const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0];
   if (set.drawn) { // hand-drawn people and characters: a little picture of each, in the chosen skin tone and colours
-    const figures = set.drawn === "characters" ? CHARACTERS : PEOPLE;
+    const figures = set.drawn === "characters" ? CHARACTERS : set.drawn === "animals" ? ANIMALS : PEOPLE;
     if (!figures.some((d) => d.id === ui.person)) ui.person = figures[0].id;
     $("stickGrid").innerHTML = figures.map((d) => `<button class="stk person" data-fig="${d.id}" aria-label="${d.name}" aria-pressed="false"><canvas width="112" height="140" aria-hidden="true"></canvas></button>`).join("");
-    $("stickGrid").querySelectorAll(".stk").forEach((b) => { const g = b.querySelector("canvas").getContext("2d"); g.translate(56, 70); drawPerson(g, { fig: b.dataset.fig, sk: data.skin ?? 2, hc: data.hair ?? -1, tc: data.top, bc: data.bot }, 128); });
+    $("stickGrid").querySelectorAll(".stk").forEach((b) => { const g = b.querySelector("canvas").getContext("2d"); g.translate(56, 70); drawPerson(g, { fig: b.dataset.fig, sk: data.skin ?? 2, hc: data.hair ?? -1, tc: data.top, bc: data.bot }, set.drawn === "people" ? 128 : 108); });
   } else {
     $("stickGrid").innerHTML = set.list.map((ch) => `<button class="stk" data-ch="${ch}" aria-pressed="false">${ch}</button>`).join("");
     if (!set.list.includes(ui.sticker)) ui.sticker = set.list[0];
@@ -725,7 +728,7 @@ for (const [id, key, word] of [["tops", "top", "top"], ["bots", "bot", "bottom"]
 $("skins").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data.skin = Number(b.dataset.sk); save(); stickerGrid(); paint(); } });
 $("hairs").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data.hair = Number(b.dataset.hc); save(); stickerGrid(); paint(); } });
 $("stickSets").innerHTML = STICKERS.map((k) => `<button class="g-chip" data-set="${k.id}"><span aria-hidden="true">${k.icon}</span> ${k.name}</button>`).join("");
-$("stickSets").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.set = b.dataset.set; ui.flip = false; stickerGrid(); paint(); } });
+$("stickSets").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.set = b.dataset.set; ui.flip = false; stickerGrid(); paint(); const row = $("stickSets"); row.scrollLeft = Math.max(0, b.offsetLeft - row.clientWidth / 2 + b.offsetWidth / 2); } }); // keep the chosen kind in view on a narrow screen
 $("stickGrid").addEventListener("click", (e) => { const b = e.target.closest(".stk"); if (!b) return; if (b.dataset.fig) ui.person = b.dataset.fig; else ui.sticker = b.dataset.ch; paint(); });
 $("stickFlip").addEventListener("change", () => { ui.flip = $("stickFlip").checked; });
 stickerGrid();

@@ -3,6 +3,7 @@
 export const STICKERS = [
   { id: "drawn", name: "Drawn people", icon: "🧑‍🎨", drawn: "people", list: [] }, // hand-drawn figures from people.js, in any skin tone
   { id: "chars", name: "Drawn characters", icon: "🎅", drawn: "characters", list: [] }, // Santa, a wizard, a pirate… drawn the same way
+  { id: "beasts", name: "Drawn animals", icon: "🐻", drawn: "animals", list: [] }, // hand-drawn animals (animals.js)
   { id: "people", name: "Emoji people", icon: "🧍", turn: true, list: ["🧍", "🚶", "🏃", "💃", "🕺", "🤸", "⛹️", "🏄", "🚴", "🏊", "🧒", "👧", "👦", "👶", "🧑", "👩", "👨", "👵", "👴", "🧑‍🚀", "🧑‍🚒", "🧑‍🍳", "🧑‍🎨", "🧑‍⚕️", "🦸", "🧙", "🧚", "🧜", "👸", "🤴", "🥷", "🤖"] },
   { id: "story", name: "Emoji characters", icon: "🧙", turn: true, list: ["🎅", "🤶", "🧑‍🎄", "🧝", "🧙", "🧚", "🧜", "🧛", "🧟", "🧞", "🦸", "🦹", "🥷", "👸", "🤴", "🫅", "🤡", "👼", "💂", "🕵️", "👮", "👷", "🧑‍🚀", "☃️", "👻", "👽", "🤖", "🎃", "🦄", "🐉", "🧌", "🦖"] },
   { id: "pets", name: "Pets", icon: "🐶", turn: true, list: ["🐶", "🐕", "🐩", "🐱", "🐈", "🐹", "🐰", "🐇", "🐭", "🐦", "🦜", "🐠", "🐟", "🐢", "🦎", "🐍", "🐴", "🐎", "🐷", "🐮", "🐔", "🐥", "🦆", "🐑"] },

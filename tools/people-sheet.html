@@ -5,8 +5,8 @@
 <title>Drawn people</title>
 <body style="margin:0;background:#fffdf6"><canvas id="c" width="1500" height="1900"></canvas>
 <script type="module">
-  import { PEOPLE as ORDINARY, CHARACTERS, drawPerson } from "../public/games/draw-animate/people.js";
-  const PEOPLE = new URLSearchParams(location.search).has("characters") ? CHARACTERS : ORDINARY; // add ?characters to see the story characters
+  import { PEOPLE as ORDINARY, CHARACTERS, ANIMALS, drawPerson } from "../public/games/draw-animate/people.js";
+  const q = new URLSearchParams(location.search), PEOPLE = q.has("characters") ? CHARACTERS : q.has("animals") ? ANIMALS : ORDINARY; // add ?characters or ?animals
   const g = document.getElementById("c").getContext("2d");
   PEOPLE.forEach((d, i) => { const col = i % 8, row = Math.floor(i / 8); // eight to a row for (let k = 0; k < 2; k += 1) { g.save(); g.translate(95 + col * 185, 125 + row * 480 + k * 235); drawPerson(g, { fig: d.id, sk: (i + k * 3) % 6, hc: -1 }, 210); g.restore(); } });
 </script></body>

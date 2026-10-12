@@ -63,7 +63,7 @@ check(PP.PEOPLE.every((d) => d.name && /^#[0-9a-f]{6}$/.test(d.top) && /^#[0-9a-
 { // drawing each one with a stand-in canvas must not throw (catches a pose that is missing)
   const stub = new Proxy({}, { get: (t, k) => (k in t ? t[k] : () => stub), set: (t, k, v) => { t[k] = v; return true; } });
   let threw = "";
-  for (const d of [...PP.PEOPLE, ...PP.CHARACTERS]) for (let sk = 0; sk < 6; sk += 1) { try { PP.drawPerson(stub, { fig: d.id, sk, hc: -1 }, 100); } catch (err) { threw = `${d.id}: ${err.message}`; } }
+  for (const d of [...PP.PEOPLE, ...PP.CHARACTERS, ...PP.ANIMALS]) for (let sk = 0; sk < 6; sk += 1) { try { PP.drawPerson(stub, { fig: d.id, sk, hc: -1 }, 100); } catch (err) { threw = `${d.id}: ${err.message}`; } }
   check(!threw, `people: every figure can be drawn in every skin tone (${threw})`);
 }
 { // the eraser takes away a sticker it passes over the middle of, and leaves one it only brushes
@@ -94,6 +94,7 @@ check(PP.PEOPLE.every((d) => d.name && /^#[0-9a-f]{6}$/.test(d.top) && /^#[0-9a-
   check(Math.abs(round[0].p[0] - 100) < 0.5 && Math.abs(round[0].p[1]) < 0.5, "four quarter turns come back to the start");
   check(E.turned(sq, 1)[0].w === 10 && E.turned(sq, 1)[0].r === undefined, "turning leaves a line's thickness alone");
 }
+check(PP.ANIMALS.length >= 15 && new Set([...PP.PEOPLE, ...PP.CHARACTERS, ...PP.ANIMALS].map((d) => d.id)).size === PP.PEOPLE.length + PP.CHARACTERS.length + PP.ANIMALS.length && PP.ANIMALS.every((d) => d.name && /^#[0-9a-f]{6}$/.test(d.top) && /^#[0-9a-f]{6}$/.test(d.bot)), "animals: different ids from everything else, each with two colours");
 check(PP.CHARACTERS.length >= 12 && new Set([...PP.PEOPLE, ...PP.CHARACTERS].map((d) => d.id)).size === PP.PEOPLE.length + PP.CHARACTERS.length && PP.personById("santa").name === "Santa Claus", "characters: different ids from the people, and Santa is among them");
 const who = E.bbox([{ fig: "wave1", sk: 3, hc: -1, w: 200, p: [300, 300] }]); check(who && who.h >= 200 && who.cy === 300, "a drawn person has a box around it");
 check(E.fillTarget([{ fig: "wave1", sk: 3, hc: -1, w: 400, p: [300, 300] }], 300, 300) === -1, "the Fill tool passes over a drawn person");
