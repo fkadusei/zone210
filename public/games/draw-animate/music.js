@@ -1,16 +1,18 @@
 /**
- * Background music for Draw & Animate, made in the browser (Web Audio): twelve short original tunes that loop, eight
- * in film styles and four others. Nothing is downloaded and nothing is copied from a real film.
+ * Background music for Draw & Animate, made in the browser (Web Audio): twenty-four short original tunes that loop,
+ * sixteen in film styles and eight others. Nothing is downloaded and nothing is copied from a real film.
  *
  * A tune is a few tracks. Each track is a line of steps, bars separated by "|":
  *   "."            rest
  *   "C4"           a note (letter, optional # or b, octave)        "C4:3" lasts three steps
  *   "C4+E4+G4"     notes together (a chord)
  *   drums:         k kick, s snare, h hi-hat, c clap, w woodblock, together as in "kh"
- * `div` is steps per beat (2 = eighth notes, 4 = sixteenths) and `bpb` beats per bar.
+ * `div` is steps per beat (2 = eighth notes, 3 = triplets, 4 = sixteenths) and `bpb` beats per bar. `swing` (0 to 0.5)
+ * makes every second step late, for a jazz lilt.
  * tools/check-draw-animate.mjs checks every bar has the right number of steps and every note can be read.
  */
 const rep = (bar, n) => Array(n).fill(bar).join(" | ");
+const x = (unit, n) => Array(n).fill(unit).join(" "); // the same few steps several times within one bar
 const R8 = ". . . . . . . .", R16 = `${R8} ${R8}`;
 const hold = (chord, steps) => `${chord}:${steps} ${Array(steps - 1).fill(".").join(" ")}`;
 
@@ -60,6 +62,50 @@ export const TUNES = [
     { inst: "organ", vol: 0.3, steps: `${R8} | ${R8} | ${R8} | . . . . . D4+F4+A4+C#5:3 . .` },
     { inst: "drums", vol: 0.5, steps: rep(". . c . . . c .", 4) },
   ] },
+  { id: "pirate", group: "Movie music", name: "Pirate", emoji: "🏴‍☠️", bpm: 104, bpb: 2, div: 3, tracks: [
+    { inst: "organ", vol: 0.5, steps: "D5 . F5 A5 . F5 | D5 . E5 F5:3 . . | E5 . G5 C5 . E5 | D5:5 . . . . A4 | F5 . A5 C6 . A5 | G5 . E5 C5:3 . . | D5 . F5 E5 . C#5 | D5:6 . . . . ." },
+    { inst: "pluck", vol: 0.34, steps: [rep(". . D4+F4+A4 . . D4+F4+A4", 2), ". . C4+E4+G4 . . C4+E4+G4", ". . D4+F4+A4 . . D4+F4+A4", ". . C4+F4+A4 . . C4+F4+A4", ". . C4+E4+G4 . . C4+E4+G4", ". . D4+F4+A4 . . A3+C#4+E4", ". . D4+F4+A4 . . ."].join(" | ") },
+    { inst: "bass", vol: 0.3, steps: [rep("D2 . . A2 . .", 2), "C3 . . G2 . .", "D2 . . A2 . .", "F2 . . C3 . .", "C3 . . G2 . .", "D3 . . A2 . .", "D2 . . . . ."].join(" | ") },
+    { inst: "drums", vol: 0.4, steps: rep("k . h s . h", 8) },
+  ] },
+  { id: "superhero", group: "Movie music", name: "Superhero", emoji: "🦸", bpm: 132, bpb: 4, div: 2, tracks: [
+    { inst: "brass", vol: 0.52, steps: "G4 . C5 . . G4 C5 E5 | G5:4 . . . E5:2 . C5 . | F5 . D5 . . Bb4 D5 F5 | A5:4 . . . F5:2 . C5 . | G4 . C5 . . G4 C5 E5 | G5:3 . . E5 G5:2 . C6 . | C6:2 . Ab5 . Eb5:2 . Ab5 . | Bb5:2 . D6:2 . C6:4 . . ." },
+    { inst: "strings", vol: 0.3, steps: [rep(hold("C3+E3+G3", 8), 2), hold("Bb2+D3+F3", 8), hold("F3+A3+C4", 8), rep(hold("C3+E3+G3", 8), 2), hold("Ab2+C3+Eb3", 8), `${hold("Bb2+D3+F3", 4)} ${hold("C3+E3+G3", 4)}`].join(" | ") },
+    { inst: "bass", vol: 0.26, steps: [rep(x("C2", 8), 2), x("Bb2", 8), x("F2", 8), rep(x("C2", 8), 2), x("Ab2", 8), `${x("Bb2", 4)} ${x("C3", 4)}`].join(" | ") },
+    { inst: "drums", vol: 0.45, steps: rep("k h s h k k s h", 8) },
+  ] },
+  { id: "jungle", group: "Movie music", name: "Jungle", emoji: "🌴", bpm: 108, bpb: 4, div: 4, tracks: [
+    { inst: "marimba", vol: 0.55, steps: "A4 . C5 . D5 . E5 . . . E5 . D5 . C5 . | A4 . . . G4 . A4 . . . . . . . . . | A4 . C5 . D5 . E5 . . . G5 . E5 . D5 . | C5 . . . A4 . . . . . . . E4 . G4 ." },
+    { inst: "whistle", vol: 0.4, steps: `${R16} | ${R8} E5:2 . G5:2 . A5:4 . . . | ${R16} | ${R8} A5:2 . G5:2 . E5:4 . . .` },
+    { inst: "bass", vol: 0.3, steps: rep("A2 . . . . . A2 . . . E2 . . . G2 .", 4) },
+    { inst: "drums", vol: 0.42, steps: rep("k . w w k . w . k w . w k . w w", 4) },
+  ] },
+  { id: "underwater", group: "Movie music", name: "Underwater", emoji: "🐠", bpm: 96, bpb: 3, div: 2, tracks: [
+    { inst: "bell", vol: 0.34, steps: "A4 C5 E5 A5 E5 C5 | F4 A4 C5 F5 C5 A4 | G4 C5 E5 G5 E5 C5 | G4 B4 D5 G5 D5 B4 | A4 C5 E5 A5 E5 C5 | F4 A4 C5 F5 C5 A4 | F4 A4 D5 F5 D5 A4 | E4 G#4 B4 E5 B4 G#4" },
+    { inst: "theremin", vol: 0.36, steps: [hold("E5", 6), "F5:4 . . . A5:2 .", hold("G5", 6), "D5:4 . . . B4:2 .", hold("C5", 6), "A4:4 . . . C5:2 .", "D5:4 . . . F5:2 .", hold("E5", 6)].join(" | ") },
+    { inst: "strings", vol: 0.26, steps: [hold("A2+E3+C4", 6), hold("F2+C3+A3", 6), hold("C3+G3+E4", 6), hold("G2+D3+B3", 6), hold("A2+E3+C4", 6), hold("F2+C3+A3", 6), hold("D3+A3+F4", 6), hold("E3+B3+G#4", 6)].join(" | ") },
+  ] },
+  { id: "circus", group: "Movie music", name: "Circus", emoji: "🎪", bpm: 126, bpb: 4, div: 2, tracks: [
+    { inst: "organ", vol: 0.5, steps: "E5 D#5 E5 G5 C6 . G5 . | E5 D#5 E5 G5 C6:2 . . . | D5 C#5 D5 F5 B5 . G5 . | D5 C#5 D5 F5 B5:2 . . . | E5 D#5 E5 G5 C6 . E6 . | D6 C6 A5 F5 A5 . C6 . | B5 A5 G5 F5 D5 F5 B4 D5 | C5 . G5 . C6:2 . . ." },
+    { inst: "pluck", vol: 0.34, steps: [rep("C3 . C4+E4+G4 . G2 . C4+E4+G4 .", 2), rep("G2 . B3+D4+F4 . D3 . B3+D4+F4 .", 2), "C3 . C4+E4+G4 . G2 . C4+E4+G4 .", "F2 . A3+C4+F4 . C3 . A3+C4+F4 .", "G2 . B3+D4+F4 . D3 . B3+D4+F4 .", "C3 . C4+E4+G4 . C3 . . ."].join(" | ") },
+    { inst: "drums", vol: 0.42, steps: rep("k . s . k . s h", 8) },
+  ] },
+  { id: "monster", group: "Movie music", name: "Monster stomp", emoji: "🦖", bpm: 72, bpb: 4, div: 2, tracks: [
+    { inst: "brass", vol: 0.6, steps: "E3:2 . . . G3:2 . . . | F#3:2 . . . E3:3 . . . | E3:2 . . . Bb3:2 . . . | A3:2 . G3 . E3:4 . . ." },
+    { inst: "strings", vol: 0.24, steps: [rep(hold("E5+G5", 8), 2), hold("E5+Bb5", 8), hold("E5+G5", 8)].join(" | ") },
+    { inst: "bass", vol: 0.3, steps: rep("E2 . . . E2 . . .", 4) },
+    { inst: "drums", vol: 0.55, steps: rep("k . . . k . s .", 4) },
+  ] },
+  { id: "magic", group: "Movie music", name: "Magic", emoji: "🪄", bpm: 100, bpb: 4, div: 4, tracks: [
+    { inst: "bell", vol: 0.32, steps: [x("C5 E5 G5 B5 D6 B5 G5 E5", 2), x("D5 F#5 A5 D6 F#6 D6 A5 F#5", 2), x("A4 C5 E5 A5 C6 A5 E5 C5", 2), "G4 C5 D5 G5 C6 G5 D5 C5 G4 B4 D5 G5 B5 G5 D5 B4"].join(" | ") },
+    { inst: "whistle", vol: 0.34, steps: [`${hold("G5", 8)} ${hold("B5", 8)}`, `${hold("A5", 12)} . . . .`, `${hold("E5", 8)} ${hold("C6", 8)}`, `${hold("D6", 12)} . . . .`].join(" | ") },
+    { inst: "strings", vol: 0.26, steps: [hold("C3+G3+E4", 16), hold("D3+A3+F#4", 16), hold("A2+E3+C4", 16), hold("G2+D3+B3", 16)].join(" | ") },
+  ] },
+  { id: "sad", group: "Movie music", name: "Sad moment", emoji: "🌧️", bpm: 66, bpb: 4, div: 2, tracks: [
+    { inst: "piano", vol: 0.44, steps: "A3 E4 A4 C5 E5 C5 A4 E4 | F3 C4 F4 A4 C5 A4 F4 C4 | C3 G3 C4 E4 G4 E4 C4 G3 | G3 D4 G4 B4 D5 B4 G4 D4" },
+    { inst: "strings", vol: 0.4, steps: "E5:6 . . . . . D5:2 . | C5:8 . . . . . . . | E5:6 . . . . . G5:2 . | D5:8 . . . . . . ." },
+    { inst: "strings", vol: 0.22, steps: [hold("A2+E3+C4", 8), hold("F2+C3+A3", 8), hold("C3+G3+E4", 8), hold("G2+D3+B3", 8)].join(" | ") },
+  ] },
   { id: "happy", group: "More music", name: "Happy day", emoji: "🌞", bpm: 118, bpb: 4, div: 2, tracks: [
     { inst: "marimba", vol: 0.56, steps: "B4 D5 G5 . D5 . B4 . | D5:2 . B4 . G4:2 . . . | C5 E5 G5 . E5 . C5 . | A4:2 . F#4 A4 D5:2 . . . | B4 D5 G5 . B5 . G5 . | E5:2 . G5 . B4:2 . . . | C5 E5 G5 E5 D5 F#5 A5 F#5 | G5:4 . . . . . . ." },
     { inst: "pluck", vol: 0.3, steps: [rep(". G3+B3+D4 . G3+B3+D4 . G3+B3+D4 . G3+B3+D4", 2), ". C4+E4+G4 . C4+E4+G4 . C4+E4+G4 . C4+E4+G4", ". D4+F#4+A4 . D4+F#4+A4 . D4+F#4+A4 . D4+F#4+A4", ". G3+B3+D4 . G3+B3+D4 . G3+B3+D4 . G3+B3+D4", ". E4+G4+B4 . E4+G4+B4 . E4+G4+B4 . E4+G4+B4", ". C4+E4+G4 . C4+E4+G4 . D4+F#4+A4 . D4+F#4+A4", ". G3+B3+D4 . G3+B3+D4 . G3+B3+D4 . ."].join(" | ") },
@@ -82,6 +128,30 @@ export const TUNES = [
     { inst: "square", vol: 0.2, steps: [rep("C4 E4 G4 C5", 4), rep("A3 C4 E4 A4", 4), rep("F3 A3 C4 F4", 4), rep("G3 B3 D4 G4", 4)].map((b) => b.replace(/ \| /g, " ")).join(" | ") },
     { inst: "bass", vol: 0.2, steps: [rep("C2 . C2 .", 4), rep("A2 . A2 .", 4), rep("F2 . F2 .", 4), rep("G2 . G2 .", 4)].map((b) => b.replace(/ \| /g, " ")).join(" | ") },
     { inst: "drums", vol: 0.34, steps: rep("k . h . s . h . k k h . s . h .", 4) },
+  ] },
+  { id: "rock", group: "More music", name: "Rock", emoji: "🎸", bpm: 138, bpb: 4, div: 2, tracks: [
+    { inst: "square", vol: 0.4, steps: "E5:2 . G5 E5 . D5 E5 . | G5:2 . A5 G5 . E5:2 . . | A5:2 . C6 A5 . G5 A5 . | G5 E5 D5 E5:4 . . . ." },
+    { inst: "brass", vol: 0.44, steps: [rep("E3+B3 . E3+B3 E3+B3 . E3+B3 G3+D4 A3+E4", 2), "A3+E4 . A3+E4 A3+E4 . A3+E4 C4+G4 D4+A4", "E3+B3 . E3+B3 E3+B3 . G3+D4 . A3+E4"].join(" | ") },
+    { inst: "bass", vol: 0.18, steps: [rep(x("E2", 8), 2), x("A2", 8), "E2 E2 E2 E2 E2 G2 G2 A2"].join(" | ") },
+    { inst: "drums", vol: 0.48, steps: rep("kh h sh h kh kh sh h", 4) },
+  ] },
+  { id: "jazz", group: "More music", name: "Jazz", emoji: "🎷", bpm: 132, bpb: 4, div: 2, swing: 0.3, tracks: [
+    { inst: "bell", vol: 0.42, steps: "A4 . D5 F5 . E5 . D5 | B4 . . D5 F5:2 . . . | E5 . G5 B5 . A5 . G5 | E5:3 . . C#5 E5:2 . . ." },
+    { inst: "piano", vol: 0.3, steps: ". . . F3+A3+C4+E4 . . . F3+A3+C4+E4 | . . . F3+A3+B3+D4 . . . F3+A3+B3+D4 | . . . E3+G3+B3+D4 . . . E3+G3+B3+D4 | . . . G3+B3+C#4+E4 . . . G3+B3+C#4+E4" },
+    { inst: "bass", vol: 0.34, steps: "D2 . F2 . A2 . C3 . | G2 . B2 . D3 . F3 . | C3 . E3 . G3 . A3 . | A2 . C#3 . E3 . G3 ." },
+    { inst: "drums", vol: 0.34, steps: rep("kh . sh h h . sh h", 4) },
+  ] },
+  { id: "island", group: "More music", name: "Island", emoji: "🏝️", bpm: 112, bpb: 4, div: 4, tracks: [
+    { inst: "bell", vol: 0.42, steps: "E5 . G5 . . C6 . G5 . E5 . G5 . . C5 . | F5 . A5 . . C6 . A5 . F5 . A5 . . F5 . | D5 . G5 . . B5 . G5 . D5 . G5 . . B4 . | C5 . E5 . G5 . C6 . . . G5 . C6:4 . . ." },
+    { inst: "pluck", vol: 0.32, steps: [x(". . C4+E4+G4 .", 4), x(". . C4+F4+A4 .", 4), x(". . B3+D4+G4 .", 4), x(". . C4+E4+G4 .", 4)].join(" | ") },
+    { inst: "bass", vol: 0.3, steps: "C3 . . . . . G2 . C3 . . . G2 . . . | F2 . . . . . C3 . F2 . . . C3 . . . | G2 . . . . . D3 . G2 . . . D3 . . . | C3 . . . . . G2 . C3 . . . . . . ." },
+    { inst: "drums", vol: 0.38, steps: rep("k . h w . h k . k . h w . h w .", 4) },
+  ] },
+  { id: "march", group: "More music", name: "Marching band", emoji: "🥁", bpm: 120, bpb: 4, div: 2, tracks: [
+    { inst: "brass", vol: 0.5, steps: "F4 . A4 C5 F5:2 . C5 . | A4 . C5 F5 A5:2 . F5 . | Bb4 . D5 F5 Bb5:2 . F5 . | A5:2 . F5 . C5:2 . . . | G4 . C5 E5 G5:2 . E5 . | F5 . A5 . C6:2 . A5 . | Bb5 A5 G5 F5 E5 G5 C6 Bb5 | A5:2 . F5 . F5:4 . . ." },
+    { inst: "pluck", vol: 0.3, steps: [rep(". . A3+C4+F4 . . . A3+C4+F4 .", 2), ". . Bb3+D4+F4 . . . Bb3+D4+F4 .", ". . A3+C4+F4 . . . A3+C4+F4 .", ". . G3+C4+E4 . . . G3+C4+E4 .", ". . A3+C4+F4 . . . A3+C4+F4 .", ". . Bb3+D4+F4 . . . G3+C4+E4 .", ". . A3+C4+F4 . . . . ."].join(" | ") },
+    { inst: "bass", vol: 0.3, steps: [rep("F2 . C3 . F2 . C3 .", 2), "Bb2 . F3 . Bb2 . F3 .", "F2 . C3 . F2 . C3 .", "C3 . G2 . C3 . G2 .", "F2 . C3 . F2 . C3 .", "Bb2 . F3 . C3 . G2 .", "F2 . C3 . F2 . . ."].join(" | ") },
+    { inst: "drums", vol: 0.44, steps: rep("k . s s k . s s", 8) },
   ] },
 ];
 
@@ -142,6 +212,7 @@ function parts(tune) { if (!ready.has(tune.id)) ready.set(tune.id, tune.tracks.m
 /** Schedules step number `i` of a tune at time t; returns how long one step lasts. */
 function playStep(ac, out, tune, i, t) {
   const stepLen = 60 / tune.bpm / tune.div;
+  if (tune.swing && i % 2) t += tune.swing * stepLen; // every second step a little late
   for (const { tr, steps } of parts(tune)) {
     const s = steps[i % steps.length];
     if (!s) continue;
