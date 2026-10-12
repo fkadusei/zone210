@@ -1,0 +1,12 @@
+/* Algebra Lab: the balance scale picture (the rest comes from assets/learn-kit.css) */
+.sc { width: min(100%, 340px); color: var(--ink); }
+.sc g { transition: transform 0.5s ease; }
+.sc-beam, .sc-pan { fill: currentColor; fill-opacity: 0.55; }
+.sc-stand { fill: currentColor; fill-opacity: 0.25; }
+.sc-pivot { fill: var(--gold); }
+.sc-box { fill: #4f8df7; stroke: #2c5fc0; stroke-width: 1.5; }
+.sc-x { fill: #fff; font: italic 700 17px Georgia, serif; text-anchor: middle; }
+.sc-w { fill: #f5b41f; stroke: #cf9410; stroke-width: 1.5; }
+.sc-n { fill: #2b1f00; font: 700 14px var(--font); text-anchor: middle; }
+.eq-now { text-align: center; font: 600 1.7rem var(--font-head); margin: 4px 0 2px; min-height: 1.4em; }
+.eq-log { list-style: none; margin: 10px auto 0; padding: 0; max-width: 24em; color: var(--muted); text-align: center; line-height: 1.7; }

@@ -1,0 +1,6 @@
+/* Calculus Lab: everything comes from assets/learn-kit.css; this only tunes the two explore panels */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
+.two figure { margin: 0; display: grid; justify-items: center; }
+.two figcaption { font-size: 0.85rem; font-weight: 700; color: var(--muted); text-align: center; }
+.two svg { width: 100%; height: auto; }
+@media (max-width: 600px) { .two { grid-template-columns: 1fr; } }
