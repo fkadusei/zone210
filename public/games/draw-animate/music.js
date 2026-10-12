@@ -150,15 +150,16 @@ function playStep(ac, out, tune, i, t) {
   }
   return stepLen;
 }
-function chain(ac, volume) { const out = ac.createGain(), comp = ac.createDynamicsCompressor(); out.gain.value = volume; comp.threshold.value = -16; comp.ratio.value = 4; out.connect(comp).connect(ac.destination); return out; }
+/** Everything goes through a gentle limiter to the speakers, and also to `tap` if one is given (the video recorder). */
+function chain(ac, volume, tap) { const out = ac.createGain(), comp = ac.createDynamicsCompressor(); out.gain.value = volume; comp.threshold.value = -16; comp.ratio.value = 4; out.connect(comp).connect(ac.destination); if (tap) comp.connect(tap); return out; }
 
 let playing = null; // { id, out, timer }
 export const playingTune = () => (playing ? playing.id : null);
-export function playTune(id, ac, volume = 0.5) {
+export function playTune(id, ac, volume = 0.5, tap = null) {
   stopTune();
   const tune = TUNES.find((x) => x.id === id);
   if (!tune || !ac) return;
-  const out = chain(ac, volume), me = { id, out, i: 0, at: ac.currentTime + 0.12 };
+  const out = chain(ac, volume, tap), me = { id, out, i: 0, at: ac.currentTime + 0.12 };
   playing = me;
   me.timer = setInterval(() => { if (playing !== me) return; while (me.at < ac.currentTime + 0.5) { me.at += playStep(ac, out, tune, me.i, me.at); me.i += 1; } }, 120);
 }

@@ -209,8 +209,8 @@ function flick(quick) {
   src.buffer = paper; src.playbackRate.value = 0.9 + Math.random() * 0.25; // never quite the same twice
   bp.type = "bandpass"; bp.Q.value = 0.8; bp.frequency.setValueAtTime(quick ? 3400 : 2600, t); bp.frequency.exponentialRampToValueAtTime(900, t + len); // the pitch falls as the page lands
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(quick ? 0.1 : 0.16, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
-  src.connect(bp).connect(g).connect(ac.destination); src.start(t); src.stop(t + len + 0.02);
-  if (!quick) { const o = ac.createOscillator(), og = ac.createGain(); o.frequency.setValueAtTime(190, t + len * 0.75); o.frequency.exponentialRampToValueAtTime(90, t + len + 0.05); og.gain.setValueAtTime(0.0001, t + len * 0.75); og.gain.exponentialRampToValueAtTime(0.05, t + len * 0.8); og.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.06); o.connect(og).connect(ac.destination); o.start(t + len * 0.75); o.stop(t + len + 0.08); } // a soft pat as it lands
+  src.connect(bp).connect(g).connect(ac.destination); if (recTap) g.connect(recTap); src.start(t); src.stop(t + len + 0.02);
+  if (!quick) { const o = ac.createOscillator(), og = ac.createGain(); o.frequency.setValueAtTime(190, t + len * 0.75); o.frequency.exponentialRampToValueAtTime(90, t + len + 0.05); og.gain.setValueAtTime(0.0001, t + len * 0.75); og.gain.exponentialRampToValueAtTime(0.05, t + len * 0.8); og.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.06); o.connect(og).connect(ac.destination); if (recTap) og.connect(recTap); o.start(t + len * 0.75); o.stop(t + len + 0.08); } // a soft pat as it lands
 }
 
 // ---------- background music (music.js): the scene and the flipbook each remember their own tune, which plays while they play ----------
@@ -218,8 +218,9 @@ const work = () => (scene() ? data.scene : data.flip);
 function startMusic() {
   const id = work().music;
   if (data.muted || !id || id === "none") { stopTune(); return; }
-  playTune(id, window.z210Audio && window.z210Audio.get(), 0.5);
+  playTune(id, window.z210Audio && window.z210Audio.get(), 0.5, recTap);
 }
+let recTap = null; // while a video is being recorded: where the sound goes as well as the speakers
 
 // ---------- the flipbook as a real book: whole pages (background and drawing) that turn over ----------
 let cur = A, oth = B; // the page showing, and the page being turned to
@@ -568,25 +569,36 @@ $("savePic").addEventListener("click", async () => {
   ui.clean = false; if (ui.state !== "play") render();
 });
 let recording = false;
-const VIDEO = window.MediaRecorder && cv.captureStream ? ["video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"].find((m) => { try { return MediaRecorder.isTypeSupported(m); } catch (err) { return false; } }) : "";
+// the picture comes from the canvas; the sound (the tune and the page flicks) is tapped from the audio and recorded with it
+const KINDS = ["video/mp4;codecs=avc1,mp4a.40.2", "video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/mp4", "video/webm"];
+const VIDEO = window.MediaRecorder && cv.captureStream ? KINDS.find((m) => { try { return MediaRecorder.isTypeSupported(m); } catch (err) { return false; } }) : "";
 $("saveVid").hidden = !VIDEO;
 $("saveVid").addEventListener("click", () => {
   if (recording) return;
   if (ui.state === "draw" || ui.state === "path") { note("Finish your drawing first."); return; }
   if (scene() ? !data.scene.things.length : data.flip.frames.length < 2) { note(scene() ? "Draw something first." : "A flipbook needs at least two pages."); return; }
-  stop(); ui.sel = -1;
-  const secs = scene() ? 6 : Math.min(8, Math.max(3, (data.flip.frames.length / data.flip.fps) * 2));
-  let rec;
-  try { rec = new MediaRecorder(cv.captureStream(30), { mimeType: VIDEO, videoBitsPerSecond: 2500000 }); } catch (err) { note("This browser could not record a video."); return; }
+  stop(); stopTune(); ui.sel = -1;
+  const tuned = !data.muted && TUNES.some((t) => t.id === work().music);
+  // long enough to hear some of the tune; a flipbook plays through at least twice
+  const secs = scene() ? (tuned ? 10 : 6) : Math.min(12, Math.max(tuned ? 8 : 3, (data.flip.frames.length / data.flip.fps) * 2));
+  let rec, tap = null;
+  try {
+    const stream = cv.captureStream(30), ac = !data.muted && window.z210Audio && window.z210Audio.get();
+    if (ac && ac.createMediaStreamDestination) { tap = ac.createMediaStreamDestination(); tap.stream.getAudioTracks().forEach((tr) => stream.addTrack(tr)); }
+    rec = new MediaRecorder(stream, { mimeType: VIDEO, videoBitsPerSecond: 2500000, audioBitsPerSecond: 128000 });
+  } catch (err) { note("This browser could not record a video."); return; }
   const parts = [];
-  recording = true; $("saveVid").disabled = true;
+  recording = true; recTap = tap; $("saveVid").disabled = true;
+  const done = () => { recording = false; recTap = null; $("saveVid").disabled = false; stop(); };
   rec.ondataavailable = (ev) => { if (ev.data && ev.data.size) parts.push(ev.data); };
+  rec.onerror = () => { done(); note("The recording stopped unexpectedly. Please try again."); };
   rec.onstop = () => {
-    recording = false; $("saveVid").disabled = false; stop();
+    done();
     const type = VIDEO.split(";")[0], file = new File([new Blob(parts, { type })], `my-animation.${type === "video/mp4" ? "mp4" : "webm"}`, { type });
     if (!file.size) { note("The video came out empty. Please try again."); return; }
+    window.__da.video = file;
     // a second tap is needed: phones only let a page share or save a file straight after a tap
-    $("note").innerHTML = `Your video is ready. <button class="g-btn" id="keepVid">📥 Save or share it</button>`;
+    $("note").innerHTML = `Your video is ready${tap ? ", with its sound" : ""}. <button class="g-btn" id="keepVid">📥 Save or share it</button>`;
     $("keepVid").addEventListener("click", async () => {
       try { if (navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia("(pointer: coarse)").matches) { await navigator.share({ files: [file], title: "My animation from Zone 210" }); note("Done!"); return; } } catch (err) { if (err && err.name === "AbortError") return; }
       const url = URL.createObjectURL(file), a = document.createElement("a");
@@ -598,7 +610,8 @@ $("saveVid").addEventListener("click", () => {
   let left = Math.ceil(secs);
   note(`Recording… ${left}`);
   const count = setInterval(() => { left -= 1; if (left > 0 && recording) note(`Recording… ${left}`); else clearInterval(count); }, 1000);
-  setTimeout(() => { try { rec.stop(); } catch (err) { recording = false; $("saveVid").disabled = false; } }, secs * 1000);
+  // the tune fades out just before the recording ends, so the video does not cut off mid-note
+  setTimeout(() => { stopTune(); setTimeout(() => { try { rec.stop(); } catch (err) { done(); } }, 350); }, secs * 1000);
 });
 
 // ---------- start ----------
