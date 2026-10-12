@@ -99,5 +99,5 @@ export function exampleFlip() {
     const squash = i === 4;
     return [line("#8b5a2b", 8, 60, 500, 740, 500), squash ? line("#e5484d", 46, 370, 474, 430, 474) : dot(400, y, 70, "#e5484d"), dot(squash ? 384 : 386, squash ? 466 : y - 14, 10, "#ffffff")];
   });
-  return { frames, fps: 8, onion: true };
+  return { frames, fps: 8, onion: true, bg: "paper" };
 }

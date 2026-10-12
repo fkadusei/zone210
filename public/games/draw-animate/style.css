@@ -1,8 +1,20 @@
 .g-page { max-width: 880px; }
 .modes { margin-bottom: 8px; }
 .hint { min-height: 1.5em; margin: 0 0 8px; color: var(--muted); font-weight: 700; line-height: 1.45; }
-.stage { position: relative; width: min(100%, calc(64vh * 4 / 3)); margin: 0 auto; border-radius: 20px; overflow: hidden; border: 2px solid var(--line-strong); box-shadow: var(--shadow); background: #fff; line-height: 0; }
-.stage canvas { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; touch-action: none; cursor: crosshair; }
+.stage { position: relative; width: min(100%, calc(64vh * 4 / 3)); margin: 0 auto; line-height: 0; }
+.stage canvas { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; touch-action: none; cursor: crosshair; border-radius: 20px; border: 2px solid var(--line-strong); box-shadow: var(--shadow); background: #fff; }
+/* the flipbook looks like a little book: a binding down the left, and a stack of page edges (set in game.js) */
+.stage.book { width: min(calc(100% - 44px), calc(64vh * 4 / 3)); margin: 0 16px 26px auto; }
+@media (min-width: 700px) { .stage.book { margin: 0 auto 26px; } }
+.stage.book canvas { border-radius: 4px 12px 12px 4px; border-color: #b9b19c; }
+.stage.book::before { content: ""; position: absolute; z-index: 1; left: -26px; top: 0; bottom: 0; width: 28px; border-radius: 8px 2px 2px 8px; pointer-events: none;
+  background: radial-gradient(circle at 10px 50%, #1c2238 0 4px, transparent 4.5px) 0 0 / 28px 34px repeat-y, linear-gradient(90deg, #8a5a2b, #b9824a 45%, #7a4d22); box-shadow: 2px 0 6px rgba(0, 0, 0, 0.3); }
+.stage.book::after { content: ""; position: absolute; z-index: 2; left: -17px; top: 0; bottom: 0; width: 26px; pointer-events: none;
+  background: radial-gradient(ellipse 13px 5px at 50% 50%, transparent 0 55%, #d8dbe6 58% 78%, transparent 82%) 0 0 / 26px 34px repeat-y; }
+.stage.book.playing canvas { cursor: grab; }
+.thumbrow { display: flex; align-items: center; gap: 12px; margin: 4px 0 0; font-weight: 700; color: var(--muted); }
+.thumbrow[hidden] { display: none; }
+.thumbrow input { flex: 1; height: 34px; accent-color: var(--gold-deep); }
 .stage.pick canvas { cursor: grab; }
 .stage.playing canvas { cursor: default; }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; }
