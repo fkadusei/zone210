@@ -43,7 +43,7 @@
 .rules li { margin: 4px 0; line-height: 1.5; }
 @media (max-width: 520px) { .lbl { min-width: 0; width: 100%; } .sw { width: 34px; height: 34px; } .row.main .g-btn { flex: 1 1 auto; padding: 11px 12px; font-size: 0.98rem; } }
 .note .g-btn { margin-left: 6px; padding: 6px 12px; }
-.pick { font: 700 1rem var(--font); color: var(--ink); background: var(--surface-2); border: 1.5px solid var(--line-strong); border-radius: 12px; padding: 9px 12px; max-width: 100%; }
+.tunesel { font: 700 1rem var(--font); color: var(--ink); background: var(--surface-2); border: 1.5px solid var(--line-strong); border-radius: 12px; padding: 9px 12px; max-width: 100%; }
 /* background picker: small pictures in a grid */
 .g-chips.bggrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px; padding: 8px; border-radius: 18px; width: 100%; max-height: 236px; overflow-y: auto; }
 .bgsw { display: grid; gap: 3px; justify-items: center; padding: 4px 4px 5px; border-radius: 12px; border: 2px solid transparent; font-size: 0.72rem; font-weight: 700; line-height: 1.15; text-align: center; }
@@ -65,3 +65,15 @@
   .stickgrid { max-height: 132px; }
   #tools .g-chip { padding: 6px 11px; }
 }
+/* hand-drawn people */
+#toneRows { display: grid; gap: 8px; }
+#toneRows[hidden] { display: none; }
+#toneRows .lbl { min-width: 44px; }
+#toneRows .palette { justify-content: flex-start; }
+.stickgrid.people { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); max-height: 196px; }
+.stk.person { height: auto; padding: 2px; background: #fffdf6; }
+.stk.person canvas { width: 100%; height: auto; display: block; }
+.stk.person[aria-pressed="true"] { background: #fff1c8; }
+.sw.mixed { background: conic-gradient(#1f1b1a 0 17%, #4a2f1d 0 33%, #8b5a2b 0 50%, #e2b653 0 67%, #c0562a 0 83%, #b9bcc2 0); }
+/* nothing in a panel may push it wider than the screen */
+.g-panel > *, #stickRow > *, .row > .g-chips { min-width: 0; max-width: 100%; }

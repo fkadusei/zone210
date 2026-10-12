@@ -62,6 +62,10 @@
         <div id="stickRow" hidden>
           <div class="row"><div class="g-chips" id="stickSets" role="group" aria-label="Kind of sticker"></div>
             <label class="tick"><input type="checkbox" id="stickFlip"> Face the other way</label></div>
+          <div id="toneRows" hidden>
+            <div class="opt"><span class="lbl">Skin</span><div class="row palette" id="skins" role="group" aria-label="Skin tone"></div></div>
+            <div class="opt"><span class="lbl">Hair</span><div class="row palette" id="hairs" role="group" aria-label="Hair colour"></div></div>
+          </div>
           <div class="stickgrid" id="stickGrid" role="group" aria-label="Stickers"></div>
         </div>
         <div class="row palette" id="palette" role="group" aria-label="Colours"></div>
@@ -88,7 +92,7 @@
       <section class="g-panel" id="scenePanel" aria-label="Scene">
         <div class="opt"><span class="lbl">Background</span><div class="g-chips" id="bgs" role="group" aria-label="Background"></div></div>
         <div class="opt"><span class="lbl">Music</span>
-          <select id="stune" class="pick tunepick" aria-label="Background music for the scene"></select>
+          <select id="stune" class="tunesel tunepick" aria-label="Background music for the scene"></select>
           <button class="g-btn ghost listenbtn" id="slisten">🎧 Listen</button></div>
         <div class="row left"><button class="g-btn ghost" id="exScene">🎁 Show me an example</button><button class="g-btn ghost" id="newScene">Start again</button></div>
       </section>
@@ -97,7 +101,7 @@
         <div class="opt"><span class="lbl">This page's background</span><div class="g-chips" id="fbgs" role="group" aria-label="Background of this page"></div>
           <button class="g-btn ghost" id="bgAll">Use on every page</button></div>
         <div class="opt"><span class="lbl">Music</span>
-          <select id="tune" class="pick tunepick" aria-label="Background music for the flipbook"></select>
+          <select id="tune" class="tunesel tunepick" aria-label="Background music for the flipbook"></select>
           <button class="g-btn ghost listenbtn" id="listen">🎧 Listen</button></div>
         <div class="opt"><span class="lbl">Speed</span><div class="g-chips" id="fps" role="group" aria-label="Playback speed"></div>
           <label class="tick"><input type="checkbox" id="onion"> Show the page before, faintly</label></div>
@@ -109,7 +113,7 @@
         <ul>
           <li><b>Bring it to life:</b> tap <b>Draw a new thing</b>, draw one thing (a fish, a ball, a cloud) and tap <b>Done</b>. Then choose how it moves and what else it does.</li>
           <li><b>Follow my path:</b> trace a line with your finger and your drawing will travel along it. If you end where you started, it goes round and round.</li>
-          <li><b>Tools:</b> the pen draws freely. <b>Shapes</b> draws a line, rectangle, oval, triangle, diamond, star or heart: press and drag. <b>Fill</b> colours the inside of something you have drawn: pick a colour and tap inside it. <b>Stickers</b> stamps a ready-made person, pet, animal or thing: tap where it should go. The size buttons change how thick the line is, or how big the sticker.</li>
+          <li><b>Tools:</b> the pen draws freely. <b>Shapes</b> draws a line, rectangle, oval, triangle, diamond, star or heart: press and drag. <b>Fill</b> colours the inside of something you have drawn: pick a colour and tap inside it. <b>Stickers</b> stamps a ready-made person, pet, animal or thing: tap where it should go. <b>Drawn people</b> come in six skin tones and six hair colours: pick those first, then the person. The size buttons change how thick the line is, or how big the sticker.</li>
           <li>Tap a drawing to choose it. Drag it to move it. Each drawing can move in its own way.</li>
           <li>Press <b>Play</b> to watch everything move together.</li>
           <li><b>Flipbook:</b> draw a page, tap <b>New page</b>, and draw the next one a tiny bit different. The faint picture shows the page before. Press Play to flip through them.</li>

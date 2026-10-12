@@ -5,6 +5,7 @@
 import { canSharePhotos, toPhotos, download } from "../../assets/save-image.js";
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS } from "./stickers.js";
+import { PEOPLE, SKINS, HAIRS, drawPerson } from "./people.js";
 import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
@@ -27,6 +28,7 @@ const COLORS = ["#1f2430", "#e5484d", "#f5a623", "#f5d90a", "#2fb36d", "#3b82f6"
 const COLOR_NAMES = ["Black", "Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink", "Brown", "White"];
 const SIZES = [[4, "Small"], [10, "Medium"], [22, "Big"], [44, "Huge"]];
 const STICKER_SIZE = { 4: 46, 10: 72, 22: 112, 44: 170 }; // how tall a sticker is at each size button
+const PERSON_SIZE = { 4: 80, 10: 130, 22: 200, 44: 300 }; // and a hand-drawn person
 const TOOLS = [["pen", "✏️ Pen"], ["shape", "🔷 Shapes"], ["fill", "🪣 Fill"], ["stamp", "😀 Stickers"], ["erase", "🧽 Eraser"]];
 const SHAPE_ICON = { line: "╱", rect: "▭", oval: "◯", tri: "△", diamond: "◇", star: "☆", heart: "♡" };
 const BGS = [["paper", "Paper"], ["grid", "Squared paper"], ["lined", "Lined paper"], ["chalk", "Chalkboard"], ["sky", "Sky"], ["meadow", "Meadow"], ["rainbow", "Rainbow"], ["rainy", "Rainy day"],
@@ -41,7 +43,7 @@ const cv = $("cv"), ctx = cv.getContext("2d");
 const saverOn = () => !!(window.z210Saver && window.z210Saver.on);
 let SCALE = 2;
 // state: "idle" | "draw" (drawing a thing) | "path" (tracing a path) | "play"
-const ui = { state: "idle", sel: -1, edit: -1, draft: [], frame: 0, tool: "pen", shape: "rect", set: "people", sticker: "🧍", flip: false, from: null, live: null, drag: null, pathPts: null, t0: 0, raf: 0, clean: false,
+const ui = { state: "idle", sel: -1, edit: -1, draft: [], frame: 0, tool: "pen", shape: "rect", set: "drawn", sticker: "🧍", person: "stand1", flip: false, from: null, live: null, drag: null, pathPts: null, t0: 0, raf: 0, clean: false,
   page: 0, turn: null, auto: true, lastTurn: 0, scrub: null, want: null, landed: 0 }; // want: the page a finger or the slider is heading for // the flipbook being flipped: the page showing, the page turn in progress, whether it flips by itself
 const scene = () => data.mode === "scene";
 const drawing = () => (scene() ? ui.state === "draw" : ui.state === "idle");
@@ -58,6 +60,7 @@ function trace(g, p, sharp) {
 }
 function strokeOn(g, s) {
   const p = s.p;
+  if (s.fig) { g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1); drawPerson(g, s, s.w); g.restore(); return; } // a hand-drawn person
   if (s.ch) { // a sticker
     g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1);
     g.font = `${s.w}px ${EMOJI}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#000"; g.fillText(s.ch, 0, s.w * 0.07);
@@ -470,7 +473,11 @@ function paint() {
   press("tools", "tool", ui.tool); press("shapes", "shape", ui.shape); press("stickSets", "set", ui.set);
   $("shapeRow").hidden = ui.tool !== "shape"; $("stickRow").hidden = ui.tool !== "stamp";
   $("palette").hidden = ui.tool === "stamp" || ui.tool === "erase";
-  document.querySelectorAll("#stickGrid .stk").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ch === ui.sticker)));
+  const drawnSet = ui.set === "drawn";
+  document.querySelectorAll("#stickGrid .stk").forEach((b) => b.setAttribute("aria-pressed", String(drawnSet ? b.dataset.fig === ui.person : b.dataset.ch === ui.sticker)));
+  $("toneRows").hidden = !drawnSet;
+  document.querySelectorAll("#skins .sw").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.sk) === (data.skin ?? 2))));
+  document.querySelectorAll("#hairs .sw").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.hc) === (data.hair ?? -1))));
   $("stickFlip").checked = ui.flip;
   press("sizes", "size", data.size);
   press("bgs", "bg", data.scene.bg);
@@ -540,7 +547,7 @@ cv.addEventListener("pointermove", (e) => {
 function lift() {
   if (ui.scrub) { const tn = ui.turn; letGo(!!tn && tn.hand && (tn.forward ? ui.scrub.v : -ui.scrub.v) > 0.5 && performance.now() - ui.scrub.lastT < 120); ui.scrub = null; return; } // a quick flick finishes the turn too
   if (ui.from) { // a shape or a sticker is put down
-    const s2 = ui.live, big = s2 && (s2.ch || ui.reach > 8);
+    const s2 = ui.live, big = s2 && (s2.ch || s2.fig || ui.reach > 8);
     ui.from = null; ui.live = null; ui.reach = 0;
     if (big) { strokes().push(s2); did({ k: "add" }); paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } }
     else if (s2 || ui.tool === "shape") note("Press and drag to draw the shape.");
@@ -630,11 +637,29 @@ $("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chi
 $("shapes").innerHTML = SHAPES.map(([v, label]) => `<button class="g-chip shp" data-shape="${v}" aria-label="${label}"><span aria-hidden="true">${SHAPE_ICON[v]}</span></button>`).join("");
 $("shapes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.shape = b.dataset.shape; paint(); } });
 // stickers: pick a set, then a sticker; sets that usually face left are mirrored so they face right
-const sticker = (x, y) => { const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0], mirror = !!set.turn !== ui.flip; return { ch: ui.sticker, w: STICKER_SIZE[data.size] || 72, p: [Math.round(x), Math.round(y)], ...(mirror ? { m: 1 } : {}) }; };
-function stickerGrid() { const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0]; $("stickGrid").innerHTML = set.list.map((ch) => `<button class="stk" data-ch="${ch}" aria-pressed="false">${ch}</button>`).join(""); if (!set.list.includes(ui.sticker)) ui.sticker = set.list[0]; }
+const sticker = (x, y) => {
+  const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0], mirror = !!set.turn !== ui.flip, at2 = [Math.round(x), Math.round(y)];
+  if (set.drawn) return { fig: ui.person, sk: data.skin ?? 2, hc: data.hair ?? -1, w: PERSON_SIZE[data.size] || 130, p: at2, ...(mirror ? { m: 1 } : {}) };
+  return { ch: ui.sticker, w: STICKER_SIZE[data.size] || 72, p: at2, ...(mirror ? { m: 1 } : {}) };
+};
+function stickerGrid() {
+  const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0];
+  if (set.drawn) { // hand-drawn people: a little picture of each, in the chosen skin tone and hair colour
+    $("stickGrid").innerHTML = PEOPLE.map((d) => `<button class="stk person" data-fig="${d.id}" aria-label="${d.name}" aria-pressed="false"><canvas width="112" height="140" aria-hidden="true"></canvas></button>`).join("");
+    $("stickGrid").querySelectorAll(".stk").forEach((b) => { const g = b.querySelector("canvas").getContext("2d"); g.translate(56, 70); drawPerson(g, { fig: b.dataset.fig, sk: data.skin ?? 2, hc: data.hair ?? -1 }, 128); });
+  } else {
+    $("stickGrid").innerHTML = set.list.map((ch) => `<button class="stk" data-ch="${ch}" aria-pressed="false">${ch}</button>`).join("");
+    if (!set.list.includes(ui.sticker)) ui.sticker = set.list[0];
+  }
+  $("stickGrid").classList.toggle("people", !!set.drawn);
+}
+$("skins").innerHTML = SKINS.map(([c, name], i) => `<button class="sw" data-sk="${i}" style="background:${c}" aria-label="${name} skin"></button>`).join("");
+$("hairs").innerHTML = `<button class="sw mixed" data-hc="-1" aria-label="Mixed hair colours"></button>` + HAIRS.map(([c, name], i) => `<button class="sw" data-hc="${i}" style="background:${c}" aria-label="${name} hair"></button>`).join("");
+$("skins").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data.skin = Number(b.dataset.sk); save(); stickerGrid(); paint(); } });
+$("hairs").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data.hair = Number(b.dataset.hc); save(); stickerGrid(); paint(); } });
 $("stickSets").innerHTML = STICKERS.map((k) => `<button class="g-chip" data-set="${k.id}"><span aria-hidden="true">${k.icon}</span> ${k.name}</button>`).join("");
 $("stickSets").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.set = b.dataset.set; ui.flip = false; stickerGrid(); paint(); } });
-$("stickGrid").addEventListener("click", (e) => { const b = e.target.closest(".stk"); if (b) { ui.sticker = b.dataset.ch; paint(); } });
+$("stickGrid").addEventListener("click", (e) => { const b = e.target.closest(".stk"); if (!b) return; if (b.dataset.fig) ui.person = b.dataset.fig; else ui.sticker = b.dataset.ch; paint(); });
 $("stickFlip").addEventListener("change", () => { ui.flip = $("stickFlip").checked; });
 stickerGrid();
 // Fill: colour in the top-most outline the tap is inside

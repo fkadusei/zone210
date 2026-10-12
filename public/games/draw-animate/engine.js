@@ -3,6 +3,7 @@
 //   k: 1  its corners stay sharp (lines and shapes; a finger-drawn stroke is smoothed instead)
 //   ff    a colour its inside is filled with (the Fill tool)
 //   ch    a sticker: one emoji drawn w pixels tall at its single point, m: 1 if it is mirrored to face right
+//   fig   a hand-drawn person (people.js) w pixels tall at its single point, with sk (skin tone) and hc (hair colour)
 // A "thing" is a little drawing with its own movement: { s: strokes (measured from its middle), x, y (where its middle
 // sits), move, act, speed, face, path }.
 export const W = 800, H = 600;
@@ -13,7 +14,7 @@ export const SPEEDS = [[0.5, "Slow"], [1, "Medium"], [2, "Fast"]];
 /** The box around some strokes, allowing for how thick the lines are. */
 export function bbox(strokes) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-  for (const s of strokes) { if (s.e) continue; const h = s.ch ? s.w * 0.62 : s.w / 2; for (let i = 0; i < s.p.length; i += 2) { x0 = Math.min(x0, s.p[i] - h); x1 = Math.max(x1, s.p[i] + h); y0 = Math.min(y0, s.p[i + 1] - h); y1 = Math.max(y1, s.p[i + 1] + h); } }
+  for (const s of strokes) { if (s.e) continue; const h = s.ch ? s.w * 0.62 : s.fig ? s.w * 0.54 : s.w / 2; for (let i = 0; i < s.p.length; i += 2) { x0 = Math.min(x0, s.p[i] - h); x1 = Math.max(x1, s.p[i] + h); y0 = Math.min(y0, s.p[i + 1] - h); y1 = Math.max(y1, s.p[i + 1] + h); } }
   return x0 === Infinity ? null : { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
 }
 export const shift = (strokes, dx, dy) => strokes.map((s) => ({ ...s, p: s.p.map((v, i) => Math.round((v + (i % 2 ? dy : dx)) * 10) / 10) }));
@@ -50,7 +51,7 @@ export function inside(p, x, y) {
 export function areaOf(p) { let a = 0; for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) a += (p[j] + p[i]) * (p[j + 1] - p[i + 1]); return Math.abs(a / 2); }
 /** The top-most stroke whose outline the point is inside (its place in the list), or -1. Stickers, erasing and thin scribbles are passed over. */
 export function fillTarget(strokes, x, y) {
-  for (let i = strokes.length - 1; i >= 0; i -= 1) { const s = strokes[i]; if (!s.e && !s.ch && s.p.length >= 6 && areaOf(s.p) > 250 && inside(s.p, x, y)) return i; }
+  for (let i = strokes.length - 1; i >= 0; i -= 1) { const s = strokes[i]; if (!s.e && !s.ch && !s.fig && s.p.length >= 6 && areaOf(s.p) > 250 && inside(s.p, x, y)) return i; }
   return -1;
 }
 

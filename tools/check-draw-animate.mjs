@@ -56,6 +56,19 @@ const pile = [{ c: "#000", w: 6, p: E.shapePoints("rect", 0, 0, 400, 400), k: 1 
 check(E.fillTarget(pile, 200, 200) === 1 && E.fillTarget(pile, 20, 300) === 0 && E.fillTarget(pile, 500, 500) === -1 && E.fillTarget(pile, 60, 11) === 0, "a tap fills the top-most outline it is inside, and passes over stickers, erasing and thin scribbles");
 const stick = E.bbox([{ ch: "🐱", w: 100, p: [300, 300] }]); check(stick && stick.w > 100 && stick.cx === 300, "a sticker has a box around it");
 
+// hand-drawn people: every figure has a pose and colours, there are six skin tones, and a person has a box around it
+const PP = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/people.js")).href);
+check(PP.SKINS.length === 6 && PP.HAIRS.length === 6 && PP.PEOPLE.length >= 12 && new Set(PP.PEOPLE.map((d) => d.id)).size === PP.PEOPLE.length, "people: six skin tones, six hair colours, and figures with different ids");
+check(PP.PEOPLE.every((d) => d.name && /^#[0-9a-f]{6}$/.test(d.top) && /^#[0-9a-f]{6}$/.test(d.bot) && ["long", "short", "skirt"].includes(d.kind) && d.hc >= 0 && d.hc < 6), "people: every figure has clothes and a hair colour");
+{ // drawing each one with a stand-in canvas must not throw (catches a pose that is missing)
+  const stub = new Proxy({}, { get: (t, k) => (k in t ? t[k] : () => stub), set: (t, k, v) => { t[k] = v; return true; } });
+  let threw = "";
+  for (const d of PP.PEOPLE) for (let sk = 0; sk < 6; sk += 1) { try { PP.drawPerson(stub, { fig: d.id, sk, hc: -1 }, 100); } catch (err) { threw = `${d.id}: ${err.message}`; } }
+  check(!threw, `people: every figure can be drawn in every skin tone (${threw})`);
+}
+const who = E.bbox([{ fig: "wave1", sk: 3, hc: -1, w: 200, p: [300, 300] }]); check(who && who.h >= 200 && who.cy === 300, "a drawn person has a box around it");
+check(E.fillTarget([{ fig: "wave1", sk: 3, hc: -1, w: 400, p: [300, 300] }], 300, 300) === -1, "the Fill tool passes over a drawn person");
+
 const okStroke = (s) => typeof s.c === "string" && s.w > 0 && s.p.length >= 2 && s.p.length % 2 === 0 && s.p.every(Number.isFinite);
 const sc = E.exampleScene();
 check(sc.things.length >= 3 && sc.things.every((th) => th.s.every(okStroke) && th.x > 0 && th.x < E.W && th.y > 0 && th.y < E.H && E.MOVES.some((m) => m[0] === th.move) && E.ACTS.some((a) => a[0] === th.act)), "the example scene is well formed");

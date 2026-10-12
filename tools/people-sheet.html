@@ -1,0 +1,11 @@
+<!doctype html>
+<!-- Contact sheet of the hand-drawn people in Draw & Animate, each in two skin tones, for checking the drawings.
+     Serve the repo root (python3 -m http.server 8124) and open http://localhost:8124/tools/people-sheet.html -->
+<meta charset="utf-8" />
+<title>Drawn people</title>
+<body style="margin:0;background:#fffdf6"><canvas id="c" width="1500" height="960"></canvas>
+<script type="module">
+  import { PEOPLE, drawPerson } from "../public/games/draw-animate/people.js";
+  const g = document.getElementById("c").getContext("2d");
+  PEOPLE.forEach((d, i) => { const col = i % 8, row = Math.floor(i / 8); for (let k = 0; k < 2; k += 1) { g.save(); g.translate(95 + col * 185, 125 + row * 480 + k * 235); drawPerson(g, { fig: d.id, sk: (i + k * 3) % 6, hc: -1 }, 210); g.restore(); } });
+</script></body>
