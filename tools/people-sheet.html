@@ -1,12 +1,26 @@
 <!doctype html>
-<!-- Contact sheet of the hand-drawn people in Draw & Animate, each in two skin tones, for checking the drawings.
-     Serve the repo root (python3 -m http.server 8124) and open http://localhost:8124/tools/people-sheet.html -->
+<!-- Contact sheet of the hand-drawn figures in Draw & Animate, for checking the drawings.
+     Serve the repo root (python3 -m http.server 8124) and open http://localhost:8124/tools/people-sheet.html
+     Add ?characters, ?animals or ?walkers for the other sets. Add &live to see four moments of each figure's
+     animation (travelling), or &live=stay for the same when it stays in one place. -->
 <meta charset="utf-8" />
 <title>Drawn people</title>
 <body style="margin:0;background:#fffdf6"><canvas id="c" width="1500" height="1900"></canvas>
 <script type="module">
-  import { PEOPLE as ORDINARY, CHARACTERS, ANIMALS, drawPerson } from "../public/games/draw-animate/people.js";
-  const q = new URLSearchParams(location.search), PEOPLE = q.has("characters") ? CHARACTERS : q.has("animals") ? ANIMALS : ORDINARY; // add ?characters or ?animals
+  const q = new URLSearchParams(location.search);
+  const { PEOPLE, CHARACTERS, ANIMALS, drawPerson } = await import("../public/games/draw-animate/people.js?x=" + Date.now());
+  const list = q.has("characters") ? CHARACTERS : q.has("walkers") ? ANIMALS.filter((d) => d.walk) : q.has("animals") ? ANIMALS.filter((d) => !d.walk) : PEOPLE;
   const g = document.getElementById("c").getContext("2d");
-  PEOPLE.forEach((d, i) => { const col = i % 8, row = Math.floor(i / 8); // eight to a row for (let k = 0; k < 2; k += 1) { g.save(); g.translate(95 + col * 185, 125 + row * 480 + k * 235); drawPerson(g, { fig: d.id, sk: (i + k * 3) % 6, hc: -1 }, 210); g.restore(); } });
+  if (q.has("live")) { // four moments, side by side
+    const from = Number(q.get("from") || 0);
+    list.slice(from, from + 16).forEach((d, i) => {
+      const col = i % 2, row = Math.floor(i / 2);
+      for (let k = 0; k < 4; k += 1) { g.save(); g.translate(95 + col * 750 + k * 180, 120 + row * 232); drawPerson(g, { fig: d.id, sk: i % 6, hc: -1 }, 200, { t: k * 0.18, go: q.get("live") !== "stay" }); g.restore(); }
+    });
+  } else {
+    list.forEach((d, i) => {
+      const col = i % 8, row = Math.floor(i / 8); // eight to a row, each in two skin tones
+      for (let k = 0; k < 2; k += 1) { g.save(); g.translate(95 + col * 185, 125 + row * 480 + k * 235); drawPerson(g, { fig: d.id, sk: (i + k * 3) % 6, hc: -1 }, 210); g.restore(); }
+    });
+  }
 </script></body>

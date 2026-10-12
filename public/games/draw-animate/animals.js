@@ -1,9 +1,14 @@
-// Draw & Animate: hand-drawn animals. Most are a "critter": a sitting cartoon animal seen from the front, built from
-// the same body, head and face with different ears, tails and markings. A few (fish, duck, turtle, butterfly, bee,
-// bird) have their own drawing and face right. Every animal is one unit tall with its middle at the origin.
-// `a` is the main colour and `b` the second colour: the child can change both (the Top and Bottom rows).
+// Draw & Animate: hand-drawn animals, in three kinds. Every animal is one unit tall with its middle at the origin.
+//  - a "critter": a sitting cartoon animal seen from the front, built from the same body, head and face with
+//    different ears, tails and markings;
+//  - a "walker": a four-legged animal seen from the side, facing right, whose legs step when it travels;
+//  - a few with their own drawing, facing right (fish, duck, turtle, butterfly, bee, bird).
+// `a` is the main colour and `b` the second colour: the child can change both (the Colour and Second rows).
 
-const DARK = "#1f2937";
+const DARK = "#1f2937", TAU = Math.PI * 2;
+// `live` is null for a still picture. While an animation plays it is { t: seconds, go: is it travelling }, and the
+// animal moves its legs, tail or wings to suit.
+const beat = (live, rate, off = 0) => (live ? Math.sin(live.t * TAU * rate + off) : 0);
 function kit(g) {
   const oval = (c, x, y, rx, ry, turn = 0) => { g.fillStyle = c; g.beginPath(); g.ellipse(x, y, rx, ry, turn, 0, Math.PI * 2); g.fill(); };
   const tri = (c, p, q, r) => { g.fillStyle = c; g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); g.lineTo(r[0], r[1]); g.closePath(); g.fill(); };
@@ -14,8 +19,9 @@ function kit(g) {
 }
 
 /** A sitting animal seen from the front. `o` says what kind of ears, tail, nose and markings it has. */
-function critter(g, o, a, b) {
+function critter(g, o, a, b, live) {
   const { oval, tri, line, curve, edge } = kit(g), limb = o.limb || a, ear = o.ear || a;
+  const wag = beat(live, 2) * 0.2, arms = beat(live, 1.5) * 0.3, hop = live && live.go ? beat(live, 1.5) * 0.02 : 0;
   for (const sx of [-1, 1]) { // ears and anything else behind the head
     if (o.ears === "long") { oval(ear, sx * 0.09, -0.4, 0.05, 0.15, sx * 0.12); oval(b, sx * 0.09, -0.39, 0.024, 0.1, sx * 0.12); }
     if (o.ears === "big") { oval(ear, sx * 0.25, -0.13, 0.14, 0.18); oval(b, sx * 0.26, -0.12, 0.08, 0.12); }
@@ -23,17 +29,19 @@ function critter(g, o, a, b) {
     if (o.antlers) { line("#7a5230", 0.022, [[sx * 0.08, -0.31], [sx * 0.15, -0.46]]); line("#7a5230", 0.02, [[sx * 0.12, -0.39], [sx * 0.2, -0.41]]); line("#7a5230", 0.02, [[sx * 0.14, -0.43], [sx * 0.09, -0.48]]); }
     if (o.horns) tri("#fff4c2", [sx * 0.1, -0.31], [sx * 0.17, -0.44], [sx * 0.16, -0.29]);
   }
+  g.save(); g.translate(0.15, 0.36); g.rotate(wag); g.translate(-0.15, -0.36); // the tail wags
   if (o.tail === "long") { curve(limb, 0.05, [0.15, 0.36], [0.36, 0.38], [0.34, 0.14]); if (o.tuft) oval(o.tuft, 0.34, 0.12, 0.045, 0.055); }
   if (o.tail === "bushy") { oval(a, 0.27, 0.24, 0.1, 0.17, 0.5); oval(b, 0.33, 0.13, 0.055, 0.07, 0.5); }
   if (o.tail === "puff") oval(b, 0.19, 0.37, 0.065, 0.065);
   if (o.tail === "curly") { g.strokeStyle = a; g.lineWidth = 0.028; g.lineCap = "round"; g.beginPath(); g.arc(0.24, 0.3, 0.04, Math.PI * 0.9, Math.PI * 2.9); g.stroke(); }
+  g.restore();
   if (o.mane) oval(o.mane, 0, -0.14, 0.275, 0.275);
-  oval(o.foot || limb, -0.1, 0.43, 0.085, 0.048); oval(o.foot || limb, 0.1, 0.43, 0.085, 0.048);
+  oval(o.foot || limb, -0.1, 0.43 - Math.max(0, hop), 0.085, 0.048); oval(o.foot || limb, 0.1, 0.43 - Math.max(0, -hop), 0.085, 0.048);
   oval(a, 0, 0.2, 0.19, 0.23); if (o.edge) edge(0, 0.2, 0.19, 0.23);
   oval(b, 0, 0.25, 0.12, 0.16);
   if (o.spots) [[-0.11, 0.1, 0.05], [0.12, 0.2, 0.045], [-0.08, 0.34, 0.04]].forEach(([x, y, r]) => oval(o.spots, x, y, r, r * 0.8));
   if (o.stripes) [[-0.15, 0.1], [-0.17, 0.22], [0.15, 0.1], [0.17, 0.22]].forEach(([x, y]) => line(o.stripes, 0.022, [[x, y], [x * 0.55, y + 0.02]]));
-  oval(limb, -0.185, 0.17, 0.05, 0.1, 0.35); oval(limb, 0.185, 0.17, 0.05, 0.1, -0.35);
+  oval(limb, -0.185 - Math.max(0, arms) * 0.06, 0.17 - Math.max(0, arms) * 0.05, 0.05, 0.1, 0.35 + Math.max(0, arms) * 1.6); oval(limb, 0.185 + Math.max(0, -arms) * 0.06, 0.17 - Math.max(0, -arms) * 0.05, 0.05, 0.1, -0.35 - Math.max(0, -arms) * 1.6);
   for (const sx of [-1, 1]) {
     if (o.ears === "round") { oval(ear, sx * 0.15, -0.3, 0.075, 0.075); oval(o.ear ? ear : b, sx * 0.15, -0.3, 0.04, 0.04); }
     if (o.ears === "pointy") { tri(ear, [sx * 0.2, -0.2], [sx * 0.17, -0.41], [sx * 0.03, -0.3]); tri(b, [sx * 0.165, -0.24], [sx * 0.155, -0.35], [sx * 0.08, -0.29]); }
@@ -60,42 +68,126 @@ function critter(g, o, a, b) {
   if (o.cheeks) for (const sx of [-1, 1]) oval("rgba(244,114,182,0.45)", sx * 0.13, -0.08, 0.035, 0.025);
 }
 
+/** A four-legged animal seen from the side, mid-stride and facing right, so it can walk along a path. `o` gives its
+ *  proportions (body, legs, neck, head, snout) and its ears, tail and markings. `b` is used for whichever of the
+ *  belly, mane, stripes or spots the animal has. */
+function walker(g, o, a, b, live) {
+  const { oval, tri, line, curve, edge } = kit(g), G = 0.46;
+  const len = o.len ?? 0.24, fat = o.fat ?? 0.13, leg = o.leg ?? 0.2, lw = o.lw ?? 0.05, bx = o.bx ?? -0.06, by = G - leg - fat * 0.7;
+  const limb = o.limb === "b" ? b : o.limb || a, foot = o.foot || limb, hair = o.hair || b, hr = o.head ?? 0.09, sl = o.snout ?? 0.08;
+  const up = o.up ?? 0.9, nl = o.neck ?? 0.1, nw = o.nw ?? fat * 1.1, nx = bx + len * 0.72, ny = by - fat * 0.15;
+  const nod = live && live.go ? beat(live, 2.8) * 0.008 : 0, hx = nx + Math.cos(up) * nl, hy = ny - Math.sin(up) * nl + nod, tx = bx - len * 0.93, ty = by - fat * 0.25, topY = by + fat * 0.3;
+  const face = o.face === "b" ? b : o.face || a, headc = o.headc === "b" ? b : a;
+  const st0 = o.stride ?? 0.06, walking = !!(live && live.go), st = walking ? Math.max(st0 * 1.5, Math.min(0.09, leg * 0.45)) : st0;
+  const ph = walking ? live.t * TAU * 1.4 : 0, sway = beat(live, 0.9) * 0.22;
+  const stand = (x, way, far) => { // one leg, from the body down to the ground; `way` is +1 or -1: which half of the stride it is in
+    const sw = st * way * Math.cos(ph), up = walking ? Math.max(0, -way * Math.sin(ph)) * Math.min(0.045, leg * 0.3) : 0, fy = G - up;
+    const leg1 = [[x, topY], [x + sw * 0.35 + up * 0.5, (topY + fy) / 2 - up * 0.3], [x + sw, fy - lw * 0.5]];
+    if (o.edge && limb === a) { g.save(); g.beginPath(); g.rect(-1, by + fat * 0.85, 2, 1); g.clip(); line("#b6c2d1", lw + 0.014, leg1); g.restore(); } // white legs need an edge to show on white paper
+    line(limb, lw, leg1); if (far) line("rgba(0,0,0,0.22)", lw, leg1);
+    oval(foot, x + sw + lw * 0.2, fy - lw * 0.32, lw * 0.72, lw * 0.42); if (far) oval("rgba(0,0,0,0.22)", x + sw + lw * 0.2, fy - lw * 0.32, lw * 0.72, lw * 0.42);
+  };
+  const hip = bx - len * 0.62, sh = bx + len * 0.62;
+  stand(hip + 0.04, 1, true); stand(sh - 0.04, -1, true);
+  g.save(); g.translate(tx + 0.04, ty); g.rotate(sway); g.translate(-tx - 0.04, -ty); // the tail swings
+  // tail
+  if (o.tail === "long") { curve(limb, 0.032, [tx + 0.03, ty], [tx - 0.13, ty - 0.03], [tx - 0.11, ty + 0.15]); if (o.tuft) oval(hair, tx - 0.11, ty + 0.16, 0.035, 0.05); }
+  if (o.tail === "up") curve(limb, 0.034, [tx + 0.03, ty], [tx - 0.1, ty - 0.02], [tx - 0.08, ty - 0.2]);
+  if (o.tail === "horse") { oval(hair, tx - 0.035, ty + 0.11, 0.045, 0.15, 0.22); }
+  if (o.tail === "thin") { curve(limb, 0.02, [tx + 0.03, ty], [tx - 0.06, ty], [tx - 0.05, ty + 0.16]); oval(hair, tx - 0.05, ty + 0.18, 0.022, 0.04); }
+  if (o.tail === "bushy") { oval(a, tx - 0.07, ty + 0.0, 0.14, 0.065, 0.35); oval(b, tx - 0.17, ty - 0.035, 0.05, 0.04, 0.35); }
+  if (o.tail === "puff") oval(o.puff || b, tx, ty + 0.02, 0.045, 0.045);
+  if (o.tail === "short") tri(a, [tx + 0.05, ty - 0.03], [tx + 0.05, ty + 0.05], [tx - 0.06, ty - 0.05]);
+  if (o.tail === "curly") { g.strokeStyle = a; g.lineWidth = 0.024; g.lineCap = "round"; g.beginPath(); g.arc(tx - 0.03, ty, 0.035, 0, Math.PI * 1.7); g.stroke(); }
+  if (o.tail === "dino") { g.fillStyle = a; g.beginPath(); g.moveTo(bx - len * 0.5, by - fat * 0.85); g.quadraticCurveTo(tx - 0.05, by - fat * 0.5, tx - (o.tlen ?? 0.2), by + fat * 0.75); g.quadraticCurveTo(tx, by + fat * 0.9, bx - len * 0.5, by + fat * 0.85); g.fill(); }
+  g.restore();
+  // neck, with a mane down the back of it
+  if (o.mane === "neck") line(hair, nw * 0.75, [[nx - nw * 0.42, ny - 0.01], [hx - nw * 0.36, hy - 0.03]]);
+  if (nl > 0.03) line(a, nw, [[nx, ny], [hx, hy]]);
+  if (o.hump) oval(a, bx - len * 0.05, by - fat * 0.85, len * 0.4, fat * 0.7);
+  // body
+  if (o.wool) { [[-0.8, -0.3], [-0.45, -0.75], [0.05, -0.85], [0.5, -0.7], [0.82, -0.25], [-0.85, 0.3], [-0.4, 0.7], [0.1, 0.78], [0.55, 0.65], [0.85, 0.3]].forEach(([u, v]) => { oval(a, bx + u * len, by + v * fat, len * 0.36, fat * 0.5); edge(bx + u * len, by + v * fat, len * 0.36, fat * 0.5); }); oval(a, bx, by, len * 0.95, fat * 0.95); }
+  else { oval(a, bx, by, len, fat); if (o.edge) edge(bx, by, len, fat); }
+  if (o.belly) { g.save(); g.beginPath(); g.ellipse(bx, by, len, fat, 0, 0, Math.PI * 2); g.clip(); oval(b, bx + len * 0.05, by + fat * 0.85, len * 0.85, fat * 0.5); g.restore(); }
+  if (o.stripes || o.spots || o.plates) { g.save(); g.beginPath(); g.ellipse(bx, by, len, fat, 0, 0, Math.PI * 2); g.clip();
+    if (o.stripes) for (let i = -3; i <= 3; i += 1) line(b, 0.022, [[bx + i * len * 0.26, by - fat], [bx + i * len * 0.26 - 0.025, by + fat * (i % 2 ? 0.2 : 0.5)]]);
+    if (o.spots) [[-0.6, -0.2, 0.2], [-0.2, 0.25, 0.24], [0.2, -0.35, 0.22], [0.55, 0.2, 0.2], [-0.1, -0.6, 0.16], [0.75, -0.3, 0.13]].forEach(([u, v, r]) => oval(b, bx + u * len, by + v * fat, r * len, r * len * 0.8, u));
+    g.restore(); }
+  if (o.udder) oval("#f9a8d4", bx - len * 0.35, by + fat * 0.92, 0.045, 0.035);
+  stand(hip, -1, false); stand(sh, 1.1, false);
+  if (o.neckSpots) for (let i = 1; i <= 3; i += 1) oval(b, nx + Math.cos(up) * nl * i / 4 + (i % 2 ? 0.012 : -0.012), ny - Math.sin(up) * nl * i / 4, nw * 0.22, nw * 0.2);
+  if (o.neckStripes) for (let i = 1; i <= 3; i += 1) { const cx = nx + Math.cos(up) * nl * i / 4.2, cy = ny - Math.sin(up) * nl * i / 4.2; line(b, 0.018, [[cx - nw * 0.36, cy - 0.01], [cx + nw * 0.3, cy + 0.025]]); }
+  // head
+  const ex = hx - hr * 0.45, ey = hy - hr * 0.75;
+  if (o.mane === "lion") oval(hair, hx - hr * 0.25, hy + hr * 0.1, hr * 1.55, hr * 1.6);
+  if (o.ears === "big") { oval(a, hx - hr * 0.75, hy + hr * 0.05, hr * 0.95, hr * 1.25); oval(b, hx - hr * 0.78, hy + hr * 0.08, hr * 0.68, hr * 0.95); }
+  if (o.antlers) { line("#7a5230", 0.02, [[ex + 0.02, ey], [ex - 0.01, ey - 0.16]]); line("#7a5230", 0.018, [[ex, ey - 0.07], [ex + 0.07, ey - 0.12]]); line("#7a5230", 0.018, [[ex - 0.005, ey - 0.12], [ex - 0.07, ey - 0.16]]); line("#7a5230", 0.018, [[ex + 0.07, ey], [ex + 0.1, ey - 0.13]]); }
+  if (o.horns === "cow") tri("#fff4c2", [ex + 0.01, ey + 0.02], [ex + 0.06, ey + 0.01], [ex + 0.05, ey - 0.09]);
+  if (o.horns === "goat") { curve("#d6c7a1", 0.024, [ex + 0.03, ey + 0.01], [ex + 0.0, ey - 0.1], [ex - 0.09, ey - 0.07]); }
+  if (o.horns === "knobs") for (const dx of [0.0, 0.05]) { line("#b45309", 0.016, [[ex + dx + 0.02, ey + 0.01], [ex + dx + 0.015, ey - 0.06]]); oval("#7a4a12", ex + dx + 0.015, ey - 0.065, 0.014, 0.014); }
+  if (o.ears === "pointy") { tri(a, [ex - 0.035, ey + 0.035], [ex - 0.005, ey - 0.085], [ex + 0.05, ey + 0.01]); }
+  if (o.ears === "long") { oval(a, ex - 0.01, ey - 0.06, 0.03, 0.09, -0.25); oval("rgba(0,0,0,0.15)", ex - 0.008, ey - 0.055, 0.013, 0.06, -0.25); }
+  if (o.ears === "round") { oval(o.mane === "lion" ? a : headc, ex, ey + 0.01, hr * 0.38, hr * 0.38); oval("rgba(0,0,0,0.15)", ex, ey + 0.01, hr * 0.2, hr * 0.2); }
+  oval(headc, hx, hy, hr * 1.05, hr); if (o.edge) edge(hx, hy, hr * 1.05, hr);
+  const sx = hx + hr * 0.65 + sl * 0.45, sy = hy + hr * 0.28, tipx = sx + sl * 0.82;
+  if (o.nose === "trunk") { curve(a, hr * 0.62, [hx + hr * 0.7, hy + hr * 0.1], [hx + hr * 1.9, hy + hr * 0.4], [hx + hr * 1.35, G - 0.15]); curve(a, hr * 0.5, [hx + hr * 1.35, G - 0.15], [hx + hr * 1.3, G - 0.07], [hx + hr * 1.8, G - 0.08]); tri("#fffbeb", [hx + hr * 0.5, hy + hr * 0.6], [hx + hr * 0.85, hy + hr * 0.55], [hx + hr * 1.25, hy + hr * 1.3]); }
+  else if (sl > 0) { oval(face, sx, sy, sl, hr * (o.jaw ?? 0.62), 0.12); if (o.edge) { g.save(); g.beginPath(); g.rect(hx + hr * 0.75, hy - hr, 1, 1); g.clip(); edge(sx, sy, sl, hr * (o.jaw ?? 0.62)); g.restore(); } }
+  if (o.nose === "pig") { oval("#f48fb1", tipx - 0.012, sy, 0.022, hr * 0.5); oval("#b0556f", tipx - 0.008, sy - 0.012, 0.007, 0.009); }
+  else if (o.nose === "horn") { tri(b, [tipx - 0.075, sy - hr * 0.45], [tipx - 0.005, sy - hr * 0.4], [tipx - 0.015, sy - hr * 1.5]); oval("rgba(0,0,0,0.35)", tipx - 0.012, sy + 0.0, 0.009, 0.009); }
+  else if (o.nose === "nostril") oval("rgba(0,0,0,0.35)", tipx - 0.02, sy - hr * 0.2, 0.01, 0.012);
+  else if (o.nose !== "trunk") oval(o.nosec || DARK, tipx - 0.012, sy - hr * 0.18, 0.02, 0.017);
+  if (o.teeth) for (let i = 0; i < 5; i += 1) tri("#ffffff", [sx - sl * 0.7 + i * sl * 0.33, sy + hr * 0.25], [sx - sl * 0.7 + i * sl * 0.33 + sl * 0.17, sy + hr * 0.25], [sx - sl * 0.7 + i * sl * 0.33 + sl * 0.085, sy + hr * 0.62]);
+  else if (o.nose !== "trunk") curve("rgba(0,0,0,0.5)", 0.01, [sx + sl * 0.1, sy + hr * 0.33], [sx + sl * 0.5, sy + hr * 0.4], [tipx - 0.02, sy + hr * 0.22]);
+  if (o.horn) { tri("#fbbf24", [hx - hr * 0.05, hy - hr * 0.85], [hx + hr * 0.4, hy - hr * 0.8], [hx + hr * 0.75, hy - hr * 2.5]); }
+  if (o.ears === "floppy") oval(o.earc || hair, hx - hr * 0.5, hy + hr * 0.25, hr * 0.42, hr * 0.85, 0.25);
+  if (o.ears === "side") { oval(headc, ex - 0.03, ey + 0.045, 0.055, 0.028, 0.5); }
+  if (o.forelock) oval(hair, hx - hr * 0.1, hy - hr * 0.85, hr * 0.55, hr * 0.3, 0.3);
+  if (o.beard) tri("#f8fafc", [sx - sl * 0.4, sy + hr * 0.4], [sx + sl * 0.2, sy + hr * 0.45], [sx - sl * 0.2, sy + hr * 1.3]);
+  if (o.woolTop) { oval(a, hx - hr * 0.2, hy - hr * 0.8, hr * 0.7, hr * 0.45); edge(hx - hr * 0.2, hy - hr * 0.8, hr * 0.7, hr * 0.45); }
+  const eyeX = hx + hr * (o.eyeX ?? 0.3), eyeY = hy - hr * 0.25;
+  if (o.headStripes) { line(b, 0.016, [[hx - hr * 0.2, hy - hr * 0.95], [hx - hr * 0.1, hy - hr * 0.45]]); line(b, 0.016, [[hx - hr * 0.75, hy - hr * 0.5], [hx - hr * 0.4, hy - hr * 0.25]]); line(b, 0.016, [[hx - hr * 0.8, hy + hr * 0.2], [hx - hr * 0.4, hy + hr * 0.25]]); }
+  oval(o.eye || DARK, eyeX, eyeY, 0.02, 0.02); oval("#ffffff", eyeX - 0.006, eyeY - 0.007, 0.007, 0.007);
+  if (o.whiskers) { line("rgba(0,0,0,0.45)", 0.007, [[sx + sl * 0.2, sy], [sx + sl * 0.2 + 0.1, sy - 0.03]]); line("rgba(0,0,0,0.45)", 0.007, [[sx + sl * 0.2, sy + 0.015], [sx + sl * 0.2 + 0.1, sy + 0.03]]); }
+}
+
 const OWN = {
-  fish(g, a, b) {
+  fish(g, a, b, live) {
     const { oval, tri, curve } = kit(g);
-    tri(b, [-0.2, 0.0], [-0.44, -0.2], [-0.44, 0.2]); tri(b, [-0.02, -0.2], [0.14, -0.2], [-0.1, -0.36]); tri(b, [-0.02, 0.2], [0.1, 0.2], [-0.08, 0.32]);
+    g.save(); g.translate(-0.2, 0); g.scale(1 - Math.abs(beat(live, 2)) * 0.45, 1); tri(b, [0, 0.0], [-0.24, -0.2], [-0.24, 0.2]); g.restore(); // the tail flicks tri(b, [-0.02, -0.2], [0.14, -0.2], [-0.1, -0.36]); tri(b, [-0.02, 0.2], [0.1, 0.2], [-0.08, 0.32]);
     oval(a, 0.04, 0, 0.3, 0.22);
     for (const x of [-0.12, 0.0, 0.11]) curve("rgba(255,255,255,0.4)", 0.02, [x, -0.14], [x + 0.07, 0], [x, 0.14]);
     oval("#ffffff", 0.2, -0.06, 0.055, 0.055); oval(DARK, 0.21, -0.06, 0.028, 0.028); curve(DARK, 0.012, [0.27, 0.06], [0.3, 0.08], [0.33, 0.05]);
     oval("rgba(255,255,255,0.7)", 0.42, -0.2, 0.025, 0.025); oval("rgba(255,255,255,0.7)", 0.46, -0.3, 0.035, 0.035);
   },
-  duck(g, a, b) {
-    const { oval, tri, curve } = kit(g);
+  duck(g, a, b, live) {
+    const { oval, tri, curve } = kit(g), k = beat(live, 1.6);
     tri(a, [-0.3, 0.1], [-0.44, -0.02], [-0.2, 0.0]);
-    oval(a, -0.05, 0.14, 0.27, 0.19); oval(b, -0.09, 0.15, 0.14, 0.1, -0.2);
-    oval("#f59e0b", -0.02, 0.4, 0.08, 0.035); oval("#f59e0b", 0.12, 0.4, 0.08, 0.035);
+    oval(a, -0.05, 0.14, 0.27, 0.19); oval("#f59e0b", -0.02 + k * 0.05, 0.4 - Math.max(0, k) * 0.02, 0.08, 0.035); oval("#f59e0b", 0.12 - k * 0.05, 0.4 - Math.max(0, -k) * 0.02, 0.08, 0.035);
+    oval(a, -0.05, 0.14, 0.27, 0.19); oval(b, -0.09, 0.15 - Math.abs(k) * 0.03, 0.14, 0.1, -0.2 - Math.abs(k) * 0.35);
     oval(a, 0.16, -0.17, 0.15, 0.15);
     g.fillStyle = "#f59e0b"; g.beginPath(); g.ellipse(0.33, -0.14, 0.09, 0.04, 0.05, 0, Math.PI * 2); g.fill();
     oval(DARK, 0.2, -0.22, 0.022, 0.022); oval("#ffffff", 0.194, -0.227, 0.007, 0.007); curve("rgba(0,0,0,0.25)", 0.01, [0.26, -0.14], [0.33, -0.13], [0.41, -0.14]);
   },
-  turtle(g, a, b) {
-    const { oval, curve } = kit(g);
-    oval(a, 0.37, 0.03, 0.12, 0.1); oval(a, -0.2, 0.26, 0.07, 0.085); oval(a, 0.14, 0.27, 0.07, 0.085); oval(a, -0.36, 0.14, 0.06, 0.03, 0.4);
+  turtle(g, a, b, live) {
+    const { oval, curve } = kit(g), k = beat(live, 0.8);
+    oval(a, 0.37, 0.03, 0.12, 0.1); oval(a, -0.2 + k * 0.05, 0.26, 0.07, 0.085, k * 0.4); oval(a, 0.14 - k * 0.05, 0.27, 0.07, 0.085, -k * 0.4); oval(a, -0.36, 0.14, 0.06, 0.03, 0.4);
     g.fillStyle = b; g.beginPath(); g.ellipse(-0.03, 0.1, 0.3, 0.26, 0, Math.PI, 0); g.lineTo(-0.33, 0.1); g.fill();
     g.strokeStyle = "rgba(0,0,0,0.2)"; g.lineWidth = 0.014; g.beginPath(); g.arc(-0.03, 0.1, 0.14, Math.PI, 0); g.moveTo(-0.03, -0.04); g.lineTo(-0.03, -0.16); g.moveTo(-0.14, 0.0); g.lineTo(-0.24, -0.08); g.moveTo(0.08, 0.0); g.lineTo(0.18, -0.08); g.stroke();
     oval(a, -0.03, 0.12, 0.32, 0.045);
     oval(DARK, 0.41, 0.0, 0.02, 0.02); oval("#ffffff", 0.405, -0.006, 0.007, 0.007); curve(DARK, 0.012, [0.38, 0.07], [0.42, 0.09], [0.46, 0.06]);
   },
-  butterfly(g, a, b) {
+  butterfly(g, a, b, live) {
     const { oval, line, curve } = kit(g);
+    g.save(); g.scale(live ? 0.35 + 0.65 * Math.abs(Math.cos(live.t * TAU * 1.5)) : 1, 1); // the wings open and close
     for (const sx of [-1, 1]) { oval(a, sx * 0.21, -0.12, 0.2, 0.24, sx * 0.35); oval(b, sx * 0.17, 0.2, 0.15, 0.17, sx * -0.3); oval("rgba(255,255,255,0.75)", sx * 0.23, -0.14, 0.07, 0.09, sx * 0.35); oval(a, sx * 0.17, 0.21, 0.055, 0.065); }
+    g.restore();
     oval(DARK, 0, 0.03, 0.045, 0.24); oval(DARK, 0, -0.24, 0.055, 0.055);
     curve(DARK, 0.014, [-0.02, -0.28], [-0.1, -0.4], [-0.14, -0.42]); curve(DARK, 0.014, [0.02, -0.28], [0.1, -0.4], [0.14, -0.42]);
     line("#ffffff", 0.012, [[-0.02, -0.25], [-0.02, -0.25]]); line("#ffffff", 0.012, [[0.02, -0.25], [0.02, -0.25]]);
   },
-  bee(g, a, b) {
-    const { oval, line, curve } = kit(g);
-    oval("rgba(190,225,255,0.85)", -0.08, -0.22, 0.13, 0.17, -0.5); oval("rgba(190,225,255,0.85)", 0.08, -0.24, 0.12, 0.16, 0.3);
+  bee(g, a, b, live) {
+    const { oval, line, curve } = kit(g), k = beat(live, 6);
+    g.save(); g.translate(0, -0.08); g.scale(1, 1 - Math.abs(k) * 0.5); g.translate(0, 0.08); oval("rgba(190,225,255,0.85)", -0.08, -0.22, 0.13, 0.17, -0.5); oval("rgba(190,225,255,0.85)", 0.08, -0.24, 0.12, 0.16, 0.3); g.restore(); // buzzing wings
     g.fillStyle = b; g.beginPath(); g.moveTo(-0.3, 0.08); g.lineTo(-0.42, 0.05); g.lineTo(-0.3, 0.02); g.fill(); // sting
     oval(a, -0.04, 0.06, 0.28, 0.2);
     g.save(); g.beginPath(); g.ellipse(-0.04, 0.06, 0.28, 0.2, 0, 0, Math.PI * 2); g.clip(); g.fillStyle = b; for (const x of [-0.22, -0.08, 0.06]) g.fillRect(x, -0.2, 0.07, 0.5); g.restore();
@@ -104,12 +196,12 @@ const OWN = {
     curve(DARK, 0.012, [0.22, -0.1], [0.24, -0.22], [0.3, -0.24]); curve(DARK, 0.012, [0.28, -0.1], [0.34, -0.2], [0.4, -0.2]);
     line(DARK, 0.03, [[0.3, -0.24], [0.3, -0.24]]); line(DARK, 0.03, [[0.4, -0.2], [0.4, -0.2]]);
   },
-  bird(g, a, b) {
-    const { oval, tri, line } = kit(g);
+  bird(g, a, b, live) {
+    const { oval, tri, line } = kit(g), k = beat(live, 2.5);
     tri(a, [-0.2, 0.06], [-0.45, -0.02], [-0.42, 0.16]);
     line("#f59e0b", 0.02, [[-0.03, 0.24], [-0.03, 0.4], [0.04, 0.4]]); line("#f59e0b", 0.02, [[0.08, 0.24], [0.08, 0.4], [0.15, 0.4]]);
     oval(a, 0, 0.06, 0.26, 0.2); oval(b, 0.04, 0.12, 0.15, 0.11);
-    oval(a, -0.08, 0.04, 0.15, 0.09, 0.4);
+    oval(a, -0.08 - Math.max(0, k) * 0.03, 0.04 - Math.max(0, k) * 0.12, 0.15, 0.09, 0.4 + Math.max(0, k) * 0.9); oval("rgba(0,0,0,0.1)", -0.08 - Math.max(0, k) * 0.03, 0.04 - Math.max(0, k) * 0.12, 0.15, 0.09, 0.4 + Math.max(0, k) * 0.9); // the wing flaps
     oval(a, 0.2, -0.16, 0.14, 0.14);
     tri("#f59e0b", [0.32, -0.2], [0.46, -0.15], [0.32, -0.1]);
     oval(DARK, 0.23, -0.2, 0.022, 0.022); oval("#ffffff", 0.224, -0.207, 0.007, 0.007);
@@ -140,7 +232,32 @@ export const ANIMALS = [
   { id: "turtle", name: "Turtle", custom: "animal", top: "#65a30d", bot: "#a16207" },
   { id: "butterfly", name: "Butterfly", custom: "animal", top: "#a855f7", bot: "#ec4899" },
   { id: "bee", name: "Bee", custom: "animal", top: "#fde047", bot: "#1f2937" },
+  // walking animals: seen from the side, facing right
+  { id: "walk-horse", name: "Horse", custom: "animal", walk: true, top: "#a0522d", bot: "#3b2314", o: { leg: 0.25, lw: 0.042, neck: 0.2, up: 1.0, nw: 0.11, head: 0.075, snout: 0.1, ears: "pointy", tail: "horse", mane: "neck", forelock: true, foot: "#3b2314", nose: "nostril" } },
+  { id: "walk-unicorn", name: "Unicorn", custom: "animal", walk: true, top: "#ffffff", bot: "#f472b6", o: { leg: 0.25, lw: 0.042, neck: 0.2, up: 1.0, nw: 0.11, head: 0.075, snout: 0.1, ears: "pointy", tail: "horse", mane: "neck", forelock: true, foot: "#fbbf24", nose: "nostril", horn: true, edge: true } },
+  { id: "walk-zebra", name: "Zebra", custom: "animal", walk: true, top: "#ffffff", bot: "#1f2937", o: { leg: 0.24, lw: 0.042, neck: 0.18, up: 1.0, nw: 0.11, head: 0.075, snout: 0.095, ears: "pointy", tail: "thin", mane: "neck", foot: "#1f2937", face: "#374151", stripes: true, neckStripes: true, headStripes: true, edge: true } },
+  { id: "walk-donkey", name: "Donkey", custom: "animal", walk: true, top: "#9ca3af", bot: "#f3f4f6", o: { leg: 0.2, lw: 0.042, neck: 0.15, up: 0.95, nw: 0.11, head: 0.08, snout: 0.1, ears: "long", tail: "thin", hair: "#4b5563", mane: "neck", belly: true, face: "b", foot: "#374151", nose: "nostril" } },
+  { id: "walk-cow", name: "Cow", custom: "animal", walk: true, top: "#ffffff", bot: "#1f2937", o: { len: 0.26, fat: 0.15, leg: 0.17, lw: 0.05, neck: 0.08, up: 0.5, nw: 0.14, head: 0.085, snout: 0.085, jaw: 0.72, ears: "side", horns: "cow", tail: "thin", hair: "#1f2937", spots: true, face: "#f9a8d4", foot: "#374151", udder: true, nose: "nostril", edge: true } },
+  { id: "walk-sheep", name: "Sheep", custom: "animal", walk: true, top: "#f8fafc", bot: "#374151", o: { len: 0.23, fat: 0.15, leg: 0.15, lw: 0.04, neck: 0.07, up: 0.6, nw: 0.1, head: 0.075, snout: 0.07, ears: "side", wool: true, woolTop: true, limb: "b", headc: "b", face: "b", tail: "puff", puff: "#f8fafc", nosec: "#111827", eye: "#ffffff" } },
+  { id: "walk-goat", name: "Goat", custom: "animal", walk: true, top: "#e7e5e4", bot: "#ffffff", o: { len: 0.22, fat: 0.12, leg: 0.18, lw: 0.038, neck: 0.11, up: 1.0, nw: 0.09, head: 0.07, snout: 0.085, ears: "side", horns: "goat", beard: true, tail: "short", belly: true, foot: "#44403c", edge: true } },
+  { id: "walk-pig", name: "Pig", custom: "animal", walk: true, top: "#f7a8c9", bot: "#fbd0e0", o: { len: 0.25, fat: 0.16, leg: 0.11, lw: 0.05, neck: 0.03, up: 0.3, head: 0.1, snout: 0.06, bx: -0.08, ears: "pointy", tail: "curly", belly: true, nose: "pig", foot: "#b0556f" } },
+  { id: "walk-dog", name: "Dog", custom: "animal", walk: true, top: "#c68642", bot: "#8d5524", o: { len: 0.22, fat: 0.11, leg: 0.17, lw: 0.042, neck: 0.1, up: 0.9, nw: 0.1, head: 0.085, snout: 0.085, ears: "floppy", tail: "up" } },
+  { id: "walk-cat", name: "Cat", custom: "animal", walk: true, top: "#f59e0b", bot: "#fff1d6", o: { len: 0.2, fat: 0.095, leg: 0.14, lw: 0.036, neck: 0.07, up: 0.8, nw: 0.09, head: 0.085, snout: 0.035, ears: "pointy", tail: "up", belly: true, whiskers: true, nosec: "#f48fb1", face: "b" } },
+  { id: "walk-fox", name: "Fox", custom: "animal", walk: true, top: "#ea580c", bot: "#fff7ed", o: { len: 0.21, fat: 0.095, leg: 0.15, lw: 0.036, neck: 0.08, up: 0.75, nw: 0.09, head: 0.08, snout: 0.09, jaw: 0.5, bx: 0.0, ears: "pointy", tail: "bushy", belly: true, face: "b", foot: "#1f2937" } },
+  { id: "walk-wolf", name: "Wolf", custom: "animal", walk: true, top: "#6b7280", bot: "#e5e7eb", o: { len: 0.23, fat: 0.11, leg: 0.19, lw: 0.042, neck: 0.1, up: 0.8, nw: 0.11, head: 0.085, snout: 0.1, jaw: 0.5, bx: 0.0, ears: "pointy", tail: "bushy", belly: true, face: "b" } },
+  { id: "walk-lion", name: "Lion", custom: "animal", walk: true, top: "#f2b84b", bot: "#b45309", o: { len: 0.24, fat: 0.12, leg: 0.17, lw: 0.05, neck: 0.09, up: 0.8, nw: 0.12, head: 0.095, snout: 0.06, ears: "round", mane: "lion", tail: "long", tuft: true, face: "#fde9b8" } },
+  { id: "walk-tiger", name: "Tiger", custom: "animal", walk: true, top: "#f59e0b", bot: "#1f2937", o: { len: 0.25, fat: 0.12, leg: 0.16, lw: 0.05, neck: 0.08, up: 0.7, nw: 0.12, head: 0.095, snout: 0.06, ears: "round", tail: "long", stripes: true, headStripes: true, face: "#fffbeb", whiskers: true, nosec: "#f48fb1" } },
+  { id: "walk-bear", name: "Bear", custom: "animal", walk: true, top: "#8b5a2b", bot: "#e7c9a0", o: { len: 0.25, fat: 0.17, leg: 0.13, lw: 0.07, neck: 0.06, up: 0.35, nw: 0.16, head: 0.105, snout: 0.07, ears: "round", tail: "puff", puff: "#8b5a2b", face: "b" } },
+  { id: "walk-elephant", name: "Elephant", custom: "animal", walk: true, top: "#9aa5b1", bot: "#d1d8e0", o: { len: 0.25, fat: 0.19, leg: 0.15, lw: 0.085, neck: 0.07, up: 0.35, nw: 0.2, head: 0.13, snout: 0, bx: -0.12, stride: 0.03, ears: "big", nose: "trunk", tail: "thin", hair: "#6b7280", foot: "#7b8794", eyeX: 0.45 } },
+  { id: "walk-giraffe", name: "Giraffe", custom: "animal", walk: true, top: "#fbbf24", bot: "#b45309", o: { len: 0.16, fat: 0.09, leg: 0.27, lw: 0.03, neck: 0.36, up: 1.2, nw: 0.07, head: 0.055, snout: 0.065, stride: 0.035, ears: "side", horns: "knobs", tail: "thin", spots: true, neckSpots: true, foot: "#7a4a12", nose: "nostril" } },
+  { id: "walk-camel", name: "Camel", custom: "animal", walk: true, top: "#d4a373", bot: "#a47148", o: { len: 0.22, fat: 0.11, leg: 0.24, lw: 0.036, neck: 0.22, up: 1.05, nw: 0.08, head: 0.065, snout: 0.085, ears: "side", hump: true, tail: "thin", foot: "#a47148", nose: "nostril" } },
+  { id: "walk-deer", name: "Deer", custom: "animal", walk: true, top: "#b5651d", bot: "#fff7ed", o: { len: 0.2, fat: 0.1, leg: 0.23, lw: 0.03, neck: 0.15, up: 1.05, nw: 0.075, head: 0.065, snout: 0.075, ears: "side", antlers: true, tail: "puff", belly: true, foot: "#3b2314" } },
+  { id: "walk-rhino", name: "Rhino", custom: "animal", walk: true, top: "#9ca3af", bot: "#f3f4f6", o: { len: 0.27, fat: 0.17, leg: 0.12, lw: 0.075, neck: 0.03, up: 0.1, nw: 0.2, head: 0.11, snout: 0.1, jaw: 0.7, bx: -0.1, stride: 0.03, ears: "pointy", nose: "horn", tail: "thin", hair: "#6b7280", foot: "#6b7280" } },
+  { id: "walk-hippo", name: "Hippo", custom: "animal", walk: true, top: "#a78bba", bot: "#e9d5ff", o: { len: 0.27, fat: 0.18, leg: 0.09, lw: 0.075, neck: 0.03, up: 0.15, nw: 0.2, head: 0.11, snout: 0.11, jaw: 0.95, bx: -0.1, stride: 0.03, ears: "round", belly: true, tail: "short", nose: "nostril", foot: "#8b6ea3" } },
+  { id: "walk-dinosaur", name: "Dinosaur", custom: "animal", walk: true, top: "#4ade80", bot: "#fde047", o: { len: 0.2, fat: 0.13, leg: 0.15, lw: 0.06, neck: 0.33, up: 0.95, nw: 0.075, head: 0.055, snout: 0.055, bx: -0.02, stride: 0.03, tail: "dino", tlen: 0.26, belly: true, spots: false, nose: "nostril", foot: "#16a34a" } },
+  { id: "walk-crocodile", name: "Crocodile", custom: "animal", walk: true, top: "#4d7c0f", bot: "#d9f99d", o: { len: 0.24, fat: 0.075, leg: 0.06, lw: 0.045, neck: 0.02, up: 0, head: 0.065, snout: 0.15, jaw: 0.6, bx: -0.05, stride: 0.04, tail: "dino", tlen: 0.2, belly: true, teeth: true, nose: "nostril" } },
 ];
 
-/** Draws an animal one unit tall at the origin (the caller has already scaled). a and b are its two colours. */
-export function drawAnimal(g, d, a, b) { if (OWN[d.id]) OWN[d.id](g, a, b); else critter(g, d.o || {}, a, b); }
+/** Draws an animal one unit tall at the origin (the caller has already scaled). a and b are its two colours;
+ *  `live` (see the top of this file) makes it move its limbs. */
+export function drawAnimal(g, d, a, b, live = null) { if (OWN[d.id]) OWN[d.id](g, a, b, live); else if (d.walk) walker(g, d.o || {}, a, b, live); else critter(g, d.o || {}, a, b, live); }

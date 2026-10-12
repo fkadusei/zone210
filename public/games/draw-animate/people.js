@@ -189,11 +189,36 @@ const OTHER = {
   },
 };
 
-/** Draws a person `h` pixels tall with its middle at the origin. `fig` is { fig: id, sk, hc }. */
-export function drawPerson(g, fig, h) {
+const TAU = Math.PI * 2;
+/**
+ * The pose at one moment of an animation. `live` is { t: seconds, go: is the figure travelling }.
+ * Arms that are held up wave; arms that hang down swing; the legs step when the figure is travelling.
+ */
+function livePose(base, live) {
+  if (!live) return base;
+  const s = Math.sin(live.t * TAU * 1.4), c = Math.cos(live.t * TAU * 1.4), p = { ...base };
+  const turn = (e, hand, by) => { const dx = hand[0] - e[0], dy = hand[1] - e[1], ca = Math.cos(by), sa = Math.sin(by); return [e[0] + dx * ca - dy * sa, e[1] + dx * sa + dy * ca]; };
+  const arm = (e, hand, k) => { // k runs from -1 to 1 through the step
+    if (hand[1] < e[1] - 0.04) return [e, turn(e, hand, 0.32 * k)]; // held up: it waves from the elbow
+    if (!live.go || base.chair) return [e, [hand[0] + 0.025 * k, hand[1]]];
+    const lift = Math.max(0, k) * (base === P.run ? 0.16 : 0.08); // the figure faces us, so a swinging arm is seen as a hand that comes up and in a little
+    return [[e[0], e[1] - lift * 0.2], [hand[0] - Math.sign(e[0] || 1) * lift * 0.35 + 0.02 * k, hand[1] - lift]];
+  };
+  [p.ea, p.ha] = arm(base.ea, base.ha, -s); [p.eb, p.hb] = arm(base.eb, base.hb, s);
+  if (live.go && !base.chair) {
+    const A = base === P.run ? 0.17 : 0.1, high = base === P.run ? 0.09 : 0.05;
+    const leg = (hipX, k, lift) => { const f = [hipX + A * k, 0.46 - lift * high]; return [[(hipX + f[0]) / 2 + 0.035 + lift * 0.04, 0.29 - lift * high * 0.6], f]; };
+    [p.ka, p.fa] = leg(-0.06, s, Math.max(0, c)); [p.kb, p.fb] = leg(0.06, -s, Math.max(0, -c));
+  } else if (base === P.dance || base === P.kick) p.fb = turn(base.kb, base.fb, 0.35 * s);
+  return p;
+}
+
+/** Draws a person `h` pixels tall with its middle at the origin. `fig` is { fig: id, sk, hc }. `live` (optional) is
+ *  { t, go } while an animation plays, and makes the figure move its arms and legs. */
+export function drawPerson(g, fig, h, live = null) {
   const what = personById(fig.fig);
-  if (what.custom) { g.save(); g.scale(h, h); g.lineCap = "round"; g.lineJoin = "round"; if (what.custom === "animal") drawAnimal(g, what, fig.tc || what.top, fig.bc || what.bot); else OTHER[what.custom](g, fig.tc || what.top, fig.bc || what.bot); g.restore(); return; }
-  const own = personById(fig.fig), d = { ...own, top: fig.tc || own.top, bot: fig.bc || own.bot }, pose = P[d.pose], skin = (SKINS[fig.sk] || SKINS[2])[0], hair = own.hairc || (HAIRS[fig.hc >= 0 ? fig.hc : d.hc] || HAIRS[0])[0];
+  if (what.custom) { g.save(); g.scale(h, h); g.lineCap = "round"; g.lineJoin = "round"; if (what.custom === "animal") drawAnimal(g, what, fig.tc || what.top, fig.bc || what.bot, live); else OTHER[what.custom](g, fig.tc || what.top, fig.bc || what.bot); g.restore(); return; }
+  const own = personById(fig.fig), d = { ...own, top: fig.tc || own.top, bot: fig.bc || own.bot }, pose = livePose(P[d.pose], live), skin = (SKINS[fig.sk] || SKINS[2])[0], hair = own.hairc || (HAIRS[fig.hc >= 0 ? fig.hc : d.hc] || HAIRS[0])[0];
   const limb = 0.062, HEAD = [0, -0.34], R = 0.135, sh = [0, -0.17], hipA = [-0.06, 0.1], hipB = [0.06, 0.1];
   g.save(); g.scale(h, h); g.lineCap = "round"; g.lineJoin = "round";
   if (d.fit) { g.translate(0, (1 - d.fit) * 0.46); g.scale(d.fit, d.fit); } // feet stay on the ground; the hat comes down inside the box

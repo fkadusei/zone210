@@ -58,9 +58,9 @@ function trace(g, p, sharp) {
   for (let i = 2; i < p.length - 2; i += 2) g.quadraticCurveTo(p[i], p[i + 1], (p[i] + p[i + 2]) / 2, (p[i + 1] + p[i + 3]) / 2);
   g.lineTo(p[p.length - 2], p[p.length - 1]);
 }
-function strokeOn(g, s) {
+function strokeOn(g, s, live = null) {
   const p = s.p;
-  if (s.fig) { g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1); if (s.r) g.rotate(s.r); drawPerson(g, s, s.w); g.restore(); return; } // a hand-drawn person
+  if (s.fig) { g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1); if (s.r) g.rotate(s.r); drawPerson(g, s, s.w, live); g.restore(); return; } // a hand-drawn person
   if (s.ch) { // a sticker
     g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1); if (s.r) g.rotate(s.r);
     g.font = `${s.w}px ${EMOJI}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#000"; g.fillText(s.ch, 0, s.w * 0.07);
@@ -78,27 +78,37 @@ const mkLayer = () => { const c = document.createElement("canvas"); c.width = W 
 const A = mkLayer(), B = mkLayer(), C = mkLayer(); // C is scratch
 function paintLayer(L, list) { L.g.clearRect(0, 0, W, H); list.forEach((s) => strokeOn(L.g, s)); }
 
-// each thing is drawn once onto its own small canvas, then that picture is moved, turned and stretched
+// each thing is drawn once onto its own small canvas, then that picture is moved, turned and stretched.
+// A thing with hand-drawn people or animals in it is drawn again for every moment of an animation, so their limbs move.
 const layers = new WeakMap();
-function layer(thing) {
+function layer(thing, live = null) {
   let L = layers.get(thing);
-  if (L) return L;
-  const b = bbox(thing.s) || { x0: -1, y0: -1, x1: 1, y1: 1, w: 2, h: 2 }, pad = 4, c = document.createElement("canvas");
-  c.width = Math.max(2, Math.ceil((b.w + pad * 2) * 2)); c.height = Math.max(2, Math.ceil((b.h + pad * 2) * 2));
-  const g = c.getContext("2d");
-  g.scale(2, 2); g.translate(pad - b.x0, pad - b.y0);
-  thing.s.forEach((s) => strokeOn(g, s));
-  L = { cv: c, b, pad };
-  layers.set(thing, L);
+  if (!L) {
+    const figs = thing.s.filter((s) => s.fig), pad = 4 + Math.round(figs.reduce((m, s) => Math.max(m, s.w), 0) * 0.14); // room for a swinging arm or leg
+    const b = bbox(thing.s) || { x0: -1, y0: -1, x1: 1, y1: 1, w: 2, h: 2 }, c = document.createElement("canvas");
+    c.width = Math.max(2, Math.ceil((b.w + pad * 2) * 2)); c.height = Math.max(2, Math.ceil((b.h + pad * 2) * 2));
+    L = { cv: c, g: c.getContext("2d"), b, pad, alive: figs.length > 0, at: undefined };
+    layers.set(thing, L);
+  }
+  const at = L.alive && live ? live.t : null;
+  if (L.at !== at) {
+    const g = L.g, b = L.b;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, L.cv.width, L.cv.height);
+    g.scale(2, 2); g.translate(L.pad - b.x0, L.pad - b.y0);
+    thing.s.forEach((s) => strokeOn(g, s, at === null ? null : live));
+    L.at = at;
+  }
   return L;
 }
-function drawThing(thing, p) {
-  const { cv: c, b, pad } = layer(thing);
+function drawThing(thing, p, live = null) {
+  const { cv: c, b, pad } = layer(thing, live);
   ctx.save();
   ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(p.sx * p.flip, p.sy);
   ctx.drawImage(c, b.x0 - pad, b.y0 - pad, b.w + pad * 2, b.h + pad * 2);
   ctx.restore();
 }
+/** What the limbs of the hand-drawn figures in a thing are doing at time t: stepping if the thing travels sideways. */
+const limbs = (th, t, i) => ({ t: t * (th.speed || 1) + i * 0.37, go: th.move === "side" || th.move === "circle" || (th.move === "path" && !!th.path && th.path.length >= 4) });
 
 // ---------- backgrounds ----------
 function stars(g, n, seed) { let a = seed; const r = () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; }; g.fillStyle = "#fff"; for (let i = 0; i < n; i += 1) { g.globalAlpha = 0.4 + r() * 0.6; g.beginPath(); g.arc(r() * W, r() * H * 0.85, 0.8 + r() * 1.8, 0, 7); g.fill(); } g.globalAlpha = 1; }
@@ -324,7 +334,7 @@ function render(t = null) {
   if (scene()) {
     const playing = ui.state === "play";
     putBg(ctx, data.scene.bg);
-    data.scene.things.forEach((th, i) => { if (ui.state === "draw" && i === ui.edit) return; drawThing(th, pose(th, playing ? t : null, i)); });
+    data.scene.things.forEach((th, i) => { if (ui.state === "draw" && i === ui.edit) return; drawThing(th, pose(th, playing ? t : null, i), playing && t !== null ? limbs(th, t, i) : null); });
     if (ui.state === "draw") { ctx.drawImage(A.cv, 0, 0, W, H); if (ui.from && ui.live) strokeOn(ctx, ui.live); if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(data.scene.bg)); } }
     const th = data.scene.things[ui.sel];
     if (th && !playing && ui.state !== "draw" && !ui.clean) {
@@ -708,7 +718,7 @@ const sticker = (x, y) => {
 function stickerGrid() {
   const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0];
   if (set.drawn) { // hand-drawn people and characters: a little picture of each, in the chosen skin tone and colours
-    const figures = set.drawn === "characters" ? CHARACTERS : set.drawn === "animals" ? ANIMALS : PEOPLE;
+    const figures = set.drawn === "characters" ? CHARACTERS : set.drawn === "animals" ? ANIMALS.filter((d) => !!d.walk === !!set.walk) : PEOPLE;
     if (!figures.some((d) => d.id === ui.person)) ui.person = figures[0].id;
     $("stickGrid").innerHTML = figures.map((d) => `<button class="stk person" data-fig="${d.id}" aria-label="${d.name}" aria-pressed="false"><canvas width="112" height="140" aria-hidden="true"></canvas></button>`).join("");
     $("stickGrid").querySelectorAll(".stk").forEach((b) => { const g = b.querySelector("canvas").getContext("2d"); g.translate(56, 70); drawPerson(g, { fig: b.dataset.fig, sk: data.skin ?? 2, hc: data.hair ?? -1, tc: data.top, bc: data.bot }, set.drawn === "people" ? 128 : 108); });
