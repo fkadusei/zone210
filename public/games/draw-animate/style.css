@@ -49,3 +49,19 @@
 .bgsw { display: grid; gap: 3px; justify-items: center; padding: 4px 4px 5px; border-radius: 12px; border: 2px solid transparent; font-size: 0.72rem; font-weight: 700; line-height: 1.15; text-align: center; }
 .bgsw canvas { width: 100%; height: auto; aspect-ratio: 4 / 3; border-radius: 8px; display: block; box-shadow: 0 0 0 1px var(--line-strong); }
 .bgsw[aria-pressed="true"] { border-color: var(--gold); background: var(--gold-soft); box-shadow: none; }
+/* shapes and stickers */
+.shp { min-width: 46px; font-size: 1.25rem; line-height: 1; }
+#stickRow { display: grid; gap: 10px; }
+#stickRow[hidden] { display: none; }
+.stickgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; max-height: 168px; overflow-y: auto; padding: 6px; border-radius: 16px; background: var(--glass); border: 1px solid var(--glass-edge); }
+.stk { height: 48px; padding: 0; border-radius: 12px; border: 2px solid transparent; background: none; font-size: 1.7rem; line-height: 1; cursor: pointer; touch-action: manipulation; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+.stk:hover { background: var(--glass-soft); }
+.stk[aria-pressed="true"] { border-color: var(--gold); background: var(--gold-soft); }
+.stk:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+.palette[hidden] { display: none; }
+@media (max-width: 520px) {
+  #stickSets { flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  #stickSets .g-chip { flex: none; }
+  .stickgrid { max-height: 132px; }
+  #tools .g-chip { padding: 6px 11px; }
+}

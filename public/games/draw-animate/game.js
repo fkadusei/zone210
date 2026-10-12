@@ -4,7 +4,8 @@
 // Drawings are kept as strokes (lists of points), so they stay small enough to save on the device.
 import { canSharePhotos, toPhotos, download } from "../../assets/save-image.js";
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
-import { W, H, MOVES, ACTS, SPEEDS, bbox, makeThing, stageStrokes, thin, pose, pathLength, exampleScene, exampleFlip } from "./engine.js";
+import { STICKERS } from "./stickers.js";
+import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -24,7 +25,10 @@ const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { if (!store.
 
 const COLORS = ["#1f2430", "#e5484d", "#f5a623", "#f5d90a", "#2fb36d", "#3b82f6", "#8a5ce0", "#ec6aa0", "#8b5a2b", "#ffffff"];
 const COLOR_NAMES = ["Black", "Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink", "Brown", "White"];
-const SIZES = [[4, "Thin"], [10, "Medium"], [22, "Thick"], [44, "Huge"]];
+const SIZES = [[4, "Small"], [10, "Medium"], [22, "Big"], [44, "Huge"]];
+const STICKER_SIZE = { 4: 46, 10: 72, 22: 112, 44: 170 }; // how tall a sticker is at each size button
+const TOOLS = [["pen", "✏️ Pen"], ["shape", "🔷 Shapes"], ["fill", "🪣 Fill"], ["stamp", "😀 Stickers"], ["erase", "🧽 Eraser"]];
+const SHAPE_ICON = { line: "╱", rect: "▭", oval: "◯", tri: "△", diamond: "◇", star: "☆", heart: "♡" };
 const BGS = [["paper", "Paper"], ["grid", "Squared paper"], ["lined", "Lined paper"], ["chalk", "Chalkboard"], ["sky", "Sky"], ["meadow", "Meadow"], ["rainbow", "Rainbow"], ["rainy", "Rainy day"],
   ["park", "Park"], ["farm", "Farm"], ["forest", "Forest"], ["jungle", "Jungle"], ["mountains", "Mountains"], ["volcano", "Volcano"], ["desert", "Desert"], ["snow", "Snow"], ["arctic", "Arctic"],
   ["beach", "Beach"], ["island", "Island"], ["sea", "Under the sea"], ["cave", "Cave"], ["road", "Road"], ["city", "City"], ["castle", "Castle"], ["pitch", "Sports pitch"], ["stage", "Stage"],
@@ -37,7 +41,7 @@ const cv = $("cv"), ctx = cv.getContext("2d");
 const saverOn = () => !!(window.z210Saver && window.z210Saver.on);
 let SCALE = 2;
 // state: "idle" | "draw" (drawing a thing) | "path" (tracing a path) | "play"
-const ui = { state: "idle", sel: -1, edit: -1, draft: [], frame: 0, erase: false, live: null, drag: null, pathPts: null, t0: 0, raf: 0, clean: false,
+const ui = { state: "idle", sel: -1, edit: -1, draft: [], frame: 0, tool: "pen", shape: "rect", set: "people", sticker: "🧍", flip: false, from: null, live: null, drag: null, pathPts: null, t0: 0, raf: 0, clean: false,
   page: 0, turn: null, auto: true, lastTurn: 0, scrub: null, want: null, landed: 0 }; // want: the page a finger or the slider is heading for // the flipbook being flipped: the page showing, the page turn in progress, whether it flips by itself
 const scene = () => data.mode === "scene";
 const drawing = () => (scene() ? ui.state === "draw" : ui.state === "idle");
@@ -45,16 +49,25 @@ const strokes = () => (scene() ? ui.draft : data.flip.frames[ui.frame]);
 const note = (text) => { $("note").textContent = text; };
 
 // ---------- drawing strokes ----------
+const EMOJI = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+function trace(g, p, sharp) {
+  g.beginPath(); g.moveTo(p[0], p[1]);
+  if (sharp) { for (let i = 2; i < p.length; i += 2) g.lineTo(p[i], p[i + 1]); return; }
+  for (let i = 2; i < p.length - 2; i += 2) g.quadraticCurveTo(p[i], p[i + 1], (p[i] + p[i + 2]) / 2, (p[i + 1] + p[i + 3]) / 2);
+  g.lineTo(p[p.length - 2], p[p.length - 1]);
+}
 function strokeOn(g, s) {
   const p = s.p;
-  g.globalCompositeOperation = s.e ? "destination-out" : "source-over";
-  g.strokeStyle = g.fillStyle = s.c; g.lineWidth = s.w; g.lineCap = "round"; g.lineJoin = "round";
-  g.beginPath();
-  if (p.length === 2) { g.arc(p[0], p[1], s.w / 2, 0, Math.PI * 2); g.fill(); } else {
-    g.moveTo(p[0], p[1]);
-    for (let i = 2; i < p.length - 2; i += 2) g.quadraticCurveTo(p[i], p[i + 1], (p[i] + p[i + 2]) / 2, (p[i + 1] + p[i + 3]) / 2);
-    g.lineTo(p[p.length - 2], p[p.length - 1]); g.stroke();
+  if (s.ch) { // a sticker
+    g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1);
+    g.font = `${s.w}px ${EMOJI}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#000"; g.fillText(s.ch, 0, s.w * 0.07);
+    g.restore(); return;
   }
+  g.globalCompositeOperation = s.e ? "destination-out" : "source-over";
+  g.lineWidth = s.w; g.lineCap = "round"; g.lineJoin = "round";
+  if (s.ff && p.length >= 6) { g.fillStyle = s.ff; trace(g, p, s.k); g.closePath(); g.fill(); } // coloured in (the Fill tool)
+  g.strokeStyle = g.fillStyle = s.c;
+  if (p.length === 2) { g.beginPath(); g.arc(p[0], p[1], s.w / 2, 0, Math.PI * 2); g.fill(); } else { trace(g, p, s.k); g.stroke(); }
   g.globalCompositeOperation = "source-over";
 }
 // two stage-sized layers: A is what is being drawn (a thing, or the flipbook page); B is the page before, or the page being played
@@ -288,7 +301,7 @@ function render(t = null) {
     const playing = ui.state === "play";
     putBg(ctx, data.scene.bg);
     data.scene.things.forEach((th, i) => { if (ui.state === "draw" && i === ui.edit) return; drawThing(th, pose(th, playing ? t : null, i)); });
-    if (ui.state === "draw") ctx.drawImage(A.cv, 0, 0, W, H);
+    if (ui.state === "draw") { ctx.drawImage(A.cv, 0, 0, W, H); if (ui.from && ui.live) strokeOn(ctx, ui.live); }
     const th = data.scene.things[ui.sel];
     if (th && !playing && ui.state !== "draw" && !ui.clean) {
       const light = DARK.has(data.scene.bg);
@@ -304,6 +317,7 @@ function render(t = null) {
     else {
       if (data.flip.onion && ui.frame > 0 && !ui.clean) { ctx.globalAlpha = 0.22; ctx.drawImage(B.cv, 0, 0, W, H); ctx.globalAlpha = 1; }
       ctx.drawImage(A.cv, 0, 0, W, H);
+      if (ui.from && ui.live) strokeOn(ctx, ui.live);
     }
   }
 }
@@ -452,9 +466,13 @@ function paint() {
   // the stack of page edges under the book gets thicker as pages are added
   const thick = scene() ? 0 : Math.min(7, 1 + Math.floor(data.flip.frames.length / 3));
   cv.style.boxShadow = scene() ? "" : Array.from({ length: thick }, (_, i) => `${(i + 1) * 3}px ${(i + 1) * 3}px 0 ${i % 2 ? "#cfc8b6" : "#ebe5d5"}`).join(", ") + `, ${thick * 3 + 6}px ${thick * 3 + 10}px 22px rgba(0,0,0,0.35)`;
-  document.querySelectorAll("#palette .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === data.color && !ui.erase)));
+  document.querySelectorAll("#palette .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === data.color)));
+  press("tools", "tool", ui.tool); press("shapes", "shape", ui.shape); press("stickSets", "set", ui.set);
+  $("shapeRow").hidden = ui.tool !== "shape"; $("stickRow").hidden = ui.tool !== "stamp";
+  $("palette").hidden = ui.tool === "stamp" || ui.tool === "erase";
+  document.querySelectorAll("#stickGrid .stk").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ch === ui.sticker)));
+  $("stickFlip").checked = ui.flip;
   press("sizes", "size", data.size);
-  document.querySelectorAll("#penKind .g-chip").forEach((b) => b.setAttribute("aria-pressed", String((b.dataset.erase === "1") === ui.erase)));
   press("bgs", "bg", data.scene.bg);
   press("fbgs", "bg", bgOf(ui.frame));
   press("fps", "fps", data.flip.fps);
@@ -478,12 +496,18 @@ cv.addEventListener("pointerdown", (e) => {
   try { cv.setPointerCapture(e.pointerId); } catch (err) { /* older browsers */ }
   const [x, y] = at(e);
   if (ui.state === "play") { endTurn(); ui.scrub = { x, lastX: x, lastT: performance.now(), v: 0 }; ui.want = null; if (ui.auto) { ui.auto = false; paint(); } return; } // take hold of the book
-  if (drawing()) { ui.live = { c: data.color, w: ui.erase ? Math.max(18, data.size * 1.8) : data.size, e: ui.erase ? 1 : 0, p: [x, y] }; strokeOn(A.g, ui.live); render(); }
+  if (drawing()) {
+    if (ui.tool === "fill") { fillAt(x, y); return; }
+    if (ui.tool === "shape") { ui.from = [x, y]; ui.live = null; ui.reach = 0; return; }
+    if (ui.tool === "stamp") { ui.from = [x, y]; ui.live = sticker(x, y); render(); return; }
+    const erase = ui.tool === "erase";
+    ui.live = { c: data.color, w: erase ? Math.max(18, data.size * 1.8) : data.size, e: erase ? 1 : 0, p: [x, y] }; strokeOn(A.g, ui.live); render();
+  }
   else if (ui.state === "path") { ui.pathPts = [x, y]; render(); }
   else if (scene()) { const i = hit(x, y); if (i !== ui.sel) { ui.sel = i; paint(); } if (i >= 0) ui.drag = { x, y }; render(); }
 });
 cv.addEventListener("pointermove", (e) => {
-  if (!ui.live && !ui.pathPts && !ui.drag && !ui.scrub) return;
+  if (!ui.live && !ui.pathPts && !ui.drag && !ui.scrub && !ui.from) return;
   const [x, y] = at(e);
   if (ui.scrub) { // the page follows the finger: drag left to turn on, right to turn back; half the book's width is a whole turn
     const sc = ui.scrub, dx = sc.x - x, now = performance.now();
@@ -495,7 +519,10 @@ cv.addEventListener("pointermove", (e) => {
     if (tn && tn.hand) tn.p = Math.max(0, Math.min(1, ((tn.forward ? dx : -dx) - 10) / (W * 0.5)));
     return;
   }
-  if (ui.live) {
+  if (ui.from) { // a shape stretches from where the finger went down; a sticker follows the finger
+    ui.reach = Math.hypot(x - ui.from[0], y - ui.from[1]);
+    ui.live = ui.tool === "stamp" ? sticker(x, y) : { c: data.color, w: data.size, k: 1, p: shapePoints(ui.shape, ui.from[0], ui.from[1], x, y) };
+  } else if (ui.live) {
     const p = ui.live.p, g = A.g;
     g.globalCompositeOperation = ui.live.e ? "destination-out" : "source-over"; g.strokeStyle = ui.live.c; g.lineWidth = ui.live.w; g.lineCap = "round";
     g.beginPath(); g.moveTo(p[p.length - 2], p[p.length - 1]); g.lineTo(x, y); g.stroke(); g.globalCompositeOperation = "source-over";
@@ -512,9 +539,14 @@ cv.addEventListener("pointermove", (e) => {
 });
 function lift() {
   if (ui.scrub) { const tn = ui.turn; letGo(!!tn && tn.hand && (tn.forward ? ui.scrub.v : -ui.scrub.v) > 0.5 && performance.now() - ui.scrub.lastT < 120); ui.scrub = null; return; } // a quick flick finishes the turn too
-  if (ui.live) {
+  if (ui.from) { // a shape or a sticker is put down
+    const s2 = ui.live, big = s2 && (s2.ch || ui.reach > 8);
+    ui.from = null; ui.live = null; ui.reach = 0;
+    if (big) { strokes().push(s2); did({ k: "add" }); paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } }
+    else if (s2 || ui.tool === "shape") note("Press and drag to draw the shape.");
+  } else if (ui.live) {
     ui.live.p = thin(ui.live.p);
-    strokes().push(ui.live); ui.live = null;
+    strokes().push(ui.live); ui.live = null; did({ k: "add" });
     paintLayer(A, strokes()); // redraw smoothly
     if (!scene()) { thumb(ui.frame); save(); }
   } else if (ui.pathPts) {
@@ -590,12 +622,41 @@ $("newScene").addEventListener("click", () => { if (data.scene.things.length && 
 
 // ---------- drawing tools ----------
 $("palette").innerHTML = COLORS.map((c, i) => `<button class="sw" data-c="${c}" style="background:${c}" aria-label="${COLOR_NAMES[i]}"></button>`).join("");
-$("palette").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data.color = b.dataset.c; ui.erase = false; save(); paint(); } });
-$("sizes").innerHTML = SIZES.map(([v, label]) => `<button class="g-chip sz" data-size="${v}" aria-label="${label} line"><i style="width:${Math.min(26, v + 2)}px;height:${Math.min(26, v + 2)}px"></i></button>`).join("");
+$("palette").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data.color = b.dataset.c; save(); paint(); } });
+$("sizes").innerHTML = SIZES.map(([v, label]) => `<button class="g-chip sz" data-size="${v}" aria-label="${label}"><i style="width:${Math.min(26, v + 2)}px;height:${Math.min(26, v + 2)}px"></i></button>`).join("");
 $("sizes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.size = Number(b.dataset.size); save(); paint(); } });
-$("penKind").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.erase = b.dataset.erase === "1"; paint(); } });
-$("undo").addEventListener("click", () => { if (!strokes().length) return; strokes().pop(); paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } render(); });
-$("clear").addEventListener("click", () => { strokes().length = 0; paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } render(); });
+chips("tools", TOOLS, "tool");
+$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a sticker, then tap where it should go." : ""); paint(); });
+$("shapes").innerHTML = SHAPES.map(([v, label]) => `<button class="g-chip shp" data-shape="${v}" aria-label="${label}"><span aria-hidden="true">${SHAPE_ICON[v]}</span></button>`).join("");
+$("shapes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.shape = b.dataset.shape; paint(); } });
+// stickers: pick a set, then a sticker; sets that usually face left are mirrored so they face right
+const sticker = (x, y) => { const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0], mirror = !!set.turn !== ui.flip; return { ch: ui.sticker, w: STICKER_SIZE[data.size] || 72, p: [Math.round(x), Math.round(y)], ...(mirror ? { m: 1 } : {}) }; };
+function stickerGrid() { const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0]; $("stickGrid").innerHTML = set.list.map((ch) => `<button class="stk" data-ch="${ch}" aria-pressed="false">${ch}</button>`).join(""); if (!set.list.includes(ui.sticker)) ui.sticker = set.list[0]; }
+$("stickSets").innerHTML = STICKERS.map((k) => `<button class="g-chip" data-set="${k.id}"><span aria-hidden="true">${k.icon}</span> ${k.name}</button>`).join("");
+$("stickSets").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.set = b.dataset.set; ui.flip = false; stickerGrid(); paint(); } });
+$("stickGrid").addEventListener("click", (e) => { const b = e.target.closest(".stk"); if (b) { ui.sticker = b.dataset.ch; paint(); } });
+$("stickFlip").addEventListener("change", () => { ui.flip = $("stickFlip").checked; });
+stickerGrid();
+// Fill: colour in the top-most outline the tap is inside
+function fillAt(x, y) {
+  const list = strokes(), i = fillTarget(list, x, y);
+  if (i < 0) { note("Tap inside a shape or an outline you have drawn. Draw all the way round to close it."); return; }
+  did({ k: "fill", s: list[i], was: list[i].ff });
+  list[i].ff = data.color; note("");
+  paintLayer(A, list); if (!scene()) { thumb(ui.frame); save(); } render();
+}
+// what Undo takes back: the last thing added, or the last fill
+let past = [];
+function did(step) { past.push(step); if (past.length > 60) past.shift(); }
+function undo() {
+  const list = strokes(), step = past.pop();
+  if (step && step.k === "fill" && list.includes(step.s)) { if (step.was) step.s.ff = step.was; else delete step.s.ff; }
+  else if (list.length) list.pop();
+  else return;
+  paintLayer(A, list); if (!scene()) { thumb(ui.frame); save(); } render();
+}
+$("undo").addEventListener("click", undo);
+$("clear").addEventListener("click", () => { past = []; strokes().length = 0; paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } render(); });
 
 // ---------- flipbook ----------
 function thumb(i) {

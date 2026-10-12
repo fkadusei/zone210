@@ -44,6 +44,18 @@ check(E.makeThing([]) === null && E.makeThing([{ c: "#000", w: 10, e: 1, p: [1, 
 const back = E.stageStrokes(made)[0].p; check(back.join() === "100,100,200,180", "a thing's strokes go back to where they were drawn");
 const t = E.thin([0, 0, 1, 0, 2, 0, 10, 0, 11, 0, 30, 0, 31, 0]); check(t[0] === 0 && t[t.length - 2] === 31 && t.length < 14, "thinning a line keeps both ends and drops crowded points");
 
+// shapes, and telling whether a tap is inside an outline
+for (const [kind] of E.SHAPES) {
+  const pts = E.shapePoints(kind, 100, 200, 300, 320);
+  check(pts.length >= 4 && pts.length % 2 === 0 && pts.every(Number.isFinite), `${kind}: points are numbers`);
+  check(pts.every((v, i) => (i % 2 ? v >= 199.9 && v <= 320.1 : v >= 99.9 && v <= 300.1)), `${kind}: stays inside the box it was dragged in`);
+  if (kind !== "line") { check(Math.hypot(pts[0] - pts[pts.length - 2], pts[1] - pts[pts.length - 1]) < 0.2, `${kind}: ends where it starts`); check(E.inside(pts, 200, kind === "tri" ? 290 : 262), `${kind}: its middle is inside`); check(!E.inside(pts, 90, 190) && !E.inside(pts, 310, 330), `${kind}: points outside its box are outside`); check(E.areaOf(pts) > 3000, `${kind}: encloses room`); }
+}
+check(Math.abs(E.areaOf(E.shapePoints("rect", 0, 0, 10, 20)) - 200) < 1e-6, "area of a rectangle");
+const pile = [{ c: "#000", w: 6, p: E.shapePoints("rect", 0, 0, 400, 400), k: 1 }, { c: "#000", w: 6, p: E.shapePoints("oval", 100, 100, 300, 300), k: 1 }, { c: "#000", w: 6, p: [10, 10, 60, 12, 110, 10] }, { ch: "🐶", w: 80, p: [200, 200] }, { c: "#000", w: 30, e: 1, p: E.shapePoints("rect", 150, 150, 250, 250) }];
+check(E.fillTarget(pile, 200, 200) === 1 && E.fillTarget(pile, 20, 300) === 0 && E.fillTarget(pile, 500, 500) === -1 && E.fillTarget(pile, 60, 11) === 0, "a tap fills the top-most outline it is inside, and passes over stickers, erasing and thin scribbles");
+const stick = E.bbox([{ ch: "🐱", w: 100, p: [300, 300] }]); check(stick && stick.w > 100 && stick.cx === 300, "a sticker has a box around it");
+
 const okStroke = (s) => typeof s.c === "string" && s.w > 0 && s.p.length >= 2 && s.p.length % 2 === 0 && s.p.every(Number.isFinite);
 const sc = E.exampleScene();
 check(sc.things.length >= 3 && sc.things.every((th) => th.s.every(okStroke) && th.x > 0 && th.x < E.W && th.y > 0 && th.y < E.H && E.MOVES.some((m) => m[0] === th.move) && E.ACTS.some((a) => a[0] === th.act)), "the example scene is well formed");

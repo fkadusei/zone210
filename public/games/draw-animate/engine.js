@@ -1,5 +1,8 @@
 // Draw & Animate: the parts with no page code (checked by tools/check-draw-animate.mjs).
-// A stroke is { c: colour, w: width, e: 1 if it rubs out, p: [x0, y0, x1, y1, …] }.
+// A stroke is { c: colour, w: width, e: 1 if it rubs out, p: [x0, y0, x1, y1, …] }, optionally with:
+//   k: 1  its corners stay sharp (lines and shapes; a finger-drawn stroke is smoothed instead)
+//   ff    a colour its inside is filled with (the Fill tool)
+//   ch    a sticker: one emoji drawn w pixels tall at its single point, m: 1 if it is mirrored to face right
 // A "thing" is a little drawing with its own movement: { s: strokes (measured from its middle), x, y (where its middle
 // sits), move, act, speed, face, path }.
 export const W = 800, H = 600;
@@ -10,7 +13,7 @@ export const SPEEDS = [[0.5, "Slow"], [1, "Medium"], [2, "Fast"]];
 /** The box around some strokes, allowing for how thick the lines are. */
 export function bbox(strokes) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-  for (const s of strokes) { if (s.e) continue; const h = s.w / 2; for (let i = 0; i < s.p.length; i += 2) { x0 = Math.min(x0, s.p[i] - h); x1 = Math.max(x1, s.p[i] + h); y0 = Math.min(y0, s.p[i + 1] - h); y1 = Math.max(y1, s.p[i + 1] + h); } }
+  for (const s of strokes) { if (s.e) continue; const h = s.ch ? s.w * 0.62 : s.w / 2; for (let i = 0; i < s.p.length; i += 2) { x0 = Math.min(x0, s.p[i] - h); x1 = Math.max(x1, s.p[i] + h); y0 = Math.min(y0, s.p[i + 1] - h); y1 = Math.max(y1, s.p[i + 1] + h); } }
   return x0 === Infinity ? null : { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
 }
 export const shift = (strokes, dx, dy) => strokes.map((s) => ({ ...s, p: s.p.map((v, i) => Math.round((v + (i % 2 ? dy : dx)) * 10) / 10) }));
@@ -22,6 +25,34 @@ export function makeThing(strokes, old = {}) {
 }
 /** A thing's strokes back in stage positions (for adding to it). */
 export const stageStrokes = (thing) => shift(thing.s, thing.x, thing.y);
+
+export const SHAPES = [["line", "Line"], ["rect", "Rectangle"], ["oval", "Oval"], ["tri", "Triangle"], ["diamond", "Diamond"], ["star", "Star"], ["heart", "Heart"]];
+/** The outline of a shape dragged from one corner (x0, y0) to the other (x1, y1), as stroke points that end where they start. */
+export function shapePoints(kind, x0, y0, x1, y1) {
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = (x1 - x0) / 2, ry = (y1 - y0) / 2, r1 = (v) => Math.round(v * 10) / 10;
+  let p;
+  if (kind === "line") p = [x0, y0, x1, y1];
+  else if (kind === "rect") p = [x0, y0, x1, y0, x1, y1, x0, y1, x0, y0];
+  else if (kind === "tri") p = [cx, y0, x1, y1, x0, y1, cx, y0];
+  else if (kind === "diamond") p = [cx, y0, x1, cy, cx, y1, x0, cy, cx, y0];
+  else if (kind === "star") { p = []; for (let i = 0; i <= 10; i += 1) { const a = -Math.PI / 2 + (i * Math.PI) / 5, k = i % 2 ? 0.42 : 1; p.push(cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k); } }
+  else if (kind === "heart") { p = []; for (let i = 0; i <= 40; i += 1) { const a = (i * Math.PI * 2) / 40, hx = 16 * Math.sin(a) ** 3, hy = 13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a); p.push(cx + (hx / 16) * rx, cy - ((hy + 2.5) / 14.5) * ry); } }
+  else { p = []; for (let i = 0; i <= 48; i += 1) { const a = (i * Math.PI * 2) / 48; p.push(cx + Math.cos(a) * rx, cy + Math.sin(a) * ry); } } // oval
+  return p.map(r1);
+}
+/** Is the point inside the outline these points make (the two ends are joined)? */
+export function inside(p, x, y) {
+  let hit = false;
+  for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) { const xi = p[i], yi = p[i + 1], xj = p[j], yj = p[j + 1]; if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) hit = !hit; }
+  return hit;
+}
+/** How much room an outline encloses (so a tap is not mistaken for filling a nearly straight scribble). */
+export function areaOf(p) { let a = 0; for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) a += (p[j] + p[i]) * (p[j + 1] - p[i + 1]); return Math.abs(a / 2); }
+/** The top-most stroke whose outline the point is inside (its place in the list), or -1. Stickers, erasing and thin scribbles are passed over. */
+export function fillTarget(strokes, x, y) {
+  for (let i = strokes.length - 1; i >= 0; i -= 1) { const s = strokes[i]; if (!s.e && !s.ch && s.p.length >= 6 && areaOf(s.p) > 250 && inside(s.p, x, y)) return i; }
+  return -1;
+}
 
 /** Drop points that are closer than `gap` to the one before (keeps saved drawings small). */
 export function thin(points, gap = 3) {
