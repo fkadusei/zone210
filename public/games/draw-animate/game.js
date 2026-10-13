@@ -20,7 +20,7 @@ if (!Array.isArray(data.flip.frames) || !data.flip.frames.length) data.flip.fram
 // each flipbook page has its own background: data.flip.bgs runs alongside data.flip.frames (older saves had one for the whole book)
 function evenBgs() { const f = data.flip, old = Array.isArray(f.bgs) ? f.bgs : []; f.bgs = f.frames.map((_, i) => old[i] || f.bg || "paper"); delete f.bg; }
 evenBgs();
-if (data.flip.fps === 3) data.flip.fps = 2; // "Slow" used to be 3 pages a second
+if (data.flip.fps === 3 || data.flip.fps === 2) data.flip.fps = 0.75; // "Slow" used to be 3, then 2, pages a second
 const bgOf = (i) => data.flip.bgs[i] || "paper";
 let saveT = 0;
 const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { if (!store.set(KEY, data)) note("This device is out of space to save more. Your animation still plays."); }, 400); };
@@ -37,7 +37,7 @@ const BGS = [["paper", "Paper"], ["grid", "Squared paper"], ["lined", "Lined pap
   ["beach", "Beach"], ["island", "Island"], ["sea", "Under the sea"], ["cave", "Cave"], ["road", "Road"], ["city", "City"], ["castle", "Castle"], ["pitch", "Sports pitch"], ["stage", "Stage"],
   ["bedroom", "Bedroom"], ["candy", "Candy land"], ["sunset", "Sunset"], ["night", "Night"], ["moon", "Moon"], ["space", "Space"]];
 const DARK = new Set(["space", "night", "chalk", "sunset", "cave", "moon", "stage", "volcano", "jungle"]); // backgrounds where the outline round a chosen drawing needs to be light
-const FPS = [[2, "Slow"], [6, "Medium"], [10, "Fast"]];
+const FPS = [[0.75, "Slow"], [6, "Medium"], [10, "Fast"]]; // pages a second: Slow holds each page for well over a second, long enough to read it
 const MAX_THINGS = 24, MAX_FRAMES = 60;
 
 const cv = $("cv"), ctx = cv.getContext("2d");
@@ -1317,7 +1317,7 @@ $("saveVid").addEventListener("click", () => {
   stop(); stopTune(); ui.sel = -1;
   const tuned = !data.muted && TUNES.some((t) => t.id === work().music);
   // long enough to hear some of the tune; a flipbook plays through at least twice
-  const secs = scene() ? (tuned ? 10 : 6) : Math.min(12, Math.max(tuned ? 8 : 3, (data.flip.frames.length / data.flip.fps) * 2));
+  const secs = scene() ? (tuned ? 10 : 6) : Math.min(data.flip.fps < 1 ? 24 : 12, Math.max(tuned ? 8 : 3, (data.flip.frames.length / data.flip.fps) * (data.flip.fps < 1 ? 1 : 2))); // a slow book is recorded once through, up to 24 seconds
   let rec, tap = null;
   try {
     const stream = cv.captureStream(30), ac = !data.muted && window.z210Audio && window.z210Audio.get();
