@@ -564,10 +564,11 @@ function paint() {
   const beasts = (STICKERS.find((k) => k.id === ui.set) || {}).drawn === "animals";
   $("skinRow").hidden = beasts; $("hairRow").hidden = beasts;
   $("topLbl").textContent = beasts ? "Colour" : "Top"; $("botLbl").textContent = beasts ? "Second" : "Bottom";
-  document.querySelectorAll("#skins .sw").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.sk) === (data.skin ?? 2))));
-  document.querySelectorAll("#hairs .sw").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.hc) === (data.hair ?? -1))));
-  document.querySelectorAll("#tops .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === (data.top || ""))));
-  document.querySelectorAll("#bots .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === (data.bot || ""))));
+  const lk = look(ui.person); // the colour rows show the chosen figure's own colours
+  document.querySelectorAll("#skins .sw").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.sk) === lk.sk)));
+  document.querySelectorAll("#hairs .sw").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.hc) === lk.hc)));
+  document.querySelectorAll("#tops .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === (lk.tc || ""))));
+  document.querySelectorAll("#bots .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === (lk.bc || ""))));
   $("stickFlip").checked = ui.flip;
   press("sizes", "size", data.size);
   press("bgs", "bg", data.scene.bg);
@@ -852,16 +853,29 @@ $("shapes").addEventListener("click", (e) => { const b = e.target.closest(".g-ch
 // stickers: pick a set, then a sticker; sets that usually face left are mirrored so they face right
 const sticker = (x, y) => {
   const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0], mirror = !!set.turn !== ui.flip, at2 = [Math.round(x), Math.round(y)];
-  if (set.drawn) return { fig: ui.person, sk: data.skin ?? 2, hc: data.hair ?? -1, ...(data.top ? { tc: data.top } : {}), ...(data.bot ? { bc: data.bot } : {}), w: PERSON_SIZE[data.size] || 130, p: at2, ...(mirror ? { m: 1 } : {}) };
+  if (set.drawn) { const lk = look(ui.person); return { fig: ui.person, sk: lk.sk, hc: lk.hc, ...(lk.tc ? { tc: lk.tc } : {}), ...(lk.bc ? { bc: lk.bc } : {}), w: PERSON_SIZE[data.size] || 130, p: at2, ...(mirror ? { m: 1 } : {}) }; }
   return { ch: ui.sticker, w: STICKER_SIZE[data.size] || 72, p: at2, ...(mirror ? { m: 1 } : {}) };
 };
+// Each hand-drawn figure keeps its own colours: choosing a skin tone or a colour changes the chosen figure only.
+// Until a figure has been given a skin tone, the figures show the whole range of tones between them.
+const FIGURES = [...PEOPLE, ...CHARACTERS, ...ANIMALS];
+function look(id) {
+  const own = (data.looks || {})[id] || {}, n = Math.max(0, FIGURES.findIndex((d) => d.id === id));
+  return { sk: own.sk ?? n % SKINS.length, hc: own.hc ?? -1, tc: own.tc || null, bc: own.bc || null };
+}
+function setLook(key, value) {
+  if (!data.looks) data.looks = {};
+  const own = data.looks[ui.person] || (data.looks[ui.person] = {});
+  if (value === null || value === undefined || value === "") delete own[key]; else own[key] = value;
+  save(); stickerGrid(); paint();
+}
 function stickerGrid() {
   const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0];
   if (set.drawn) { // hand-drawn people and characters: a little picture of each, in the chosen skin tone and colours
     const figures = set.drawn === "characters" ? CHARACTERS : set.drawn === "animals" ? ANIMALS.filter((d) => !!d.walk === !!set.walk) : PEOPLE;
     if (!figures.some((d) => d.id === ui.person)) ui.person = figures[0].id;
     $("stickGrid").innerHTML = figures.map((d) => `<button class="stk person" data-fig="${d.id}" aria-label="${d.name}" aria-pressed="false"><canvas width="112" height="140" aria-hidden="true"></canvas></button>`).join("");
-    $("stickGrid").querySelectorAll(".stk").forEach((b) => { const g = b.querySelector("canvas").getContext("2d"); g.translate(56, 70); drawPerson(g, { fig: b.dataset.fig, sk: data.skin ?? 2, hc: data.hair ?? -1, tc: data.top, bc: data.bot }, set.drawn === "people" ? 128 : 108); });
+    $("stickGrid").querySelectorAll(".stk").forEach((b) => { const g = b.querySelector("canvas").getContext("2d"); g.translate(56, 70); const lk = look(b.dataset.fig); drawPerson(g, { fig: b.dataset.fig, sk: lk.sk, hc: lk.hc, tc: lk.tc, bc: lk.bc }, set.drawn === "people" ? 128 : 108); });
   } else {
     $("stickGrid").innerHTML = set.list.map((ch) => `<button class="stk" data-ch="${ch}" aria-pressed="false">${ch}</button>`).join("");
     if (!set.list.includes(ui.sticker)) ui.sticker = set.list[0];
@@ -872,11 +886,11 @@ $("skins").innerHTML = SKINS.map(([c, name], i) => `<button class="sw" data-sk="
 $("hairs").innerHTML = `<button class="sw mixed" data-hc="-1" aria-label="Mixed hair colours"></button>` + HAIRS.map(([c, name], i) => `<button class="sw" data-hc="${i}" style="background:${c}" aria-label="${name} hair"></button>`).join("");
 // clothes: the figure's own colours, or one the child picks for the top and one for the bottom
 for (const [id, key, word] of [["tops", "top", "top"], ["bots", "bot", "bottom"]]) {
-  $(id).innerHTML = `<button class="sw mixed own" data-c="" aria-label="Each figure's own ${word}"></button>` + COLORS.map((c, i) => `<button class="sw" data-c="${c}" style="background:${c}" aria-label="${COLOR_NAMES[i]} ${word}"></button>`).join("");
-  $(id).addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data[key] = b.dataset.c || null; save(); stickerGrid(); paint(); } });
+  $(id).innerHTML = `<button class="sw mixed own" data-c="" aria-label="This figure's own ${word}"></button>` + COLORS.map((c, i) => `<button class="sw" data-c="${c}" style="background:${c}" aria-label="${COLOR_NAMES[i]} ${word}"></button>`).join("");
+  $(id).addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) setLook(key === "top" ? "tc" : "bc", b.dataset.c || null); });
 }
-$("skins").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data.skin = Number(b.dataset.sk); save(); stickerGrid(); paint(); } });
-$("hairs").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data.hair = Number(b.dataset.hc); save(); stickerGrid(); paint(); } });
+$("skins").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) setLook("sk", Number(b.dataset.sk)); });
+$("hairs").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { const v = Number(b.dataset.hc); setLook("hc", v < 0 ? null : v); } });
 $("stickSets").innerHTML = STICKERS.map((k) => `<button class="g-chip" data-set="${k.id}"><span aria-hidden="true">${k.icon}</span> ${k.name}</button>`).join("");
 $("stickSets").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.set = b.dataset.set; ui.flip = false; stickerGrid(); paint(); const row = $("stickSets"); row.scrollLeft = Math.max(0, b.offsetLeft - row.clientWidth / 2 + b.offsetWidth / 2); } }); // keep the chosen kind in view on a narrow screen
 $("stickGrid").addEventListener("click", (e) => { const b = e.target.closest(".stk"); if (!b) return; if (b.dataset.fig) ui.person = b.dataset.fig; else ui.sticker = b.dataset.ch; paint(); });
