@@ -5,7 +5,8 @@
 // Figures that move (walking, running, the wheelchair) are drawn facing right.
 
 import { ANIMALS, drawAnimal } from "./animals.js";
-export { ANIMALS };
+import { THINGS, drawThing } from "./things.js";
+export { ANIMALS, THINGS };
 
 export const SKINS = [["#ffe0bd", "Light"], ["#f6cfa0", "Light medium"], ["#e0ac69", "Medium"], ["#c68642", "Medium deep"], ["#8d5524", "Deep"], ["#5a3620", "Very deep"]];
 export const HAIRS = [["#1f1b1a", "Black"], ["#4a2f1d", "Dark brown"], ["#8b5a2b", "Brown"], ["#e2b653", "Blonde"], ["#c0562a", "Red"], ["#b9bcc2", "Grey"]];
@@ -141,7 +142,7 @@ export const CHARACTERS = [
   { id: "jester", name: "Jester", pose: "star", hair: "none", hc: 0, top: "#7c3aed", bot: "#f5d90a", kind: "long", hat: "jester", dots: "#f5d90a", bow: "#d62839", fit: 0.88 },
   { id: "chef", name: "Chef", pose: "point", hair: "short", hc: 1, top: "#f8fafc", bot: "#374151", kind: "long", hat: "chef", apron: true, outline: true, fit: 0.84 },
 ];
-export const personById = (id) => PEOPLE.find((x) => x.id === id) || CHARACTERS.find((x) => x.id === id) || ANIMALS.find((x) => x.id === id) || PEOPLE[0];
+export const personById = (id) => PEOPLE.find((x) => x.id === id) || CHARACTERS.find((x) => x.id === id) || ANIMALS.find((x) => x.id === id) || THINGS.find((x) => x.id === id) || PEOPLE[0];
 
 // `live` is null for a still picture, or { t: seconds, go: is it travelling } while an animation plays.
 const beat = (live, rate, off = 0) => (live ? Math.sin(live.t * Math.PI * 2 * rate + off) : 0);
@@ -280,7 +281,7 @@ function livePose(base, live) {
  *  { t, go } while an animation plays, and makes the figure move its arms and legs. */
 export function drawPerson(g, fig, h, live = null) {
   const what = personById(fig.fig);
-  if (what.custom) { g.save(); g.scale(h, h); g.lineCap = "round"; g.lineJoin = "round"; if (what.custom === "animal") drawAnimal(g, what, fig.tc || what.top, fig.bc || what.bot, live); else OTHER[what.custom](g, fig.tc || what.top, fig.bc || what.bot, live); g.restore(); return; }
+  if (what.custom) { g.save(); g.scale(h, h); g.lineCap = "round"; g.lineJoin = "round"; if (what.custom === "animal") drawAnimal(g, what, fig.tc || what.top, fig.bc || what.bot, live); else if (what.custom === "thing") drawThing(g, what, fig.tc || what.top, fig.bc || what.bot, live); else OTHER[what.custom](g, fig.tc || what.top, fig.bc || what.bot, live); g.restore(); return; }
   const own = personById(fig.fig), d = { ...own, top: fig.tc || own.top, bot: fig.bc || own.bot }, pose = livePose(P[d.pose], live), skin = own.skinc || (SKINS[fig.sk] || SKINS[2])[0], hair = own.hairc || (HAIRS[fig.hc >= 0 ? fig.hc : d.hc] || HAIRS[0])[0];
   const limb = 0.062, HEAD = [0, -0.34], R = 0.135, sh = [0, -0.17], hipA = [-0.06, 0.1], hipB = [0.06, 0.1];
   g.save(); g.scale(h, h); g.lineCap = "round"; g.lineJoin = "round";

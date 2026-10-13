@@ -5,7 +5,7 @@
 import { canSharePhotos, onTouchDevice, toPhotos, download } from "../../assets/save-image.js";
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS, stickerLife, stickerMoves } from "./stickers.js";
-import { PEOPLE, CHARACTERS, ANIMALS, SKINS, HAIRS, drawPerson } from "./people.js";
+import { PEOPLE, CHARACTERS, ANIMALS, THINGS, SKINS, HAIRS, drawPerson } from "./people.js";
 import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, poseTogether, between, tweenMoves, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointAngle, jointReach, strokeNear, hingeOf, nearestOn, bend, oldJoints, cutByLoop, inside, clusters, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
@@ -588,7 +588,7 @@ function paint() {
   const drawnSet = !!(STICKERS.find((k) => k.id === ui.set) || {}).drawn;
   document.querySelectorAll("#stickGrid .stk").forEach((b) => b.setAttribute("aria-pressed", String(drawnSet ? b.dataset.fig === ui.person : b.dataset.ch === ui.sticker)));
   $("toneRows").hidden = !drawnSet;
-  const beasts = (STICKERS.find((k) => k.id === ui.set) || {}).drawn === "animals";
+  const beasts = ["animals", "things"].includes((STICKERS.find((k) => k.id === ui.set) || {}).drawn); // two colours, no skin or hair
   $("skinRow").hidden = beasts; $("hairRow").hidden = beasts;
   $("topLbl").textContent = beasts ? "Colour" : "Top"; $("botLbl").textContent = beasts ? "Second" : "Bottom";
   const lk = look(ui.person); // the colour rows show the chosen figure's own colours
@@ -887,7 +887,7 @@ const sticker = (x, y) => {
 };
 // Each hand-drawn figure keeps its own colours: choosing a skin tone or a colour changes the chosen figure only.
 // Until a figure has been given a skin tone, the figures show the whole range of tones between them.
-const FIGURES = [...PEOPLE, ...CHARACTERS, ...ANIMALS];
+const FIGURES = [...PEOPLE, ...CHARACTERS, ...ANIMALS, ...THINGS];
 function look(id) {
   const own = (data.looks || {})[id] || {}, n = Math.max(0, FIGURES.findIndex((d) => d.id === id));
   return { sk: own.sk ?? n % SKINS.length, hc: own.hc ?? -1, tc: own.tc || null, bc: own.bc || null };
@@ -901,7 +901,7 @@ function setLook(key, value) {
 function stickerGrid() {
   const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0];
   if (set.drawn) { // hand-drawn people and characters: a little picture of each, in the chosen skin tone and colours
-    const figures = set.drawn === "characters" ? CHARACTERS : set.drawn === "animals" ? ANIMALS.filter((d) => !!d.walk === !!set.walk) : PEOPLE;
+    const figures = set.drawn === "characters" ? CHARACTERS : set.drawn === "animals" ? ANIMALS.filter((d) => !!d.walk === !!set.walk) : set.drawn === "things" ? THINGS.filter((d) => d.set === set.kind) : PEOPLE;
     if (!figures.some((d) => d.id === ui.person)) ui.person = figures[0].id;
     $("stickGrid").innerHTML = figures.map((d) => `<button class="stk person" data-fig="${d.id}" aria-label="${d.name}" aria-pressed="false"><canvas width="112" height="140" aria-hidden="true"></canvas></button>`).join("");
     $("stickGrid").querySelectorAll(".stk").forEach((b) => { const g = b.querySelector("canvas").getContext("2d"); g.translate(56, 70); const lk = look(b.dataset.fig); drawPerson(g, { fig: b.dataset.fig, sk: lk.sk, hc: lk.hc, tc: lk.tc, bc: lk.bc }, set.drawn === "people" ? 128 : 108); });

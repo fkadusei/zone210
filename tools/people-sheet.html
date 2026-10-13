@@ -1,17 +1,20 @@
 <!doctype html>
 <!-- Contact sheet of the hand-drawn figures in Draw & Animate, for checking the drawings.
      Serve the repo root (python3 -m http.server 8124) and open http://localhost:8124/tools/people-sheet.html
-     Add ?characters, ?animals or ?walkers for the other sets. Add &live to see four moments of each figure's
+     Add ?characters, ?animals, ?walkers or ?things for the other sets. Add &live to see four moments of each figure's
      animation (travelling), or &live=stay for the same when it stays in one place. -->
 <meta charset="utf-8" />
 <title>Drawn people</title>
 <body style="margin:0;background:#fffdf6"><canvas id="c" width="1500" height="1900"></canvas>
 <script type="module">
   const q = new URLSearchParams(location.search);
-  const { PEOPLE, CHARACTERS, ANIMALS, drawPerson } = await import("../public/games/draw-animate/people.js?x=" + Date.now());
-  const list = q.has("characters") ? CHARACTERS : q.has("walkers") ? ANIMALS.filter((d) => d.walk) : q.has("animals") ? ANIMALS.filter((d) => !d.walk) : PEOPLE;
+  const { PEOPLE, CHARACTERS, ANIMALS, THINGS, drawPerson } = await import("../public/games/draw-animate/people.js?x=" + Date.now());
+  const list = q.has("things") ? THINGS : q.has("characters") ? CHARACTERS : q.has("walkers") ? ANIMALS.filter((d) => d.walk) : q.has("animals") ? ANIMALS.filter((d) => !d.walk) : PEOPLE;
   const g = document.getElementById("c").getContext("2d");
-  if (q.has("live")) { // four moments, side by side
+  if (q.has("grid")) { // many to a page, each at one moment of its movement: ?things&grid, with &from= for the next page
+    const from = Number(q.get("from") || 0);
+    list.slice(from, from + 48).forEach((d, i) => { g.save(); g.translate(95 + (i % 8) * 185, 110 + Math.floor(i / 8) * 215); drawPerson(g, { fig: d.id, sk: i % 6, hc: -1 }, 165, q.get("grid") === "live" ? { t: 0.3 + i * 0.07, go: true } : null); g.restore(); g.fillStyle = "#6b7280"; g.font = "13px sans-serif"; g.textAlign = "center"; g.fillText(d.name, 95 + (i % 8) * 185, 205 + Math.floor(i / 8) * 215); });
+  } else if (q.has("live")) { // four moments, side by side
     const from = Number(q.get("from") || 0);
     list.slice(from, from + 16).forEach((d, i) => {
       const col = i % 2, row = Math.floor(i / 2);
