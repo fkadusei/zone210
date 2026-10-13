@@ -81,7 +81,7 @@ const mkLayer = () => { const c = document.createElement("canvas"); c.width = W 
 const A = mkLayer(), B = mkLayer(), C = mkLayer(); // C is scratch
 /** A stroke at one moment of an animation: one with a joint is first swung about its pin. */
 function strokeLive(g, s, live) {
-  if (!live || !s.j) { strokeOn(g, s, live); return; }
+  if (!live || !s.j || live.still) { strokeOn(g, s, live); return; }
   g.save(); g.translate(s.j[0], s.j[1]); g.rotate(jointAngle(s, live.t)); g.translate(-s.j[0], -s.j[1]);
   if (!s.jx || !s.jx.length) strokeOn(g, s, live);
   else { // elbows and knees: what lies beyond each one bends again
@@ -91,7 +91,24 @@ function strokeLive(g, s, live) {
   }
   g.restore();
 }
-function paintLayer(L, list, live = null) { L.g.clearRect(0, 0, W, H); list.forEach((s) => strokeLive(L.g, s, live)); }
+// In the flipbook each page is the next step: a person, an animal, a sticker or a jointed part takes its next pose
+// every time the page turns, eight pages to a stride. So the movement comes from flipping, as in a real flipbook.
+const STEP = 1 / (1.4 * 8);
+function pageLive(list, L) {
+  if (scene() || data.flip.step === false) return null;
+  const pages = data.flip.frames, f = pages.indexOf(list);
+  if (f < 0) return null;
+  const editing = L === A && ui.state !== "play";
+  if (editing && ui.tool === "joint") return null; // pins are put in with the drawing at rest
+  // legs step only for a figure that is somewhere else on the page before or after: one that stays put just waves or wags
+  const per = list.map((s, k) => !!(s.fig || s.ch) && [pages[f - 1], pages[f + 1]].some((o) => o && o[k] && o[k].fig === s.fig && o[k].ch === s.ch && Math.hypot(o[k].p[0] - s.p[0], o[k].p[1] - s.p[1]) > 2));
+  return { t: f * STEP, per, still: editing && ui.tool === "move" }; // while things are being moved about, jointed parts stay where their boxes are
+}
+function paintLayer(L, list, live) {
+  if (live === undefined) live = pageLive(list, L);
+  L.g.clearRect(0, 0, W, H);
+  list.forEach((s, i) => strokeLive(L.g, s, live && live.per ? { t: live.t, go: live.per[i], still: live.still } : live));
+}
 
 // each thing is drawn once onto its own small canvas, then that picture is moved, turned and stretched.
 // A thing with hand-drawn figures or stickers that move in it is drawn again for every moment of an animation,
@@ -357,7 +374,7 @@ function render(t = null) {
       const now = playing ? t : null, at = lead ? poseTogether(th, lead, now, i, il) : pose(th, now, i);
       drawThing(th, at, playing && t !== null ? (lead ? { ...limbs(th, t, i), go: limbs(lead, t, il).go } : limbs(th, t, i)) : null);
     });
-    if (ui.state === "draw") { ctx.drawImage(A.cv, 0, 0, W, H); if (ui.from && ui.live) strokeOn(ctx, ui.live); if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(data.scene.bg)); } if (ui.tool === "joint" && !ui.clean) { drawPins(); const la = ui.lasso; if (la && la.moved) { ctx.save(); ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.setLineDash([3, 9]); ctx.strokeStyle = "#f5a623"; ctx.beginPath(); ctx.moveTo(la.pts[0], la.pts[1]); for (let k = 2; k < la.pts.length; k += 2) ctx.lineTo(la.pts[k], la.pts[k + 1]); ctx.closePath(); ctx.stroke(); ctx.restore(); } } }
+    if (ui.state === "draw") { ctx.drawImage(A.cv, 0, 0, W, H); if (ui.from && ui.live) strokeOn(ctx, ui.live); if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(data.scene.bg)); } if (ui.tool === "joint" && !ui.clean) jointOverlay(); }
     const th = data.scene.things[ui.sel];
     if (th && !playing && ui.state !== "draw" && !ui.clean) {
       const light = DARK.has(data.scene.bg);
@@ -380,6 +397,7 @@ function render(t = null) {
       ctx.drawImage(A.cv, 0, 0, W, H);
       if (ui.from && ui.live) strokeOn(ctx, ui.live);
       if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(bgOf(ui.frame))); }
+      if (ui.tool === "joint" && !ui.clean) jointOverlay();
     }
   }
 }
@@ -532,8 +550,6 @@ function paint() {
   const thick = scene() ? 0 : Math.min(7, 1 + Math.floor(data.flip.frames.length / 3));
   cv.style.boxShadow = scene() ? "" : Array.from({ length: thick }, (_, i) => `${(i + 1) * 3}px ${(i + 1) * 3}px 0 ${i % 2 ? "#cfc8b6" : "#ebe5d5"}`).join(", ") + `, ${thick * 3 + 6}px ${thick * 3 + 10}px 22px rgba(0,0,0,0.35)`;
   document.querySelectorAll("#palette .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === data.color)));
-  if (!scene() && ui.tool === "joint") ui.tool = "pen"; // joints are for Bring it to life: a flipbook page does not move by itself
-  const jt = document.querySelector('#tools [data-tool="joint"]'); if (jt) jt.hidden = !scene();
   press("tools", "tool", ui.tool); press("shapes", "shape", ui.shape); press("stickSets", "set", ui.set);
   $("shapeRow").hidden = ui.tool !== "shape"; $("stickRow").hidden = ui.tool !== "stamp"; $("moveRow").hidden = ui.tool !== "move"; $("jointRow").hidden = ui.tool !== "joint";
   $("palette").hidden = ui.tool === "stamp" || ui.tool === "erase" || ui.tool === "move" || ui.tool === "joint";
@@ -561,7 +577,7 @@ function paint() {
   document.querySelectorAll(".tunepick").forEach((el) => { el.value = tuneId; });
   document.querySelectorAll(".listenbtn").forEach((el) => { el.disabled = tuneId === "none"; el.textContent = playingTune() && ui.state !== "play" ? "⏹ Stop" : "🎧 Listen"; });
   $("mute").textContent = data.muted ? "🔇 Sound off" : "🔊 Sound on"; $("mute").setAttribute("aria-pressed", String(!data.muted));
-  $("onion").checked = !!data.flip.onion;
+  $("onion").checked = !!data.flip.onion; $("flipStep").checked = data.flip.step !== false;
   if (th) { press("moves", "move", th.move); press("acts", "act", th.act); press("speeds", "speed", th.speed); $("face").checked = !!th.face; }
   // a joined group can travel together, following one of its members
   const follows = !!(th && th.g && th.gt && !th.lead);
@@ -893,6 +909,8 @@ function setElbow(x, y, which = -1) {
   ui.jel = which >= 0 ? which : parts[0].jx.length - 1;
   return true;
 }
+/** The pins, and the ring being drawn, on top of the drawing while the Joints tool is open. */
+function jointOverlay() { drawPins(); const la = ui.lasso; if (la && la.moved) { ctx.save(); ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.setLineDash([3, 9]); ctx.strokeStyle = "#f5a623"; ctx.beginPath(); ctx.moveTo(la.pts[0], la.pts[1]); for (let k = 2; k < la.pts.length; k += 2) ctx.lineTo(la.pts[k], la.pts[k + 1]); ctx.closePath(); ctx.stroke(); ctx.restore(); } }
 function drawPins() {
   for (const [k, pt] of pins()) {
     const on = k === ui.joint;
@@ -907,7 +925,7 @@ function drawPins() {
 // after every change the drawing swings for a few seconds, so the child sees at once what each pin does; then it
 // settles, so that the pins sit on the lines again and are easy to take hold of
 function jointTick() {
-  if (!(scene() && ui.state === "draw" && ui.tool === "joint") || calm() || performance.now() > (ui.jshow || 0)) { ui.jraf = 0; if (scene() && ui.state === "draw") { paintLayer(A, strokes()); render(); } return; }
+  if (!(drawing() && ui.tool === "joint") || calm() || performance.now() > (ui.jshow || 0)) { ui.jraf = 0; if (drawing()) { paintLayer(A, strokes()); render(); } return; }
   paintLayer(A, strokes(), { t: performance.now() / 1000, go: true }); render();
   ui.jraf = requestAnimationFrame(jointTick);
 }
@@ -921,9 +939,9 @@ function paintJoints() {
   $("jBend").disabled = !lead; $("jBend").setAttribute("aria-pressed", String(!!ui.jbend)); $("jBend").textContent = elbowCount() ? "➕ Add another elbow or knee" : "➕ Add elbow or knee";
   const en = elbowNow();
   $("jUnbend").disabled = en < 0; $("jFlip").disabled = en < 0; $("jFlip").checked = en >= 0 && !!lead.jx[en][2];
-  if (!ui.jraf && !calm() && ui.state === "draw" && performance.now() < (ui.jshow || 0)) ui.jraf = requestAnimationFrame(jointTick);
+  if (!ui.jraf && !calm() && drawing() && performance.now() < (ui.jshow || 0)) ui.jraf = requestAnimationFrame(jointTick);
 }
-function jointShow(swing = true) { ui.jshow = swing ? performance.now() + 2600 : 0; paint(); if (!ui.jraf) { paintLayer(A, strokes()); render(); } }
+function jointShow(swing = true) { ui.jshow = swing ? performance.now() + 2600 : 0; paint(); if (!ui.jraf) { paintLayer(A, strokes()); render(); } if (!scene()) { thumb(ui.frame); save(); } }
 function jointAt(x, y) {
   const list = strokes();
   if (ui.jbend && jointParts().length) { // putting an elbow or knee on the chosen part
@@ -1162,6 +1180,7 @@ $("fbgs").addEventListener("click", (e) => { const b = e.target.closest(".g-chip
 $("bgAll").addEventListener("click", () => { data.flip.bgs = data.flip.frames.map(() => bgOf(ui.frame)); save(); strip(); paint(); render(); note(data.flip.frames.length > 1 ? `All ${data.flip.frames.length} pages now have this background.` : ""); });
 $("thumb").addEventListener("input", () => { if (ui.state !== "play") return; if (ui.auto) { ui.auto = false; paint(); } ui.want = Number($("thumb").value); });
 $("fps").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.flip.fps = Number(b.dataset.fps); save(); paint(); } });
+$("flipStep").addEventListener("change", () => { data.flip.step = $("flipStep").checked; save(); syncFlip(); render(); });
 $("onion").addEventListener("change", () => { data.flip.onion = $("onion").checked; save(); render(); });
 $("exFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Swap your flipbook for the example? Your pages here will be removed.")) return; data.flip = { ...exampleFlip(), music: data.flip.music }; evenBgs(); ui.frame = 0; save(); syncFlip(); paint(); render(); note("Press Play! Then look through the pages to see how each one changes."); });
 $("newFlip").addEventListener("click", () => { if (data.flip.frames.some((f) => f.length) && !confirm("Clear this flipbook and start again?")) return; data.flip = { frames: [[]], fps: data.flip.fps, onion: data.flip.onion, bgs: [bgOf(ui.frame)], music: data.flip.music }; ui.frame = 0; save(); syncFlip(); paint(); render(); });
