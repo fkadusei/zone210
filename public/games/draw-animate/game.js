@@ -30,7 +30,7 @@ const COLOR_NAMES = ["Black", "Red", "Orange", "Yellow", "Green", "Blue", "Purpl
 const SIZES = [[4, "Small"], [10, "Medium"], [22, "Big"], [44, "Huge"]];
 const STICKER_SIZE = { 4: 46, 10: 72, 22: 112, 44: 170 }; // how tall a sticker is at each size button
 const PERSON_SIZE = { 4: 80, 10: 130, 22: 200, 44: 300 }; // and a hand-drawn person
-const TOOLS = [["pen", "✏️ Pen"], ["shape", "🔷 Shapes"], ["fill", "🪣 Fill"], ["stamp", "😀 Stickers"], ["text", "🔤 Text"], ["move", "✋ Move"], ["joint", "🦴 Joints"], ["erase", "🧽 Eraser"]];
+const TOOLS = [["pen", "✏️ Pen"], ["shape", "🔷 Shapes"], ["fill", "🪣 Fill"], ["stamp", "🧩 Pictures"], ["text", "🔤 Text"], ["move", "👆 Select"], ["joint", "🦴 Joints"], ["erase", "🧽 Eraser"]];
 const SHAPE_ICON = { line: "╱", rect: "▭", oval: "◯", tri: "△", diamond: "◇", star: "☆", heart: "♡" };
 const BGS = [["paper", "Paper"], ["grid", "Squared paper"], ["lined", "Lined paper"], ["chalk", "Chalkboard"], ["sky", "Sky"], ["meadow", "Meadow"], ["rainbow", "Rainbow"], ["rainy", "Rainy day"],
   ["park", "Park"], ["farm", "Farm"], ["forest", "Forest"], ["jungle", "Jungle"], ["mountains", "Mountains"], ["volcano", "Volcano"], ["desert", "Desert"], ["snow", "Snow"], ["arctic", "Arctic"],
@@ -875,7 +875,7 @@ $("palette").addEventListener("click", (e) => { const b = e.target.closest(".sw"
 $("sizes").innerHTML = SIZES.map(([v, label]) => `<button class="g-chip sz" data-size="${v}" aria-label="${label}"><i style="width:${Math.min(26, v + 2)}px;height:${Math.min(26, v + 2)}px"></i></button>`).join("");
 $("sizes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.size = Number(b.dataset.size); save(); paint(); if (ui.tool === "text") textApply((s) => { s.w = TEXT_SIZE[data.size] || 42; }); } });
 chips("tools", TOOLS, "tool");
-$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a sticker, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a sticker or a person to take it away." : ui.tool === "move" ? "Tap something to pick it up, then drag it. The corner handle makes it bigger or smaller; the top handle turns it." : ui.tool === "text" ? "Type your words, pick a font, then tap where they should go. Tap words already on the page to change them." : ui.tool === "joint" ? "Tap an arm, leg, tail or wing: a pin appears where it joins the body. Or draw a ring round a part to cut it free and pin it." : "");
+$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a picture, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a picture or a person to take it away." : ui.tool === "move" ? "Tap something to pick it up, then drag it. The corner handle makes it bigger or smaller; the top handle turns it." : ui.tool === "text" ? "Type your words, pick a font, then tap where they should go. Tap words already on the page to change them." : ui.tool === "joint" ? "Tap an arm, leg, tail or wing: a pin appears where it joins the body. Or draw a ring round a part to cut it free and pin it." : "");
   ui.pick = []; ui.joint = null; ui.jadd = false; ui.jbend = false; ui.jshow = performance.now() + 2600; paint(); if (drawing()) { paintLayer(A, strokes()); render(); } });
 $("shapes").innerHTML = SHAPES.map(([v, label]) => `<button class="g-chip shp" data-shape="${v}" aria-label="${label}"><span aria-hidden="true">${SHAPE_ICON[v]}</span></button>`).join("");
 $("shapes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.shape = b.dataset.shape; paint(); } });
@@ -931,7 +931,7 @@ function textAt(x, y) {
   const list = strokes(), i = itemAt(list, x, y, 4);
   if (i >= 0 && list[i].tx) { // a tap on words that are already there: choose them, to change them
     ui.textPick = list[i]; $("textIn").value = list[i].tx; ui.font = list[i].f;
-    note("Chosen. Type to change the words, or pick another font, colour or size. Use Move to slide, resize or turn them.");
+    note("Chosen. Type to change the words, or pick another font, colour or size. Use Select to slide, resize or turn them.");
     paint(); render(); return;
   }
   if (!$("textIn").value.trim()) { note("Type your words in the box first, then tap where they should go."); $("textIn").focus(); return; }
@@ -1235,7 +1235,7 @@ function addFrame(copy) {
 function fillBetween() {
   const pages = data.flip.frames, i = ui.frame, n = ui.tweenN || 2;
   if (i >= pages.length - 1) { note("Go to a page that has another page after it. The new pages go between the two."); return; }
-  if (!tweenMoves(pages[i], pages[i + 1])) { note("Nothing moves from this page to the next, so there is nothing to fill in. Use Copy page, then slide, resize or turn something with Move."); return; }
+  if (!tweenMoves(pages[i], pages[i + 1])) { note("Nothing moves from this page to the next, so there is nothing to fill in. Use Copy page, then slide, resize or turn something with Select."); return; }
   if (pages.length + n > MAX_FRAMES) { note(`There is no room: a flipbook can hold ${MAX_FRAMES} pages.`); return; }
   const made = Array.from({ length: n }, (_, k) => between(pages[i], pages[i + 1], (k + 1) / (n + 1)));
   pages.splice(i + 1, 0, ...made); data.flip.bgs.splice(i + 1, 0, ...made.map(() => bgOf(i)));
