@@ -148,7 +148,7 @@ function draw() {
   if (hintMove) { [hintMove.from, hintMove.to].forEach((i) => { const { x, y } = xy(i, rot); el("circle", { cx: x, cy: y, r: 15, fill: "none", stroke: "#2fbf71", "stroke-width": 3.5, class: "pulse" }); }); }
   for (let i = 0; i < HOLES.length; i += 1) {
     const { x, y } = xy(i, rot);
-    const hit = el("circle", { cx: x, cy: y, r: 11, class: "hit" });
+    const hit = el("circle", { cx: x, cy: y, r: U * 0.99, class: "hit" }); // as big as it can be without touching the next hole's
     hit.style.cursor = canAct && (s.b[i] === s.turn || dests.has(i)) ? "pointer" : "default";
     hit.dataset.i = i; hit.addEventListener("click", () => onHole(i));
   }

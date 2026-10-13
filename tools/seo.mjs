@@ -5,7 +5,8 @@
  * It writes or updates:
  *  - public/sitemap.xml   every page, so search engines know all the games exist
  *  - public/robots.txt    allow everything, and point at the sitemap
- *  - every game page      a canonical link (the one true address) and structured data (schema.org) about the game
+ *  - every game page      a canonical link (the one true address), a link to the app manifest
+ *                         (public/manifest.webmanifest) and structured data (schema.org) about the game
  *  - the home page        a canonical link, structured data listing the games, the up-to-date game count in its
  *                         descriptions, and a plain "All games" list of links (crawlers that don't run JavaScript
  *                         can't see the cards, and it's handy for people too)
@@ -40,6 +41,9 @@ function setBlock(html, name, content, before = "  </head>") {
   return html.replace(before, `    ${block}\n${before}`);
 }
 
+// every page points at the app manifest, so the site can be added to a phone's home screen like an app
+const MANIFEST = `    <link rel="manifest" href="/manifest.webmanifest" />`;
+
 // ---------- game pages ----------
 let changed = 0;
 for (const g of games) {
@@ -53,7 +57,7 @@ for (const g of games) {
     audience: { "@type": "Audience", audienceType: AUD[g.audience] || "Everyone" }, isAccessibleForFree: true, inLanguage: "en",
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" }, publisher: { "@type": "Organization", name: "Zone 210", url: `${SITE}/` },
   };
-  let html = setBlock(before, "head", `    <link rel="canonical" href="${url}" />\n    <script type="application/ld+json">${jsonld(data)}</script>`);
+  let html = setBlock(before, "head", `    <link rel="canonical" href="${url}" />\n${MANIFEST}\n    <script type="application/ld+json">${jsonld(data)}</script>`);
   if (html !== before) { fs.writeFileSync(file, html); changed += 1; }
 }
 
@@ -64,7 +68,7 @@ const n = games.length;
 home = home.replace(/content="\d+ free games, puzzles and learning adventures/g, `content="${n} free games, puzzles and learning adventures`);
 const site = { "@context": "https://schema.org", "@type": "WebSite", name: "Zone 210", url: `${SITE}/`, description: `${n} free games, puzzles and learning adventures for kids and grown-ups. Play in your browser, no sign-up.` };
 const list = { "@context": "https://schema.org", "@type": "ItemList", name: "Zone 210 games", numberOfItems: n, itemListElement: games.map((g, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE}/games/${g.id}/`, name: g.title })) };
-home = setBlock(home, "head", `    <link rel="canonical" href="${SITE}/" />\n    <script type="application/ld+json">${jsonld(site)}</script>\n    <script type="application/ld+json">${jsonld(list)}</script>`);
+home = setBlock(home, "head", `    <link rel="canonical" href="${SITE}/" />\n${MANIFEST}\n    <script type="application/ld+json">${jsonld(site)}</script>\n    <script type="application/ld+json">${jsonld(list)}</script>`);
 const groups = Object.entries(CAT).map(([k, label]) => [label, games.filter((g) => g.cat === k)]).filter(([, gs]) => gs.length);
 const links = `      <details class="allgames"><summary>All ${n} games, A to Z</summary>\n${groups.map(([label, gs]) => `        <h2>${esc(label)}</h2><ul>${gs.map((g) => `<li><a href="games/${g.id}/">${esc(g.title)}</a></li>`).join("")}</ul>`).join("\n")}\n      </details>`;
 home = setBlock(home, "links", links, "    </footer>");
