@@ -189,6 +189,17 @@ const M = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(imp
   check(moved.p[0] === 300 && moved.tx === t.tx && E.tweenMoves([t], [{ ...t, tx: "Bye" }]) === 0 && E.clusters([t, { ...t, p: [600, 400] }]).length === 2, "text: words glide between flipbook pages, and different words are not mistaken for the same ones");
 }
 check(PP.THINGS.length >= 70 && PP.THINGS.every((d) => typeof d.draw === "function" && d.name && /^#[0-9a-f]{6}$/.test(d.top) && /^#[0-9a-f]{6}$/.test(d.bot) && ["go", "nature", "build", "food", "home", "thing"].includes(d.set)), `drawn things: ${PP.THINGS.length}, each with a drawing and two colours`);
+{ // the two files split off game.js stand on their own: every background paints, and every kind of stroke draws, still and moving
+  const here = path.dirname(fileURLToPath(import.meta.url)), load = (f) => import(pathToFileURL(path.resolve(here, "../public/games/draw-animate", f)).href);
+  const BG = await load("backgrounds.js"), R = await load("render.js");
+  const stub = new Proxy({}, { get: (t, k) => (k in t ? t[k] : () => stub), set: (t, k, v) => { t[k] = v; return true; } });
+  let threw = "";
+  for (const [id] of BG.BGS) { try { BG.drawBg(stub, id); } catch (err) { threw = `background ${id}: ${err.message}`; } }
+  const kinds = [{ c: "#000", w: 6, p: [0, 0, 10, 10, 20, 0] }, { c: "#000", w: 6, p: [5, 5] }, { c: "#000", w: 6, k: 1, ff: "#f00", p: [0, 0, 10, 0, 10, 10, 0, 0] }, { c: "#000", w: 20, e: 1, p: [0, 0, 5, 5] }, { ch: "🐶", w: 60, p: [0, 0], m: 1, r: 0.3 }, { fig: "run1", sk: 2, hc: -1, w: 120, p: [0, 0] }, { fig: "thing-car", w: 120, p: [0, 0] }, { tx: "Hi\nthere", f: "book", c: "#000", w: 40, p: [0, 0], tw: 80 },
+    { c: "#000", w: 6, p: [0, 0, 0, 30, 0, 60], j: [0, 0], ja: 1, jx: [[0, 30, 0]] }, { ch: "🐶", w: 60, p: [0, 50], j: [0, 0], ja: 1, jx: [[0, 30, 0]] }];
+  for (const s of kinds) for (const live of [null, { t: 0.4, go: true }, { t: 0.9, go: false, still: true }]) { try { R.strokeLive(stub, s, live); } catch (err) { threw = `stroke ${JSON.stringify(s).slice(0, 40)}: ${err.message}`; } }
+  check(!threw && BG.BGS.length === 32 && BG.BGS.every(([id]) => typeof id === "string") && [...BG.DARK].every((id) => BG.BGS.some(([b]) => b === id)) && R.FONTS.length === 8 && R.fontOf({ f: "poster", w: 30 }).includes("30px"), `backgrounds and stroke drawing work on their own ${threw}`);
+}
 const ST = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/stickers.js")).href);
 { // stickers that move by themselves: small, finite movements, and nothing for a still picture
   const all = ST.STICKERS.flatMap((k) => k.list), moving = all.filter((ch) => ST.stickerMoves(ch));
