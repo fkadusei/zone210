@@ -1,0 +1,14 @@
+<!doctype html>
+<!-- Contact sheet of Draw & Animate's backgrounds, for checking the drawings. Serve the repo root
+     (python3 -m http.server 8124) and open http://localhost:8124/tools/bg-sheet.html  Add ?from=32 to start later. -->
+<meta charset="utf-8" /><title>Backgrounds</title>
+<body style="margin:0;background:#222;font:13px sans-serif;color:#fff"><div id="g" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px"></div>
+<script type="module">
+  const { BGS, drawBg } = await import("../public/games/draw-animate/backgrounds.js?x=" + Date.now());
+  const from = Number(new URLSearchParams(location.search).get("from") || 0);
+  for (const [id, name] of BGS.slice(from, from + 20)) {
+    const c = document.createElement("canvas"); c.width = 800; c.height = 600; c.style.width = "100%";
+    drawBg(c.getContext("2d"), id);
+    const d = document.createElement("div"); d.append(c, name); document.getElementById("g").append(d);
+  }
+</script></body>
