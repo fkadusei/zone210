@@ -287,6 +287,30 @@ export function poseTogether(thing, lead, t, i, il) {
   return own;
 }
 
+// ---------- in-between pages for the flipbook ----------
+// Two pages are compared thing by thing, in drawing order (which Copy page keeps). A thing on the first page has a
+// partner on the second if it is the same sticker or person, or a pen line of the same colour with the same number
+// of points: that is, the same thing after it has been moved, resized or turned.
+const partner = (x, y) => !!x && !!y && !x.e && !y.e && x.fig === y.fig && x.ch === y.ch && (x.fig || x.ch ? true : x.c === y.c && x.p.length === y.p.length);
+/** How many things are in a different place, size or turn on page b than on page a. */
+export const tweenMoves = (a, b) => a.filter((s, k) => partner(s, b[k]) && (s.w !== b[k].w || (s.r || 0) !== (b[k].r || 0) || s.p.some((v, i) => Math.abs(v - b[k].p[i]) > 0.5))).length;
+/**
+ * A page part of the way (u, from 0 to 1) from page a to page b: everything with a partner is that far along from
+ * where it is on a to where it is on b. Anything without a partner stays as it is on a.
+ */
+export function between(a, b, u) {
+  const mix = (x, y) => Math.round((x + (y - x) * u) * 10) / 10;
+  return a.map((s, k) => {
+    const o = b[k], n = JSON.parse(JSON.stringify(s));
+    if (!partner(s, o)) return n;
+    n.p = s.p.map((v, i) => mix(v, o.p[i])); n.w = mix(s.w, o.w);
+    if (s.r || o.r) { const d = (o.r || 0) - (s.r || 0), turn = Math.atan2(Math.sin(d), Math.cos(d)); n.r = Math.round(((s.r || 0) + turn * u) * 1000) / 1000; if (!n.r) delete n.r; } // the short way round
+    if (s.j && o.j) n.j = [mix(s.j[0], o.j[0]), mix(s.j[1], o.j[1])];
+    if (s.jx && o.jx && s.jx.length === o.jx.length) n.jx = s.jx.map((e, i) => [mix(e[0], o.jx[i][0]), mix(e[1], o.jx[i][1]), e[2]]);
+    return n;
+  });
+}
+
 // ---------- ready-made examples, built from the same kind of strokes a finger makes ----------
 const dot = (x, y, w, c) => ({ c, w, p: [x, y] });
 const line = (c, w, ...p) => ({ c, w, p });

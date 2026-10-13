@@ -6,7 +6,7 @@ import { canSharePhotos, onTouchDevice, toPhotos, download } from "../../assets/
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS, stickerLife, stickerMoves } from "./stickers.js";
 import { PEOPLE, CHARACTERS, ANIMALS, SKINS, HAIRS, drawPerson } from "./people.js";
-import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, poseTogether, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointAngle, jointReach, strokeNear, hingeOf, nearestOn, bend, oldJoints, cutByLoop, inside, clusters, exampleScene, exampleFlip } from "./engine.js";
+import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, poseTogether, between, tweenMoves, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointAngle, jointReach, strokeNear, hingeOf, nearestOn, bend, oldJoints, cutByLoop, inside, clusters, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -38,7 +38,7 @@ const BGS = [["paper", "Paper"], ["grid", "Squared paper"], ["lined", "Lined pap
   ["bedroom", "Bedroom"], ["candy", "Candy land"], ["sunset", "Sunset"], ["night", "Night"], ["moon", "Moon"], ["space", "Space"]];
 const DARK = new Set(["space", "night", "chalk", "sunset", "cave", "moon", "stage", "volcano", "jungle"]); // backgrounds where the outline round a chosen drawing needs to be light
 const FPS = [[2, "Slow"], [6, "Medium"], [10, "Fast"]];
-const MAX_THINGS = 24, MAX_FRAMES = 24;
+const MAX_THINGS = 24, MAX_FRAMES = 60;
 
 const cv = $("cv"), ctx = cv.getContext("2d");
 const saverOn = () => !!(window.z210Saver && window.z210Saver.on);
@@ -577,6 +577,7 @@ function paint() {
   document.querySelectorAll(".tunepick").forEach((el) => { el.value = tuneId; });
   document.querySelectorAll(".listenbtn").forEach((el) => { el.disabled = tuneId === "none"; el.textContent = playingTune() && ui.state !== "play" ? "⏹ Stop" : "🎧 Listen"; });
   $("mute").textContent = data.muted ? "🔇 Sound off" : "🔊 Sound on"; $("mute").setAttribute("aria-pressed", String(!data.muted));
+  press("tweenN", "n", String(ui.tweenN || 2)); $("tween").disabled = ui.frame >= data.flip.frames.length - 1;
   $("onion").checked = !!data.flip.onion; $("flipStep").checked = data.flip.step !== false;
   if (th) { press("moves", "move", th.move); press("acts", "act", th.act); press("speeds", "speed", th.speed); $("face").checked = !!th.face; }
   // a joined group can travel together, following one of its members
@@ -1161,6 +1162,20 @@ function addFrame(copy) {
   data.flip.bgs.splice(ui.frame + 1, 0, bgOf(ui.frame)); // a new page starts with the background of the page before it
   ui.frame += 1; note(""); save(); syncFlip(); paint(); render();
 }
+/** Pages are made between this page and the next, with everything part of the way from where it is here to where it is there. */
+function fillBetween() {
+  const pages = data.flip.frames, i = ui.frame, n = ui.tweenN || 2;
+  if (i >= pages.length - 1) { note("Go to a page that has another page after it. The new pages go between the two."); return; }
+  if (!tweenMoves(pages[i], pages[i + 1])) { note("Nothing moves from this page to the next, so there is nothing to fill in. Use Copy page, then slide, resize or turn something with Move."); return; }
+  if (pages.length + n > MAX_FRAMES) { note(`There is no room: a flipbook can hold ${MAX_FRAMES} pages.`); return; }
+  const made = Array.from({ length: n }, (_, k) => between(pages[i], pages[i + 1], (k + 1) / (n + 1)));
+  pages.splice(i + 1, 0, ...made); data.flip.bgs.splice(i + 1, 0, ...made.map(() => bgOf(i)));
+  note(`${n} ${n === 1 ? "page" : "pages"} added between page ${i + 1} and what is now page ${i + n + 2}. Things glide more smoothly there now.`);
+  save(); syncFlip(); paint(); render();
+}
+chips("tweenN", [["1", "1"], ["2", "2"], ["3", "3"]], "n");
+$("tweenN").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.tweenN = Number(b.dataset.n); paint(); } });
+$("tween").addEventListener("click", fillBetween);
 $("strip").addEventListener("click", (e) => { const b = e.target.closest(".fr"); if (b) { ui.frame = Number(b.dataset.f); syncFlip(); paint(); render(); } });
 // deleting a page that has a drawing on it can be undone straight away
 function delFrame() {
