@@ -767,9 +767,9 @@ stickerGrid();
 const jkey = (s) => (s.j ? s.jg || 0 : null); // which joint a stroke belongs to
 const jointParts = () => (ui.joint === null || ui.joint === undefined ? [] : strokes().filter((s) => jkey(s) === ui.joint));
 const pins = () => { const seen = new Map(); strokes().forEach((s) => { if (s.j && !seen.has(jkey(s))) seen.set(jkey(s), s.j); }); return seen; };
-const jointWas = (s) => ({ s, j: s.j && s.j.slice(), ja: s.ja, jn: s.jn, jg: s.jg, j2: s.j2 && s.j2.slice() });
+const jointWas = (s) => ({ s, j: s.j && s.j.slice(), ja: s.ja, jn: s.jn, jg: s.jg, j2: s.j2 && s.j2.slice(), jb: s.jb });
 const elbowWas = (s) => ({ ...jointWas(s), p: s.p.slice() }); // putting an elbow on a line may add a point to it
-const unpin = (s) => { delete s.j; delete s.ja; delete s.jn; delete s.jg; delete s.j2; };
+const unpin = (s) => { delete s.j; delete s.ja; delete s.jn; delete s.jg; delete s.j2; delete s.jb; };
 const elbows = () => { const seen = new Map(); strokes().forEach((s) => { if (s.j && s.j2 && !seen.has(jkey(s))) seen.set(jkey(s), s.j2); }); return seen; };
 /** Puts the chosen joint's elbow or knee on the part, at the place nearest (x, y). False if that is not on the part. */
 function setElbow(x, y) {
@@ -779,7 +779,9 @@ function setElbow(x, y) {
   if (!best || best.d > 34) return false;
   const pt = [Math.round(best.x), Math.round(best.y)], i = best.i;
   if (Math.hypot(on.p[i] - pt[0], on.p[i + 1] - pt[1]) > 5 && Math.hypot(on.p[i + 2] - pt[0], on.p[i + 3] - pt[1]) > 5) on.p.splice(i + 2, 0, pt[0], pt[1]); // a straight line needs a point there, to bend at
-  parts.forEach((s) => { s.j2 = pt.slice(); });
+  // a first guess at which way it folds, for a figure facing right: a leg's knee lets the foot go back, an arm's elbow brings the hand forward
+  const fresh = !parts[0].j2, box = bbox(strokes()), arm = box && parts[0].j[1] < box.cy;
+  parts.forEach((s) => { s.j2 = pt.slice(); if (fresh) { if (arm) s.jb = 1; else delete s.jb; } });
   return true;
 }
 function drawPins() {
@@ -808,7 +810,7 @@ function paintJoints() {
   $("jAdd").setAttribute("aria-pressed", String(!!ui.jadd));
   if (!lead) ui.jbend = false;
   $("jBend").disabled = !lead; $("jBend").setAttribute("aria-pressed", String(!!ui.jbend)); $("jBend").textContent = lead && lead.j2 ? "↪ Move elbow or knee" : "➕ Add elbow or knee";
-  $("jUnbend").disabled = !(lead && lead.j2);
+  $("jUnbend").disabled = !(lead && lead.j2); $("jFlip").disabled = !(lead && lead.j2); $("jFlip").checked = !!(lead && lead.j2 && lead.jb);
   if (!ui.jraf && !calm() && ui.state === "draw" && performance.now() < (ui.jshow || 0)) ui.jraf = requestAnimationFrame(jointTick);
 }
 function jointShow(swing = true) { ui.jshow = swing ? performance.now() + 2600 : 0; paint(); if (!ui.jraf) { paintLayer(A, strokes()); render(); } }
@@ -818,7 +820,7 @@ function jointAt(x, y) {
     const was = jointParts().map(elbowWas);
     if (!setElbow(x, y)) { note("Tap on the arm or leg itself, part-way along it."); return; }
     did({ k: "joint", was }); ui.jbend = false;
-    note("It bends there too! Drag the blue pin to move the elbow or knee."); jointShow(); return;
+    note("It bends there too, one way only. If it folds the wrong way, tick Bends the other way."); jointShow(); return;
   }
   const bent = [...elbows()].filter(([, pt]) => Math.hypot(x - pt[0], y - pt[1]) <= 16).sort((a, b) => (b[0] === ui.joint) - (a[0] === ui.joint));
   if (bent.length && !ui.jadd) { ui.joint = bent[0][0]; ui.jdrag = { elbow: true, was: jointParts().map(elbowWas), moved: false, x, y }; note("Elbow or knee chosen. Drag it along the part to move it."); jointShow(false); return; }
@@ -829,7 +831,7 @@ function jointAt(x, y) {
     if (jkey(s) === ui.joint) {
       if (parts.length < 2) { note("That is the only line on this joint. Use Remove joint to take the joint away."); return; }
       did({ k: "joint", was: [jointWas(s)] }); unpin(s);
-    } else { did({ k: "joint", was: [jointWas(s)] }); s.j = lead.j.slice(); s.ja = lead.ja; s.jg = lead.jg; if (lead.jn) s.jn = 1; else delete s.jn; if (lead.j2) s.j2 = lead.j2.slice(); else delete s.j2; }
+    } else { did({ k: "joint", was: [jointWas(s)] }); s.j = lead.j.slice(); s.ja = lead.ja; s.jg = lead.jg; if (lead.jn) s.jn = 1; else delete s.jn; if (lead.j2) s.j2 = lead.j2.slice(); else delete s.j2; if (lead.jb) s.jb = 1; else delete s.jb; }
     const n = jointParts().length; note(`${n} ${n === 1 ? "line swings" : "lines swing"} from this joint. Tap Add lines to it again when you have finished.`);
     jointShow(); return;
   }
@@ -865,7 +867,8 @@ $("jamps").addEventListener("click", (e) => { const b = e.target.closest(".g-chi
 $("jOpp").addEventListener("change", () => { const on = $("jOpp").checked; jointSet((s) => { if (on) s.jn = 1; else delete s.jn; }); });
 $("jAdd").addEventListener("click", () => { ui.jadd = !ui.jadd; ui.jbend = false; note(ui.jadd ? "Tap the other lines that belong to this part (a hand, a foot). Tap one again to take it off." : ""); paint(); });
 $("jBend").addEventListener("click", () => { ui.jbend = !ui.jbend; ui.jadd = false; note(ui.jbend ? "Tap the arm or leg part-way along, where its elbow or knee should be." : ""); paint(); });
-$("jUnbend").addEventListener("click", () => { jointSet((s) => { delete s.j2; }); ui.jbend = false; note("Elbow or knee removed."); jointShow(); });
+$("jFlip").addEventListener("change", () => { const on = $("jFlip").checked; jointSet((s) => { if (on) s.jb = 1; else delete s.jb; }); });
+$("jUnbend").addEventListener("click", () => { jointSet((s) => { delete s.j2; delete s.jb; }); ui.jbend = false; note("Elbow or knee removed."); jointShow(); });
 $("jRemove").addEventListener("click", () => { jointSet(unpin); ui.joint = null; ui.jadd = false; note("Joint removed."); jointShow(); });
 
 // ---------- the Move tool: pick up a line, shape, sticker or person; drag it, or drag its corner handle to resize ----------
@@ -948,7 +951,7 @@ function undo() {
   const list = strokes(), step = past.pop();
   ui.pick = [];
   if (step && step.k === "fill" && list.includes(step.s)) { if (step.was) step.s.ff = step.was; else delete step.s.ff; }
-  else if (step && step.k === "joint") { step.was.forEach((o) => { for (const key of ["j", "ja", "jn", "jg", "j2"]) { if (o[key] === undefined) delete o.s[key]; else o.s[key] = o[key]; } if (o.p) o.s.p = o.p; }); ui.joint = null; paint(); } // a pin put in, moved or taken out
+  else if (step && step.k === "joint") { step.was.forEach((o) => { for (const key of ["j", "ja", "jn", "jg", "j2", "jb"]) { if (o[key] === undefined) delete o.s[key]; else o.s[key] = o[key]; } if (o.p) o.s.p = o.p; }); ui.joint = null; paint(); } // a pin put in, moved or taken out
   else if (step && step.k === "edit") step.was.forEach((o) => putBack(o, o)); // put back where, the size and the way round it was
   else if (step && step.k === "rub") { if (step.added && list.length) list.pop(); step.gone.forEach(({ i, s: back }) => list.splice(Math.min(i, list.length), 0, back)); } // stickers the eraser took come back
   else if (list.length) list.pop();

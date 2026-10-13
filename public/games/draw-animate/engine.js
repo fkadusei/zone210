@@ -44,7 +44,7 @@ export function itemAt(strokes, x, y, slack = 10) {
 // A stroke with a joint has j: [x, y] (the pin it swings from), ja (how far: an index into JOINTS), jn (1 if it
 // swings the opposite way to the others, as a second leg does) and jg, the number of its joint: strokes with the
 // same jg share a pin and swing together. A joint may also have j2: [x, y], an elbow or knee part-way along,
-// where everything beyond it bends a second time.
+// where everything beyond it bends a second time, to one side only (jb: 1 for the other side).
 export const JOINTS = [["A little", 0.2], ["Some", 0.42], ["A lot", 0.75]];
 /** The angle (radians) a jointed stroke is turned by at time t seconds. */
 export const jointAngle = (s, t) => (JOINTS[s.ja] || JOINTS[1])[1] * Math.sin(t * TAU * 1.4 + (s.jn ? Math.PI : 0));
@@ -62,10 +62,12 @@ export function nearestOn(s, x, y) {
  * The second bend of a jointed stroke at time t. Returns { a: the angle, all, p }.
  * If the elbow lies on this stroke, `p` is its points with everything beyond the elbow (away from the pin) turned
  * about it. If it does not (a hand, added to an arm), `all` says whether the whole stroke is beyond the elbow and
- * so turns with the forearm. The elbow follows the swing a little late, as a real one does.
+ * so turns with the forearm. The elbow follows the swing a little late, as a real one does, and only ever folds
+ * to one side.
  */
 export function bend(s, t) {
-  const a = (JOINTS[s.ja] || JOINTS[1])[1] * 0.9 * Math.sin(t * TAU * 1.4 + (s.jn ? Math.PI : 0) - 1.1);
+  // an elbow or knee folds one way only: from straight (0) to fully bent and back, never backwards. jb: 1 folds it the other way.
+  const a = (s.jb ? -1 : 1) * (JOINTS[s.ja] || JOINTS[1])[1] * 1.5 * (0.5 + 0.5 * Math.sin(t * TAU * 1.4 + (s.jn ? Math.PI : 0) - 1.1));
   const [ex, ey] = s.j2, [hx, hy] = s.j;
   let ie = 0, de = Infinity, ih = 0, dh = Infinity, cx = 0, cy = 0;
   for (let i = 0; i < s.p.length; i += 2) {
@@ -83,7 +85,7 @@ export function bend(s, t) {
 export function jointReach(s) {
   if (!s.j) return 0;
   let far = 0; for (let i = 0; i < s.p.length; i += 2) far = Math.max(far, Math.hypot(s.p[i] - s.j[0], s.p[i + 1] - s.j[1]));
-  return (far + (s.ch || s.fig ? s.w * 0.6 : s.w / 2)) * Math.min(1, (JOINTS[s.ja] || JOINTS[1])[1] * (s.j2 ? 1.9 : 1.1));
+  return (far + (s.ch || s.fig ? s.w * 0.6 : s.w / 2)) * Math.min(1, (JOINTS[s.ja] || JOINTS[1])[1] * (s.j2 ? 2.4 : 1.1));
 }
 /**
  * Where a part joins the rest of the drawing: the point of stroke `i` that is nearest to any other stroke.
