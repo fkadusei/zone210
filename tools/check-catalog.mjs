@@ -36,6 +36,7 @@ GAMES.forEach((g, i) => {
   if (!fs.existsSync(page)) { bad(`${at}: games/${g.id}/index.html is missing`); return; }
   const html = fs.readFileSync(page, "utf8");
   if (!fs.existsSync(path.join(root, "assets/thumbs", `${g.id}.jpg`))) warns.push(`${at}: no thumbnail (assets/thumbs/${g.id}.jpg), the card falls back to the emoji`);
+  else { const j = path.join(root, "assets/thumbs", `${g.id}.jpg`), w = j.replace(/\.jpg$/, ".webp"); if (!fs.existsSync(w)) warns.push(`${at}: no WebP copy of the thumbnail, so the home page loads the heavier JPEG. Run: node tools/thumbs.mjs`); }
   if (!fs.existsSync(path.join(root, "assets/og", `${g.id}.jpg`))) bad(`${at}: no share card (assets/og/${g.id}.jpg)`);
   const og = (html.match(/<meta property="og:image" content="([^"]+)"/) || [])[1];
   if (!og) bad(`${at}: page has no og:image share tag`);
@@ -52,8 +53,8 @@ const isRedirect = (d) => { const fl = fs.readdirSync(path.join(root, "games", d
 for (const d of fs.readdirSync(path.join(root, "games"))) if (fs.statSync(path.join(root, "games", d)).isDirectory() && !ids.has(d) && !isRedirect(d)) warns.push(`games/${d}/ is not in the catalog`);
 for (const [dir, label] of [["assets/thumbs", "thumbnail"], ["assets/og", "share card"]]) {
   for (const f of fs.readdirSync(path.join(root, dir))) {
-    const id = f.replace(/\.jpg$/, "");
-    if (f.endsWith(".jpg") && !ids.has(id) && id !== "home") warns.push(`${dir}/${f}: ${label} for a game that is not in the catalog`);
+    const id = f.replace(/\.(jpg|webp)$/, "");
+    if (/\.(jpg|webp)$/.test(f) && !ids.has(id) && id !== "home") warns.push(`${dir}/${f}: ${label} for a game that is not in the catalog`);
   }
 }
 if (!fs.existsSync(path.join(root, "assets/og/home.jpg"))) bad("assets/og/home.jpg (home share card) is missing");

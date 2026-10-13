@@ -81,9 +81,10 @@ function card(game, index) {
   const img = document.createElement("img");
   img.alt = "";
   img.loading = "lazy";
-  img.src = `assets/thumbs/${game.id}.jpg`;
+  // the WebP copy is about a third of the size; an old browser that cannot show it, or a game without one, gets the JPEG
+  img.src = `assets/thumbs/${game.id}.webp`;
   img.addEventListener("load", () => tile.remove());
-  img.addEventListener("error", () => img.remove());
+  img.addEventListener("error", () => { if (img.src.endsWith(".webp")) img.src = `assets/thumbs/${game.id}.jpg`; else img.remove(); });
   art.appendChild(img);
   if (game.featured) {
     const flag = document.createElement("span");
