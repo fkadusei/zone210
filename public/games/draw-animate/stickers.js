@@ -7,7 +7,10 @@ export const STICKERS = [
   { id: "walkers", name: "Walking animals", icon: "🐎", drawn: "animals", walk: true, list: [] }, // hand-drawn from the side, facing right: their legs step when they travel
   { id: "dgo", name: "Drawn things that go", icon: "🚗", drawn: "things", kind: "go", list: [] }, // hand-drawn (things.js): their wheels turn when they travel
   { id: "dnature", name: "Drawn nature", icon: "🌳", drawn: "things", kind: "nature", list: [] },
-  { id: "dthings", name: "Drawn things", icon: "🏠", drawn: "things", kind: "thing", list: [] },
+  { id: "dbuild", name: "Drawn buildings", icon: "🏠", drawn: "things", kind: "build", list: [] },
+  { id: "dfood", name: "Drawn food", icon: "🍎", drawn: "things", kind: "food", list: [] },
+  { id: "dhome", name: "Drawn furniture", icon: "🛋️", drawn: "things", kind: "home", list: [] },
+  { id: "dthings", name: "Drawn things", icon: "🎁", drawn: "things", kind: "thing", list: [] },
   { id: "people", name: "Emoji people", icon: "🧍", turn: true, list: ["🧍", "🚶", "🏃", "💃", "🕺", "🤸", "⛹️", "🏄", "🚴", "🏊", "🧒", "👧", "👦", "👶", "🧑", "👩", "👨", "👵", "👴", "🧑‍🚀", "🧑‍🚒", "🧑‍🍳", "🧑‍🎨", "🧑‍⚕️", "🦸", "🧙", "🧚", "🧜", "👸", "🤴", "🥷", "🤖"] },
   { id: "story", name: "Emoji characters", icon: "🧙", turn: true, list: ["🎅", "🤶", "🧑‍🎄", "🧝", "🧙", "🧚", "🧜", "🧛", "🧟", "🧞", "🦸", "🦹", "🥷", "👸", "🤴", "🫅", "🤡", "👼", "💂", "🕵️", "👮", "👷", "🧑‍🚀", "☃️", "👻", "👽", "🤖", "🎃", "🦄", "🐉", "🧌", "🦖"] },
   { id: "pets", name: "Pets", icon: "🐶", turn: true, list: ["🐶", "🐕", "🐩", "🐱", "🐈", "🐹", "🐰", "🐇", "🐭", "🐦", "🦜", "🐠", "🐟", "🐢", "🦎", "🐍", "🐴", "🐎", "🐷", "🐮", "🐔", "🐥", "🦆", "🐑"] },

@@ -188,7 +188,7 @@ const M = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(imp
   const moved = E.between([t], [{ ...t, p: [400, 100] }], 0.5)[0];
   check(moved.p[0] === 300 && moved.tx === t.tx && E.tweenMoves([t], [{ ...t, tx: "Bye" }]) === 0 && E.clusters([t, { ...t, p: [600, 400] }]).length === 2, "text: words glide between flipbook pages, and different words are not mistaken for the same ones");
 }
-check(PP.THINGS.length >= 70 && PP.THINGS.every((d) => typeof d.draw === "function" && d.name && /^#[0-9a-f]{6}$/.test(d.top) && /^#[0-9a-f]{6}$/.test(d.bot) && ["go", "nature", "thing"].includes(d.set)), `drawn things: ${PP.THINGS.length}, each with a drawing and two colours`);
+check(PP.THINGS.length >= 70 && PP.THINGS.every((d) => typeof d.draw === "function" && d.name && /^#[0-9a-f]{6}$/.test(d.top) && /^#[0-9a-f]{6}$/.test(d.bot) && ["go", "nature", "build", "food", "home", "thing"].includes(d.set)), `drawn things: ${PP.THINGS.length}, each with a drawing and two colours`);
 const ST = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/stickers.js")).href);
 { // stickers that move by themselves: small, finite movements, and nothing for a still picture
   const all = ST.STICKERS.flatMap((k) => k.list), moving = all.filter((ch) => ST.stickerMoves(ch));
