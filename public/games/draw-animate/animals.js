@@ -35,7 +35,7 @@ function critter(g, o, a, b, live) {
   if (o.tail === "puff") oval(b, 0.19, 0.37, 0.065, 0.065);
   if (o.tail === "curly") { g.strokeStyle = a; g.lineWidth = 0.028; g.lineCap = "round"; g.beginPath(); g.arc(0.24, 0.3, 0.04, Math.PI * 0.9, Math.PI * 2.9); g.stroke(); }
   g.restore();
-  if (o.mane) oval(o.mane, 0, -0.14, 0.275, 0.275);
+  if (o.mane) { oval(o.mane, 0, -0.14, 0.275, 0.275); if (o.spiky) for (let i = 0; i < 14; i += 1) { const t = Math.PI * (0.9 + (i * 1.2) / 13); tri(o.mane, [Math.cos(t - 0.12) * 0.26, -0.14 + Math.sin(t - 0.12) * 0.26], [Math.cos(t) * 0.36, -0.14 + Math.sin(t) * 0.36], [Math.cos(t + 0.12) * 0.26, -0.14 + Math.sin(t + 0.12) * 0.26]); } }
   oval(o.foot || limb, -0.1, 0.43 - Math.max(0, hop), 0.085, 0.048); oval(o.foot || limb, 0.1, 0.43 - Math.max(0, -hop), 0.085, 0.048);
   oval(a, 0, 0.2, 0.19, 0.23); if (o.edge) edge(0, 0.2, 0.19, 0.23);
   oval(b, 0, 0.25, 0.12, 0.16);
@@ -104,14 +104,16 @@ function walker(g, o, a, b, live) {
   // neck, with a mane down the back of it
   if (o.mane === "neck") line(hair, nw * 0.75, [[nx - nw * 0.42, ny - 0.01], [hx - nw * 0.36, hy - 0.03]]);
   if (nl > 0.03) line(a, nw, [[nx, ny], [hx, hy]]);
-  if (o.hump) oval(a, bx - len * 0.05, by - fat * 0.85, len * 0.4, fat * 0.7);
+  if (o.hump === "low") oval(a, bx + len * 0.25, by - fat * 0.55, len * 0.55, fat * 0.6); // a bison's shoulders
+  else if (o.hump) oval(a, bx - len * 0.05, by - fat * 0.85, len * 0.4, fat * 0.7);
   // body
   if (o.wool) { [[-0.8, -0.3], [-0.45, -0.75], [0.05, -0.85], [0.5, -0.7], [0.82, -0.25], [-0.85, 0.3], [-0.4, 0.7], [0.1, 0.78], [0.55, 0.65], [0.85, 0.3]].forEach(([u, v]) => { oval(a, bx + u * len, by + v * fat, len * 0.36, fat * 0.5); edge(bx + u * len, by + v * fat, len * 0.36, fat * 0.5); }); oval(a, bx, by, len * 0.95, fat * 0.95); }
   else { oval(a, bx, by, len, fat); if (o.edge) edge(bx, by, len, fat); }
   if (o.belly) { g.save(); g.beginPath(); g.ellipse(bx, by, len, fat, 0, 0, Math.PI * 2); g.clip(); oval(b, bx + len * 0.05, by + fat * 0.85, len * 0.85, fat * 0.5); g.restore(); }
   if (o.stripes || o.spots || o.plates) { g.save(); g.beginPath(); g.ellipse(bx, by, len, fat, 0, 0, Math.PI * 2); g.clip();
     if (o.stripes) for (let i = -3; i <= 3; i += 1) line(b, 0.022, [[bx + i * len * 0.26, by - fat], [bx + i * len * 0.26 - 0.025, by + fat * (i % 2 ? 0.2 : 0.5)]]);
-    if (o.spots) [[-0.6, -0.2, 0.2], [-0.2, 0.25, 0.24], [0.2, -0.35, 0.22], [0.55, 0.2, 0.2], [-0.1, -0.6, 0.16], [0.75, -0.3, 0.13]].forEach(([u, v, r]) => oval(b, bx + u * len, by + v * fat, r * len, r * len * 0.8, u));
+    if (o.spots === "small") [[-0.75, -0.1], [-0.55, 0.35], [-0.5, -0.45], [-0.3, 0.0], [-0.2, 0.5], [-0.1, -0.5], [0.05, 0.1], [0.2, -0.35], [0.3, 0.45], [0.45, -0.05], [0.6, -0.45], [0.7, 0.25], [0.85, -0.1]].forEach(([u, v]) => { g.strokeStyle = b; g.lineWidth = 0.014; g.beginPath(); g.arc(bx + u * len, by + v * fat, 0.016, 0.6, Math.PI * 2.2); g.stroke(); }); // a leopard's rosettes
+    else if (o.spots) [[-0.6, -0.2, 0.2], [-0.2, 0.25, 0.24], [0.2, -0.35, 0.22], [0.55, 0.2, 0.2], [-0.1, -0.6, 0.16], [0.75, -0.3, 0.13]].forEach(([u, v, r]) => oval(b, bx + u * len, by + v * fat, r * len, r * len * 0.8, u));
     g.restore(); }
   if (o.udder) oval("#f9a8d4", bx - len * 0.35, by + fat * 0.92, 0.045, 0.035);
   stand(hip, -1, false); stand(sh, 1.1, false);
@@ -127,7 +129,7 @@ function walker(g, o, a, b, live) {
   if (o.horns === "knobs") for (const dx of [0.0, 0.05]) { line("#b45309", 0.016, [[ex + dx + 0.02, ey + 0.01], [ex + dx + 0.015, ey - 0.06]]); oval("#7a4a12", ex + dx + 0.015, ey - 0.065, 0.014, 0.014); }
   if (o.ears === "pointy") { tri(a, [ex - 0.035, ey + 0.035], [ex - 0.005, ey - 0.085], [ex + 0.05, ey + 0.01]); }
   if (o.ears === "long") { oval(a, ex - 0.01, ey - 0.06, 0.03, 0.09, -0.25); oval("rgba(0,0,0,0.15)", ex - 0.008, ey - 0.055, 0.013, 0.06, -0.25); }
-  if (o.ears === "round") { oval(o.mane === "lion" ? a : headc, ex, ey + 0.01, hr * 0.38, hr * 0.38); oval("rgba(0,0,0,0.15)", ex, ey + 0.01, hr * 0.2, hr * 0.2); }
+  if (o.ears === "round") { oval(o.earc === "b" ? b : o.mane === "lion" ? a : headc, ex, ey + 0.01, hr * 0.38, hr * 0.38); oval("rgba(0,0,0,0.15)", ex, ey + 0.01, hr * 0.2, hr * 0.2); }
   oval(headc, hx, hy, hr * 1.05, hr); if (o.edge) edge(hx, hy, hr * 1.05, hr);
   const sx = hx + hr * 0.65 + sl * 0.45, sy = hy + hr * 0.28, tipx = sx + sl * 0.82;
   if (o.nose === "trunk") { curve(a, hr * 0.62, [hx + hr * 0.7, hy + hr * 0.1], [hx + hr * 1.9, hy + hr * 0.4], [hx + hr * 1.35, G - 0.15]); curve(a, hr * 0.5, [hx + hr * 1.35, G - 0.15], [hx + hr * 1.3, G - 0.07], [hx + hr * 1.8, G - 0.08]); tri("#fffbeb", [hx + hr * 0.5, hy + hr * 0.6], [hx + hr * 0.85, hy + hr * 0.55], [hx + hr * 1.25, hy + hr * 1.3]); }
@@ -146,7 +148,8 @@ function walker(g, o, a, b, live) {
   if (o.woolTop) { oval(a, hx - hr * 0.2, hy - hr * 0.8, hr * 0.7, hr * 0.45); edge(hx - hr * 0.2, hy - hr * 0.8, hr * 0.7, hr * 0.45); }
   const eyeX = hx + hr * (o.eyeX ?? 0.3), eyeY = hy - hr * 0.25;
   if (o.headStripes) { line(b, 0.016, [[hx - hr * 0.2, hy - hr * 0.95], [hx - hr * 0.1, hy - hr * 0.45]]); line(b, 0.016, [[hx - hr * 0.75, hy - hr * 0.5], [hx - hr * 0.4, hy - hr * 0.25]]); line(b, 0.016, [[hx - hr * 0.8, hy + hr * 0.2], [hx - hr * 0.4, hy + hr * 0.25]]); }
-  oval(o.eye || DARK, eyeX, eyeY, 0.02, 0.02); oval("#ffffff", eyeX - 0.006, eyeY - 0.007, 0.007, 0.007);
+  if (o.eyePatch) oval(b, eyeX, eyeY + 0.005, 0.036, 0.042, 0.4);
+  oval(o.eyePatch ? "#ffffff" : o.eye || DARK, eyeX, eyeY, 0.02, 0.02); if (o.eyePatch) oval(DARK, eyeX, eyeY, 0.011, 0.011); oval("#ffffff", eyeX - 0.006, eyeY - 0.007, 0.007, 0.007);
   if (o.whiskers) { line("rgba(0,0,0,0.45)", 0.007, [[sx + sl * 0.2, sy], [sx + sl * 0.2 + 0.1, sy - 0.03]]); line("rgba(0,0,0,0.45)", 0.007, [[sx + sl * 0.2, sy + 0.015], [sx + sl * 0.2 + 0.1, sy + 0.03]]); }
 }
 
@@ -206,6 +209,106 @@ const OWN = {
     tri("#f59e0b", [0.32, -0.2], [0.46, -0.15], [0.32, -0.1]);
     oval(DARK, 0.23, -0.2, 0.022, 0.022); oval("#ffffff", 0.224, -0.207, 0.007, 0.007);
   },
+  whale(g, a, b, live) {
+    const { oval, tri, curve } = kit(g), k = beat(live, 1), up = live ? 0.5 + 0.5 * beat(live, 0.7) : 0.6;
+    g.save(); g.translate(-0.3, 0.08); g.rotate(k * 0.25); tri(a, [0, 0], [-0.18, -0.16], [-0.1, 0.0]); tri(a, [0, 0], [-0.18, 0.14], [-0.1, 0.0]); g.restore(); // the tail beats
+    oval(a, 0.03, 0.08, 0.36, 0.22);
+    g.save(); g.beginPath(); g.ellipse(0.03, 0.08, 0.36, 0.22, 0, 0, TAU); g.clip(); oval(b, 0.1, 0.3, 0.36, 0.16); g.restore();
+    oval(a, -0.02, 0.2, 0.09, 0.04, 0.5);
+    oval("#ffffff", 0.24, 0.02, 0.03, 0.03); oval(DARK, 0.245, 0.022, 0.017, 0.017); curve(DARK, 0.012, [0.24, 0.13], [0.31, 0.16], [0.37, 0.11]);
+    for (const sx of [-1, 1]) curve("#7dd3fc", 0.022, [0.06, -0.14], [0.06 + sx * 0.02, -0.26 - up * 0.08], [0.06 + sx * (0.08 + up * 0.04), -0.24 - up * 0.04]); // its spout
+  },
+  shark(g, a, b, live) {
+    const { oval, tri, line, curve } = kit(g), k = beat(live, 1.6);
+    g.save(); g.translate(-0.3, 0.0); g.rotate(k * 0.3); tri(a, [0.02, 0], [-0.16, -0.2], [-0.08, 0]); tri(a, [0.02, 0], [-0.14, 0.14], [-0.08, 0]); g.restore();
+    tri(a, [-0.06, -0.1], [0.0, -0.3], [0.1, -0.1]); tri(a, [0.02, 0.08], [-0.04, 0.24], [0.12, 0.1]);
+    oval(a, 0.03, 0, 0.37, 0.14);
+    g.save(); g.beginPath(); g.ellipse(0.03, 0, 0.37, 0.14, 0, 0, TAU); g.clip(); oval(b, 0.08, 0.14, 0.38, 0.1); g.restore();
+    oval(DARK, 0.26, -0.04, 0.018, 0.018); for (const x of [0.1, 0.13, 0.16]) line("rgba(0,0,0,0.3)", 0.01, [[x, -0.04], [x - 0.01, 0.04]]);
+    curve(DARK, 0.012, [0.2, 0.07], [0.29, 0.1], [0.37, 0.04]); for (const x of [0.24, 0.28, 0.32]) tri("#ffffff", [x - 0.015, 0.075], [x + 0.015, 0.07], [x, 0.1]);
+  },
+  dolphin(g, a, b, live) {
+    const { oval, tri, curve } = kit(g), k = beat(live, 1.4);
+    g.rotate(-0.18 + k * 0.06);
+    g.save(); g.translate(-0.3, 0.0); g.rotate(k * 0.35); tri(a, [0.03, 0], [-0.15, -0.13], [-0.07, 0]); tri(a, [0.03, 0], [-0.15, 0.13], [-0.07, 0]); g.restore();
+    tri(a, [-0.08, -0.1], [-0.04, -0.27], [0.08, -0.1]); tri(a, [0.04, 0.06], [0.0, 0.2], [0.14, 0.08]);
+    oval(a, 0.0, 0, 0.33, 0.13); oval(a, 0.34, 0.03, 0.1, 0.04);
+    g.save(); g.beginPath(); g.ellipse(0.0, 0, 0.33, 0.13, 0, 0, TAU); g.clip(); oval(b, 0.06, 0.13, 0.34, 0.09); g.restore();
+    oval(DARK, 0.22, -0.03, 0.018, 0.018); oval("#ffffff", 0.215, -0.036, 0.006, 0.006); curve(DARK, 0.01, [0.26, 0.045], [0.34, 0.06], [0.42, 0.04]);
+  },
+  octopus(g, a, b, live) {
+    const { oval, curve } = kit(g);
+    for (let i = 0; i < 6; i += 1) { const x = -0.2 + i * 0.08, w = live ? beat(live, 1.1, i * 0.9) * 0.07 : (i % 2 ? 0.05 : -0.05); g.strokeStyle = a; g.lineWidth = 0.065; g.lineCap = "round"; g.beginPath(); g.moveTo(x * 0.7, 0.08); g.bezierCurveTo(x + w, 0.2, x * 1.5 - w, 0.3, x * 1.6 + w, 0.42); g.stroke(); }
+    oval(a, 0, -0.12, 0.25, 0.27);
+    [[-0.14, -0.3, 0.03], [0.1, -0.33, 0.025], [0.17, -0.2, 0.02], [-0.19, -0.14, 0.02]].forEach(([x, y, r]) => oval(b, x, y, r, r));
+    for (const sx of [-1, 1]) { oval("#ffffff", sx * 0.09, -0.1, 0.06, 0.07); oval(DARK, sx * 0.09, -0.09, 0.03, 0.036); oval("#ffffff", sx * 0.08, -0.105, 0.01, 0.01); }
+    curve(DARK, 0.014, [-0.05, 0.02], [0, 0.07], [0.05, 0.02]);
+  },
+  crab(g, a, b, live) {
+    const { oval, line } = kit(g), k = beat(live, 2), nip = beat(live, 1.3);
+    for (const sx of [-1, 1]) for (let i = 0; i < 3; i += 1) { const lift = (i % 2 ? k : -k) * 0.025 * sx; line(a, 0.03, [[sx * (0.14 + i * 0.05), 0.2], [sx * (0.26 + i * 0.05), 0.24 + lift], [sx * (0.3 + i * 0.05), 0.38 + lift]]); }
+    for (const sx of [-1, 1]) { g.save(); g.translate(sx * 0.2, 0.06); g.rotate(sx * nip * 0.2); line(a, 0.045, [[0, 0], [sx * 0.12, -0.14]]); oval(a, sx * 0.16, -0.22, 0.085, 0.07, sx * 0.5); g.fillStyle = "#fffdf6"; g.beginPath(); g.moveTo(sx * 0.16, -0.22); g.lineTo(sx * 0.22, -0.32); g.lineTo(sx * 0.13, -0.3); g.fill(); g.restore(); }
+    oval(a, 0, 0.14, 0.25, 0.17); oval(b, 0, 0.2, 0.17, 0.08);
+    for (const sx of [-1, 1]) { line(a, 0.022, [[sx * 0.07, 0.0], [sx * 0.08, -0.1]]); oval("#ffffff", sx * 0.08, -0.12, 0.038, 0.038); oval(DARK, sx * 0.085, -0.12, 0.018, 0.018); }
+    g.strokeStyle = DARK; g.lineWidth = 0.012; g.beginPath(); g.arc(0, 0.1, 0.06, Math.PI * 0.2, Math.PI * 0.8); g.stroke();
+  },
+  snail(g, a, b, live) {
+    const { oval, line } = kit(g), k = beat(live, 0.8);
+    g.strokeStyle = a; g.lineWidth = 0.1; g.lineCap = "round"; g.beginPath(); g.moveTo(-0.34, 0.36); g.lineTo(0.26 + k * 0.02, 0.36); g.quadraticCurveTo(0.36 + k * 0.02, 0.34, 0.34 + k * 0.02, 0.16); g.stroke();
+    for (const dx of [-0.03, 0.05]) { line(a, 0.02, [[0.34 + k * 0.02 + dx * 0.4, 0.14], [0.34 + dx + k * 0.04, 0.0]]); oval(DARK, 0.34 + dx + k * 0.04, -0.01, 0.022, 0.022); }
+    oval(b, -0.06, 0.1, 0.25, 0.25);
+    g.strokeStyle = "rgba(0,0,0,0.25)"; g.lineWidth = 0.022; g.beginPath(); for (let i = 0; i <= 60; i += 1) { const t = (i / 60) * Math.PI * 4.5, r = 0.02 + i * 0.0033; const x = -0.06 + Math.cos(t) * r, y = 0.1 + Math.sin(t) * r; if (i) g.lineTo(x, y); else g.moveTo(x, y); } g.stroke();
+    g.strokeStyle = DARK; g.lineWidth = 0.01; g.beginPath(); g.arc(0.36 + k * 0.02, 0.22, 0.03, Math.PI * 0.1, Math.PI * 0.7); g.stroke();
+  },
+  snake(g, a, b, live) {
+    const { oval, line } = kit(g), ph = live ? live.t * TAU * 1.2 : 0, y = (x) => 0.12 + Math.sin(x * 14 - ph) * 0.09 * Math.min(1, (0.36 - x) / 0.2 + 0.25);
+    g.strokeStyle = a; g.lineWidth = 0.09; g.lineCap = "round"; g.lineJoin = "round"; g.beginPath(); for (let i = 0; i <= 40; i += 1) { const x = -0.42 + i * 0.017; if (i) g.lineTo(x, y(x)); else g.moveTo(x, y(x)); } g.stroke();
+    for (let i = 3; i < 36; i += 5) { const x = -0.42 + i * 0.017; oval(b, x, y(x), 0.022, 0.022); }
+    const hx = 0.3, hy = y(0.26); oval(a, hx + 0.04, hy - 0.02, 0.1, 0.075);
+    line("#e5484d", 0.012, [[hx + 0.13, hy - 0.01], [hx + 0.19, hy - 0.01], [hx + 0.22, hy - 0.035]]); line("#e5484d", 0.012, [[hx + 0.19, hy - 0.01], [hx + 0.22, hy + 0.015]]);
+    oval("#ffffff", hx + 0.06, hy - 0.05, 0.026, 0.026); oval(DARK, hx + 0.066, hy - 0.05, 0.013, 0.013);
+  },
+  ladybird(g, a, b, live) {
+    const { oval, line } = kit(g), k = beat(live, 2.2);
+    for (let i = 0; i < 3; i += 1) { const x = -0.14 + i * 0.13, s2 = (i % 2 ? k : -k) * 0.03; line(DARK, 0.022, [[x, 0.2], [x + s2, 0.34]]); }
+    oval(DARK, 0.26, 0.1, 0.11, 0.13);
+    line(DARK, 0.014, [[0.3, 0.0], [0.36, -0.1 + k * 0.01]]); line(DARK, 0.014, [[0.33, 0.02], [0.42, -0.05 - k * 0.01]]);
+    g.fillStyle = a; g.beginPath(); g.ellipse(-0.02, 0.2, 0.3, 0.3, 0, Math.PI, 0); g.fill();
+    g.save(); g.beginPath(); g.ellipse(-0.02, 0.2, 0.3, 0.3, 0, Math.PI, 0); g.clip(); [[-0.18, 0.08, 0.05], [-0.02, -0.02, 0.055], [0.14, 0.09, 0.05], [-0.1, 0.17, 0.035], [0.06, 0.16, 0.035]].forEach(([x, y, r]) => oval(b, x, y, r, r)); g.restore();
+    oval("#ffffff", 0.3, 0.07, 0.03, 0.03); oval(DARK, 0.305, 0.07, 0.014, 0.014);
+  },
+  parrot(g, a, b, live) {
+    const { oval, tri, line } = kit(g), k = Math.max(0, beat(live, 1.6));
+    tri(b, [-0.1, 0.2], [-0.2, 0.46], [-0.04, 0.3]); tri(a, [-0.04, 0.22], [-0.1, 0.46], [0.02, 0.3]);
+    line("#6b7280", 0.02, [[0.0, 0.3], [0.0, 0.38], [0.05, 0.38]]); line("#6b7280", 0.02, [[0.08, 0.3], [0.08, 0.38], [0.13, 0.38]]);
+    line("#8b5a2b", 0.035, [[-0.3, 0.4], [0.34, 0.4]]);
+    oval(a, 0.02, 0.08, 0.17, 0.24, 0.15);
+    g.save(); g.translate(-0.06, -0.02); g.rotate(-k * 0.7); oval(b, -0.02, 0.12, 0.085, 0.17, 0.25); oval("#fde047", -0.03, 0.2, 0.05, 0.08, 0.25); g.restore(); // the wing lifts
+    oval(a, 0.1, -0.22, 0.13, 0.13);
+    g.fillStyle = "#fbbf24"; g.beginPath(); g.moveTo(0.2, -0.27); g.quadraticCurveTo(0.36, -0.26, 0.3, -0.1); g.quadraticCurveTo(0.26, -0.16, 0.19, -0.16); g.fill();
+    oval("#ffffff", 0.13, -0.25, 0.045, 0.045); oval(DARK, 0.14, -0.25, 0.02, 0.02);
+  },
+  bat(g, a, b, live) {
+    const { oval, tri } = kit(g), flap = live ? 0.35 + 0.65 * Math.abs(Math.cos(live.t * TAU * 1.6)) : 1;
+    for (const sx of [-1, 1]) { g.save(); g.scale(sx, 1); g.translate(0.06, -0.04); g.scale(1, flap); g.fillStyle = b; g.beginPath(); g.moveTo(0, 0); g.lineTo(0.2, -0.2); g.lineTo(0.42, -0.06); g.quadraticCurveTo(0.34, 0.0, 0.33, 0.12); g.quadraticCurveTo(0.24, 0.04, 0.2, 0.16); g.quadraticCurveTo(0.12, 0.06, 0.02, 0.16); g.fill(); g.restore(); }
+    for (const sx of [-1, 1]) tri(a, [sx * 0.03, -0.2], [sx * 0.1, -0.36], [sx * 0.13, -0.17]);
+    oval(a, 0, 0.06, 0.1, 0.16); oval(a, 0, -0.14, 0.12, 0.11);
+    for (const sx of [-1, 1]) { oval("#ffffff", sx * 0.045, -0.15, 0.03, 0.03); oval(DARK, sx * 0.045, -0.15, 0.015, 0.015); tri("#ffffff", [sx * 0.015, -0.09], [sx * 0.04, -0.09], [sx * 0.027, -0.05]); }
+  },
+  jellyfish(g, a, b, live) {
+    const { oval, curve } = kit(g), k = beat(live, 0.9), sq = 1 + k * 0.08;
+    for (let i = 0; i < 5; i += 1) { const x = -0.18 + i * 0.09, w = live ? beat(live, 1.1, i * 1.3) * 0.06 : (i % 2 ? 0.04 : -0.04); g.strokeStyle = b; g.lineWidth = 0.035; g.lineCap = "round"; g.beginPath(); g.moveTo(x, -0.02); g.bezierCurveTo(x + w, 0.12, x - w, 0.26, x + w, 0.42); g.stroke(); }
+    g.fillStyle = a; g.beginPath(); g.ellipse(0, -0.04, 0.27 * sq, 0.3 / sq, 0, Math.PI, 0); g.quadraticCurveTo(0.2, 0.04, 0.13, -0.02); g.quadraticCurveTo(0.07, 0.04, 0, -0.02); g.quadraticCurveTo(-0.07, 0.04, -0.13, -0.02); g.quadraticCurveTo(-0.2, 0.04, -0.27 * sq, -0.04); g.fill();
+    oval("rgba(255,255,255,0.45)", -0.1, -0.22, 0.05, 0.03, -0.5);
+    for (const sx of [-1, 1]) oval(DARK, sx * 0.07, -0.14, 0.02, 0.024); curve(DARK, 0.012, [-0.04, -0.08], [0, -0.05], [0.04, -0.08]);
+  },
+  spider(g, a, b, live) {
+    const { oval, line } = kit(g), k = beat(live, 2.4);
+    for (const sx of [-1, 1]) for (let i = 0; i < 4; i += 1) { const lift = (i % 2 ? k : -k) * 0.03, ax = sx * 0.1, ay = 0.02 + i * 0.03; line(a, 0.022, [[ax, ay], [sx * (0.26 + i * 0.03), -0.16 + i * 0.1 + lift], [sx * (0.36 + i * 0.02), 0.1 + i * 0.1 + lift]]); }
+    oval(a, 0, 0.14, 0.17, 0.2); oval(a, 0, -0.1, 0.12, 0.11); oval(b, 0, 0.14, 0.06, 0.09);
+    for (const sx of [-1, 1]) { oval("#ffffff", sx * 0.045, -0.12, 0.034, 0.034); oval(DARK, sx * 0.045, -0.115, 0.016, 0.016); }
+    g.strokeStyle = "#ffffff"; g.lineWidth = 0.01; g.beginPath(); g.arc(0, -0.07, 0.035, Math.PI * 0.2, Math.PI * 0.8); g.stroke();
+  },
 };
 
 export const ANIMALS = [
@@ -226,12 +329,36 @@ export const ANIMALS = [
   { id: "penguin", name: "Penguin", custom: "animal", top: "#1f2937", bot: "#ffffff", o: { nose: "beak", foot: "#f59e0b", face: "#ffffff" } },
   { id: "owl", name: "Owl", custom: "animal", top: "#8b5a2b", bot: "#f1dcb8", o: { ears: "tufts", eyes: "big", nose: "beak", muzzle: false } },
   { id: "reindeer", name: "Reindeer", custom: "animal", top: "#a16207", bot: "#f1dcb8", o: { ears: "side", antlers: true, nosec: "#e5484d" } },
+  { id: "koala", name: "Koala", custom: "animal", top: "#9ca3af", bot: "#e5e7eb", o: { ears: "big", nosec: "#1f2937" } },
+  { id: "hamster", name: "Hamster", custom: "animal", top: "#f2b36b", bot: "#fff3e0", o: { ears: "round", tail: "puff", teeth: true, cheeks: true, nosec: "#f48fb1" } },
+  { id: "raccoon", name: "Raccoon", custom: "animal", top: "#8b8f98", bot: "#e5e7eb", o: { ears: "pointy", patches: "#1f2937", tail: "bushy" } },
+  { id: "squirrel", name: "Squirrel", custom: "animal", top: "#c2622d", bot: "#fde9d0", o: { ears: "tufts", tail: "bushy", teeth: true } },
+  { id: "hedgehog", name: "Hedgehog", custom: "animal", top: "#d9b38c", bot: "#f5e6d3", o: { ears: "side", mane: "#7a5230", spiky: true } },
+  { id: "wolf", name: "Wolf", custom: "animal", top: "#6b7280", bot: "#e5e7eb", o: { ears: "pointy", tail: "bushy" } },
+  { id: "sheep", name: "Sheep", custom: "animal", top: "#f1f5f9", bot: "#ffffff", o: { ears: "side", ear: "#374151", limb: "#374151", face: "#4b5563", mane: "#e2e8f0", edge: true, nosec: "#111827" } },
+  { id: "chick", name: "Chick", custom: "animal", top: "#fde047", bot: "#fef08a", o: { nose: "beak", muzzle: false, foot: "#f59e0b", cheeks: true } },
+  { id: "polarbear", name: "Polar bear", custom: "animal", top: "#ffffff", bot: "#f1f5f9", o: { ears: "round", ear: "#dbe3ec", limb: "#dbe3ec", edge: true } },
+  { id: "leopard", name: "Leopard", custom: "animal", top: "#f2b84b", bot: "#fde9b8", o: { ears: "round", spots: "#7a4a12", tail: "long", whiskers: true } },
+  { id: "gorilla", name: "Gorilla", custom: "animal", top: "#374151", bot: "#6b7280", o: { ears: "side", face: "#9ca3af" } },
+  { id: "dalmatian", name: "Dalmatian", custom: "animal", top: "#ffffff", bot: "#f8fafc", o: { ears: "floppy", ear: "#1f2937", limb: "#dbe3ec", spots: "#1f2937", tail: "long", tongue: true, edge: true } },
   { id: "fish", name: "Fish", custom: "animal", top: "#f97316", bot: "#fbbf24" },
   { id: "duck", name: "Duck", custom: "animal", top: "#fde047", bot: "#facc15" },
   { id: "bird", name: "Bird", custom: "animal", top: "#3b82f6", bot: "#bfdbfe" },
   { id: "turtle", name: "Turtle", custom: "animal", top: "#65a30d", bot: "#a16207" },
   { id: "butterfly", name: "Butterfly", custom: "animal", top: "#a855f7", bot: "#ec4899" },
   { id: "bee", name: "Bee", custom: "animal", top: "#fde047", bot: "#1f2937" },
+  { id: "whale", name: "Whale", custom: "animal", top: "#3b82f6", bot: "#bfdbfe" },
+  { id: "shark", name: "Shark", custom: "animal", top: "#6b7280", bot: "#f1f5f9" },
+  { id: "dolphin", name: "Dolphin", custom: "animal", top: "#60a5fa", bot: "#e0f2fe" },
+  { id: "octopus", name: "Octopus", custom: "animal", top: "#ec4899", bot: "#f9a8d4" },
+  { id: "crab", name: "Crab", custom: "animal", top: "#ef4444", bot: "#fecaca" },
+  { id: "jellyfish", name: "Jellyfish", custom: "animal", top: "#c084fc", bot: "#f0abfc" },
+  { id: "snail", name: "Snail", custom: "animal", top: "#a3e635", bot: "#b45309" },
+  { id: "snake", name: "Snake", custom: "animal", top: "#22c55e", bot: "#fde047" },
+  { id: "ladybird", name: "Ladybird", custom: "animal", top: "#ef4444", bot: "#1f2937" },
+  { id: "spider", name: "Spider", custom: "animal", top: "#1f2937", bot: "#ef4444" },
+  { id: "parrot", name: "Parrot", custom: "animal", top: "#ef4444", bot: "#3b82f6" },
+  { id: "bat", name: "Bat", custom: "animal", top: "#4b5563", bot: "#9ca3af" },
   // walking animals: seen from the side, facing right
   { id: "walk-horse", name: "Horse", custom: "animal", walk: true, top: "#a0522d", bot: "#3b2314", o: { leg: 0.25, lw: 0.042, neck: 0.2, up: 1.0, nw: 0.11, head: 0.075, snout: 0.1, ears: "pointy", tail: "horse", mane: "neck", forelock: true, foot: "#3b2314", nose: "nostril" } },
   { id: "walk-unicorn", name: "Unicorn", custom: "animal", walk: true, top: "#ffffff", bot: "#f472b6", o: { leg: 0.25, lw: 0.042, neck: 0.2, up: 1.0, nw: 0.11, head: 0.075, snout: 0.1, ears: "pointy", tail: "horse", mane: "neck", forelock: true, foot: "#fbbf24", nose: "nostril", horn: true, edge: true } },
@@ -255,6 +382,14 @@ export const ANIMALS = [
   { id: "walk-rhino", name: "Rhino", custom: "animal", walk: true, top: "#9ca3af", bot: "#f3f4f6", o: { len: 0.27, fat: 0.17, leg: 0.12, lw: 0.075, neck: 0.03, up: 0.1, nw: 0.2, head: 0.11, snout: 0.1, jaw: 0.7, bx: -0.1, stride: 0.03, ears: "pointy", nose: "horn", tail: "thin", hair: "#6b7280", foot: "#6b7280" } },
   { id: "walk-hippo", name: "Hippo", custom: "animal", walk: true, top: "#a78bba", bot: "#e9d5ff", o: { len: 0.27, fat: 0.18, leg: 0.09, lw: 0.075, neck: 0.03, up: 0.15, nw: 0.2, head: 0.11, snout: 0.11, jaw: 0.95, bx: -0.1, stride: 0.03, ears: "round", belly: true, tail: "short", nose: "nostril", foot: "#8b6ea3" } },
   { id: "walk-dinosaur", name: "Dinosaur", custom: "animal", walk: true, top: "#4ade80", bot: "#fde047", o: { len: 0.2, fat: 0.13, leg: 0.15, lw: 0.06, neck: 0.33, up: 0.95, nw: 0.075, head: 0.055, snout: 0.055, bx: -0.02, stride: 0.03, tail: "dino", tlen: 0.26, belly: true, spots: false, nose: "nostril", foot: "#16a34a" } },
+  { id: "walk-pony", name: "Pony", custom: "animal", walk: true, top: "#e2b653", bot: "#fff4c2", o: { len: 0.22, fat: 0.13, leg: 0.17, lw: 0.045, neck: 0.14, up: 0.95, nw: 0.11, head: 0.08, snout: 0.085, ears: "pointy", tail: "horse", mane: "neck", forelock: true, foot: "#7a5230", nose: "nostril" } },
+  { id: "walk-llama", name: "Llama", custom: "animal", walk: true, top: "#f1e3c6", bot: "#fffaf0", o: { len: 0.2, fat: 0.13, leg: 0.21, lw: 0.04, neck: 0.26, up: 1.25, nw: 0.095, head: 0.065, snout: 0.07, ears: "long", tail: "puff", puff: "#f1e3c6", wool: true, foot: "#7a5230", nose: "nostril", bx: -0.02 } },
+  { id: "walk-bison", name: "Bison", custom: "animal", walk: true, top: "#5b3a1c", bot: "#3b2314", o: { len: 0.27, fat: 0.17, leg: 0.13, lw: 0.06, neck: 0.04, up: 0.1, nw: 0.2, head: 0.105, snout: 0.07, jaw: 0.75, bx: -0.1, stride: 0.035, ears: "side", hump: "low", horns: "cow", tail: "thin", foot: "#1f2937", nose: "nostril" } },
+  { id: "walk-moose", name: "Moose", custom: "animal", walk: true, top: "#6b4423", bot: "#d6c7a1", o: { len: 0.23, fat: 0.12, leg: 0.24, lw: 0.036, neck: 0.13, up: 0.9, nw: 0.1, head: 0.075, snout: 0.1, jaw: 0.72, ears: "side", antlers: true, tail: "short", belly: true, foot: "#1f2937", nose: "nostril" } },
+  { id: "walk-polarbear", name: "Polar bear", custom: "animal", walk: true, top: "#ffffff", bot: "#e2e8f0", o: { len: 0.25, fat: 0.17, leg: 0.13, lw: 0.07, neck: 0.06, up: 0.35, nw: 0.16, head: 0.105, snout: 0.07, ears: "round", tail: "puff", puff: "#ffffff", edge: true } },
+  { id: "walk-panda", name: "Panda", custom: "animal", walk: true, top: "#ffffff", bot: "#1f2937", o: { len: 0.24, fat: 0.17, leg: 0.12, lw: 0.07, neck: 0.06, up: 0.35, nw: 0.16, head: 0.11, snout: 0.06, ears: "round", earc: "b", eyePatch: true, limb: "b", tail: "puff", puff: "#ffffff", edge: true } },
+  { id: "walk-leopard", name: "Leopard", custom: "animal", walk: true, top: "#f2b84b", bot: "#7a4a12", o: { len: 0.25, fat: 0.11, leg: 0.16, lw: 0.045, neck: 0.08, up: 0.7, nw: 0.12, head: 0.09, snout: 0.06, ears: "round", tail: "long", spots: "small", face: "#fde9b8", whiskers: true } },
+  { id: "walk-dalmatian", name: "Dalmatian", custom: "animal", walk: true, top: "#ffffff", bot: "#1f2937", o: { len: 0.22, fat: 0.11, leg: 0.18, lw: 0.042, neck: 0.1, up: 0.9, nw: 0.1, head: 0.085, snout: 0.085, ears: "floppy", tail: "up", spots: true, edge: true } },
   { id: "walk-crocodile", name: "Crocodile", custom: "animal", walk: true, top: "#4d7c0f", bot: "#d9f99d", o: { len: 0.24, fat: 0.075, leg: 0.06, lw: 0.045, neck: 0.02, up: 0, head: 0.065, snout: 0.15, jaw: 0.6, bx: -0.05, stride: 0.04, tail: "dino", tlen: 0.2, belly: true, teeth: true, nose: "nostril" } },
 ];
 
