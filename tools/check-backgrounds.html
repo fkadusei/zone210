@@ -1,0 +1,18 @@
+<!doctype html>
+<!-- Checks that every Draw & Animate background paints the whole page: a gap shows as a hole when a picture or video
+     is saved. Serve the repo root (python3 -m http.server 8124) and open
+     http://localhost:8124/tools/check-backgrounds.html : the result appears on the page and in window.result. -->
+<meta charset="utf-8" /><title>Background coverage</title><body style="font:14px ui-monospace,monospace;padding:16px">checking…
+<script type="module">
+  const { BGS, drawBg } = await import("../public/games/draw-animate/backgrounds.js?x=" + Date.now());
+  const bare = [];
+  for (const [id] of BGS) {
+    const c = document.createElement("canvas"); c.width = 800; c.height = 600;
+    const g = c.getContext("2d", { willReadFrequently: true }); drawBg(g, id);
+    const d = g.getImageData(0, 0, 800, 600).data; let n = 0;
+    for (let i = 3; i < d.length; i += 4) if (d[i] < 250) n += 1;
+    if (n) bare.push([id, n]);
+  }
+  window.result = { count: BGS.length, bare };
+  document.body.textContent = bare.length ? `${bare.length} of ${BGS.length} backgrounds leave part of the page unpainted: ${bare.map(([id, n]) => `${id} (${n} pixels)`).join(", ")}` : `All ${BGS.length} backgrounds paint the whole page.`;
+</script></body>
