@@ -13,10 +13,13 @@ export const MOVES = [["stay", "Stay put"], ["side", "Side to side"], ["updown",
 export const ACTS = [["none", "Nothing else"], ["bounce", "Bounce"], ["spin", "Spin"], ["wiggle", "Wiggle"], ["pulse", "Grow and shrink"]];
 export const SPEEDS = [[0.5, "Slow"], [1, "Medium"], [2, "Fast"]];
 
+/** How wide and tall a piece of text is: tw is its measured width (the page measures it when it is written); each line is 1.2 times the letter size. */
+export const textBox = (s) => [s.tw || Math.max(...s.tx.split("\n").map((l) => l.length)) * s.w * 0.56, s.tx.split("\n").length * s.w * 1.2];
+const solid = (s) => !!(s.ch || s.fig || s.tx); // a sticker, a person or a piece of text: one picture at one point, not a line
 /** The box around some strokes, allowing for how thick the lines are (a turned sticker or person needs more room). */
 export function bbox(strokes) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-  for (const s of strokes) { if (s.e) continue; const h = s.ch ? s.w * (s.r ? 0.72 : 0.62) : s.fig ? s.w * (s.r ? 0.6 : 0.56) : s.w / 2; for (let i = 0; i < s.p.length; i += 2) { x0 = Math.min(x0, s.p[i] - h); x1 = Math.max(x1, s.p[i] + h); y0 = Math.min(y0, s.p[i + 1] - h); y1 = Math.max(y1, s.p[i + 1] + h); } }
+  for (const s of strokes) { if (s.e) continue; const h = s.ch ? s.w * (s.r ? 0.72 : 0.62) : s.fig ? s.w * (s.r ? 0.6 : 0.56) : s.w / 2; let hx = h, hy = h; if (s.tx) { const [tw, th] = textBox(s); hx = s.r ? Math.hypot(tw, th) / 2 : tw / 2; hy = s.r ? hx : th / 2; } for (let i = 0; i < s.p.length; i += 2) { x0 = Math.min(x0, s.p[i] - hx); x1 = Math.max(x1, s.p[i] + hx); y0 = Math.min(y0, s.p[i + 1] - hy); y1 = Math.max(y1, s.p[i + 1] + hy); } }
   return x0 === Infinity ? null : { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
 }
 const r1 = (v) => Math.round(v * 10) / 10;
@@ -24,14 +27,14 @@ const r1 = (v) => Math.round(v * 10) / 10;
 const pins = (s, f) => ({ ...(s.j ? { j: f(s.j[0], s.j[1]) } : {}), ...(s.jx ? { jx: s.jx.map((e) => [...f(e[0], e[1]), e[2] ? 1 : 0]) } : {}) });
 export const shift = (strokes, dx, dy) => strokes.map((s) => ({ ...s, p: s.p.map((v, i) => r1(v + (i % 2 ? dy : dx))), ...pins(s, (x, y) => [r1(x + dx), r1(y + dy)]) }));
 /** Strokes made k times bigger (or smaller) about the point (ox, oy): their lines get thicker or thinner to match. */
-export const scaled = (strokes, k, ox = 0, oy = 0) => strokes.map((s) => ({ ...s, w: Math.max(s.ch || s.fig ? 14 : 1, Math.round(s.w * k * 10) / 10), p: s.p.map((v, i) => Math.round(((i % 2 ? oy : ox) + (v - (i % 2 ? oy : ox)) * k) * 10) / 10), ...pins(s, (x, y) => [r1(ox + (x - ox) * k), r1(oy + (y - oy) * k)]) }));
+export const scaled = (strokes, k, ox = 0, oy = 0) => strokes.map((s) => ({ ...s, w: Math.max(solid(s) ? 14 : 1, Math.round(s.w * k * 10) / 10), ...(s.tw ? { tw: Math.round(s.tw * k * 10) / 10 } : {}), p: s.p.map((v, i) => Math.round(((i % 2 ? oy : ox) + (v - (i % 2 ? oy : ox)) * k) * 10) / 10), ...pins(s, (x, y) => [r1(ox + (x - ox) * k), r1(oy + (y - oy) * k)]) }));
 /** Strokes turned by `angle` (radians, clockwise on screen) about the point (ox, oy). A sticker or person keeps its own turn in `r`. */
 export function turned(strokes, angle, ox = 0, oy = 0) {
   const c = Math.cos(angle), n = Math.sin(angle), r1 = (v) => Math.round(v * 10) / 10;
   return strokes.map((s) => {
     const p = []; for (let i = 0; i < s.p.length; i += 2) { const dx = s.p[i] - ox, dy = s.p[i + 1] - oy; p.push(r1(ox + dx * c - dy * n), r1(oy + dx * n + dy * c)); }
     const j = pins(s, (x, y) => [r1(ox + (x - ox) * c - (y - oy) * n), r1(oy + (x - ox) * n + (y - oy) * c)]);
-    return s.ch || s.fig ? { ...s, p, ...j, r: Math.round(((s.r || 0) + (s.m ? -angle : angle)) * 1000) / 1000 } : { ...s, p, ...j };
+    return solid(s) ? { ...s, p, ...j, r: Math.round(((s.r || 0) + (s.m ? -angle : angle)) * 1000) / 1000 } : { ...s, p, ...j };
   });
 }
 /** The top-most stroke, shape, sticker or person at a point (its place in the list), or -1. Erasing is passed over. */
@@ -79,7 +82,7 @@ export function bend(s, t) {
   let ih = 0, dh = Infinity, cx = 0, cy = 0;
   for (let i = 0; i < s.p.length; i += 2) { const d = from(s.p[i], s.p[i + 1]); if (d < dh) { dh = d; ih = i; } cx += s.p[i]; cy += s.p[i + 1]; }
   const far = from(cx / (s.p.length / 2), cy / (s.p.length / 2)), beyond = (k) => far > from(s.jx[k][0], s.jx[k][1]);
-  if (s.ch || s.fig) return { a, p: s.p, turns: order.filter(beyond).map((k) => [s.jx[k][0], s.jx[k][1], a[k]]) };
+  if (solid(s)) return { a, p: s.p, turns: order.filter(beyond).map((k) => [s.jx[k][0], s.jx[k][1], a[k]]) };
   const rest = s.p, p = s.p.slice();
   for (const k of order.slice().reverse()) {
     const [ex, ey] = s.jx[k], c = Math.cos(a[k]), sn = Math.sin(a[k]);
@@ -95,7 +98,7 @@ export function bend(s, t) {
 export function jointReach(s) {
   if (!s.j) return 0;
   let far = 0; for (let i = 0; i < s.p.length; i += 2) far = Math.max(far, Math.hypot(s.p[i] - s.j[0], s.p[i + 1] - s.j[1]));
-  return (far + (s.ch || s.fig ? s.w * 0.6 : s.w / 2)) * Math.min(1, (JOINTS[s.ja] || JOINTS[1])[1] * (s.jx && s.jx.length ? 2.4 : 1.1));
+  return (far + (s.tx ? Math.hypot(...textBox(s)) / 2 : s.ch || s.fig ? s.w * 0.6 : s.w / 2)) * Math.min(1, (JOINTS[s.ja] || JOINTS[1])[1] * (s.jx && s.jx.length ? 2.4 : 1.1));
 }
 /**
  * Where a part joins the rest of the drawing: the point of stroke `i` that is nearest to any other stroke.
@@ -114,7 +117,7 @@ export function strokeNear(strokes, x, y, reach = 22) {
   strokes.forEach((s, i) => {
     if (s.e) return;
     let d = Infinity;
-    if (s.ch || s.fig) { const b = bbox([s]); d = x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1 ? 0 : Infinity; }
+    if (solid(s)) { const b = bbox([s]); d = x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1 ? 0 : Infinity; }
     else if (s.ff && s.p.length >= 6 && inside(s.p, x, y)) d = 0;
     else if (s.p.length === 2) d = Math.hypot(x - s.p[0], y - s.p[1]) - s.w / 2;
     else for (let k = 0; k < s.p.length - 2; k += 2) {
@@ -201,7 +204,7 @@ export function cutByLoop(pts, loop) {
 export function areaOf(p) { let a = 0; for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) a += (p[j] + p[i]) * (p[j + 1] - p[i + 1]); return Math.abs(a / 2); }
 /** The top-most stroke whose outline the point is inside (its place in the list), or -1. Stickers, erasing and thin scribbles are passed over. */
 export function fillTarget(strokes, x, y) {
-  for (let i = strokes.length - 1; i >= 0; i -= 1) { const s = strokes[i]; if (!s.e && !s.ch && !s.fig && s.p.length >= 6 && areaOf(s.p) > 250 && inside(s.p, x, y)) return i; }
+  for (let i = strokes.length - 1; i >= 0; i -= 1) { const s = strokes[i]; if (!s.e && !solid(s) && s.p.length >= 6 && areaOf(s.p) > 250 && inside(s.p, x, y)) return i; }
   return -1;
 }
 
@@ -212,8 +215,8 @@ export function fillTarget(strokes, x, y) {
 export function stickersUnder(strokes, pts, width) {
   const out = [];
   strokes.forEach((s, i) => {
-    if (!s.ch && !s.fig) return;
-    const reach = s.w * 0.3 + width / 2;
+    if (!solid(s)) return;
+    const reach = (s.tx ? Math.min(...textBox(s)) * 0.4 : s.w * 0.3) + width / 2;
     const [cx, cy] = s.p;
     if (pts.length === 2 && Math.hypot(pts[0] - cx, pts[1] - cy) <= reach) { out.push(i); return; }
     for (let k = 2; k < pts.length; k += 2) { // how near each stretch of the stroke comes (a fast swipe has few points)
@@ -291,7 +294,7 @@ export function poseTogether(thing, lead, t, i, il) {
 // Two pages are compared thing by thing, in drawing order (which Copy page keeps). A thing on the first page has a
 // partner on the second if it is the same sticker or person, or a pen line of the same colour with the same number
 // of points: that is, the same thing after it has been moved, resized or turned.
-const partner = (x, y) => !!x && !!y && !x.e && !y.e && x.fig === y.fig && x.ch === y.ch && (x.fig || x.ch ? true : x.c === y.c && x.p.length === y.p.length);
+const partner = (x, y) => !!x && !!y && !x.e && !y.e && x.fig === y.fig && x.ch === y.ch && x.tx === y.tx && x.f === y.f && (x.fig || x.ch || x.tx ? true : x.c === y.c && x.p.length === y.p.length);
 /** How many things are in a different place, size or turn on page b than on page a. */
 export const tweenMoves = (a, b) => a.filter((s, k) => partner(s, b[k]) && (s.w !== b[k].w || (s.r || 0) !== (b[k].r || 0) || s.p.some((v, i) => Math.abs(v - b[k].p[i]) > 0.5))).length;
 /**
@@ -303,7 +306,7 @@ export function between(a, b, u) {
   return a.map((s, k) => {
     const o = b[k], n = JSON.parse(JSON.stringify(s));
     if (!partner(s, o)) return n;
-    n.p = s.p.map((v, i) => mix(v, o.p[i])); n.w = mix(s.w, o.w);
+    n.p = s.p.map((v, i) => mix(v, o.p[i])); n.w = mix(s.w, o.w); if (s.tw && o.tw) n.tw = mix(s.tw, o.tw);
     if (s.r || o.r) { const d = (o.r || 0) - (s.r || 0), turn = Math.atan2(Math.sin(d), Math.cos(d)); n.r = Math.round(((s.r || 0) + turn * u) * 1000) / 1000; if (!n.r) delete n.r; } // the short way round
     if (s.j && o.j) n.j = [mix(s.j[0], o.j[0]), mix(s.j[1], o.j[1])];
     if (s.jx && o.jx && s.jx.length === o.jx.length) n.jx = s.jx.map((e, i) => [mix(e[0], o.jx[i][0]), mix(e[1], o.jx[i][1]), e[2]]);

@@ -182,6 +182,12 @@ const M = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(imp
   check(m.length === 5 && m[0].p[0] === 200 && m[0].p[1] === 300 && Math.abs(m[0].w - 133.3) < 0.01 && m[0].fig === "run1" && m[1].p[0] === 10 && m[1].p[2] === 20 && Math.abs(m[2].r - 3.095) < 0.002 && m[3].p.length === 4 && m[3].p[0] === 5 && m[4].p[0] === 700 && JSON.stringify(A) === keep && m[0] !== A[0], "in between: things glide part of the way to where they are on the next page, turning the short way round; a line that was redrawn stays put");
   check(E.tweenMoves(A, B) === 3 && E.tweenMoves(A, A) === 0 && E.tweenMoves(A, []) === 0 && E.between(A, B, 0)[0].p[0] === 100 && E.between(A, B, 1)[0].p[0] === 400, "in between: the game can tell when nothing moves from one page to the next");
 }
+{ // text on the page
+  const t = { tx: "Hello\nworld", f: "round", c: "#000", w: 40, p: [200, 100], tw: 120 }, b = E.bbox([t]), [big] = E.scaled([t], 2), [tr] = E.turned([t], 0.5, 200, 100);
+  check(b.w === 120 && b.h === 96 && b.cx === 200 && big.w === 80 && big.tw === 240 && Math.abs(tr.r - 0.5) < 1e-9 && E.itemAt([t], 250, 130) === 0 && E.itemAt([t], 300, 100) === -1 && E.stickersUnder([t], [205, 102], 20).length === 1 && E.fillTarget([t], 200, 100) === -1 && E.textBox({ tx: "abc", w: 10 })[0] > 10, "text: words have a box that fits them, grow and turn like stickers, and the eraser takes them away whole");
+  const moved = E.between([t], [{ ...t, p: [400, 100] }], 0.5)[0];
+  check(moved.p[0] === 300 && moved.tx === t.tx && E.tweenMoves([t], [{ ...t, tx: "Bye" }]) === 0 && E.clusters([t, { ...t, p: [600, 400] }]).length === 2, "text: words glide between flipbook pages, and different words are not mistaken for the same ones");
+}
 const ST = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/stickers.js")).href);
 { // stickers that move by themselves: small, finite movements, and nothing for a still picture
   const all = ST.STICKERS.flatMap((k) => k.list), moving = all.filter((ch) => ST.stickerMoves(ch));

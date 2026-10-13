@@ -30,7 +30,7 @@ const COLOR_NAMES = ["Black", "Red", "Orange", "Yellow", "Green", "Blue", "Purpl
 const SIZES = [[4, "Small"], [10, "Medium"], [22, "Big"], [44, "Huge"]];
 const STICKER_SIZE = { 4: 46, 10: 72, 22: 112, 44: 170 }; // how tall a sticker is at each size button
 const PERSON_SIZE = { 4: 80, 10: 130, 22: 200, 44: 300 }; // and a hand-drawn person
-const TOOLS = [["pen", "✏️ Pen"], ["shape", "🔷 Shapes"], ["fill", "🪣 Fill"], ["stamp", "😀 Stickers"], ["move", "✋ Move"], ["joint", "🦴 Joints"], ["erase", "🧽 Eraser"]];
+const TOOLS = [["pen", "✏️ Pen"], ["shape", "🔷 Shapes"], ["fill", "🪣 Fill"], ["stamp", "😀 Stickers"], ["text", "🔤 Text"], ["move", "✋ Move"], ["joint", "🦴 Joints"], ["erase", "🧽 Eraser"]];
 const SHAPE_ICON = { line: "╱", rect: "▭", oval: "◯", tri: "△", diamond: "◇", star: "☆", heart: "♡" };
 const BGS = [["paper", "Paper"], ["grid", "Squared paper"], ["lined", "Lined paper"], ["chalk", "Chalkboard"], ["sky", "Sky"], ["meadow", "Meadow"], ["rainbow", "Rainbow"], ["rainy", "Rainy day"],
   ["park", "Park"], ["farm", "Farm"], ["forest", "Forest"], ["jungle", "Jungle"], ["mountains", "Mountains"], ["volcano", "Volcano"], ["desert", "Desert"], ["snow", "Snow"], ["arctic", "Arctic"],
@@ -59,8 +59,32 @@ function trace(g, p, sharp) {
   for (let i = 2; i < p.length - 2; i += 2) g.quadraticCurveTo(p[i], p[i + 1], (p[i] + p[i + 2]) / 2, (p[i + 1] + p[i + 3]) / 2);
   g.lineTo(p[p.length - 2], p[p.length - 1]);
 }
+// ---------- text ----------
+// Words on the page: { tx: the words (lines split by \n), f: which font, c: colour, w: letter size, p: [x, y] (the middle), tw: measured width }.
+// The fonts are the two that come with the site and ones every phone and computer already has, so nothing is downloaded.
+const FONTS = [
+  ["round", "Round", '700 SIZE "Fredoka", "Nunito", sans-serif'],
+  ["plain", "Plain", '700 SIZE "Nunito", "Helvetica Neue", Arial, sans-serif'],
+  ["book", "Storybook", 'SIZE Georgia, "Times New Roman", serif'],
+  ["hand", "Handwriting", 'SIZE "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive'],
+  ["script", "Curly", 'SIZE "Snell Roundhand", "Brush Script MT", "Segoe Script", "Lucida Handwriting", cursive'],
+  ["poster", "Poster", 'SIZE Impact, "Arial Black", "Haettenschweiler", sans-serif'],
+  ["marker", "Marker", 'SIZE "Marker Felt", "Segoe Print", "Chalkduster", fantasy'],
+  ["type", "Typewriter", 'SIZE "Courier New", Courier, monospace'],
+];
+const TEXT_SIZE = { 4: 26, 10: 42, 22: 66, 44: 100 }; // how tall the letters are at each size button
+const fontOf = (s) => (FONTS.find((f) => f[0] === s.f) || FONTS[0])[2].replace("SIZE", `${s.w}px`);
+/** Measures a piece of text, so its box, the eraser and the Move tool know how wide it is. */
+function fitText(s) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.font = fontOf(s); s.tw = Math.round(Math.max(...s.tx.split("\n").map((l) => ctx.measureText(l).width))); ctx.restore(); return s; }
 function strokeOn(g, s, live = null) {
   const p = s.p;
+  if (s.tx) { // words
+    const lines = s.tx.split("\n");
+    g.save(); g.translate(p[0], p[1]); if (s.r) g.rotate(s.r);
+    g.font = fontOf(s); g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = s.c;
+    lines.forEach((l, i) => g.fillText(l, 0, (i - (lines.length - 1) / 2) * s.w * 1.2 + s.w * 0.04));
+    g.restore(); return;
+  }
   if (s.fig) { g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1); if (s.r) g.rotate(s.r); drawPerson(g, s, s.w, live); g.restore(); return; } // a hand-drawn person
   if (s.ch) { // a sticker
     g.save(); g.translate(p[0], p[1]); if (s.m) g.scale(-1, 1); if (s.r) g.rotate(s.r);
@@ -374,7 +398,7 @@ function render(t = null) {
       const now = playing ? t : null, at = lead ? poseTogether(th, lead, now, i, il) : pose(th, now, i);
       drawThing(th, at, playing && t !== null ? (lead ? { ...limbs(th, t, i), go: limbs(lead, t, il).go } : limbs(th, t, i)) : null);
     });
-    if (ui.state === "draw") { ctx.drawImage(A.cv, 0, 0, W, H); if (ui.from && ui.live) strokeOn(ctx, ui.live); if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(data.scene.bg)); } if (ui.tool === "joint" && !ui.clean) jointOverlay(); }
+    if (ui.state === "draw") { ctx.drawImage(A.cv, 0, 0, W, H); if (ui.from && ui.live) strokeOn(ctx, ui.live); if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(data.scene.bg)); } if (ui.tool === "joint" && !ui.clean) jointOverlay(); if (ui.tool === "text" && !ui.clean) textOverlay(); }
     const th = data.scene.things[ui.sel];
     if (th && !playing && ui.state !== "draw" && !ui.clean) {
       const light = DARK.has(data.scene.bg);
@@ -398,6 +422,7 @@ function render(t = null) {
       if (ui.from && ui.live) strokeOn(ctx, ui.live);
       if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(bgOf(ui.frame))); }
       if (ui.tool === "joint" && !ui.clean) jointOverlay();
+      if (ui.tool === "text" && !ui.clean) textOverlay();
     }
   }
 }
@@ -551,7 +576,9 @@ function paint() {
   cv.style.boxShadow = scene() ? "" : Array.from({ length: thick }, (_, i) => `${(i + 1) * 3}px ${(i + 1) * 3}px 0 ${i % 2 ? "#cfc8b6" : "#ebe5d5"}`).join(", ") + `, ${thick * 3 + 6}px ${thick * 3 + 10}px 22px rgba(0,0,0,0.35)`;
   document.querySelectorAll("#palette .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === data.color)));
   press("tools", "tool", ui.tool); press("shapes", "shape", ui.shape); press("stickSets", "set", ui.set);
-  $("shapeRow").hidden = ui.tool !== "shape"; $("stickRow").hidden = ui.tool !== "stamp"; $("moveRow").hidden = ui.tool !== "move"; $("jointRow").hidden = ui.tool !== "joint";
+  $("shapeRow").hidden = ui.tool !== "shape"; $("stickRow").hidden = ui.tool !== "stamp"; $("moveRow").hidden = ui.tool !== "move"; $("jointRow").hidden = ui.tool !== "joint"; $("textRow").hidden = ui.tool !== "text";
+  if (ui.tool !== "text" || !strokes().includes(ui.textPick)) ui.textPick = null;
+  press("fonts", "font", ui.textPick ? ui.textPick.f : ui.font || "round"); $("textNew").disabled = !ui.textPick;
   $("palette").hidden = ui.tool === "stamp" || ui.tool === "erase" || ui.tool === "move" || ui.tool === "joint";
   $("sizes").hidden = ui.tool === "move" || ui.tool === "fill" || ui.tool === "joint";
   if (ui.tool === "joint") paintJoints();
@@ -634,6 +661,7 @@ cv.addEventListener("pointerdown", (e) => {
     if (ui.tool === "fill") { fillAt(x, y); return; }
     if (ui.tool === "move") { grabAt(x, y); return; }
     if (ui.tool === "joint") { jointAt(x, y); return; }
+    if (ui.tool === "text") { textAt(x, y); return; }
     if (ui.tool === "shape") { ui.from = [x, y]; ui.live = null; ui.reach = 0; return; }
     if (ui.tool === "stamp") { ui.from = [x, y]; ui.live = sticker(x, y); render(); return; }
     const erase = ui.tool === "erase";
@@ -673,7 +701,7 @@ cv.addEventListener("pointermove", (e) => {
   }
   if (ui.from) { // a shape stretches from where the finger went down; a sticker follows the finger
     ui.reach = Math.hypot(x - ui.from[0], y - ui.from[1]);
-    ui.live = ui.tool === "stamp" ? sticker(x, y) : { c: data.color, w: data.size, k: 1, p: shapePoints(ui.shape, ui.from[0], ui.from[1], x, y) };
+    ui.live = ui.tool === "stamp" ? sticker(x, y) : ui.tool === "text" ? words(x, y) : { c: data.color, w: data.size, k: 1, p: shapePoints(ui.shape, ui.from[0], ui.from[1], x, y) };
   } else if (ui.live) {
     const p = ui.live.p, g = A.g;
     g.globalCompositeOperation = ui.live.e ? "destination-out" : "source-over"; g.strokeStyle = ui.live.c; g.lineWidth = ui.live.w; g.lineCap = "round";
@@ -698,9 +726,10 @@ function lift() {
   if (ui.lasso) { const la = ui.lasso; ui.lasso = null; if (la.moved && la.pts.length >= 12) jointRing(la.pts); else jointTap(la.x, la.y); render(); return; }
   if (ui.scrub) { const tn = ui.turn; letGo(!!tn && tn.hand && (tn.forward ? ui.scrub.v : -ui.scrub.v) > 0.5 && performance.now() - ui.scrub.lastT < 120); ui.scrub = null; return; } // a quick flick finishes the turn too
   if (ui.from) { // a shape or a sticker is put down
-    const s2 = ui.live, big = s2 && (s2.ch || s2.fig || ui.reach > 8);
+    const s2 = ui.live, big = s2 && (s2.ch || s2.fig || s2.tx || ui.reach > 8);
     ui.from = null; ui.live = null; ui.reach = 0;
-    if (big) { strokes().push(s2); did({ k: "add" }); paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } }
+    if (s2 && s2.tx) { ui.textPick = s2; note("Written! Keep typing to change it, pick another font, colour or size, or tap New text to write something else."); }
+    if (big) { strokes().push(s2); did({ k: "add" }); paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } if (s2.tx) paint(); }
     else if (s2 || ui.tool === "shape") note("Press and drag to draw the shape.");
   } else if (ui.live && ui.live.e) {
     // the eraser: a sticker or person it passes over the middle of is taken away whole (rubbing leaves no scraps)
@@ -842,11 +871,11 @@ $("newScene").addEventListener("click", () => { if (data.scene.things.length && 
 
 // ---------- drawing tools ----------
 $("palette").innerHTML = COLORS.map((c, i) => `<button class="sw" data-c="${c}" style="background:${c}" aria-label="${COLOR_NAMES[i]}"></button>`).join("");
-$("palette").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data.color = b.dataset.c; save(); paint(); } });
+$("palette").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { data.color = b.dataset.c; save(); paint(); if (ui.tool === "text") textApply((s) => { s.c = data.color; }); } });
 $("sizes").innerHTML = SIZES.map(([v, label]) => `<button class="g-chip sz" data-size="${v}" aria-label="${label}"><i style="width:${Math.min(26, v + 2)}px;height:${Math.min(26, v + 2)}px"></i></button>`).join("");
-$("sizes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.size = Number(b.dataset.size); save(); paint(); } });
+$("sizes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.size = Number(b.dataset.size); save(); paint(); if (ui.tool === "text") textApply((s) => { s.w = TEXT_SIZE[data.size] || 42; }); } });
 chips("tools", TOOLS, "tool");
-$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a sticker, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a sticker or a person to take it away." : ui.tool === "move" ? "Tap something to pick it up, then drag it. The corner handle makes it bigger or smaller; the top handle turns it." : ui.tool === "joint" ? "Tap an arm, leg, tail or wing: a pin appears where it joins the body. Or draw a ring round a part to cut it free and pin it." : "");
+$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a sticker, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a sticker or a person to take it away." : ui.tool === "move" ? "Tap something to pick it up, then drag it. The corner handle makes it bigger or smaller; the top handle turns it." : ui.tool === "text" ? "Type your words, pick a font, then tap where they should go. Tap words already on the page to change them." : ui.tool === "joint" ? "Tap an arm, leg, tail or wing: a pin appears where it joins the body. Or draw a ring round a part to cut it free and pin it." : "");
   ui.pick = []; ui.joint = null; ui.jadd = false; ui.jbend = false; ui.jshow = performance.now() + 2600; paint(); if (drawing()) { paintLayer(A, strokes()); render(); } });
 $("shapes").innerHTML = SHAPES.map(([v, label]) => `<button class="g-chip shp" data-shape="${v}" aria-label="${label}"><span aria-hidden="true">${SHAPE_ICON[v]}</span></button>`).join("");
 $("shapes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.shape = b.dataset.shape; paint(); } });
@@ -896,6 +925,30 @@ $("stickSets").addEventListener("click", (e) => { const b = e.target.closest(".g
 $("stickGrid").addEventListener("click", (e) => { const b = e.target.closest(".stk"); if (!b) return; if (b.dataset.fig) ui.person = b.dataset.fig; else ui.sticker = b.dataset.ch; paint(); });
 $("stickFlip").addEventListener("change", () => { ui.flip = $("stickFlip").checked; });
 stickerGrid();
+// ---------- the Text tool ----------
+const words = (x, y) => fitText({ tx: $("textIn").value.replace(/\s+$/, "").split("\n").slice(0, 4).join("\n"), f: ui.font || "round", c: data.color, w: TEXT_SIZE[data.size] || 42, p: [Math.round(x), Math.round(y)] });
+function textAt(x, y) {
+  const list = strokes(), i = itemAt(list, x, y, 4);
+  if (i >= 0 && list[i].tx) { // a tap on words that are already there: choose them, to change them
+    ui.textPick = list[i]; $("textIn").value = list[i].tx; ui.font = list[i].f;
+    note("Chosen. Type to change the words, or pick another font, colour or size. Use Move to slide, resize or turn them.");
+    paint(); render(); return;
+  }
+  if (!$("textIn").value.trim()) { note("Type your words in the box first, then tap where they should go."); $("textIn").focus(); return; }
+  ui.textPick = null; ui.from = [x, y]; ui.live = words(x, y); render();
+}
+/** The chosen words take up whatever has just been typed or picked. */
+function textApply(change) {
+  const s = ui.textPick;
+  if (!s || !strokes().includes(s)) return;
+  change(s); fitText(s); redraw();
+}
+chips("fonts", FONTS.map(([id, label]) => [id, label]), "font");
+document.querySelectorAll("#fonts .g-chip").forEach((b) => { b.style.font = (FONTS.find((f) => f[0] === b.dataset.font) || FONTS[0])[2].replace("SIZE", "17px"); });
+$("fonts").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.font = b.dataset.font; textApply((s) => { s.f = ui.font; }); paint(); });
+$("textIn").addEventListener("input", () => { const v = $("textIn").value.replace(/\s+$/, "").split("\n").slice(0, 4).join("\n"); if (v) textApply((s) => { s.tx = v; }); });
+$("textNew").addEventListener("click", () => { ui.textPick = null; $("textIn").value = ""; $("textIn").focus(); note("Type the new words, then tap where they should go."); paint(); render(); });
+
 // ---------- the Joints tool: pin a part of a pen drawing, and it swings from the pin when the animation plays ----------
 const jkey = (s) => (s.j ? s.jg || 0 : null); // which joint a stroke belongs to
 const jointParts = () => (ui.joint === null || ui.joint === undefined ? [] : strokes().filter((s) => jkey(s) === ui.joint));
@@ -911,7 +964,7 @@ const elbowNow = () => { const n = elbowCount(); return n ? Math.min(n - 1, ui.j
  * that is being moved. False if that place is not on the part.
  */
 function setElbow(x, y, which = -1) {
-  const parts = jointParts(), lines = parts.filter((s) => !s.ch && !s.fig && s.p.length >= 4);
+  const parts = jointParts(), lines = parts.filter((s) => !s.ch && !s.fig && !s.tx && s.p.length >= 4);
   let best = null, on = null;
   lines.forEach((s) => { const n = nearestOn(s, x, y); if (!best || n.d < best.d) { best = n; on = s; } });
   if (!best || best.d > 34) return false;
@@ -924,6 +977,8 @@ function setElbow(x, y, which = -1) {
   ui.jel = which >= 0 ? which : parts[0].jx.length - 1;
   return true;
 }
+/** A dotted box round the words that are being changed. */
+function textOverlay() { const s = ui.textPick; if (!s || !strokes().includes(s)) return; const b = bbox([s]); ctx.save(); ctx.lineWidth = 2; ctx.setLineDash([3, 6]); ctx.strokeStyle = "#cf9410"; ctx.strokeRect(b.x0 - 5, b.y0 - 5, b.w + 10, b.h + 10); ctx.restore(); }
 /** The pins, and the ring being drawn, on top of the drawing while the Joints tool is open. */
 function jointOverlay() { drawPins(); const la = ui.lasso; if (la && la.moved) { ctx.save(); ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.setLineDash([3, 9]); ctx.strokeStyle = "#f5a623"; ctx.beginPath(); ctx.moveTo(la.pts[0], la.pts[1]); for (let k = 2; k < la.pts.length; k += 2) ctx.lineTo(la.pts[k], la.pts[k + 1]); ctx.closePath(); ctx.stroke(); ctx.restore(); } }
 function drawPins() {
@@ -991,7 +1046,7 @@ function jointTap(x, y) {
   if (i < 0) { ui.joint = null; note(list.length ? "Tap an arm, a leg, a tail or a wing of your drawing." : "Draw something with the pen first, then come back to pin its arms and legs."); jointShow(); return; }
   const s = list[i];
   if (s.j) { ui.joint = jkey(s); note("Joint chosen. Drag the pin to move it, change how far it swings, add more lines to it, or remove it."); jointShow(false); return; }
-  const long = (q) => (q.e || q.ch || q.fig ? 0 : pathLength(q.p)); // a line that is most of the drawing is the body, not an arm
+  const long = (q) => (q.e || q.ch || q.fig || q.tx ? 0 : pathLength(q.p)); // a line that is most of the drawing is the body, not an arm
   if (list.filter((q) => !q.e).length < 2 || long(s) > 0.6 * list.reduce((m, q) => m + long(q), 0)) { note("That line is most of your drawing. Draw a ring round the part of it that should move, an arm or a leg, and it will be cut free and pinned."); return; }
   did({ k: "joint", was: [jointWas(s)] });
   const others = pins().size; // every other pin swings the opposite way, so two legs take turns

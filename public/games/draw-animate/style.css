@@ -84,3 +84,7 @@
 /* the Joints tool */
 #jointRow { display: grid; gap: 10px; }
 #jAdd[aria-pressed="true"], #jBend[aria-pressed="true"], #joinThing[aria-pressed="true"] { border-color: var(--gold); background: var(--gold-soft); }
+/* the Text tool */
+#textRow { display: grid; gap: 10px; }
+#textIn { flex: 1 1 260px; min-width: 0; max-width: 520px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--line, #3a3f5c); background: #fffdf6; color: #1f2430; font: 700 18px var(--font, sans-serif); resize: vertical; }
+#textIn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
