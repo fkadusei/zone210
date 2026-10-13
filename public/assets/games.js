@@ -825,7 +825,7 @@ export const GAMES = [
   {
     id: "draw-animate",
     title: "Draw & Animate",
-    tagline: "Draw anything, then make it move. Give each drawing a movement, like bounce, spin, wiggle or a path you trace with your finger, or make a flipbook page by page. Save your animation as a video.",
+    tagline: "Draw anything, or pick from hundreds of hand-drawn people, animals and things, then make it move. Walkers walk, wheels turn, and your own drawings bend at joints. Or make a flipbook. Save it as a video.",
     audience: "all",
     cat: "fun",
     added: "2026-10-12",
