@@ -121,6 +121,20 @@ const M = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(imp
   const limb = { c: "#000", w: 6, p: [160, 130, 130, 115, 101, 99] }, tail = { c: "#000", w: 6, p: [100, 100, 60, 90, 20, 120] };
   const h1 = E.hingeOf([body, limb, tail], 1), h2 = E.hingeOf([body, limb, tail], 2), h3 = E.hingeOf([limb], 0);
   check(h1[0] === 101 && h1[1] === 99 && h2[0] === 100 && h2[1] === 100 && h3[0] === 160 && h3[1] === 130, "joints: the pin lands on the end of the part that touches the body, whichever way the part was drawn");
+  { // elbows and knees
+    const leg = { c: "#000", w: 6, p: [100, 100, 100, 130, 100, 160], j: [100, 100], j2: [100, 130], ja: 2 }, back = { ...leg, p: [100, 160, 100, 130, 100, 100] };
+    const hand = { c: "#000", w: 6, p: [98, 165, 104, 168], j: [100, 100], j2: [100, 130], ja: 2 }, cuff = { ...hand, p: [96, 110, 104, 110] };
+    let most = 0, ok = true;
+    for (let k = 0; k < 40; k += 1) {
+      const b = E.bend(leg, k / 40), r = E.bend(back, k / 40);
+      most = Math.max(most, Math.abs(b.a));
+      ok = ok && b.p[0] === 100 && b.p[1] === 100 && b.p[2] === 100 && b.p[3] === 130 && Math.abs(Math.hypot(b.p[4] - 100, b.p[5] - 130) - 30) < 1e-6 && Math.abs(b.p[4] - r.p[0]) < 1e-9 && r.p[4] === 100 && r.p[5] === 100 && leg.p[5] === 160;
+      ok = ok && E.bend(hand, k / 40).all === true && E.bend(cuff, k / 40).all === false;
+    }
+    check(ok && most > 0.5 && most < 0.75, "elbows: only what lies beyond the elbow bends, whichever way the line was drawn; a hand goes with the forearm");
+    const [m2] = E.shift([leg], 5, 5), [t2] = E.turned([leg], Math.PI, 100, 100), n = E.nearestOn({ p: [0, 0, 100, 0] }, 40, 7);
+    check(m2.j2[0] === 105 && m2.j2[1] === 135 && Math.abs(t2.j2[1] - 70) < 0.2 && Math.abs(n.x - 40) < 1e-9 && n.y === 0 && Math.abs(n.d - 7) < 1e-9 && n.i === 0 && E.jointReach(leg) > E.jointReach({ ...leg, j2: undefined }) - 1e-9, "elbows: the elbow moves and turns with its part, and a tap finds the nearest place on a line");
+  }
   const th = E.makeThing([body, arm]);
   check(th.s[1].j && Math.abs(th.s[1].j[0] - th.s[1].p[0]) < 0.01 && Math.abs(th.s[1].j[1] - th.s[1].p[1]) < 0.01, "joints: the pin stays on its part when the drawing becomes a thing");
 }

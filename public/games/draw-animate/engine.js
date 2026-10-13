@@ -20,16 +20,17 @@ export function bbox(strokes) {
   return x0 === Infinity ? null : { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
 }
 const r1 = (v) => Math.round(v * 10) / 10;
-// a stroke's joint (the pin it swings from, see JOINTS below) goes wherever the stroke goes
-export const shift = (strokes, dx, dy) => strokes.map((s) => ({ ...s, p: s.p.map((v, i) => r1(v + (i % 2 ? dy : dx))), ...(s.j ? { j: [r1(s.j[0] + dx), r1(s.j[1] + dy)] } : {}) }));
+// a stroke's joint (the pin it swings from, see JOINTS below) and its elbow or knee go wherever the stroke goes
+const pins = (s, f) => ({ ...(s.j ? { j: f(s.j[0], s.j[1]) } : {}), ...(s.j2 ? { j2: f(s.j2[0], s.j2[1]) } : {}) });
+export const shift = (strokes, dx, dy) => strokes.map((s) => ({ ...s, p: s.p.map((v, i) => r1(v + (i % 2 ? dy : dx))), ...pins(s, (x, y) => [r1(x + dx), r1(y + dy)]) }));
 /** Strokes made k times bigger (or smaller) about the point (ox, oy): their lines get thicker or thinner to match. */
-export const scaled = (strokes, k, ox = 0, oy = 0) => strokes.map((s) => ({ ...s, w: Math.max(s.ch || s.fig ? 14 : 1, Math.round(s.w * k * 10) / 10), p: s.p.map((v, i) => Math.round(((i % 2 ? oy : ox) + (v - (i % 2 ? oy : ox)) * k) * 10) / 10), ...(s.j ? { j: [r1(ox + (s.j[0] - ox) * k), r1(oy + (s.j[1] - oy) * k)] } : {}) }));
+export const scaled = (strokes, k, ox = 0, oy = 0) => strokes.map((s) => ({ ...s, w: Math.max(s.ch || s.fig ? 14 : 1, Math.round(s.w * k * 10) / 10), p: s.p.map((v, i) => Math.round(((i % 2 ? oy : ox) + (v - (i % 2 ? oy : ox)) * k) * 10) / 10), ...pins(s, (x, y) => [r1(ox + (x - ox) * k), r1(oy + (y - oy) * k)]) }));
 /** Strokes turned by `angle` (radians, clockwise on screen) about the point (ox, oy). A sticker or person keeps its own turn in `r`. */
 export function turned(strokes, angle, ox = 0, oy = 0) {
   const c = Math.cos(angle), n = Math.sin(angle), r1 = (v) => Math.round(v * 10) / 10;
   return strokes.map((s) => {
     const p = []; for (let i = 0; i < s.p.length; i += 2) { const dx = s.p[i] - ox, dy = s.p[i + 1] - oy; p.push(r1(ox + dx * c - dy * n), r1(oy + dx * n + dy * c)); }
-    const j = s.j ? { j: [r1(ox + (s.j[0] - ox) * c - (s.j[1] - oy) * n), r1(oy + (s.j[0] - ox) * n + (s.j[1] - oy) * c)] } : {};
+    const j = pins(s, (x, y) => [r1(ox + (x - ox) * c - (y - oy) * n), r1(oy + (x - ox) * n + (y - oy) * c)]);
     return s.ch || s.fig ? { ...s, p, ...j, r: Math.round(((s.r || 0) + (s.m ? -angle : angle)) * 1000) / 1000 } : { ...s, p, ...j };
   });
 }
@@ -42,15 +43,47 @@ export function itemAt(strokes, x, y, slack = 10) {
 // ---------- joints: parts of a pen drawing that bend ----------
 // A stroke with a joint has j: [x, y] (the pin it swings from), ja (how far: an index into JOINTS), jn (1 if it
 // swings the opposite way to the others, as a second leg does) and jg, the number of its joint: strokes with the
-// same jg share a pin and swing together.
+// same jg share a pin and swing together. A joint may also have j2: [x, y], an elbow or knee part-way along,
+// where everything beyond it bends a second time.
 export const JOINTS = [["A little", 0.2], ["Some", 0.42], ["A lot", 0.75]];
 /** The angle (radians) a jointed stroke is turned by at time t seconds. */
 export const jointAngle = (s, t) => (JOINTS[s.ja] || JOINTS[1])[1] * Math.sin(t * TAU * 1.4 + (s.jn ? Math.PI : 0));
+/** The nearest place on a stroke's line to a point: { d: how far, i: where in p that piece of line starts, x, y }. */
+export function nearestOn(s, x, y) {
+  let best = { d: Math.hypot(x - s.p[0], y - s.p[1]), i: 0, x: s.p[0], y: s.p[1] };
+  for (let k = 0; k < s.p.length - 2; k += 2) {
+    const ax = s.p[k], ay = s.p[k + 1], bx = s.p[k + 2], by = s.p[k + 3], len = (bx - ax) ** 2 + (by - ay) ** 2;
+    const u = len ? Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / len)) : 0, px = ax + u * (bx - ax), py = ay + u * (by - ay), d = Math.hypot(x - px, y - py);
+    if (d < best.d) best = { d, i: k, x: px, y: py };
+  }
+  return best;
+}
+/**
+ * The second bend of a jointed stroke at time t. Returns { a: the angle, all, p }.
+ * If the elbow lies on this stroke, `p` is its points with everything beyond the elbow (away from the pin) turned
+ * about it. If it does not (a hand, added to an arm), `all` says whether the whole stroke is beyond the elbow and
+ * so turns with the forearm. The elbow follows the swing a little late, as a real one does.
+ */
+export function bend(s, t) {
+  const a = (JOINTS[s.ja] || JOINTS[1])[1] * 0.9 * Math.sin(t * TAU * 1.4 + (s.jn ? Math.PI : 0) - 1.1);
+  const [ex, ey] = s.j2, [hx, hy] = s.j;
+  let ie = 0, de = Infinity, ih = 0, dh = Infinity, cx = 0, cy = 0;
+  for (let i = 0; i < s.p.length; i += 2) {
+    const d1 = Math.hypot(s.p[i] - ex, s.p[i + 1] - ey), d2 = Math.hypot(s.p[i] - hx, s.p[i + 1] - hy);
+    if (d1 < de) { de = d1; ie = i; } if (d2 < dh) { dh = d2; ih = i; }
+    cx += s.p[i]; cy += s.p[i + 1];
+  }
+  const n = s.p.length / 2;
+  if (s.ch || s.fig || de > 14) return { a, all: Math.hypot(cx / n - hx, cy / n - hy) > Math.hypot(ex - hx, ey - hy), p: s.p };
+  const c = Math.cos(a), sn = Math.sin(a), p = s.p.slice(), tail = ie >= ih; // which way along the line leads away from the pin
+  for (let i = tail ? ie + 2 : 0; i < (tail ? p.length : ie); i += 2) { const dx = p[i] - ex, dy = p[i + 1] - ey; p[i] = ex + dx * c - dy * sn; p[i + 1] = ey + dx * sn + dy * c; }
+  return { a, all: false, p };
+}
 /** How far outside its resting box a jointed stroke can reach as it swings. */
 export function jointReach(s) {
   if (!s.j) return 0;
   let far = 0; for (let i = 0; i < s.p.length; i += 2) far = Math.max(far, Math.hypot(s.p[i] - s.j[0], s.p[i + 1] - s.j[1]));
-  return (far + (s.ch || s.fig ? s.w * 0.6 : s.w / 2)) * Math.min(1, (JOINTS[s.ja] || JOINTS[1])[1] * 1.1);
+  return (far + (s.ch || s.fig ? s.w * 0.6 : s.w / 2)) * Math.min(1, (JOINTS[s.ja] || JOINTS[1])[1] * (s.j2 ? 1.9 : 1.1));
 }
 /**
  * Where a part joins the rest of the drawing: the point of stroke `i` that is nearest to any other stroke.
