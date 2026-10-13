@@ -30,7 +30,7 @@ const COLOR_NAMES = ["Black", "Red", "Orange", "Yellow", "Green", "Blue", "Purpl
 const SIZES = [[4, "Small"], [10, "Medium"], [22, "Big"], [44, "Huge"]];
 const STICKER_SIZE = { 4: 46, 10: 72, 22: 112, 44: 170 }; // how tall a sticker is at each size button
 const PERSON_SIZE = { 4: 80, 10: 130, 22: 200, 44: 300 }; // and a hand-drawn person
-const TOOLS = [["pen", "✏️ Pen"], ["shape", "🔷 Shapes"], ["fill", "🪣 Fill"], ["stamp", "🧩 Pictures"], ["text", "🔤 Text"], ["move", "👆 Select"], ["joint", "🦴 Joints"], ["erase", "🧽 Eraser"]];
+const TOOLS = [["pen", "✏️ Pen"], ["shape", "🔷 Shapes"], ["fill", "🪣 Fill"], ["stamp", "🧩 Pictures"], ["text", "🔤 Text"], ["move", "✋ Select"], ["joint", "🦴 Joints"], ["erase", "🧽 Eraser"]];
 const SHAPE_ICON = { line: "╱", rect: "▭", oval: "◯", tri: "△", diamond: "◇", star: "☆", heart: "♡" };
 const BGS = [["paper", "Paper"], ["grid", "Squared paper"], ["lined", "Lined paper"], ["chalk", "Chalkboard"], ["sky", "Sky"], ["meadow", "Meadow"], ["rainbow", "Rainbow"], ["rainy", "Rainy day"],
   ["park", "Park"], ["farm", "Farm"], ["forest", "Forest"], ["jungle", "Jungle"], ["mountains", "Mountains"], ["volcano", "Volcano"], ["desert", "Desert"], ["snow", "Snow"], ["arctic", "Arctic"],
