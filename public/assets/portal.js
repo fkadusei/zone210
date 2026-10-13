@@ -410,22 +410,3 @@ function greet() {
 }
 greet();
 setInterval(greet, 60000); // still right if the page is left open past a change
-
-// ---------- install as an app ----------
-// Chrome, Edge and Android can install the site themselves when asked: the button asks them. Safari cannot be
-// asked, so there the button says which menu to use. Browsers that cannot install at all never see the button.
-(() => {
-  const row = document.getElementById("installRow"), btn = document.getElementById("install"), tip = document.getElementById("installTip");
-  if (!row || !btn) return;
-  if (matchMedia("(display-mode: standalone)").matches || navigator.standalone) return; // already running as the app
-  const ua = navigator.userAgent, ios = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const safari = /safari/i.test(ua) && !/chrome|chromium|crios|fxios|edg|android/i.test(ua);
-  let ask = null;
-  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); ask = e; row.hidden = false; });
-  window.addEventListener("appinstalled", () => { row.hidden = true; });
-  if (ios) row.hidden = false; else if (safari) row.hidden = false;
-  btn.addEventListener("click", async () => {
-    if (ask) { const e = ask; ask = null; try { await e.prompt(); await e.userChoice; row.hidden = true; } catch (err) { tip.textContent = "Open your browser's menu and choose Install or Add to Home screen."; } return; }
-    tip.textContent = ios ? "Tap the Share button (the square with an arrow), then choose Add to Home Screen." : "In Safari's menu bar, choose File, then Add to Dock.";
-  });
-})();
