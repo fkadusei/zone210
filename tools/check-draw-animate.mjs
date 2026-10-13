@@ -207,6 +207,18 @@ check(PP.THINGS.length >= 70 && PP.THINGS.every((d) => typeof d.draw === "functi
   const o = E.objects([castle, face, snake, eye1, bat, far, words, arm, held]);
   check(o.length === 7 && o[0][0] === castle && o[0].length === 1 && o[1].length === 2 && o[1][0] === face && o[1][1] === eye1 && o.some((g) => g.length === 2 && g[0] === arm && g[1] === held) && o.filter((g) => g.length === 1).length === 5 && E.objects([castle, snake, { c: "#000", w: 20, e: 1, p: [0, 0, 5, 5] }]).length === 1 && E.objects([face, eye1]).length === 1, "objects: a snake in front of a castle is its own object; a face keeps its eyes; a jointed part keeps what it holds");
 }
+{ // filling a space that several lines enclose (fill.js)
+  const F = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/fill.js")).href);
+  const w = 80, h = 60, ink = new Uint8Array(w * h), set = (x, y) => { ink[y * w + x] = 1; };
+  for (let x = 10; x <= 60; x += 1) { set(x, 10); set(x, 50); } for (let y = 10; y <= 50; y += 1) { set(10, y); set(60, y); } // a box
+  for (let t = 0; t < 400; t += 1) set(Math.round(40 + Math.cos(t / 63.6) * 8), Math.round(30 + Math.sin(t / 63.6) * 8)); // a ring inside it
+  const box = F.flood(ink, w, h, 20, 20), ring = F.flood(ink, w, h, 40, 30), out = F.flood(ink, w, h, 2, 2), p = F.outline(box.cells, w, h), q = F.outline(ring.cells, w, h);
+  const inside = (pts, x, y) => E.inside(pts, x, y);
+  check(F.flood(ink, w, h, 10, 30) === null && !box.open && !ring.open && out.open && box.count > 49 * 39 - 300 && box.count < 49 * 39 - 150 && ring.count > 120 && ring.count < 230, "fill: the space between a box and a ring in it is found, the ring's inside is separate, and outside is open");
+  check(p && p.length % 2 === 0 && p.length < 240 && inside(p, 20, 20) && inside(p, 55, 45) && !inside(p, 40, 30) && !inside(p, 5, 5) && inside(q, 40, 30) && !inside(q, 20, 20) && Math.abs(E.areaOf(p) - box.count) < 8, "fill: the outline of that space leaves the ring out, as a hole");
+  const big = F.grow(ring.cells, w, h, 2); let n = 0; for (const v of big) n += v;
+  check(n > ring.count + 60 && F.outline(new Uint8Array(w * h), w, h) === null, "fill: a space can be grown to tuck under its lines; an empty one has no outline");
+}
 const ST = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/stickers.js")).href);
 { // stickers that move by themselves: small, finite movements, and nothing for a still picture
   const all = ST.STICKERS.flatMap((k) => k.list), moving = all.filter((ch) => ST.stickerMoves(ch));

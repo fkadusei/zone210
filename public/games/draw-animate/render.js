@@ -7,7 +7,7 @@ import { stickerLife } from "./stickers.js";
 import { jointAngle, bend } from "./engine.js";
 
 export const EMOJI = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-function trace(g, p, sharp) {
+export function trace(g, p, sharp) {
   g.beginPath(); g.moveTo(p[0], p[1]);
   if (sharp) { for (let i = 2; i < p.length; i += 2) g.lineTo(p[i], p[i + 1]); return; }
   for (let i = 2; i < p.length - 2; i += 2) g.quadraticCurveTo(p[i], p[i + 1], (p[i] + p[i + 2]) / 2, (p[i + 1] + p[i + 3]) / 2);

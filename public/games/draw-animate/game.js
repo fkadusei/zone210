@@ -7,9 +7,10 @@ import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS, stickerMoves } from "./stickers.js";
 import { BGS, DARK, drawBg } from "./backgrounds.js";
 import { pageTurn, pageLift } from "../../assets/paper.js";
-import { FONTS, TEXT_SIZE, fitText, strokeOn, strokeLive } from "./render.js";
+import { FONTS, TEXT_SIZE, fitText, strokeOn, strokeLive, trace } from "./render.js";
+import { flood, grow, outline } from "./fill.js";
 import { PEOPLE, CHARACTERS, ANIMALS, THINGS, SKINS, HAIRS, drawPerson } from "./people.js";
-import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, poseTogether, between, tweenMoves, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointReach, strokeNear, hingeOf, nearestOn, oldJoints, cutByLoop, inside, objects, exampleScene, exampleFlip } from "./engine.js";
+import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, poseTogether, between, tweenMoves, pathLength, shapePoints, fillTarget, areaOf, stickersUnder, scaled, turned, itemAt, JOINTS, jointReach, strokeNear, hingeOf, nearestOn, oldJoints, cutByLoop, inside, objects, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -930,11 +931,39 @@ $("mRemove").addEventListener("click", () => {
 $("moveAll").addEventListener("change", () => { ui.all = $("moveAll").checked; ui.pick = []; paint(); render(); });
 
 // Fill: colour in the top-most outline the tap is inside
+// Fill colours the space that was tapped. If one closed line or shape makes that space, the shape itself is coloured.
+// If several lines enclose it between them (a box drawn as four lines, the gap between a box and a circle in it), the
+// space is found on a grid (fill.js) and becomes a coloured shape of its own, tucked in under those lines.
+const GAP = 5; // lines are treated as this much thicker, so a small gap where two of them should meet does not let the colour out
+let inkCv = null;
+function spaceAt(x, y) {
+  const list = strokes();
+  if (!inkCv) { inkCv = document.createElement("canvas"); inkCv.width = W; inkCv.height = H; }
+  const g = inkCv.getContext("2d", { willReadFrequently: true });
+  g.globalCompositeOperation = "source-over"; g.clearRect(0, 0, W, H); g.strokeStyle = g.fillStyle = "#000"; g.lineCap = "round"; g.lineJoin = "round";
+  for (const s of list) { // the lines only, a little thicker; rubbing out takes ink away again; pictures and words enclose nothing
+    if (s.ch || s.fig || s.tx) continue;
+    g.globalCompositeOperation = s.e ? "destination-out" : "source-over"; g.lineWidth = s.e ? Math.max(1, s.w - GAP) : s.w + GAP;
+    if (s.p.length === 2) { g.beginPath(); g.arc(s.p[0], s.p[1], g.lineWidth / 2, 0, Math.PI * 2); g.fill(); } else { trace(g, s.p, s.k); g.stroke(); }
+  }
+  const px = g.getImageData(0, 0, W, H).data, ink = new Uint8Array(W * H);
+  for (let i = 0; i < ink.length; i += 1) ink[i] = px[i * 4 + 3] > 70 ? 1 : 0;
+  return flood(ink, W, H, x, y);
+}
 function fillAt(x, y) {
-  const list = strokes(), i = fillTarget(list, x, y);
-  if (i < 0) { note("Tap inside a shape or an outline you have drawn. Draw all the way round to close it."); return; }
-  did({ k: "fill", s: list[i], was: list[i].ff });
-  list[i].ff = data.color; note("");
+  const list = strokes(), i = fillTarget(list, x, y), space = spaceAt(x, y), shut = !!space && !space.open && space.count >= 60;
+  // one closed shape whose inside is the very space that was tapped: colour the shape itself, which keeps its edge crisp
+  const whole = i >= 0 && (!shut || Math.abs(areaOf(list[i].p) - space.count) < pathLength(list[i].p) * (list[i].w / 2 + GAP) + areaOf(list[i].p) * 0.08); // (the space is smaller than the shape by the thickness of its own line)
+  if (whole) { did({ k: "fill", s: list[i], was: list[i].ff }); list[i].ff = data.color; note(""); }
+  else if (shut) {
+    const p = outline(grow(space.cells, W, H, 4), W, H);
+    if (!p || p.length < 6) { note("That space is too small to fill."); return; }
+    const near = grow(space.cells, W, H, GAP + 4); // which lines enclose it? The colour goes just under the lowest of them
+    let at = list.length;
+    list.forEach((s, n) => { if (n >= at || s.e || s.ch || s.fig || s.tx) return; for (let k = 0; k < s.p.length; k += 2) { const cx = Math.round(s.p[k]), cy = Math.round(s.p[k + 1]); if (cx >= 0 && cy >= 0 && cx < W && cy < H && near[cy * W + cx]) { at = n; return; } } });
+    list.splice(at, 0, { c: data.color, w: 1.5, k: 1, ff: data.color, p });
+    did({ k: "space", i: at }); note("");
+  } else { note(space ? "That space is open, so the colour would run out. Close the gap, or tap inside a closed shape." : "Tap in an empty space inside your drawing, not on a line."); return; }
   paintLayer(A, list); if (!scene()) { thumb(ui.frame); save(); } render();
 }
 // what Undo takes back: the last thing added, or the last fill
@@ -943,7 +972,8 @@ function did(step) { past.push(step); if (past.length > 60) past.shift(); }
 function undo() {
   const list = strokes(), step = past.pop();
   ui.pick = [];
-  if (step && step.k === "fill" && list.includes(step.s)) { if (step.was) step.s.ff = step.was; else delete step.s.ff; }
+  if (step && step.k === "space") { if (step.i < list.length) list.splice(step.i, 1); } // a filled space is taken out again
+  else if (step && step.k === "fill" && list.includes(step.s)) { if (step.was) step.s.ff = step.was; else delete step.s.ff; }
   else if (step && step.k === "ring") { [...step.ops].reverse().forEach((o) => list.splice(o.i, o.n, o.old)); step.was.forEach((o) => { for (const key of ["j", "ja", "jn", "jg", "jx"]) { if (o[key] === undefined) delete o.s[key]; else o.s[key] = o[key]; } }); ui.joint = null; paint(); } // lines that were cut are whole again
   else if (step && step.k === "joint") { step.was.forEach((o) => { for (const key of ["j", "ja", "jn", "jg", "jx"]) { if (o[key] === undefined) delete o.s[key]; else o.s[key] = o[key]; } if (o.p) o.s.p = o.p; }); ui.joint = null; paint(); } // a pin put in, moved or taken out
   else if (step && step.k === "edit") step.was.forEach((o) => putBack(o, o)); // put back where, the size and the way round it was
