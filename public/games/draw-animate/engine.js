@@ -156,6 +156,30 @@ export function inside(p, x, y) {
   for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) { const xi = p[i], yi = p[i + 1], xj = p[j], yj = p[j + 1]; if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) hit = !hit; }
   return hit;
 }
+/**
+ * Cuts a line where it crosses a ring drawn round part of it (`loop`, as flat x, y points). Returns
+ * { all: true } if the whole line is inside the ring, { none: true } if none of it is, and otherwise
+ * { pieces: [{ in, p }], cuts: [[x, y]] }: the line in pieces, each wholly inside or outside, which still meet at
+ * the cuts. This is how a figure drawn in one line gets parts that can swing on their own.
+ */
+export function cutByLoop(pts, loop) {
+  const n = pts.length / 2, flag = []; let count = 0;
+  for (let i = 0; i < n; i += 1) { flag.push(inside(loop, pts[i * 2], pts[i * 2 + 1])); if (flag[i]) count += 1; }
+  if (!count) return { none: true };
+  if (count === n) return { all: true };
+  const pieces = [], cuts = []; let cur = { in: flag[0], p: [pts[0], pts[1]] };
+  for (let i = 1; i < n; i += 1) {
+    if (flag[i] !== flag[i - 1]) { // the line crosses the ring between these two points: find where
+      const ax = pts[i * 2 - 2], ay = pts[i * 2 - 1], bx = pts[i * 2], by = pts[i * 2 + 1]; let lo = 0, hi = 1;
+      for (let k = 0; k < 14; k += 1) { const m = (lo + hi) / 2; if (inside(loop, ax + (bx - ax) * m, ay + (by - ay) * m) === flag[i - 1]) lo = m; else hi = m; }
+      const m = (lo + hi) / 2, c = [Math.round((ax + (bx - ax) * m) * 10) / 10, Math.round((ay + (by - ay) * m) * 10) / 10];
+      cur.p.push(c[0], c[1]); pieces.push(cur); cuts.push(c); cur = { in: flag[i], p: [c[0], c[1]] };
+    }
+    cur.p.push(pts[i * 2], pts[i * 2 + 1]);
+  }
+  pieces.push(cur);
+  return { pieces, cuts };
+}
 /** How much room an outline encloses (so a tap is not mistaken for filling a nearly straight scribble). */
 export function areaOf(p) { let a = 0; for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) a += (p[j] + p[i]) * (p[j + 1] - p[i + 1]); return Math.abs(a / 2); }
 /** The top-most stroke whose outline the point is inside (its place in the list), or -1. Stickers, erasing and thin scribbles are passed over. */

@@ -6,7 +6,7 @@ import { canSharePhotos, onTouchDevice, toPhotos, download } from "../../assets/
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS, stickerLife, stickerMoves } from "./stickers.js";
 import { PEOPLE, CHARACTERS, ANIMALS, SKINS, HAIRS, drawPerson } from "./people.js";
-import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointAngle, jointReach, strokeNear, hingeOf, nearestOn, bend, oldJoints, exampleScene, exampleFlip } from "./engine.js";
+import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointAngle, jointReach, strokeNear, hingeOf, nearestOn, bend, oldJoints, cutByLoop, inside, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -352,7 +352,7 @@ function render(t = null) {
     const playing = ui.state === "play";
     putBg(ctx, data.scene.bg);
     data.scene.things.forEach((th, i) => { if (ui.state === "draw" && i === ui.edit) return; drawThing(th, pose(th, playing ? t : null, i), playing && t !== null ? limbs(th, t, i) : null); });
-    if (ui.state === "draw") { ctx.drawImage(A.cv, 0, 0, W, H); if (ui.from && ui.live) strokeOn(ctx, ui.live); if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(data.scene.bg)); } if (ui.tool === "joint" && !ui.clean) drawPins(); }
+    if (ui.state === "draw") { ctx.drawImage(A.cv, 0, 0, W, H); if (ui.from && ui.live) strokeOn(ctx, ui.live); if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(data.scene.bg)); } if (ui.tool === "joint" && !ui.clean) { drawPins(); const la = ui.lasso; if (la && la.moved) { ctx.save(); ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.setLineDash([3, 9]); ctx.strokeStyle = "#f5a623"; ctx.beginPath(); ctx.moveTo(la.pts[0], la.pts[1]); for (let k = 2; k < la.pts.length; k += 2) ctx.lineTo(la.pts[k], la.pts[k + 1]); ctx.closePath(); ctx.stroke(); ctx.restore(); } } }
     const th = data.scene.things[ui.sel];
     if (th && !playing && ui.state !== "draw" && !ui.clean) {
       const light = DARK.has(data.scene.bg);
@@ -583,10 +583,11 @@ cv.addEventListener("pointerdown", (e) => {
   }
 });
 cv.addEventListener("pointermove", (e) => {
-  if (!ui.live && !ui.pathPts && !ui.drag && !ui.scrub && !ui.from && !ui.grab && !ui.jdrag) return;
+  if (!ui.live && !ui.pathPts && !ui.drag && !ui.scrub && !ui.from && !ui.grab && !ui.jdrag && !ui.lasso) return;
   const [x, y] = at(e);
   if (ui.grab) { grabMove(x, y); return; }
   if (ui.jdrag) { jointDrag(x, y); return; }
+  if (ui.lasso) { const la = ui.lasso; if (Math.hypot(x - la.x, y - la.y) > 12) la.moved = true; la.pts.push(x, y); render(); return; }
   if (ui.scrub) { // the page follows the finger: drag left to turn on, right to turn back; half the book's width is a whole turn
     const sc = ui.scrub, dx = sc.x - x, now = performance.now();
     if (now > sc.lastT) sc.v = (sc.lastX - x) / (now - sc.lastT);
@@ -620,6 +621,7 @@ cv.addEventListener("pointermove", (e) => {
 function lift() {
   if (ui.grab) { grabEnd(); return; }
   if (ui.jdrag) { jointDrop(); return; }
+  if (ui.lasso) { const la = ui.lasso; ui.lasso = null; if (la.moved && la.pts.length >= 12) jointRing(la.pts); else jointTap(la.x, la.y); render(); return; }
   if (ui.scrub) { const tn = ui.turn; letGo(!!tn && tn.hand && (tn.forward ? ui.scrub.v : -ui.scrub.v) > 0.5 && performance.now() - ui.scrub.lastT < 120); ui.scrub = null; return; } // a quick flick finishes the turn too
   if (ui.from) { // a shape or a sticker is put down
     const s2 = ui.live, big = s2 && (s2.ch || s2.fig || ui.reach > 8);
@@ -728,7 +730,7 @@ $("palette").addEventListener("click", (e) => { const b = e.target.closest(".sw"
 $("sizes").innerHTML = SIZES.map(([v, label]) => `<button class="g-chip sz" data-size="${v}" aria-label="${label}"><i style="width:${Math.min(26, v + 2)}px;height:${Math.min(26, v + 2)}px"></i></button>`).join("");
 $("sizes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.size = Number(b.dataset.size); save(); paint(); } });
 chips("tools", TOOLS, "tool");
-$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a sticker, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a sticker or a person to take it away." : ui.tool === "move" ? "Tap something to pick it up, then drag it. The corner handle makes it bigger or smaller; the top handle turns it." : ui.tool === "joint" ? "Tap an arm, leg, tail or wing of your drawing. A pin appears where it joins the body, and it swings from there." : "");
+$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a sticker, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a sticker or a person to take it away." : ui.tool === "move" ? "Tap something to pick it up, then drag it. The corner handle makes it bigger or smaller; the top handle turns it." : ui.tool === "joint" ? "Tap an arm, leg, tail or wing: a pin appears where it joins the body. Or draw a ring round a part to cut it free and pin it." : "");
   ui.pick = []; ui.joint = null; ui.jadd = false; ui.jbend = false; ui.jshow = performance.now() + 2600; paint(); if (drawing()) { paintLayer(A, strokes()); render(); } });
 $("shapes").innerHTML = SHAPES.map(([v, label]) => `<button class="g-chip shp" data-shape="${v}" aria-label="${label}"><span aria-hidden="true">${SHAPE_ICON[v]}</span></button>`).join("");
 $("shapes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.shape = b.dataset.shape; paint(); } });
@@ -849,16 +851,58 @@ function jointAt(x, y) {
   // a pin: choose it and take hold of it, so it can be dragged to a better place. Where two pins sit together, each tap takes the other one.
   const near = [...pins()].filter(([, pt]) => Math.hypot(x - pt[0], y - pt[1]) <= 18).sort((a, b) => (a[0] === ui.joint) - (b[0] === ui.joint));
   if (near.length) { ui.joint = near[0][0]; ui.jdrag = { was: jointParts().map(jointWas), moved: false, x, y }; note("Joint chosen. Drag the pin to move it, change how far it swings, add more lines to it, or remove it."); jointShow(false); return; }
+  ui.lasso = { pts: [x, y], x, y, moved: false }; // a tap pins a line; a ring drawn round part of the drawing pins what is inside it
+}
+/** A tap on the drawing: pin the line that was tapped, or choose its joint. */
+function jointTap(x, y) {
+  const list = strokes();
   const i = strokeNear(list, x, y);
   if (i < 0) { ui.joint = null; note(list.length ? "Tap an arm, a leg, a tail or a wing of your drawing." : "Draw something with the pen first, then come back to pin its arms and legs."); jointShow(); return; }
   const s = list[i];
   if (s.j) { ui.joint = jkey(s); note("Joint chosen. Drag the pin to move it, change how far it swings, add more lines to it, or remove it."); jointShow(false); return; }
-  if (list.filter((q) => !q.e).length < 2) { note("Draw the body first, and each arm or leg as its own line. Then tap an arm or a leg."); return; }
+  const long = (q) => (q.e || q.ch || q.fig ? 0 : pathLength(q.p)); // a line that is most of the drawing is the body, not an arm
+  if (list.filter((q) => !q.e).length < 2 || long(s) > 0.6 * list.reduce((m, q) => m + long(q), 0)) { note("That line is most of your drawing. Draw a ring round the part of it that should move, an arm or a leg, and it will be cut free and pinned."); return; }
   did({ k: "joint", was: [jointWas(s)] });
   const others = pins().size; // every other pin swings the opposite way, so two legs take turns
   s.j = hingeOf(list, i); s.ja = ui.jamp ?? 1; s.jg = 1 + list.reduce((m, q) => Math.max(m, q.jg || 0), 0); if (others % 2) s.jn = 1; else delete s.jn;
   ui.joint = jkey(s);
   note("Pinned where it joins the body! Drag the pin if it is in the wrong place. Tap another part to pin it too.");
+  jointShow();
+}
+/**
+ * A ring drawn round part of the drawing: everything inside becomes one part with its own pin. A line that is only
+ * partly inside is cut where it crosses the ring, so a figure drawn in a single line can bend too.
+ */
+function jointRing(loop) {
+  const list = strokes(), live = list.filter((s) => !s.e);
+  const plan = list.map((s) => {
+    if (s.e) return null;
+    if (s.ch || s.fig || s.p.length < 4) return inside(loop, s.p[0], s.p[1]) ? { all: true } : null;
+    const c = cutByLoop(s.p, loop);
+    if (c.none) return null;
+    if (c.pieces && s.ff) return { filled: true }; // cutting an outline would spill its colour
+    return c;
+  });
+  const whole = plan.filter((c) => c && c.all).length, cut = plan.filter((c) => c && c.pieces).length;
+  if (!whole && !cut) { note(plan.some((c) => c && c.filled) ? "A coloured-in shape cannot be cut. Draw the ring round a line, or round the whole shape." : "Draw a ring round the part that should move: an arm, a leg or a tail."); return; }
+  if (whole === live.length) { note("Leave the body outside the ring: only the part that should move goes inside."); return; }
+  const jg = 1 + list.reduce((m, q) => Math.max(m, q.jg || 0), 0), others = pins().size, cuts = [], ops = [], was = [], part = [];
+  const join = (s) => { unpin(s); s.ja = ui.jamp ?? 1; s.jg = jg; if (others % 2) s.jn = 1; part.push(s); };
+  for (let i = list.length - 1; i >= 0; i -= 1) { // from the top down, so that the places of the lines below do not change
+    const c = plan[i], old = list[i];
+    if (!c || c.filled) continue;
+    if (c.all) { was.push(jointWas(old)); join(old); continue; }
+    const made = c.pieces.map((pc) => { const s = { ...old, p: pc.p }; if (old.jx) s.jx = old.jx.map((e) => e.slice()); if (old.j) s.j = old.j.slice(); if (pc.in) join(s); return s; }); // the pieces left outside keep any joint the line already had
+    list.splice(i, 1, ...made); ops.push({ i, n: made.length, old }); cuts.push(...c.cuts);
+  }
+  // the pin goes where the part was cut from the rest; a part made only of whole lines is pinned where it touches the rest
+  let pin;
+  if (cuts.length) pin = [Math.round(cuts.reduce((m, c) => m + c[0], 0) / cuts.length), Math.round(cuts.reduce((m, c) => m + c[1], 0) / cuts.length)];
+  else { part.forEach((s) => { s.j = [0, 0]; }); pin = hingeOf(list, list.indexOf(part.find((s) => !s.ch && !s.fig) || part[0]), (o) => o.jg === jg); }
+  part.forEach((s) => { s.j = pin.slice(); });
+  did({ k: "ring", ops, was });
+  ui.joint = jg; ui.jel = undefined;
+  note(cut ? "Cut free and pinned! This part swings from the pin. Drag the pin if it is in the wrong place." : "Pinned together! Everything in the ring swings from the pin.");
   jointShow();
 }
 function jointDrag(x, y) {
@@ -962,6 +1006,7 @@ function undo() {
   const list = strokes(), step = past.pop();
   ui.pick = [];
   if (step && step.k === "fill" && list.includes(step.s)) { if (step.was) step.s.ff = step.was; else delete step.s.ff; }
+  else if (step && step.k === "ring") { [...step.ops].reverse().forEach((o) => list.splice(o.i, o.n, o.old)); step.was.forEach((o) => { for (const key of ["j", "ja", "jn", "jg", "jx"]) { if (o[key] === undefined) delete o.s[key]; else o.s[key] = o[key]; } }); ui.joint = null; paint(); } // lines that were cut are whole again
   else if (step && step.k === "joint") { step.was.forEach((o) => { for (const key of ["j", "ja", "jn", "jg", "jx"]) { if (o[key] === undefined) delete o.s[key]; else o.s[key] = o[key]; } if (o.p) o.s.p = o.p; }); ui.joint = null; paint(); } // a pin put in, moved or taken out
   else if (step && step.k === "edit") step.was.forEach((o) => putBack(o, o)); // put back where, the size and the way round it was
   else if (step && step.k === "rub") { if (step.added && list.length) list.pop(); step.gone.forEach(({ i, s: back }) => list.splice(Math.min(i, list.length), 0, back)); } // stickers the eraser took come back

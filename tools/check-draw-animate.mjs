@@ -146,6 +146,14 @@ const M = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(imp
     const one = E.oldJoints([{ p: [0, 0, 9, 9], j: [0, 0], j2: [5, 5], jb: 1 }, { p: [0, 0] }])[0], st = E.bend({ ch: "🐶", w: 40, p: [100, 0], j: [0, 0], jx: [[60, 0, 0], [30, 0, 0]], ja: 1 }, 0.3);
     check(fine && curled > 0.8 && late && one.jx[0][0] === 5 && one.jx[0][2] === 1 && !one.j2 && !one.jb && st.turns.length === 2 && st.turns[0][0] === 30 && st.turns[1][0] === 60, "elbows: a part can have several; they curl one after another, and a drawing saved with the old single elbow still bends");
   }
+  { // a ring round part of a single line cuts it there
+    const ring = [50, -20, 150, -20, 150, 20, 50, 20], line = [0, 0, 40, 0, 80, 0, 120, 0, 200, 0];
+    const c = E.cutByLoop(line, ring), flat = c.pieces.flatMap((q) => q.p);
+    const meets = c.pieces.every((q, k) => k === 0 || (q.p[0] === c.pieces[k - 1].p[c.pieces[k - 1].p.length - 2] && q.p[1] === 0));
+    check(c.pieces.length === 3 && !c.pieces[0].in && c.pieces[1].in && !c.pieces[2].in && c.cuts.length === 2 && Math.abs(c.cuts[0][0] - 50) < 0.2 && Math.abs(c.cuts[1][0] - 150) < 0.2 && meets && flat[0] === 0 && flat[flat.length - 2] === 200 && c.pieces[1].p.length === 8 && line.length === 10, "ring: a line is cut where it crosses the ring, into pieces that still meet");
+    const limb = E.cutByLoop([0, 0, 0, 50, 60, 50, 120, 50, 60, 52, 0, 52, 0, 100], [30, 30, 140, 30, 140, 70, 30, 70]); // out along an arm and back, in one line
+    check(E.cutByLoop(line, [-10, -10, 210, -10, 210, 10, -10, 10]).all === true && E.cutByLoop(line, [0, 50, 10, 50, 10, 60]).none === true && limb.pieces.length === 3 && limb.pieces[1].in && limb.cuts.length === 2 && Math.abs(limb.cuts[0][0] - 30) < 0.2 && Math.abs(limb.cuts[1][0] - 30) < 0.2, "ring: an arm drawn out and back comes away in one piece, cut twice at the shoulder");
+  }
   const th = E.makeThing([body, arm]);
   check(th.s[1].j && Math.abs(th.s[1].j[0] - th.s[1].p[0]) < 0.01 && Math.abs(th.s[1].j[1] - th.s[1].p[1]) < 0.01, "joints: the pin stays on its part when the drawing becomes a thing");
 }
