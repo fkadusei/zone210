@@ -6,7 +6,7 @@ import { canSharePhotos, onTouchDevice, toPhotos, download } from "../../assets/
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS, stickerLife, stickerMoves } from "./stickers.js";
 import { PEOPLE, CHARACTERS, ANIMALS, SKINS, HAIRS, drawPerson } from "./people.js";
-import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointAngle, jointReach, strokeNear, hingeOf, nearestOn, bend, oldJoints, cutByLoop, inside, clusters, exampleScene, exampleFlip } from "./engine.js";
+import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointAngle, jointReach, strokeNear, hingeOf, nearestOn, bend, oldJoints, cutByLoop, inside, clusters, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -360,7 +360,11 @@ function render(t = null) {
       if (th.move === "path" && th.path && ui.state !== "path") { ctx.beginPath(); ctx.moveTo(th.path[0], th.path[1]); for (let i = 2; i < th.path.length; i += 2) ctx.lineTo(th.path[i], th.path[i + 1]); ctx.stroke(); }
       ctx.restore();
       const { b } = layer(th);
-      if (ui.state === "idle") chosenBox({ x0: th.x + b.x0, y0: th.y + b.y0, x1: th.x + b.x1, y1: th.y + b.y1, w: b.w, h: b.h }, light);
+      if (ui.state === "idle") {
+        const set = mates(th);
+        chosenBox(set.length > 1 ? boxOf(set) : { x0: th.x + b.x0, y0: th.y + b.y0, x1: th.x + b.x1, y1: th.y + b.y1, w: b.w, h: b.h }, light);
+        if (set.length > 1) { ctx.save(); ctx.lineWidth = 2; ctx.setLineDash([2, 6]); ctx.strokeStyle = light ? "#ffd15a" : "#cf9410"; ctx.strokeRect(th.x + b.x0 - 2, th.y + b.y0 - 2, b.w + 4, b.h + 4); ctx.restore(); } // the one of the group whose movement the panel shows
+      }
     }
     if (ui.state === "path" && ui.pathPts) { ctx.save(); ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.setLineDash([2, 12]); ctx.strokeStyle = "#f5a623"; ctx.beginPath(); ctx.moveTo(ui.pathPts[0], ui.pathPts[1]); for (let i = 2; i < ui.pathPts.length; i += 2) ctx.lineTo(ui.pathPts[i], ui.pathPts[i + 1]); ctx.stroke(); ctx.restore(); }
   } else {
@@ -511,9 +515,9 @@ function paint() {
   $("hint").textContent = hint;
   $("drawTools").hidden = !drawing();
   $("thingPanel").hidden = !(scene() && ui.state === "idle" && th);
-  $("splitThing").hidden = !(th && scene() && ui.state === "idle" && clusters(th.s).length > 1);
+  $("splitThing").hidden = !(th && scene() && ui.state === "idle" && (th.g || clusters(th.s).length > 1));
   if (!(th && scene() && ui.state === "idle" && things.length > 1)) ui.joining = false;
-  $("joinThing").hidden = !(th && things.length > 1); $("joinThing").setAttribute("aria-pressed", String(!!ui.joining));
+  $("joinThing").hidden = !(th && things.some((q) => q !== th && !(th.g && q.g === th.g))); $("joinThing").setAttribute("aria-pressed", String(!!ui.joining));
   $("scenePanel").hidden = !(scene() && ui.state === "idle");
   $("flipPanel").hidden = scene() || playing;
   $("strip").hidden = scene() || playing;
@@ -558,12 +562,38 @@ function paint() {
 
 // ---------- pointer: draw, trace a path, or pick up and drag a thing ----------
 function at(e) { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) * W) / r.width, ((e.clientY - r.top) * H) / r.height]; }
-/** The drawing at a point (top-most first), or -1. `skip` leaves one out. A tap right on a line, sticker or person
+// ---------- joined drawings ----------
+// Drawings that have been joined share a number, g. They are chosen, moved, resized, turned, copied and deleted
+// together, but each one keeps its own way of moving when the animation plays.
+const mates = (th) => (th ? (th.g ? data.scene.things.filter((q) => q.g === th.g) : [th]) : []);
+function boxOf(set) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  set.forEach((t) => { const { b } = layer(t); x0 = Math.min(x0, t.x + b.x0); y0 = Math.min(y0, t.y + b.y0); x1 = Math.max(x1, t.x + b.x1); y1 = Math.max(y1, t.y + b.y1); });
+  return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
+}
+const snap = (set) => set.map((t) => ({ t, s: t.s, x: t.x, y: t.y, path: t.path }));
+/** A set of drawings made k times the size they were (`was`, from snap) about the point (cx, cy). */
+function sizeSet(was, k, cx, cy) {
+  const all = bbox(was.flatMap((o) => shift(o.s, o.x, o.y))), most = Math.min(8, 1500 / Math.max(all.w, all.h)), least = 24 / Math.max(all.w, all.h, 24), kk = Math.max(least, Math.min(most, k));
+  was.forEach((o) => {
+    o.t.s = scaled(o.s, kk); layers.delete(o.t);
+    if (was.length > 1) { o.t.x = cx + (o.x - cx) * kk; o.t.y = cy + (o.y - cy) * kk; if (o.path) o.t.path = o.path.map((v, i) => (i % 2 ? cy + (v - cy) * kk : cx + (v - cx) * kk)); } // joined drawings keep their places in the group
+  });
+}
+/** A set of drawings turned by `a` from how they were, about the point (cx, cy). */
+function turnSet(was, a, cx, cy) {
+  const c = Math.cos(a), n = Math.sin(a), round = (x, y) => [cx + (x - cx) * c - (y - cy) * n, cy + (x - cx) * n + (y - cy) * c];
+  was.forEach((o) => {
+    o.t.s = turned(o.s, a); layers.delete(o.t);
+    if (was.length > 1) { [o.t.x, o.t.y] = round(o.x, o.y); if (o.path) { const p = []; for (let i = 0; i < o.path.length; i += 2) p.push(...round(o.path[i], o.path[i + 1])); o.t.path = p; } }
+  });
+}
+/** The drawing at a point (top-most first), or -1. `skip(thing, place)` leaves some out. A tap right on a line, sticker or person
  *  wins over a tap that is only inside the box of a wide drawing lying over it. */
-function hit(x, y, skip = -1) {
+function hit(x, y, skip = () => false) {
   const things = data.scene.things;
-  for (let i = things.length - 1; i >= 0; i -= 1) { const th = things[i]; if (i !== skip && th.s.some((q) => { if (q.e) return false; const b = bbox([q]); return x >= th.x + b.x0 - 10 && x <= th.x + b.x1 + 10 && y >= th.y + b.y0 - 10 && y <= th.y + b.y1 + 10; })) return i; }
-  for (let i = things.length - 1; i >= 0; i -= 1) { const th = things[i], { b } = layer(th); if (i !== skip && x >= th.x + b.x0 - 10 && x <= th.x + b.x1 + 10 && y >= th.y + b.y0 - 10 && y <= th.y + b.y1 + 10) return i; }
+  for (let i = things.length - 1; i >= 0; i -= 1) { const th = things[i]; if (!skip(th, i) && th.s.some((q) => { if (q.e) return false; const b = bbox([q]); return x >= th.x + b.x0 - 10 && x <= th.x + b.x1 + 10 && y >= th.y + b.y0 - 10 && y <= th.y + b.y1 + 10; })) return i; }
+  for (let i = things.length - 1; i >= 0; i -= 1) { const th = things[i], { b } = layer(th); if (!skip(th, i) && x >= th.x + b.x0 - 10 && x <= th.x + b.x1 + 10 && y >= th.y + b.y0 - 10 && y <= th.y + b.y1 + 10) return i; }
   return -1;
 }
 cv.addEventListener("pointerdown", (e) => {
@@ -584,13 +614,16 @@ cv.addEventListener("pointerdown", (e) => {
   else if (ui.state === "path") { ui.pathPts = [x, y]; render(); }
   else if (scene()) {
     if (ui.joining && data.scene.things[ui.sel]) { // Join is on: a tap on another drawing joins it to the chosen one
-      const i = hit(x, y, ui.sel);
+      const me = data.scene.things[ui.sel], i = hit(x, y, (q, n) => n === ui.sel || (me.g && q.g === me.g)); // look past the chosen drawing and anything already joined to it
       if (i >= 0) joinThings(i); else { ui.joining = false; note(""); paint(); render(); }
       return;
     }
     const cur2 = data.scene.things[ui.sel];
-    if (cur2) { const { b } = layer(cur2), box = { x1: cur2.x + b.x1, y1: cur2.y + b.y1 }; if (onHandle(box, x, y)) { ui.drag = { size: true, from: Math.max(20, Math.hypot(x - cur2.x, y - cur2.y)), was: cur2.s }; return; } // the corner handle: resize
-      if (onTurn({ x0: cur2.x + b.x0, y0: cur2.y + b.y0, x1: cur2.x + b.x1 }, x, y)) { ui.drag = { turn: true, a0: Math.atan2(y - cur2.y, x - cur2.x), was: cur2.s }; return; } } // the top handle: turn
+    if (cur2) { // the handles of the chosen drawing, or of the whole group it is joined to
+      const set = mates(cur2), gb = boxOf(set), cx = set.length > 1 ? gb.cx : cur2.x, cy = set.length > 1 ? gb.cy : cur2.y;
+      if (onHandle(gb, x, y)) { ui.drag = { size: true, cx, cy, from: Math.max(20, Math.hypot(x - cx, y - cy)), was: snap(set) }; return; } // the corner handle: resize
+      if (onTurn(gb, x, y)) { ui.drag = { turn: true, cx, cy, a0: Math.atan2(y - cy, x - cx), was: snap(set) }; return; } // the top handle: turn
+    }
     const i = hit(x, y); if (i !== ui.sel) { ui.sel = i; paint(); } if (i >= 0) ui.drag = { x, y }; render();
   }
 });
@@ -622,10 +655,11 @@ cv.addEventListener("pointermove", (e) => {
   else {
     const th = data.scene.things[ui.sel], dx = x - ui.drag.x, dy = y - ui.drag.y;
     if (!th) return;
-    if (ui.drag.size) { resizeThing(th, ui.drag.was, Math.hypot(x - th.x, y - th.y) / ui.drag.from); render(); return; }
-    if (ui.drag.turn) { turnThing(th, ui.drag.was, Math.atan2(y - th.y, x - th.x) - ui.drag.a0); render(); return; }
-    th.x = Math.max(0, Math.min(W, th.x + dx)); th.y = Math.max(0, Math.min(H, th.y + dy));
-    if (th.path) th.path = th.path.map((v, i) => v + (i % 2 ? dy : dx)); // its path comes with it
+    const dr = ui.drag;
+    if (dr.size) { sizeSet(dr.was, Math.hypot(x - dr.cx, y - dr.cy) / dr.from, dr.cx, dr.cy); render(); return; }
+    if (dr.turn) { turnSet(dr.was, Math.atan2(y - dr.cy, x - dr.cx) - dr.a0, dr.cx, dr.cy); render(); return; }
+    const mx = Math.max(0, Math.min(W, th.x + dx)) - th.x, my = Math.max(0, Math.min(H, th.y + dy)) - th.y; // the one being held stays on the page
+    mates(th).forEach((t) => { t.x += mx; t.y += my; if (t.path) t.path = t.path.map((v, i) => v + (i % 2 ? my : mx)); }); // anything joined to it comes too, and paths come with them
     ui.drag = { x, y };
   }
   render();
@@ -682,7 +716,7 @@ function endDraw(keep) {
     const thing = build(ui.draft, how);
     if (!thing) { // nothing there: Done never leaves the child stuck. A drawing that was rubbed out or cleared is taken away.
       if (ui.edit >= 0) { things.splice(ui.edit, 1); ui.sel = -1; save(); note("That drawing is empty now, so it has been taken away."); } else note("Nothing was drawn, so nothing was added.");
-    } else if (ui.edit >= 0) { things[ui.edit] = thing; note(""); save(); }
+    } else if (ui.edit >= 0) { if (old.g) thing.g = old.g; things[ui.edit] = thing; note(""); save(); }
     else {
       // stickers stamped apart from each other are separate objects, so each can be moved and resized on its own
       const parts = clusters(ui.draft), apart = parts.length > 1 && parts.every((g) => g.some((q) => q.ch || q.fig)) && things.length + parts.length <= MAX_THINGS;
@@ -695,22 +729,22 @@ function endDraw(keep) {
   ui.state = "idle"; ui.edit = -1; ui.draft = []; ui.pick = []; ui.grab = null; ui.jdrag = null; ui.lasso = null; ui.live = null; ui.from = null;
   paint(); render();
 }
-/** Another drawing becomes part of the chosen one (which keeps its place in the pile and the way it moves). Split apart undoes it. */
+/** Another drawing (and anything already joined to it) is joined to the chosen one. Split apart undoes it. */
 function joinThings(other) {
   const things = data.scene.things, th = sel(), add = things[other];
   if (!th || !add || add === th) return;
-  const mine = stageStrokes(th), up = mine.reduce((m, q) => Math.max(m, q.jg || 0), 0);
-  const theirs = stageStrokes(add).map((q) => (q.jg ? { ...q, jg: q.jg + up } : q)); // so that their joints are not mistaken for ours
-  const made = { move: "stay", act: "none", speed: 1, face: true, path: null, ...makeThing([...mine, ...theirs], { move: th.move, act: th.act, speed: th.speed, face: th.face, path: th.path }) };
-  things[ui.sel] = made; things.splice(other, 1); if (other < ui.sel) ui.sel -= 1;
-  const more = things.length > 1; if (!more) ui.joining = false;
-  note(more ? "Joined! They move as one now. Tap another drawing to join it too, or tap Join again to finish." : "Joined! They move as one now.");
+  if (th.g && add.g === th.g) { note("Those two are already joined. Tap a different drawing."); return; }
+  const g = th.g || 1 + things.reduce((m, q) => Math.max(m, q.g || 0), 0);
+  mates(add).forEach((t) => { t.g = g; }); th.g = g;
+  const more = things.some((q) => q.g !== g); if (!more) ui.joining = false;
+  note(`Joined! They stay together when you move, resize or turn them, and each keeps its own way of moving.${more ? " Tap another drawing to join it too, or tap Join again to finish." : ""}`);
   save(); paint(); render();
 }
 /** One drawing made of several objects standing apart becomes several drawings. */
 function splitThing() {
   const th = sel(), things = data.scene.things;
   if (!th) return;
+  if (th.g) { const n = mates(th).length; mates(th).forEach((t) => { delete t.g; }); note(`${n} separate drawings again. Each has kept its own way of moving.`); save(); paint(); render(); return; } // drawings that were joined come apart first
   const parts = clusters(stageStrokes(th));
   if (parts.length < 2) return;
   if (things.length - 1 + parts.length > MAX_THINGS) { note(`A scene can hold ${MAX_THINGS} drawings, and that would be too many. Delete one first.`); return; }
@@ -744,28 +778,28 @@ $("moves").addEventListener("click", (e) => {
 $("acts").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"), th = sel(); if (b && th) { th.act = b.dataset.act; save(); paint(); } });
 $("speeds").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"), th = sel(); if (b && th) { th.speed = Number(b.dataset.speed); save(); paint(); } });
 $("face").addEventListener("change", () => { const th = sel(); if (th) { th.face = $("face").checked; save(); } });
-// a whole drawing grows or shrinks about its middle (its strokes are re-made, so it stays sharp)
-function resizeThing(th, from, k) {
-  const b = bbox(from), most = Math.min(8, 1500 / Math.max(b.w, b.h)), least = 24 / Math.max(b.w, b.h, 24);
-  th.s = scaled(from, Math.max(least, Math.min(most, k)));
-  layers.delete(th);
-}
-function turnThing(th, from, angle) { th.s = turned(from, angle); layers.delete(th); }
-for (const [id, a] of [["tLeft", -Math.PI / 12], ["tRight", Math.PI / 12]]) $(id).addEventListener("click", () => { const th = sel(); if (!th) return; turnThing(th, th.s, a); save(); render(); });
-for (const [id, k] of [["tSmaller", 1 / 1.2], ["tBigger", 1.2]]) $(id).addEventListener("click", () => { const th = sel(); if (!th) return; resizeThing(th, th.s, k); save(); render(); });
+const about = (th) => { const set = mates(th), gb = boxOf(set); return [snap(set), set.length > 1 ? gb.cx : th.x, set.length > 1 ? gb.cy : th.y]; };
+for (const [id, a] of [["tLeft", -Math.PI / 12], ["tRight", Math.PI / 12]]) $(id).addEventListener("click", () => { const th = sel(); if (!th) return; const [was, cx, cy] = about(th); turnSet(was, a, cx, cy); save(); render(); });
+for (const [id, k] of [["tSmaller", 1 / 1.2], ["tBigger", 1.2]]) $(id).addEventListener("click", () => { const th = sel(); if (!th) return; const [was, cx, cy] = about(th); sizeSet(was, k, cx, cy); save(); render(); });
 $("addTo").addEventListener("click", () => { if (sel()) startDraw(ui.sel); });
-$("toFront").addEventListener("click", () => { const th = sel(); if (!th) return; data.scene.things.splice(ui.sel, 1); data.scene.things.push(th); ui.sel = data.scene.things.length - 1; save(); render(); });
+$("toFront").addEventListener("click", () => { const th = sel(); if (!th) return; const set = mates(th); data.scene.things = [...data.scene.things.filter((q) => !set.includes(q)), ...set]; ui.sel = data.scene.things.indexOf(th); save(); render(); });
 $("copyThing").addEventListener("click", () => {
   const th = sel();
   if (!th) return;
-  if (data.scene.things.length >= MAX_THINGS) { note(`That's ${MAX_THINGS} drawings, the most a scene can hold.`); return; }
-  const copy = JSON.parse(JSON.stringify(th)); copy.x = Math.min(W - 20, th.x + 40); copy.y = Math.min(H - 20, th.y + 30);
-  if (copy.path) copy.path = copy.path.map((v, i) => v + (i % 2 ? 30 : 40));
-  data.scene.things.push(copy); ui.sel = data.scene.things.length - 1; save(); paint(); render();
+  const set = mates(th), things = data.scene.things;
+  if (things.length + set.length > MAX_THINGS) { note(`A scene can hold ${MAX_THINGS} drawings, and that would be too many.`); return; }
+  const g = set.length > 1 ? 1 + things.reduce((m, q) => Math.max(m, q.g || 0), 0) : 0; // a copied group is a group of its own
+  set.forEach((t) => {
+    const copy = JSON.parse(JSON.stringify(t)); copy.x = t.x + 40; copy.y = t.y + 30; if (g) copy.g = g; else delete copy.g;
+    if (set.length === 1) { copy.x = Math.min(W - 20, copy.x); copy.y = Math.min(H - 20, copy.y); }
+    if (copy.path) copy.path = copy.path.map((v, k) => v + (k % 2 ? 30 : 40));
+    things.push(copy); if (t === th) ui.sel = things.length - 1;
+  });
+  save(); paint(); render();
 });
 $("splitThing").addEventListener("click", splitThing);
 $("joinThing").addEventListener("click", () => { if (!sel()) return; ui.joining = !ui.joining; note(ui.joining ? "Tap another drawing to join it to this one." : ""); paint(); });
-$("delThing").addEventListener("click", () => { if (!sel()) return; data.scene.things.splice(ui.sel, 1); ui.sel = -1; save(); paint(); render(); });
+$("delThing").addEventListener("click", () => { const th = sel(); if (!th) return; const set = mates(th); data.scene.things = data.scene.things.filter((q) => !set.includes(q)); ui.sel = -1; save(); paint(); render(); });
 $("bgs").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.scene.bg = b.dataset.bg; save(); paint(); render(); } });
 $("exScene").addEventListener("click", () => { if (data.scene.things.length && !confirm("Swap your scene for the example? Your drawings here will be removed.")) return; data.scene = { ...exampleScene(), music: data.scene.music }; ui.sel = -1; save(); paint(); render(); note("Press Play! Then tap a drawing to see how it was set up."); });
 $("newScene").addEventListener("click", () => { if (data.scene.things.length && !confirm("Clear this scene and start again?")) return; data.scene = { bg: data.scene.bg, things: [], music: data.scene.music }; ui.sel = -1; save(); paint(); render(); });
