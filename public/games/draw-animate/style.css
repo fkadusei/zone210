@@ -83,4 +83,4 @@
 @media (max-width: 520px) { #toneRows .sw { width: 25px; height: 25px; } #toneRows .palette { gap: 5px; flex-wrap: nowrap; } }
 /* the Joints tool */
 #jointRow { display: grid; gap: 10px; }
-#jAdd[aria-pressed="true"], #jBend[aria-pressed="true"] { border-color: var(--gold); background: var(--gold-soft); }
+#jAdd[aria-pressed="true"], #jBend[aria-pressed="true"], #joinThing[aria-pressed="true"] { border-color: var(--gold); background: var(--gold-soft); }

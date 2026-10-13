@@ -512,6 +512,8 @@ function paint() {
   $("drawTools").hidden = !drawing();
   $("thingPanel").hidden = !(scene() && ui.state === "idle" && th);
   $("splitThing").hidden = !(th && scene() && ui.state === "idle" && clusters(th.s).length > 1);
+  if (!(th && scene() && ui.state === "idle" && things.length > 1)) ui.joining = false;
+  $("joinThing").hidden = !(th && things.length > 1); $("joinThing").setAttribute("aria-pressed", String(!!ui.joining));
   $("scenePanel").hidden = !(scene() && ui.state === "idle");
   $("flipPanel").hidden = scene() || playing;
   $("strip").hidden = scene() || playing;
@@ -556,8 +558,12 @@ function paint() {
 
 // ---------- pointer: draw, trace a path, or pick up and drag a thing ----------
 function at(e) { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) * W) / r.width, ((e.clientY - r.top) * H) / r.height]; }
-function hit(x, y) {
-  for (let i = data.scene.things.length - 1; i >= 0; i -= 1) { const th = data.scene.things[i], { b } = layer(th); if (x >= th.x + b.x0 - 10 && x <= th.x + b.x1 + 10 && y >= th.y + b.y0 - 10 && y <= th.y + b.y1 + 10) return i; }
+/** The drawing at a point (top-most first), or -1. `skip` leaves one out. A tap right on a line, sticker or person
+ *  wins over a tap that is only inside the box of a wide drawing lying over it. */
+function hit(x, y, skip = -1) {
+  const things = data.scene.things;
+  for (let i = things.length - 1; i >= 0; i -= 1) { const th = things[i]; if (i !== skip && th.s.some((q) => { if (q.e) return false; const b = bbox([q]); return x >= th.x + b.x0 - 10 && x <= th.x + b.x1 + 10 && y >= th.y + b.y0 - 10 && y <= th.y + b.y1 + 10; })) return i; }
+  for (let i = things.length - 1; i >= 0; i -= 1) { const th = things[i], { b } = layer(th); if (i !== skip && x >= th.x + b.x0 - 10 && x <= th.x + b.x1 + 10 && y >= th.y + b.y0 - 10 && y <= th.y + b.y1 + 10) return i; }
   return -1;
 }
 cv.addEventListener("pointerdown", (e) => {
@@ -577,6 +583,11 @@ cv.addEventListener("pointerdown", (e) => {
   }
   else if (ui.state === "path") { ui.pathPts = [x, y]; render(); }
   else if (scene()) {
+    if (ui.joining && data.scene.things[ui.sel]) { // Join is on: a tap on another drawing joins it to the chosen one
+      const i = hit(x, y, ui.sel);
+      if (i >= 0) joinThings(i); else { ui.joining = false; note(""); paint(); render(); }
+      return;
+    }
     const cur2 = data.scene.things[ui.sel];
     if (cur2) { const { b } = layer(cur2), box = { x1: cur2.x + b.x1, y1: cur2.y + b.y1 }; if (onHandle(box, x, y)) { ui.drag = { size: true, from: Math.max(20, Math.hypot(x - cur2.x, y - cur2.y)), was: cur2.s }; return; } // the corner handle: resize
       if (onTurn({ x0: cur2.x + b.x0, y0: cur2.y + b.y0, x1: cur2.x + b.x1 }, x, y)) { ui.drag = { turn: true, a0: Math.atan2(y - cur2.y, x - cur2.x), was: cur2.s }; return; } } // the top handle: turn
@@ -684,6 +695,18 @@ function endDraw(keep) {
   ui.state = "idle"; ui.edit = -1; ui.draft = []; ui.pick = []; ui.grab = null; ui.jdrag = null; ui.lasso = null; ui.live = null; ui.from = null;
   paint(); render();
 }
+/** Another drawing becomes part of the chosen one (which keeps its place in the pile and the way it moves). Split apart undoes it. */
+function joinThings(other) {
+  const things = data.scene.things, th = sel(), add = things[other];
+  if (!th || !add || add === th) return;
+  const mine = stageStrokes(th), up = mine.reduce((m, q) => Math.max(m, q.jg || 0), 0);
+  const theirs = stageStrokes(add).map((q) => (q.jg ? { ...q, jg: q.jg + up } : q)); // so that their joints are not mistaken for ours
+  const made = { move: "stay", act: "none", speed: 1, face: true, path: null, ...makeThing([...mine, ...theirs], { move: th.move, act: th.act, speed: th.speed, face: th.face, path: th.path }) };
+  things[ui.sel] = made; things.splice(other, 1); if (other < ui.sel) ui.sel -= 1;
+  const more = things.length > 1; if (!more) ui.joining = false;
+  note(more ? "Joined! They move as one now. Tap another drawing to join it too, or tap Join again to finish." : "Joined! They move as one now.");
+  save(); paint(); render();
+}
 /** One drawing made of several objects standing apart becomes several drawings. */
 function splitThing() {
   const th = sel(), things = data.scene.things;
@@ -741,6 +764,7 @@ $("copyThing").addEventListener("click", () => {
   data.scene.things.push(copy); ui.sel = data.scene.things.length - 1; save(); paint(); render();
 });
 $("splitThing").addEventListener("click", splitThing);
+$("joinThing").addEventListener("click", () => { if (!sel()) return; ui.joining = !ui.joining; note(ui.joining ? "Tap another drawing to join it to this one." : ""); paint(); });
 $("delThing").addEventListener("click", () => { if (!sel()) return; data.scene.things.splice(ui.sel, 1); ui.sel = -1; save(); paint(); render(); });
 $("bgs").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.scene.bg = b.dataset.bg; save(); paint(); render(); } });
 $("exScene").addEventListener("click", () => { if (data.scene.things.length && !confirm("Swap your scene for the example? Your drawings here will be removed.")) return; data.scene = { ...exampleScene(), music: data.scene.music }; ui.sel = -1; save(); paint(); render(); note("Press Play! Then tap a drawing to see how it was set up."); });
