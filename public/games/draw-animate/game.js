@@ -6,6 +6,7 @@ import { canSharePhotos, onTouchDevice, toPhotos, download } from "../../assets/
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS, stickerMoves } from "./stickers.js";
 import { BGS, DARK, drawBg } from "./backgrounds.js";
+import { pageTurn, pageLift } from "../../assets/paper.js";
 import { FONTS, TEXT_SIZE, fitText, strokeOn, strokeLive } from "./render.js";
 import { PEOPLE, CHARACTERS, ANIMALS, THINGS, SKINS, HAIRS, drawPerson } from "./people.js";
 import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, poseTogether, between, tweenMoves, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointReach, strokeNear, hingeOf, nearestOn, oldJoints, cutByLoop, inside, clusters, exampleScene, exampleFlip } from "./engine.js";
@@ -185,19 +186,14 @@ window.addEventListener("z210:saver", fit);
 window.addEventListener("pagehide", () => stopTune());
 window.addEventListener("z210:audio-reset", () => { stopTune(); if (ui.state === "play") startMusic(); }); // the phone's audio was restarted (sound.js)
 
-// ---------- the sound of a page flicking over: a short hiss of paper, brighter when the pages go by fast ----------
-let paper = null;
-function flick(quick) {
+// ---------- the sound of a page turning (assets/paper.js): it lasts as long as the turn does, so a slow page lands
+// with a pat and a fast riffle is a row of quick dry flicks ----------
+function flick(ms, liftOnly = false) {
   if (data.muted) return;
   const ac = window.z210Audio && window.z210Audio.get();
   if (!ac) return;
-  if (!paper || paper.sampleRate !== ac.sampleRate) { paper = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.25), ac.sampleRate); const d = paper.getChannelData(0); for (let i = 0; i < d.length; i += 1) d[i] = Math.random() * 2 - 1; }
-  const t = ac.currentTime, len = quick ? 0.07 : 0.16, src = ac.createBufferSource(), bp = ac.createBiquadFilter(), g = ac.createGain();
-  src.buffer = paper; src.playbackRate.value = 0.9 + Math.random() * 0.25; // never quite the same twice
-  bp.type = "bandpass"; bp.Q.value = 0.8; bp.frequency.setValueAtTime(quick ? 3400 : 2600, t); bp.frequency.exponentialRampToValueAtTime(900, t + len); // the pitch falls as the page lands
-  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(quick ? 0.1 : 0.16, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
-  src.connect(bp).connect(g).connect(ac.destination); if (recTap) g.connect(recTap); src.start(t); src.stop(t + len + 0.02);
-  if (!quick) { const o = ac.createOscillator(), og = ac.createGain(); o.frequency.setValueAtTime(190, t + len * 0.75); o.frequency.exponentialRampToValueAtTime(90, t + len + 0.05); og.gain.setValueAtTime(0.0001, t + len * 0.75); og.gain.exponentialRampToValueAtTime(0.05, t + len * 0.8); og.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.06); o.connect(og).connect(ac.destination); if (recTap) og.connect(recTap); o.start(t + len * 0.75); o.stop(t + len + 0.08); } // a soft pat as it lands
+  const to = { vol: 0.8, also: recTap || null }; // also into the video being recorded
+  if (liftOnly) pageLift(ac, to); else pageTurn(ac, { ...to, dur: ms / 1000 });
 }
 
 // ---------- background music (music.js): the scene and the flipbook each remember their own tune, which plays while they play ----------
@@ -225,7 +221,7 @@ function turnTo(n, forward, ms) {
   endTurn(); // a turn already under way simply finishes
   if (n === ui.page) return;
   wholePage(oth, n);
-  flick(ms < 150);
+  flick(calm() || ms <= 0 ? 110 : ms + 40);
   ui.page = n; ui.lastTurn = performance.now();
   if ($("thumb") && ui.auto) $("thumb").value = n; // (left alone while a thumb is on the slider itself)
   if (calm() || ms <= 0) { [cur, oth] = [oth, cur]; ui.landed = performance.now(); render(); return; } // Battery saver and reduced motion: just swap pages
@@ -238,6 +234,7 @@ function handTurn(forward) {
   endTurn();
   wholePage(oth, to);
   ui.turn = { forward, to, hand: true, p: 0 };
+  flick(0, true); // the thumb catches the edge
   return true;
 }
 function letGo(fast) {
@@ -245,7 +242,7 @@ function letGo(fast) {
   if (!tn || !tn.hand) return;
   tn.hand = false; tn.settle = true; tn.p0 = tn.p; tn.cancel = tn.p < 0.3 && !fast; tn.t0 = performance.now();
   tn.ms = 90 + 260 * (tn.cancel ? tn.p0 : 1 - tn.p0);
-  if (!tn.cancel) flick(false);
+  if (!tn.cancel) flick(tn.ms + 60);
 }
 function drawBook() {
   const tn = ui.turn;

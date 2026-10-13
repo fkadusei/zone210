@@ -8,11 +8,13 @@
  *      wide screens:  leaf k = front page 2k (right), back page 2k+1 (left)      -> a spread shows back(s-1) + front(s)
  *      phones:        leaf k = one whole page per spread (front), blank back      -> a page flips away to the left
  *  - page contents are built lazily for the leaves near the reader, so 50+ games stay light.
- *  - sounds (cover creak, paper swish, landing flap) are synthesized with Web Audio, no files.
+ *  - sounds are synthesized with Web Audio, no files: the cover creak here, the page turn in paper.js.
  *
  * createBook(host, { cats, isNew, onFav(id), onSurprise(), onGrid(), onNavigate(key) }) returns the controller.
  * Deep-link keys: "cover", "contents", "end" or a game id.
  */
+import { pageTurn } from "./paper.js";
+
 const FLIP_MS = 900;
 const AUD = { kids: "Kids", adults: "Adults", all: "Everyone" };
 const STAR = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 2.8l2.8 6 6.5.7-4.9 4.4 1.4 6.4L12 17l-5.8 3.3 1.4-6.4L2.7 9.5l6.5-.7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
@@ -105,19 +107,13 @@ const sound = (() => {
       on = v;
       try { localStorage.setItem("zone210_booksound", v ? "on" : "off"); } catch (err) { /* private mode */ }
     },
-    /** One page turned: swish, crisp paper edge, landing flap. */
+    /** One page turned (paper.js): the thumb on the edge, the crackling sweep, the landing. Quieter turns, as when several
+     *  pages go over one after another, are shorter too. */
     flip(vol = 1) {
       const now = Date.now();
       if (now - lastFlip < 40) return;
       lastFlip = now;
-      play((c, t) => {
-        const j = 0.85 + Math.random() * 0.3;
-        burst(c, t, { dur: 0.34 * j, vol: 0.5 * vol, f0: 900 * j, f1: 2800 * j, f2: 1100, q: 0.8 });
-        burst(c, t + 0.05, { dur: 0.22, vol: 0.16 * vol, f0: 3500, f1: 6000, q: 0.6 });
-        const land = t + 0.3 * j;
-        tick(c, land, 0.3 * vol);
-        thump(c, land, 0.2 * vol, 180, 90, 0.09);
-      });
+      play((c, t) => pageTurn(c, { at: t, dur: vol < 0.7 ? 0.36 : 0.78, vol: vol * 1.15 }));
     },
     open() {
       play((c, t) => {
