@@ -6,7 +6,7 @@ import { canSharePhotos, onTouchDevice, toPhotos, download } from "../../assets/
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS, stickerLife, stickerMoves } from "./stickers.js";
 import { PEOPLE, CHARACTERS, ANIMALS, SKINS, HAIRS, drawPerson } from "./people.js";
-import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointAngle, jointReach, strokeNear, hingeOf, nearestOn, bend, oldJoints, cutByLoop, inside, exampleScene, exampleFlip } from "./engine.js";
+import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointAngle, jointReach, strokeNear, hingeOf, nearestOn, bend, oldJoints, cutByLoop, inside, clusters, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -38,7 +38,7 @@ const BGS = [["paper", "Paper"], ["grid", "Squared paper"], ["lined", "Lined pap
   ["bedroom", "Bedroom"], ["candy", "Candy land"], ["sunset", "Sunset"], ["night", "Night"], ["moon", "Moon"], ["space", "Space"]];
 const DARK = new Set(["space", "night", "chalk", "sunset", "cave", "moon", "stage", "volcano", "jungle"]); // backgrounds where the outline round a chosen drawing needs to be light
 const FPS = [[2, "Slow"], [6, "Medium"], [10, "Fast"]];
-const MAX_THINGS = 12, MAX_FRAMES = 24;
+const MAX_THINGS = 24, MAX_FRAMES = 24;
 
 const cv = $("cv"), ctx = cv.getContext("2d");
 const saverOn = () => !!(window.z210Saver && window.z210Saver.on);
@@ -511,6 +511,7 @@ function paint() {
   $("hint").textContent = hint;
   $("drawTools").hidden = !drawing();
   $("thingPanel").hidden = !(scene() && ui.state === "idle" && th);
+  $("splitThing").hidden = !(th && scene() && ui.state === "idle" && clusters(th.s).length > 1);
   $("scenePanel").hidden = !(scene() && ui.state === "idle");
   $("flipPanel").hidden = scene() || playing;
   $("strip").hidden = scene() || playing;
@@ -665,16 +666,36 @@ function startDraw(edit = -1) {
 }
 function endDraw(keep) {
   if (keep) {
-    const old = ui.edit >= 0 ? data.scene.things[ui.edit] : {}, made = makeThing(ui.draft, { move: old.move, act: old.act, speed: old.speed, face: old.face, path: old.path });
-    if (!made) { note("Draw something first, then tap Done."); return; }
-    ["move", "act", "speed", "face", "path"].forEach((k) => { if (made[k] === undefined) delete made[k]; });
-    const thing = { move: "stay", act: "none", speed: 1, face: true, path: null, ...made };
-    if (ui.edit >= 0) data.scene.things[ui.edit] = thing; else { data.scene.things.push(thing); ui.sel = data.scene.things.length - 1; }
-    note(ui.edit >= 0 ? "" : "Now choose how it moves.");
-    save();
+    const things = data.scene.things, old = ui.edit >= 0 ? things[ui.edit] : {}, how = { move: old.move, act: old.act, speed: old.speed, face: old.face, path: old.path };
+    const build = (strokes, more) => { const made = makeThing(strokes, more); if (!made) return null; ["move", "act", "speed", "face", "path"].forEach((k) => { if (made[k] === undefined) delete made[k]; }); return { move: "stay", act: "none", speed: 1, face: true, path: null, ...made }; };
+    const thing = build(ui.draft, how);
+    if (!thing) { // nothing there: Done never leaves the child stuck. A drawing that was rubbed out or cleared is taken away.
+      if (ui.edit >= 0) { things.splice(ui.edit, 1); ui.sel = -1; save(); note("That drawing is empty now, so it has been taken away."); } else note("Nothing was drawn, so nothing was added.");
+    } else if (ui.edit >= 0) { things[ui.edit] = thing; note(""); save(); }
+    else {
+      // stickers stamped apart from each other are separate objects, so each can be moved and resized on its own
+      const parts = clusters(ui.draft), apart = parts.length > 1 && parts.every((g) => g.some((q) => q.ch || q.fig)) && things.length + parts.length <= MAX_THINGS;
+      if (apart) { parts.forEach((g) => things.push(build(g, {}))); note(`${parts.length} separate drawings, so you can move each one by itself. Tap one to choose how it moves.`); }
+      else { things.push(thing); note("Now choose how it moves."); }
+      ui.sel = things.length - 1;
+      save();
+    }
   }
-  ui.state = "idle"; ui.edit = -1; ui.draft = []; ui.pick = [];
+  ui.state = "idle"; ui.edit = -1; ui.draft = []; ui.pick = []; ui.grab = null; ui.jdrag = null; ui.lasso = null; ui.live = null; ui.from = null;
   paint(); render();
+}
+/** One drawing made of several objects standing apart becomes several drawings. */
+function splitThing() {
+  const th = sel(), things = data.scene.things;
+  if (!th) return;
+  const parts = clusters(stageStrokes(th));
+  if (parts.length < 2) return;
+  if (things.length - 1 + parts.length > MAX_THINGS) { note(`A scene can hold ${MAX_THINGS} drawings, and that would be too many. Delete one first.`); return; }
+  // each one keeps how the drawing moved; a traced path stays with the first only, or they would all walk on top of each other
+  const made = parts.map((g, n) => ({ move: "stay", act: "none", speed: 1, face: true, path: null, ...makeThing(g, { move: th.move === "path" && n ? "stay" : th.move, act: th.act, speed: th.speed, face: th.face, path: n ? null : th.path }) }));
+  things.splice(ui.sel, 1, ...made);
+  note(`Now ${parts.length} separate drawings. Tap one to move it, resize it or choose how it moves.`);
+  save(); paint(); render();
 }
 $("mainRow").addEventListener("click", (e) => {
   const b = e.target.closest("[data-act]");
@@ -719,6 +740,7 @@ $("copyThing").addEventListener("click", () => {
   if (copy.path) copy.path = copy.path.map((v, i) => v + (i % 2 ? 30 : 40));
   data.scene.things.push(copy); ui.sel = data.scene.things.length - 1; save(); paint(); render();
 });
+$("splitThing").addEventListener("click", splitThing);
 $("delThing").addEventListener("click", () => { if (!sel()) return; data.scene.things.splice(ui.sel, 1); ui.sel = -1; save(); paint(); render(); });
 $("bgs").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.scene.bg = b.dataset.bg; save(); paint(); render(); } });
 $("exScene").addEventListener("click", () => { if (data.scene.things.length && !confirm("Swap your scene for the example? Your drawings here will be removed.")) return; data.scene = { ...exampleScene(), music: data.scene.music }; ui.sel = -1; save(); paint(); render(); note("Press Play! Then tap a drawing to see how it was set up."); });

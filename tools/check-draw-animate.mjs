@@ -157,6 +157,13 @@ const M = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(imp
   const th = E.makeThing([body, arm]);
   check(th.s[1].j && Math.abs(th.s[1].j[0] - th.s[1].p[0]) < 0.01 && Math.abs(th.s[1].j[1] - th.s[1].p[1]) < 0.01, "joints: the pin stays on its part when the drawing becomes a thing");
 }
+{ // separate objects in one drawing
+  const d = { fig: "dragon", w: 120, p: [100, 300] }, r1 = { fig: "run1", w: 150, p: [320, 300] }, hat = { ch: "🎩", w: 40, p: [320, 230] }, r2 = { fig: "run1", w: 150, p: [600, 320] };
+  const g = E.clusters([d, r1, hat, r2]);
+  const face = [{ c: "#000", w: 6, p: [0, 0, 100, 0, 100, 100, 0, 100, 0, 0] }, { c: "#000", w: 6, p: [30, 30] }, { c: "#000", w: 6, p: [70, 30] }];
+  const armA = { c: "#000", w: 6, p: [0, 0, 10, 0], j: [0, 0], jg: 3 }, handA = { c: "#000", w: 6, p: [300, 0, 310, 0], j: [0, 0], jg: 3 };
+  check(g.length === 3 && g[0][0] === d && g[1].length === 2 && g[1][0] === r1 && g[1][1] === hat && g[2][0] === r2 && E.clusters(face).length === 1 && E.clusters([armA, handA]).length === 1 && E.clusters([d, r2, { c: "#000", w: 20, e: 1, p: [0, 0, 5, 5] }]).length === 1 && E.clusters([]).length === 0, "objects standing apart are told apart; a hat stays with its wearer, eyes with their face, and a part with its joint");
+}
 const ST = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/stickers.js")).href);
 { // stickers that move by themselves: small, finite movements, and nothing for a still picture
   const all = ST.STICKERS.flatMap((k) => k.list), moving = all.filter((ch) => ST.stickerMoves(ch));

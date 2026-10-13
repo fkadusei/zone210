@@ -127,6 +127,23 @@ export function strokeNear(strokes, x, y, reach = 22) {
   return best;
 }
 
+/**
+ * The separate objects in a drawing: groups of strokes whose boxes touch or overlap (a face and its eyes are one;
+ * a dragon and a person standing apart are two). Lines that share a joint stay together. Each group keeps its
+ * strokes in their drawing order. A drawing with eraser marks is left as one, since a mark may belong to any of it.
+ */
+export function clusters(strokes, slack = 4) {
+  if (strokes.some((s) => s.e)) return [strokes];
+  const boxes = strokes.map((s) => bbox([s])), root = strokes.map((_, i) => i);
+  const find = (i) => { while (root[i] !== i) { root[i] = root[root[i]]; i = root[i]; } return i; };
+  for (let a = 0; a < strokes.length; a += 1) for (let b = a + 1; b < strokes.length; b += 1) {
+    const A = boxes[a], B = boxes[b];
+    if ((strokes[a].jg && strokes[a].jg === strokes[b].jg) || (A.x0 <= B.x1 + slack && B.x0 <= A.x1 + slack && A.y0 <= B.y1 + slack && B.y0 <= A.y1 + slack)) root[find(a)] = find(b);
+  }
+  const groups = new Map();
+  strokes.forEach((s, i) => { const r = find(i); if (!groups.has(r)) groups.set(r, []); groups.get(r).push(s); });
+  return [...groups.values()];
+}
 /** Strokes drawn on the stage become a thing: its strokes are re-measured from the middle of its box. */
 export function makeThing(strokes, old = {}) {
   const b = bbox(strokes);
