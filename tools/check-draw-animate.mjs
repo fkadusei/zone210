@@ -122,18 +122,29 @@ const M = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(imp
   const h1 = E.hingeOf([body, limb, tail], 1), h2 = E.hingeOf([body, limb, tail], 2), h3 = E.hingeOf([limb], 0);
   check(h1[0] === 101 && h1[1] === 99 && h2[0] === 100 && h2[1] === 100 && h3[0] === 160 && h3[1] === 130, "joints: the pin lands on the end of the part that touches the body, whichever way the part was drawn");
   { // elbows and knees
-    const leg = { c: "#000", w: 6, p: [100, 100, 100, 130, 100, 160], j: [100, 100], j2: [100, 130], ja: 2 }, back = { ...leg, p: [100, 160, 100, 130, 100, 100] };
-    const hand = { c: "#000", w: 6, p: [98, 165, 104, 168], j: [100, 100], j2: [100, 130], ja: 2 }, cuff = { ...hand, p: [96, 110, 104, 110] };
-    let most = 0, least = 9, ok = true; const other = { ...leg, jb: 1 };
+    const leg = { c: "#000", w: 6, p: [100, 100, 100, 130, 100, 160], j: [100, 100], jx: [[100, 130, 0]], ja: 2 }, back = { ...leg, p: [100, 160, 100, 130, 100, 100] };
+    const hand = { c: "#000", w: 6, p: [98, 165, 104, 168], j: [100, 100], jx: [[100, 130, 0]], ja: 2 }, cuff = { ...hand, p: [96, 110, 104, 110] };
+    let most = 0, least = 9, ok = true; const other = { ...leg, jx: [[100, 130, 1]] };
     for (let k = 0; k < 40; k += 1) {
-      const b = E.bend(leg, k / 40), r = E.bend(back, k / 40);
-      most = Math.max(most, b.a); least = Math.min(least, b.a); ok = ok && Math.abs(E.bend(other, k / 40).a + b.a) < 1e-9;
+      const b = E.bend(leg, k / 40), r = E.bend(back, k / 40), h = E.bend(hand, k / 40), c = E.bend(cuff, k / 40);
+      most = Math.max(most, b.a[0]); least = Math.min(least, b.a[0]); ok = ok && Math.abs(E.bend(other, k / 40).a[0] + b.a[0]) < 1e-9;
       ok = ok && b.p[0] === 100 && b.p[1] === 100 && b.p[2] === 100 && b.p[3] === 130 && Math.abs(Math.hypot(b.p[4] - 100, b.p[5] - 130) - 30) < 1e-6 && Math.abs(b.p[4] - r.p[0]) < 1e-9 && r.p[4] === 100 && r.p[5] === 100 && leg.p[5] === 160;
-      ok = ok && E.bend(hand, k / 40).all === true && E.bend(cuff, k / 40).all === false;
+      ok = ok && Math.abs(Math.hypot(h.p[0] - 100, h.p[1] - 130) - Math.hypot(2, 35)) < 1e-6 && (b.a[0] < 0.02 || h.p[0] !== 98) && c.p[0] === 96 && c.p[1] === 110; // the hand goes round the elbow; the cuff, above it, stays
     }
     check(ok && most > 1 && most < 1.2 && least >= 0 && least < 0.02, "elbows: only what lies beyond the elbow bends, whichever way the line was drawn, and only to one side; a hand goes with the forearm");
     const [m2] = E.shift([leg], 5, 5), [t2] = E.turned([leg], Math.PI, 100, 100), n = E.nearestOn({ p: [0, 0, 100, 0] }, 40, 7);
-    check(m2.j2[0] === 105 && m2.j2[1] === 135 && Math.abs(t2.j2[1] - 70) < 0.2 && Math.abs(n.x - 40) < 1e-9 && n.y === 0 && Math.abs(n.d - 7) < 1e-9 && n.i === 0 && E.jointReach(leg) > E.jointReach({ ...leg, j2: undefined }) - 1e-9, "elbows: the elbow moves and turns with its part, and a tap finds the nearest place on a line");
+    check(m2.jx[0][0] === 105 && m2.jx[0][1] === 135 && m2.jx[0][2] === 0 && Math.abs(t2.jx[0][1] - 70) < 0.2 && Math.abs(n.x - 40) < 1e-9 && n.y === 0 && Math.abs(n.d - 7) < 1e-9 && n.i === 0 && E.jointReach(leg) >= E.jointReach({ ...leg, jx: undefined }), "elbows: the elbow moves and turns with its part, and a tap finds the nearest place on a line");
+    // several on one part: a tail with three. Each piece keeps its length, the piece before the first does not move, and an outer bend is carried round by an inner one.
+    const tail = { c: "#000", w: 6, p: [0, 0, 30, 0, 60, 0, 90, 0, 120, 0], j: [0, 0], jx: [[60, 0, 0], [30, 0, 0], [90, 0, 0]], ja: 1 };
+    let fine = true, curled = 0, late = false;
+    for (let k = 0; k < 40; k += 1) {
+      const b = E.bend(tail, k / 40), q = b.p, len = (i) => Math.hypot(q[i + 2] - q[i], q[i + 3] - q[i + 1]);
+      fine = fine && q[0] === 0 && q[1] === 0 && q[2] === 30 && q[3] === 0 && [0, 2, 4, 6].every((i) => Math.abs(len(i) - 30) < 1e-6) && b.a.every((v) => v >= 0) && b.turns.length === 0;
+      const tip = Math.atan2(q[9] - q[7], q[8] - q[6]); fine = fine && Math.abs(tip - (b.a[0] + b.a[1] + b.a[2])) < 1e-6; // the last piece has turned by all three together
+      curled = Math.max(curled, tip); if (b.a[1] > b.a[2] + 0.05) late = true;
+    }
+    const one = E.oldJoints([{ p: [0, 0, 9, 9], j: [0, 0], j2: [5, 5], jb: 1 }, { p: [0, 0] }])[0], st = E.bend({ ch: "🐶", w: 40, p: [100, 0], j: [0, 0], jx: [[60, 0, 0], [30, 0, 0]], ja: 1 }, 0.3);
+    check(fine && curled > 0.8 && late && one.jx[0][0] === 5 && one.jx[0][2] === 1 && !one.j2 && !one.jb && st.turns.length === 2 && st.turns[0][0] === 30 && st.turns[1][0] === 60, "elbows: a part can have several; they curl one after another, and a drawing saved with the old single elbow still bends");
   }
   const th = E.makeThing([body, arm]);
   check(th.s[1].j && Math.abs(th.s[1].j[0] - th.s[1].p[0]) < 0.01 && Math.abs(th.s[1].j[1] - th.s[1].p[1]) < 0.01, "joints: the pin stays on its part when the drawing becomes a thing");
