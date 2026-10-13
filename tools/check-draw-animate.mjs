@@ -164,6 +164,17 @@ const M = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(imp
   const armA = { c: "#000", w: 6, p: [0, 0, 10, 0], j: [0, 0], jg: 3 }, handA = { c: "#000", w: 6, p: [300, 0, 310, 0], j: [0, 0], jg: 3 };
   check(g.length === 3 && g[0][0] === d && g[1].length === 2 && g[1][0] === r1 && g[1][1] === hat && g[2][0] === r2 && E.clusters(face).length === 1 && E.clusters([armA, handA]).length === 1 && E.clusters([d, r2, { c: "#000", w: 20, e: 1, p: [0, 0, 5, 5] }]).length === 1 && E.clusters([]).length === 0, "objects standing apart are told apart; a hat stays with its wearer, eyes with their face, and a part with its joint");
 }
+{ // a group that travels together
+  const lead = { x: 100, y: 100, move: "path", act: "bounce", speed: 1, face: true, path: [100, 100, 400, 100] }, mate = { x: 160, y: 140, move: "updown", act: "spin", speed: 1, face: true, path: null }, shy = { ...mate, face: false, act: "none" };
+  let ok = true, went = 0, flipped = false, turned = false;
+  for (let k = 1; k < 80; k += 1) {
+    const t = k / 10, L = E.pose({ ...lead, act: "none" }, t, 0), m = E.poseTogether(mate, lead, t, 1, 0), q = E.poseTogether(shy, lead, t, 2, 0);
+    ok = ok && Math.abs(m.x - L.x - 60) < 1e-6 && Math.abs(m.y - L.y - 40) < 1e-6 && m.flip === L.flip && q.flip === 1 && q.rot === 0; // beside the leader all the way, not bouncing with it, and not going up and down by itself
+    went = Math.max(went, Math.abs(L.x - 100)); if (m.flip === -1) flipped = true; if (m.rot !== 0) turned = true;
+  }
+  const rest = E.poseTogether(mate, lead, null, 1, 0);
+  check(ok && went > 200 && flipped && turned && rest.x === 160 && rest.y === 140, "a group travelling together keeps its shape behind its leader, each member still doing its own thing");
+}
 const ST = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/stickers.js")).href);
 { // stickers that move by themselves: small, finite movements, and nothing for a still picture
   const all = ST.STICKERS.flatMap((k) => k.list), moving = all.filter((ch) => ST.stickerMoves(ch));

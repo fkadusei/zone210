@@ -274,6 +274,19 @@ export function pose(thing, t, i = 0) {
   return out;
 }
 
+/**
+ * Where a thing is when its group travels together: it goes wherever the group's leader goes, keeping its own place
+ * beside it, and still does its own "also" (bounce, spin…) on the way. `il` is the leader's place in the list.
+ */
+export function poseTogether(thing, lead, t, i, il) {
+  const own = pose({ ...thing, move: "stay" }, t, i);
+  if (t === null) return own;
+  const at = pose({ ...lead, act: "none", face: true }, t, il);
+  own.x += at.x - lead.x; own.y += at.y - lead.y;
+  if (thing.face) own.flip = at.flip;
+  return own;
+}
+
 // ---------- ready-made examples, built from the same kind of strokes a finger makes ----------
 const dot = (x, y, w, c) => ({ c, w, p: [x, y] });
 const line = (c, w, ...p) => ({ c, w, p });

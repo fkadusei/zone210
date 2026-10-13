@@ -6,7 +6,7 @@ import { canSharePhotos, onTouchDevice, toPhotos, download } from "../../assets/
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS, stickerLife, stickerMoves } from "./stickers.js";
 import { PEOPLE, CHARACTERS, ANIMALS, SKINS, HAIRS, drawPerson } from "./people.js";
-import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointAngle, jointReach, strokeNear, hingeOf, nearestOn, bend, oldJoints, cutByLoop, inside, clusters, exampleScene, exampleFlip } from "./engine.js";
+import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, poseTogether, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointAngle, jointReach, strokeNear, hingeOf, nearestOn, bend, oldJoints, cutByLoop, inside, clusters, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -351,7 +351,12 @@ function render(t = null) {
   if (scene()) {
     const playing = ui.state === "play";
     putBg(ctx, data.scene.bg);
-    data.scene.things.forEach((th, i) => { if (ui.state === "draw" && i === ui.edit) return; drawThing(th, pose(th, playing ? t : null, i), playing && t !== null ? limbs(th, t, i) : null); });
+    data.scene.things.forEach((th, i) => {
+      if (ui.state === "draw" && i === ui.edit) return;
+      const il = th.gt && !th.lead ? data.scene.things.findIndex((q) => q.g === th.g && q.lead) : -1, lead = data.scene.things[il]; // a group that travels together follows its leader
+      const now = playing ? t : null, at = lead ? poseTogether(th, lead, now, i, il) : pose(th, now, i);
+      drawThing(th, at, playing && t !== null ? (lead ? { ...limbs(th, t, i), go: limbs(lead, t, il).go } : limbs(th, t, i)) : null);
+    });
     if (ui.state === "draw") { ctx.drawImage(A.cv, 0, 0, W, H); if (ui.from && ui.live) strokeOn(ctx, ui.live); if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(data.scene.bg)); } if (ui.tool === "joint" && !ui.clean) { drawPins(); const la = ui.lasso; if (la && la.moved) { ctx.save(); ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.setLineDash([3, 9]); ctx.strokeStyle = "#f5a623"; ctx.beginPath(); ctx.moveTo(la.pts[0], la.pts[1]); for (let k = 2; k < la.pts.length; k += 2) ctx.lineTo(la.pts[k], la.pts[k + 1]); ctx.closePath(); ctx.stroke(); ctx.restore(); } } }
     const th = data.scene.things[ui.sel];
     if (th && !playing && ui.state !== "draw" && !ui.clean) {
@@ -558,6 +563,11 @@ function paint() {
   $("mute").textContent = data.muted ? "🔇 Sound off" : "🔊 Sound on"; $("mute").setAttribute("aria-pressed", String(!data.muted));
   $("onion").checked = !!data.flip.onion;
   if (th) { press("moves", "move", th.move); press("acts", "act", th.act); press("speeds", "speed", th.speed); $("face").checked = !!th.face; }
+  // a joined group can travel together, following one of its members
+  const follows = !!(th && th.g && th.gt && !th.lead);
+  $("togetherRow").hidden = !(th && th.g); $("together").checked = !!(th && th.g && th.gt && th.lead);
+  $("togetherLbl").textContent = follows ? "The group travels together, following another one. Tick to follow this one instead." : "The group travels together, following this one";
+  $("moves").parentElement.hidden = follows; // where a follower goes is up to its leader
 }
 
 // ---------- pointer: draw, trace a path, or pick up and drag a thing ----------
@@ -716,7 +726,7 @@ function endDraw(keep) {
     const thing = build(ui.draft, how);
     if (!thing) { // nothing there: Done never leaves the child stuck. A drawing that was rubbed out or cleared is taken away.
       if (ui.edit >= 0) { things.splice(ui.edit, 1); ui.sel = -1; save(); note("That drawing is empty now, so it has been taken away."); } else note("Nothing was drawn, so nothing was added.");
-    } else if (ui.edit >= 0) { if (old.g) thing.g = old.g; things[ui.edit] = thing; note(""); save(); }
+    } else if (ui.edit >= 0) { for (const key of ["g", "gt", "lead"]) if (old[key]) thing[key] = old[key]; things[ui.edit] = thing; note(""); save(); }
     else {
       // stickers stamped apart from each other are separate objects, so each can be moved and resized on its own
       const parts = clusters(ui.draft), apart = parts.length > 1 && parts.every((g) => g.some((q) => q.ch || q.fig)) && things.length + parts.length <= MAX_THINGS;
@@ -735,7 +745,8 @@ function joinThings(other) {
   if (!th || !add || add === th) return;
   if (th.g && add.g === th.g) { note("Those two are already joined. Tap a different drawing."); return; }
   const g = th.g || 1 + things.reduce((m, q) => Math.max(m, q.g || 0), 0);
-  mates(add).forEach((t) => { t.g = g; }); th.g = g;
+  const tog = mates(th).some((t) => t.gt);
+  mates(add).forEach((t) => { t.g = g; delete t.lead; if (tog) t.gt = 1; else delete t.gt; }); th.g = g; // newcomers fall in with a group that travels together
   const more = things.some((q) => q.g !== g); if (!more) ui.joining = false;
   note(`Joined! They stay together when you move, resize or turn them, and each keeps its own way of moving.${more ? " Tap another drawing to join it too, or tap Join again to finish." : ""}`);
   save(); paint(); render();
@@ -744,7 +755,7 @@ function joinThings(other) {
 function splitThing() {
   const th = sel(), things = data.scene.things;
   if (!th) return;
-  if (th.g) { const n = mates(th).length; mates(th).forEach((t) => { delete t.g; }); note(`${n} separate drawings again. Each has kept its own way of moving.`); save(); paint(); render(); return; } // drawings that were joined come apart first
+  if (th.g) { const n = mates(th).length; mates(th).forEach((t) => { delete t.g; delete t.gt; delete t.lead; }); note(`${n} separate drawings again. Each has kept its own way of moving.`); save(); paint(); render(); return; } // drawings that were joined come apart first
   const parts = clusters(stageStrokes(th));
   if (parts.length < 2) return;
   if (things.length - 1 + parts.length > MAX_THINGS) { note(`A scene can hold ${MAX_THINGS} drawings, and that would be too many. Delete one first.`); return; }
@@ -777,6 +788,13 @@ $("moves").addEventListener("click", (e) => {
 });
 $("acts").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"), th = sel(); if (b && th) { th.act = b.dataset.act; save(); paint(); } });
 $("speeds").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"), th = sel(); if (b && th) { th.speed = Number(b.dataset.speed); save(); paint(); } });
+$("together").addEventListener("change", () => {
+  const th = sel(); if (!th || !th.g) return;
+  const on = $("together").checked;
+  mates(th).forEach((t) => { delete t.lead; if (on) t.gt = 1; else delete t.gt; }); if (on) th.lead = 1;
+  note(on ? "They all go where this one goes now. Choose how it moves; each one still does its own bounce, spin or wiggle." : "Each one goes its own way again.");
+  save(); paint(); render();
+});
 $("face").addEventListener("change", () => { const th = sel(); if (th) { th.face = $("face").checked; save(); } });
 const about = (th) => { const set = mates(th), gb = boxOf(set); return [snap(set), set.length > 1 ? gb.cx : th.x, set.length > 1 ? gb.cy : th.y]; };
 for (const [id, a] of [["tLeft", -Math.PI / 12], ["tRight", Math.PI / 12]]) $(id).addEventListener("click", () => { const th = sel(); if (!th) return; const [was, cx, cy] = about(th); turnSet(was, a, cx, cy); save(); render(); });
