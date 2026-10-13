@@ -1,4 +1,4 @@
-// Draw & Animate: the 52 backgrounds. Each is painted by drawBg onto a stage-sized canvas (W by H, from engine.js);
+// Draw & Animate: the 74 backgrounds. Each is painted by drawBg onto a stage-sized canvas (W by H, from engine.js);
 // game.js keeps a painted copy of the ones in use, so a background is only drawn once.
 
 import { W, H } from "./engine.js";
@@ -8,8 +8,11 @@ export const BGS = [["paper", "Paper"], ["grid", "Squared paper"], ["lined", "Li
   ["beach", "Beach"], ["island", "Island"], ["sea", "Under the sea"], ["cave", "Cave"], ["road", "Road"], ["city", "City"], ["castle", "Castle"], ["pitch", "Sports pitch"], ["stage", "Stage"],
   ["harbor", "Harbor"], ["ocean", "Open sea"], ["lake", "Lake"], ["river", "River"], ["waterfall", "Waterfall"], ["canyon", "Canyon"], ["savanna", "Savanna"], ["autumn", "Autumn"], ["blossom", "Blossom"], ["garden", "Garden"],
   ["clouds", "Above the clouds"], ["railway", "Railway"], ["street", "Street"], ["citynight", "City at night"], ["playground", "Playground"], ["classroom", "Classroom"], ["kitchen", "Kitchen"], ["livingroom", "Living room"], ["circus", "Circus"], ["haunted", "Haunted house"],
+  ["eiffel", "Eiffel Tower"], ["london", "Big Ben"], ["colosseum", "Colosseum"], ["pisa", "Leaning Tower of Pisa"], ["parthenon", "Parthenon"], ["stonehenge", "Stonehenge"], ["windmills", "Windmills and tulips"],
+  ["pyramids", "Pyramids"], ["kilimanjaro", "Kilimanjaro"], ["tablemountain", "Table Mountain"], ["dubai", "Dubai"], ["tajmahal", "Taj Mahal"], ["greatwall", "Great Wall"], ["fuji", "Mount Fuji"], ["angkor", "Angkor Wat"],
+  ["sydney", "Sydney Opera House"], ["moai", "Easter Island"], ["liberty", "Statue of Liberty"], ["goldengate", "Golden Gate Bridge"], ["chichenitza", "Chichen Itza"], ["machupicchu", "Machu Picchu"], ["rio", "Rio de Janeiro"],
   ["bedroom", "Bedroom"], ["candy", "Candy land"], ["sunset", "Sunset"], ["night", "Night"], ["moon", "Moon"], ["space", "Space"]];
-export const DARK = new Set(["space", "night", "chalk", "sunset", "cave", "moon", "stage", "volcano", "jungle", "citynight", "haunted", "circus"]); // backgrounds where the outline round a chosen drawing needs to be light
+export const DARK = new Set(["space", "night", "chalk", "sunset", "cave", "moon", "stage", "volcano", "jungle", "citynight", "haunted", "circus", "angkor"]); // backgrounds where the outline round a chosen drawing needs to be light
 
 function stars(g, n, seed) { let a = seed; const r = () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; }; g.fillStyle = "#fff"; for (let i = 0; i < n; i += 1) { g.globalAlpha = 0.4 + r() * 0.6; g.beginPath(); g.arc(r() * W, r() * H * 0.85, 0.8 + r() * 1.8, 0, 7); g.fill(); } g.globalAlpha = 1; }
 export function drawBg(g, bg) {
@@ -310,6 +313,143 @@ function more(g, bg) {
     poly("#d7bf93", [340, H, 380, 400, 420, 400, 470, H]);
     for (let i = 0; i < 26; i += 1) { const x = rnd() * W, y = 430 + rnd() * 150; if (x > 320 && x < 490) continue; const c = ["#ff6b8a", "#ffd84d", "#c79bff", "#ffffff", "#ff9f43"][i % 5]; line("#3f9b57", 3, [x, y, x, y + 22]); for (let k = 0; k < 5; k += 1) oval(c, x + Math.cos(k * 1.257) * 7, y + Math.sin(k * 1.257) * 7, 5.5); oval("#f5b041", x, y, 4); }
     oval("#4a8f4f", 70, 420, 70, 40); oval("#4a8f4f", 740, 426, 66, 38);
+
+  // ---------- famous places around the world ----------
+  } else if (bg === "eiffel") {
+    sky("#8fd3ff", "#fdeee0"); cloud(140, 100); cloud(640, 140, 0.8); ground("#86cf70", 450);
+    const iron = "#6e5a48"; poly(iron, [296, 452, 342, 452, 388, 250, 372, 250]); poly(iron, [504, 452, 458, 452, 412, 250, 428, 250]);
+    g.strokeStyle = iron; g.lineWidth = 12; g.beginPath(); g.arc(400, 452, 62, Math.PI, 0); g.stroke(); rect(iron, 346, 330, 108, 13); rect(iron, 366, 248, 68, 11);
+    poly(iron, [374, 250, 426, 250, 406, 96, 394, 96]); rect(iron, 390, 150, 20, 8); line(iron, 5, [400, 96, 400, 52]);
+    for (const [y0, y1, a, b] of [[440, 345, 316, 372], [330, 262, 362, 384], [246, 160, 380, 396]]) { line("#8a7460", 3, [a, y0, 800 - b, y1]); line("#8a7460", 3, [800 - a, y0, b, y1]); }
+    tree(110, 458, 0.8); tree(700, 462, 0.9); for (let x = 180; x < 640; x += 46) if (x < 280 || x > 520) oval("#4a8f4f", x, 452, 24, 16);
+  } else if (bg === "london") {
+    sky("#a9c9e8", "#eef4f9", 470); cloud(180, 90, 1.2, "#f4f6f8"); cloud(480, 60, 0.9, "#f4f6f8"); cloud(690, 130, 0.8, "#f4f6f8");
+    const stone = "#c9a66b", dark = "#9a7b46"; rect(stone, 150, 330, 400, 130); for (let x = 150; x < 550; x += 40) { rect(dark, x + 14, 350, 12, 100); poly(dark, [x, 330, x + 8, 300, x + 16, 330]); }
+    rect(stone, 150, 250, 60, 210); poly(dark, [144, 252, 180, 180, 216, 252]); rect(stone, 560, 150, 74, 310); rect(dark, 554, 240, 86, 10);
+    oval("#fffdf6", 597, 196, 27); g.strokeStyle = "#3f2f1a"; g.lineWidth = 4; g.beginPath(); g.arc(597, 196, 27, 0, 7); g.stroke(); line("#3f2f1a", 4, [597, 196, 597, 176]); line("#3f2f1a", 3, [597, 196, 612, 204]);
+    poly(dark, [556, 152, 597, 60, 638, 152]); line("#3f2f1a", 3, [597, 60, 597, 36]); for (let y = 260; y < 440; y += 34) rect(dark, 584, y, 26, 20);
+    rect("#8d8d8d", 0, 458, W, 14); rect(grad([[0, "#7fa9c9"], [1, "#4f7fa6"]], 470, H), 0, 472, W, 128); for (let i = 0; i < 12; i += 1) { const x = rnd() * W, y = 490 + rnd() * 90; line("rgba(255,255,255,0.4)", 2, [x, y, x + 34, y]); }
+  } else if (bg === "liberty") {
+    sky("#7cc7ff", "#e8f6ff", 420); cloud(600, 90, 1.1); cloud(120, 140, 0.8); rect(grad([[0, "#4aa3dc"], [1, "#2b6ea8"]], 410, H), 0, 410, W, 190);
+    for (let x = 20; x < 250; x += 30) rect("#b7c4d6", x, 410 - (60 + ((x * 7) % 90)), 24, 60 + ((x * 7) % 90));
+    oval("#5fa35f", 430, 470, 250, 50); rect("#c9c1b3", 330, 420, 200, 40); rect("#d8d0c2", 372, 320, 116, 104); rect("#c9c1b3", 362, 312, 136, 12);
+    const cu = "#7fbfa5", cud = "#5fa58a"; poly(cu, [392, 312, 468, 312, 452, 190, 408, 190]); poly(cud, [430, 312, 468, 312, 452, 190, 440, 190]);
+    line(cu, 16, [446, 198, 482, 120]); oval(cu, 430, 170, 22, 24); for (let i = -2; i <= 2; i += 1) line(cu, 5, [430 + i * 9, 152, 430 + i * 16, 128]);
+    rect(cud, 398, 214, 22, 34); rect("#e2c56b", 474, 100, 18, 22); poly("#ff8a3d", [472, 100, 483, 70, 494, 100]); poly("#ffd84d", [477, 100, 483, 82, 489, 100]);
+    for (let i = 0; i < 10; i += 1) { const x = rnd() * W, y = 440 + rnd() * 150; if (y > 500 || x < 180 || x > 680) line("rgba(255,255,255,0.4)", 2, [x, y, x + 36, y]); }
+  } else if (bg === "goldengate") {
+    sky("#ffc89a", "#ffeeda", 420); sun(140, 130, 46, "#ffb347"); rect(grad([[0, "#5fa6d6"], [1, "#2f6ea3"]], 400, H), 0, 400, W, 200);
+    poly("#8a9a6a", [0, 400, 0, 300, 130, 330, 200, 400]); poly("#7c8c5e", [620, 400, 700, 310, W, 280, W, 400]);
+    const red = "#c0392b"; for (const x of [250, 550]) { rect(red, x - 18, 130, 12, 330); rect(red, x + 6, 130, 12, 330); for (const y of [150, 210, 270, 390]) rect(red, x - 18, y, 36, 10); }
+    rect(red, 0, 340, W, 12); rect("#8f2a20", 0, 352, W, 4);
+    g.strokeStyle = red; g.lineWidth = 5; g.beginPath(); g.moveTo(-40, 250); g.quadraticCurveTo(120, 330, 250, 132); g.quadraticCurveTo(400, 420, 550, 132); g.quadraticCurveTo(680, 330, 840, 250); g.stroke();
+    for (let x = 270; x < 540; x += 22) { const u = (x - 250) / 300, y = 132 + 208 * (1 - (1 - 2 * u) ** 2) * 0.72 + 0; line(red, 1.5, [x, Math.min(338, 132 + (1 - (2 * u - 1) ** 2) * 150), x, 340]); }
+    for (let i = 0; i < 6; i += 1) cloud(60 + i * 140, 410 + (i % 2) * 14, 0.9, "rgba(255,255,255,0.75)");
+  } else if (bg === "pyramids") {
+    sky("#ffd08a", "#fff0cf"); sun(650, 110, 50, "#ffb347"); ground("#e8c57a", 400, 14);
+    for (const [x, y, wd, hh] of [[560, 404, 150, 150], [330, 410, 230, 230], [130, 420, 130, 120]]) { poly("#d9a441", [x - wd, y, x, y - hh, x + wd * 0.2, y]); poly("#b8862f", [x + wd * 0.2, y, x, y - hh, x + wd, y]); for (let k = 1; k < 6; k += 1) line("rgba(0,0,0,0.1)", 2, [x - wd * (1 - k / 6), y - (hh * k) / 6, x + wd * (1 - k / 6), y - (hh * k) / 6]); }
+    rect("#c9973a", 600, 440, 120, 36); rect("#c9973a", 690, 404, 40, 44); poly("#b8862f", [684, 404, 710, 380, 736, 404]); rect("#c9973a", 590, 462, 60, 14); oval("#3f2f1a", 716, 420, 3);
+    line("#6b4226", 9, [90, 520, 104, 430]); for (const [dx, dy] of [[-50, -10], [-30, -36], [10, -44], [44, -26], [56, 0]]) g.strokeStyle = "#3f9b57", g.lineWidth = 9, g.beginPath(), g.moveTo(104, 430), g.quadraticCurveTo(104 + dx * 0.5, 430 + dy - 14, 104 + dx, 430 + dy), g.stroke();
+  } else if (bg === "tajmahal") {
+    sky("#ffc7b0", "#fff3e6"); sun(400, 180, 60, "#ffd9a8"); rect("#7ccf6b", 0, 400, W, 200); poly("#8fd0f0", [330, 400, 470, 400, 620, H, 180, H]); poly("rgba(255,255,255,0.35)", [392, 400, 408, 400, 430, H, 370, H]);
+    for (let i = 0; i < 6; i += 1) { oval("#3f9b57", 280 - i * 46, 420 + i * 30, 16 + i * 3, 26 + i * 5); oval("#3f9b57", 520 + i * 46, 420 + i * 30, 16 + i * 3, 26 + i * 5); }
+    const mar = "#fbf7ef", shade = "#e3dccd"; rect(shade, 190, 372, 420, 30); rect(mar, 300, 262, 200, 112); for (const x of [318, 452]) { rect(shade, x, 300, 30, 74); g.fillStyle = "#c7d3e6"; g.beginPath(); g.moveTo(x + 4, 374); g.lineTo(x + 4, 322); g.quadraticCurveTo(x + 15, 300, x + 26, 322); g.lineTo(x + 26, 374); g.fill(); }
+    g.fillStyle = "#b7c6dd"; g.beginPath(); g.moveTo(374, 374); g.lineTo(374, 310); g.quadraticCurveTo(400, 270, 426, 310); g.lineTo(426, 374); g.fill();
+    g.fillStyle = mar; g.beginPath(); g.moveTo(352, 264); g.bezierCurveTo(330, 200, 372, 170, 400, 150); g.bezierCurveTo(428, 170, 470, 200, 448, 264); g.fill(); line("#d6b25e", 4, [400, 150, 400, 124]);
+    for (const x of [322, 478]) { oval(mar, x, 256, 22, 20); rect(mar, x - 16, 254, 32, 12); } for (const x of [214, 586]) { rect(mar, x - 9, 220, 18, 154); oval(mar, x, 216, 13, 12); rect(shade, x - 12, 268, 24, 5); rect(shade, x - 12, 316, 24, 5); }
+  } else if (bg === "greatwall") {
+    sky(); cloud(150, 80); cloud(620, 110, 0.9); poly("#7fae8a", [0, 330, 180, 180, 360, 330]); poly("#6f9f7b", [240, 330, 470, 150, 720, 330]); poly("#8fbf96", [560, 330, 720, 220, W, 300, W, 330]); ground("#6fbf6a", 330, 30);
+    const wall = "#c9b189", sh = "#a8906a", path = [-20, 540, 140, 470, 250, 500, 360, 400, 470, 430, 560, 320, 660, 340, 740, 250, 830, 260];
+    line(sh, 34, path); line(wall, 26, path.map((v, i) => (i % 2 ? v - 6 : v)));
+    for (let i = 0; i + 3 < path.length; i += 2) { const [x0, y0, x1, y1] = path.slice(i, i + 4); for (let u = 0.1; u < 1; u += 0.2) rect(wall, x0 + (x1 - x0) * u - 5, y0 + (y1 - y0) * u - 26, 10, 9); }
+    for (const [x, y, k] of [[250, 500, 1.2], [470, 430, 1], [660, 340, 0.8]]) { rect(wall, x - 26 * k, y - 60 * k, 52 * k, 60 * k); rect(sh, x - 30 * k, y - 64 * k, 60 * k, 8 * k); for (let c = -2; c <= 2; c += 2) rect(wall, x + c * 11 * k - 5 * k, y - 74 * k, 10 * k, 10 * k); rect("#5b4a36", x - 6 * k, y - 34 * k, 12 * k, 18 * k); }
+  } else if (bg === "fuji") {
+    sky("#9fd6ff", "#fdeff3"); cloud(640, 90, 0.9); poly("#7f95c2", [130, 400, 400, 110, 670, 400]); poly("#ffffff", [400, 110, 334, 182, 362, 172, 384, 196, 404, 170, 430, 194, 448, 176, 466, 182]);
+    rect(grad([[0, "#8fc7ea"], [1, "#5fa3d6"]], 390, 470), 0, 390, W, 80); ground("#86cf70", 470);
+    tree(110, 470, 1, "#f7a8c9", "#6b4226"); tree(210, 480, 0.7, "#f9c1d6", "#6b4226"); for (let i = 0; i < 26; i += 1) oval("#f9c1d6", rnd() * 300, 300 + rnd() * 280, 4, 2.5, rnd() * 3);
+    const red = "#d6392b"; rect(red, 566, 360, 18, 130); rect(red, 676, 360, 18, 130); rect(red, 548, 378, 164, 12); g.fillStyle = "#2b1a14"; g.beginPath(); g.moveTo(530, 350); g.quadraticCurveTo(630, 366, 730, 350); g.lineTo(722, 336); g.quadraticCurveTo(630, 352, 538, 336); g.fill(); rect(red, 540, 350, 180, 10);
+  } else if (bg === "sydney") {
+    sky("#7cc7ff", "#e6f6ff", 420); cloud(160, 80, 1.1); cloud(660, 60, 0.8); rect(grad([[0, "#4aa3dc"], [1, "#2b6ea8"]], 410, H), 0, 410, W, 190);
+    g.strokeStyle = "#4b5563"; g.lineWidth = 9; g.beginPath(); g.moveTo(-20, 400); g.quadraticCurveTo(160, 190, 340, 400); g.stroke(); g.lineWidth = 5; g.beginPath(); g.moveTo(-20, 400); g.quadraticCurveTo(160, 250, 340, 400); g.stroke(); rect("#4b5563", 0, 372, 350, 9); for (let x = 20; x < 330; x += 26) line("#4b5563", 2, [x, 376, x, 400 - 0]); rect("#6b7280", 326, 340, 26, 70);
+    rect("#d9c3a0", 380, 400, 380, 26); rect("#c9b08a", 360, 420, 420, 12);
+    const shell = (x, y, k, lean) => { g.fillStyle = "#ffffff"; g.strokeStyle = "#c9d3de"; g.lineWidth = 2; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + lean * 10 * k, y - 130 * k, x + lean * 96 * k, y - 150 * k); g.quadraticCurveTo(x + lean * 70 * k, y - 60 * k, x + lean * 78 * k, y); g.closePath(); g.fill(); g.stroke(); };
+    shell(600, 400, 1.15, -1); shell(680, 400, 0.9, -1); shell(520, 400, 1, -1); shell(440, 400, 0.75, -1); shell(700, 400, 0.6, 1); shell(480, 400, 0.5, 1);
+    for (let i = 0; i < 12; i += 1) { const x = rnd() * W, y = 450 + rnd() * 140; line("rgba(255,255,255,0.4)", 2, [x, y, x + 36, y]); }
+  } else if (bg === "colosseum") {
+    sky("#ffd9a8", "#fff3e0"); sun(120, 110, 44, "#ffc266"); ground("#d9c08f", 450);
+    const st = "#e2c9a0", dk = "#7a5c3a"; g.fillStyle = "#cdb48a"; g.beginPath(); g.ellipse(400, 250, 250, 46, 0, 0, 7); g.fill();
+    poly(st, [150, 452, 150, 190, 410, 190, 440, 250, 650, 250, 650, 452]); poly("#d4b98c", [150, 190, 410, 190, 440, 250, 150, 250]);
+    for (let r = 0; r < 4; r += 1) { const y = 204 + r * 62; if (r > 0) rect("#cdb48a", 150, y - 10, 500, 6); for (let x = 164; x < 640; x += 40) { if (r === 0 && x > 400) continue; g.fillStyle = r === 3 ? "#5b4024" : dk; g.beginPath(); g.moveTo(x, y + 44); g.lineTo(x, y + 18); g.quadraticCurveTo(x + 13, y - 2, x + 26, y + 18); g.lineTo(x + 26, y + 44); g.fill(); } }
+    pine(70, 452, 1.1, "#3f7d4f"); pine(735, 456, 1.2, "#3f7d4f");
+  } else if (bg === "pisa") {
+    sky(); cloud(170, 90); cloud(620, 70, 0.9); ground("#86cf70", 450);
+    rect("#f4efe4", 60, 330, 220, 122); poly("#c98a5a", [50, 332, 170, 270, 290, 332]); oval("#f4efe4", 170, 300, 46, 40); poly("#c98a5a", [130, 290, 170, 240, 210, 290]); for (let x = 76; x < 270; x += 30) rect("#c9bfae", x, 380, 14, 72);
+    g.save(); g.translate(500, 452); g.rotate(0.09); const m = "#fbf7ef", s2 = "#d9d0c0";
+    rect(m, -52, -300, 104, 300); for (let t = 0; t < 6; t += 1) { rect(s2, -56, -300 + t * 50 + 44, 112, 6); for (let x = -46; x < 46; x += 16) { g.fillStyle = "#b9ae9c"; g.beginPath(); g.moveTo(x, -300 + t * 50 + 44); g.lineTo(x, -300 + t * 50 + 22); g.quadraticCurveTo(x + 5, -300 + t * 50 + 12, x + 10, -300 + t * 50 + 22); g.lineTo(x + 10, -300 + t * 50 + 44); g.fill(); } }
+    rect(m, -38, -344, 76, 46); rect(s2, -42, -348, 84, 6); line("#c0392b", 3, [0, -348, 0, -372]); poly("#c0392b", [0, -372, 18, -366, 0, -360]); g.restore();
+  } else if (bg === "rio") {
+    sky("#8fd3ff", "#fff0d6", 400); sun(660, 100, 44); cloud(200, 90); rect(grad([[0, "#4ab0dc"], [1, "#2b79a8"]], 380, H), 0, 380, W, 220);
+    g.fillStyle = "#5f8f5a"; g.beginPath(); g.moveTo(-10, 400); g.bezierCurveTo(40, 150, 240, 120, 300, 400); g.fill(); g.fillStyle = "#7a6a52"; g.beginPath(); g.moveTo(470, 390); g.bezierCurveTo(490, 180, 600, 170, 640, 390); g.fill(); g.fillStyle = "#6b8f5a"; g.beginPath(); g.moveTo(600, 390); g.bezierCurveTo(660, 290, 760, 300, 810, 390); g.fill();
+    rect("#b9b0a0", 139, 196, 14, 16); line("#8d8676", 11, [146, 160, 146, 198]); line("#8d8676", 10, [116, 172, 176, 172]); oval("#8d8676", 146, 152, 8); line("#f4f1ea", 7, [146, 160, 146, 198]); line("#f4f1ea", 6, [116, 172, 176, 172]); oval("#f4f1ea", 146, 152, 6); // the statue on its hilltop, with a dark edge so it shows against the sky
+    g.fillStyle = "#f2dca0"; g.beginPath(); g.moveTo(0, 470); g.quadraticCurveTo(300, 400, 560, 470); g.quadraticCurveTo(700, 520, W, 500); g.lineTo(W, H); g.lineTo(0, H); g.fill();
+    for (let x = 250; x < 470; x += 22) rect(["#f8fafc", "#fde68a", "#bfdbfe"][(x / 22) % 3 | 0], x, 400 - ((x * 13) % 40) - 14, 16, 30 + ((x * 13) % 40)); for (const [x, c] of [[120, "#ef4444"], [330, "#3b82f6"], [620, "#22c55e"]]) { g.fillStyle = c; g.beginPath(); g.arc(x, 530, 26, Math.PI, 0); g.fill(); line("#6b7280", 3, [x, 530, x, 566]); }
+  } else if (bg === "machupicchu") {
+    sky("#a9d8f5", "#eef7fb"); cloud(160, 120, 1.3, "rgba(255,255,255,0.85)"); cloud(640, 90, 1.1, "rgba(255,255,255,0.85)");
+    poly("#6f9a7f", [0, 400, 120, 230, 260, 400]); g.fillStyle = "#4f8a5a"; g.beginPath(); g.moveTo(330, 420); g.bezierCurveTo(380, 250, 420, 90, 470, 100); g.bezierCurveTo(520, 110, 560, 280, 620, 420); g.fill(); poly("#5f9468", [560, 420, 700, 250, W, 400, W, 420]);
+    cloud(420, 300, 1.4, "rgba(255,255,255,0.7)");
+    for (let t = 0; t < 6; t += 1) { const y = 400 + t * 34; rect(t % 2 ? "#7ccf6b" : "#8bd87a", 0, y, W, 34); rect("#a8a08f", 0, y, W, 7); }
+    for (const [x, y, wd] of [[120, 400, 90], [250, 434, 70], [470, 400, 110], [620, 434, 80], [360, 468, 90]]) { rect("#b8b0a0", x, y - 44, wd, 44); rect("#8d8676", x, y - 48, wd, 6); poly("#5b5347", [x + wd / 2 - 9, y, x + wd / 2 - 6, y - 26, x + wd / 2 + 6, y - 26, x + wd / 2 + 9, y]); }
+  } else if (bg === "chichenitza") {
+    sky(); sun(120, 100, 40); cloud(600, 90); rect("#3f8f52", 0, 330, W, 90); for (let x = 10; x < W; x += 60) oval(x % 120 ? "#3f9b57" : "#2f7d4f", x, 330, 46, 40); ground("#8fd07a", 420, 10);
+    const st = "#d8c9a3", dk = "#b3a27c"; for (let t = 0; t < 9; t += 1) { const half = 230 - t * 20, y = 450 - t * 26; poly(t % 2 ? st : "#cfc09a", [400 - half, y, 400 + half, y, 400 + half - 14, y - 26, 400 - half + 14, y - 26]); }
+    poly(dk, [362, 450, 438, 450, 420, 216, 380, 216]); for (let t = 0; t < 12; t += 1) line("#9a8a66", 2, [364 + t * 1.5, 446 - t * 19, 436 - t * 1.5, 446 - t * 19]);
+    rect(st, 356, 170, 88, 46); rect(dk, 350, 164, 100, 8); rect("#5b4a36", 388, 184, 24, 32);
+  } else if (bg === "kilimanjaro") {
+    sky("#ffcf8a", "#fff0cf"); sun(660, 130, 46, "#ff9f43"); poly("#8f8fb8", [60, 400, 250, 190, 560, 190, 760, 400]); poly("#ffffff", [250, 190, 560, 190, 596, 228, 560, 220, 520, 244, 470, 218, 420, 246, 370, 220, 320, 242, 270, 222, 222, 222]);
+    cloud(180, 300, 1.2, "rgba(255,255,255,0.8)"); cloud(600, 320, 1, "rgba(255,255,255,0.8)"); ground("#d9b25f", 400, 16);
+    for (const [x, y, k] of [[120, 420, 1.1], [650, 410, 1.3], [400, 404, 0.7]]) { line("#4a3520", 12 * k, [x, y, x + 6 * k, y - 80 * k]); line("#4a3520", 7 * k, [x + 6 * k, y - 80 * k, x - 40 * k, y - 120 * k]); line("#4a3520", 7 * k, [x + 6 * k, y - 80 * k, x + 50 * k, y - 124 * k]); oval("#5f7a2e", x + 4 * k, y - 132 * k, 90 * k, 22 * k); oval("#6f8d36", x - 20 * k, y - 142 * k, 50 * k, 14 * k); }
+    for (let i = 0; i < 26; i += 1) { const x = rnd() * W, y = 440 + rnd() * 150; line("#b8923f", 2, [x, y, x - 4, y - 14]); line("#b8923f", 2, [x, y, x + 5, y - 12]); }
+  } else if (bg === "tablemountain") {
+    sky("#8fd3ff", "#e8f6ff", 430); poly("#7f8f84", [40, 400, 110, 230, 150, 210, 560, 210, 600, 240, 650, 400]); poly("#6f7f74", [150, 210, 560, 210, 600, 240, 560, 260, 150, 260, 110, 230]); for (let x = 170; x < 560; x += 46) line("rgba(0,0,0,0.12)", 3, [x, 262, x - 14, 396]);
+    poly("#8a9a8a", [600, 400, 690, 250, 720, 262, 790, 400]); for (let i = 0; i < 8; i += 1) cloud(160 + i * 56, 204 + (i % 2) * 6, 0.75, "rgba(255,255,255,0.95)");
+    rect("#6fbf6a", 0, 396, W, 40); for (let x = 30; x < W; x += 34) rect(["#f8fafc", "#fde68a", "#fecaca", "#bfdbfe", "#bbf7d0"][(x / 34) % 5 | 0], x, 404 - ((x * 7) % 22), 26, 30 + ((x * 7) % 22));
+    rect(grad([[0, "#4aa3dc"], [1, "#2b6ea8"]], 430, H), 0, 434, W, 166); for (let i = 0; i < 12; i += 1) { const x = rnd() * W, y = 460 + rnd() * 130; line("rgba(255,255,255,0.4)", 2, [x, y, x + 36, y]); }
+  } else if (bg === "stonehenge") {
+    sky("#ffd3a8", "#fdf0e0"); sun(400, 300, 70, "#ffb86b"); ground("#7fbf6a", 400, 10);
+    const stone = (x, y, wd, hh, c = "#9a9a94") => { g.fillStyle = "rgba(0,0,0,0.16)"; g.beginPath(); g.ellipse(x + wd * 0.9, y + 4, wd * 1.2, 8, 0, 0, 7); g.fill(); g.fillStyle = c; g.beginPath(); g.moveTo(x - wd / 2, y); g.lineTo(x - wd / 2 + 4, y - hh); g.quadraticCurveTo(x, y - hh - 8, x + wd / 2 - 4, y - hh); g.lineTo(x + wd / 2, y); g.fill(); rect("rgba(255,255,255,0.14)", x - wd / 2 + 5, y - hh + 6, 6, hh - 14); };
+    for (const [x, y, k] of [[250, 410, 0.7], [330, 406, 0.7], [470, 406, 0.7], [550, 410, 0.7]]) stone(x, y, 30 * k, 110 * k, "#8a8a84"); rect("#8a8a84", 240, 326, 100, 14); rect("#8a8a84", 460, 326, 100, 14);
+    for (const [x, y] of [[150, 470], [250, 480], [560, 480], [660, 470]]) stone(x, y, 46, 160); rect("#a4a49e", 136, 300, 128, 22); rect("#a4a49e", 546, 300, 128, 22); stone(400, 500, 54, 130, "#a8a8a2"); stone(60, 520, 60, 60, "#9a9a94"); stone(740, 530, 70, 44, "#9a9a94");
+  } else if (bg === "windmills") {
+    sky(); cloud(160, 90, 1.1); cloud(620, 70, 0.9); rect("#7ccf6b", 0, 330, W, 30); rect(grad([[0, "#7fc0e8"], [1, "#5fa3d6"]], 350, 400), 0, 356, W, 44);
+    ["#ef4444", "#fde047", "#f472b6", "#a855f7", "#fb923c", "#ef4444"].forEach((c, i) => { poly(c, [0, 400 + i * 34, W, 400 + i * 34, W, 434 + i * 34, 0, 434 + i * 34]); for (let x = (i % 2) * 14; x < W; x += 28) oval("rgba(255,255,255,0.28)", x, 412 + i * 34, 7, 5); line("#3f9b57", 3, [0, 434 + i * 34, W, 434 + i * 34]); });
+    for (const [x, y, k, a0] of [[200, 334, 1, 0.5], [600, 330, 0.8, 0.2]]) { poly("#b98a5a", [x - 44 * k, y, x - 24 * k, y - 150 * k, x + 24 * k, y - 150 * k, x + 44 * k, y]); poly("#7a5230", [x - 30 * k, y - 150 * k, x, y - 186 * k, x + 30 * k, y - 150 * k]); rect("#5b3a1c", x - 10 * k, y - 46 * k, 20 * k, 46 * k); rect("#dff4ff", x - 8 * k, y - 110 * k, 16 * k, 18 * k);
+      for (let i = 0; i < 4; i += 1) { g.save(); g.translate(x, y - 160 * k); g.rotate(a0 + (i * Math.PI) / 2); line("#5b3a1c", 4 * k, [0, 0, 0, -120 * k]); g.fillStyle = "#fff4dc"; g.strokeStyle = "#7a5230"; g.lineWidth = 2; g.beginPath(); g.rect(4 * k, -120 * k, 26 * k, 84 * k); g.fill(); g.stroke(); g.restore(); } oval("#3f2f1a", x, y - 160 * k, 6 * k); }
+  } else if (bg === "moai") {
+    sky("#8fd3ff", "#e8f6ff", 330); cloud(600, 90, 1.1); cloud(180, 130, 0.8); rect(grad([[0, "#3f9bd6"], [1, "#2b79b8"]], 300, 400), 0, 300, W, 100); g.fillStyle = "#7ccf6b"; g.beginPath(); g.moveTo(0, 400); g.quadraticCurveTo(400, 330, W, 380); g.lineTo(W, H); g.lineTo(0, H); g.fill();
+    rect("#8d8676", 120, 440, 560, 26); for (let x = 130; x < 680; x += 46) line("#6f685a", 2, [x, 440, x, 466]);
+    [[190, 1], [320, 1.2], [460, 1.05], [590, 0.9]].forEach(([x, k], n) => { const y = 440, st = "#8f8a80", dk = "#6f6a60"; rect(st, x - 34 * k, y - 60 * k, 68 * k, 60 * k); g.fillStyle = st; g.beginPath(); g.moveTo(x - 30 * k, y - 56 * k); g.lineTo(x - 28 * k, y - 170 * k); g.quadraticCurveTo(x, y - 184 * k, x + 28 * k, y - 170 * k); g.lineTo(x + 30 * k, y - 56 * k); g.fill();
+      rect(dk, x - 28 * k, y - 142 * k, 56 * k, 10 * k); poly(dk, [x - 6 * k, y - 134 * k, x + 6 * k, y - 134 * k, x + 11 * k, y - 92 * k, x - 11 * k, y - 92 * k]); line(dk, 4 * k, [x - 14 * k, y - 76 * k, x + 14 * k, y - 76 * k]); rect(dk, x - 34 * k, y - 120 * k, 5 * k, 40 * k); rect(dk, x + 29 * k, y - 120 * k, 5 * k, 40 * k);
+      if (n === 1) { rect("#a0522d", x - 24 * k, y - 204 * k, 48 * k, 28 * k); rect("#8a4526", x - 14 * k, y - 216 * k, 28 * k, 14 * k); } });
+  } else if (bg === "angkor") {
+    sky("#ffb37a", "#ffe9c9"); sun(400, 250, 80, "#ffd08a"); const dk = "#4a3a34";
+    const bud = (x, y, k) => { g.fillStyle = dk; g.beginPath(); g.moveTo(x - 30 * k, y); g.bezierCurveTo(x - 36 * k, y - 60 * k, x - 14 * k, y - 110 * k, x, y - 150 * k); g.bezierCurveTo(x + 14 * k, y - 110 * k, x + 36 * k, y - 60 * k, x + 30 * k, y); g.fill(); for (let t = 1; t < 5; t += 1) line("rgba(255,200,140,0.18)", 2, [x - (30 - t * 5) * k, y - t * 28 * k, x + (30 - t * 5) * k, y - t * 28 * k]); };
+    rect(dk, 130, 350, 540, 60); rect(dk, 220, 310, 360, 44); bud(400, 320, 1.25); bud(290, 330, 0.9); bud(510, 330, 0.9); bud(170, 360, 0.7); bud(630, 360, 0.7); for (let x = 150; x < 660; x += 26) rect("rgba(255,200,140,0.2)", x, 370, 10, 30);
+    for (const x of [60, 740]) { line("#3a2a24", 9, [x, 420, x + (x < 400 ? 10 : -10), 250]); for (const [dx, dy] of [[-50, 0], [-34, -30], [0, -44], [34, -30], [50, 0]]) { g.strokeStyle = "#3a4a2e"; g.lineWidth = 8; g.beginPath(); const tx = x + (x < 400 ? 10 : -10); g.moveTo(tx, 250); g.quadraticCurveTo(tx + dx * 0.5, 236 + dy, tx + dx, 258 + dy); g.stroke(); } }
+    rect("#5f8f5a", 0, 406, W, 26); rect(grad([[0, "#f2b98a"], [1, "#7f8fb8"]], 430, H), 0, 430, W, 170); g.save(); g.globalAlpha = 0.25; g.translate(0, 860); g.scale(1, -1); rect(dk, 130, 350, 540, 60); bud(400, 320, 1.25); bud(290, 330, 0.9); bud(510, 330, 0.9); g.restore();
+    for (let i = 0; i < 9; i += 1) { const x = 40 + i * 90, y = 470 + ((i * 37) % 100); oval("#5fa35f", x, y, 22, 8); oval("#f9a8d4", x + 6, y - 4, 6, 5); }
+  } else if (bg === "parthenon") {
+    sky(); sun(680, 100, 40); cloud(160, 100); g.fillStyle = "#c9b089"; g.beginPath(); g.moveTo(0, 480); g.quadraticCurveTo(160, 330, 300, 380); g.lineTo(560, 380); g.quadraticCurveTo(700, 360, W, 470); g.lineTo(W, H); g.lineTo(0, H); g.fill();
+    for (let i = 0; i < 14; i += 1) oval("#4f8f52", 40 + i * 58, 500 + ((i * 29) % 60), 30, 20);
+    const m = "#f4efe2", sh = "#d9d1bf"; rect(sh, 196, 366, 408, 14); rect(m, 208, 352, 384, 14); for (let i = 0; i < 8; i += 1) { const x = 222 + i * 50; rect(m, x, 210, 24, 142); line(sh, 2, [x + 8, 214, x + 8, 350]); line(sh, 2, [x + 16, 214, x + 16, 350]); rect(sh, x - 3, 206, 30, 7); }
+    rect(m, 208, 184, 384, 24); for (let x = 216; x < 590; x += 20) rect(sh, x, 190, 6, 12); poly(m, [200, 184, 400, 120, 600, 184]); poly(sh, [236, 180, 400, 132, 564, 180]);
+  } else if (bg === "dubai") {
+    rect(grad([[0, "#5b6fd6"], [0.55, "#f7a8a0"], [1, "#ffe1b0"]], 0, 430), 0, 0, W, 430); sun(170, 330, 56, "#ffd08a");
+    const tw = (x, wd, hh, c) => rect(c, x, 430 - hh, wd, hh); tw(60, 44, 150, "#6f7fb8"); tw(120, 36, 210, "#7f8fc8"); tw(540, 50, 190, "#7f8fc8"); tw(610, 40, 250, "#6f7fb8"); tw(670, 56, 160, "#8f9fd8"); tw(250, 40, 130, "#8f9fd8");
+    const b = "#55659f"; poly(b, [372, 430, 376, 300, 384, 300, 386, 220, 392, 220, 394, 140, 398, 140, 400, 40, 402, 140, 406, 140, 408, 220, 414, 220, 416, 300, 424, 300, 428, 430]); for (const y of [300, 220, 140]) line("#8fa0e0", 2, [380, y, 420, y]);
+    g.fillStyle = "#f4f6fb"; g.beginPath(); g.moveTo(470, 430); g.lineTo(470, 270); g.quadraticCurveTo(560, 300, 520, 430); g.fill(); line("#55659f", 4, [470, 430, 470, 250]); line("#c9d3e6", 2, [476, 300, 512, 330]); line("#c9d3e6", 2, [476, 350, 520, 376]);
+    for (const [x, wd, hh] of [[60, 44, 150], [120, 36, 210], [540, 50, 190], [610, 40, 250], [670, 56, 160]]) for (let y = 430 - hh + 12; y < 420; y += 18) for (let wx = x + 6; wx < x + wd - 6; wx += 12) if (rnd() > 0.45) rect("#ffe9a6", wx, y, 5, 8);
+    rect(grad([[0, "#7fb0e0"], [1, "#4f7fc0"]], 430, 480), 0, 430, W, 50); g.fillStyle = "#e8c98a"; g.beginPath(); g.moveTo(0, 480); g.quadraticCurveTo(250, 450, 480, 486); g.quadraticCurveTo(660, 510, W, 470); g.lineTo(W, H); g.lineTo(0, H); g.fill(); g.fillStyle = "#d9b673"; g.beginPath(); g.moveTo(0, 560); g.quadraticCurveTo(300, 500, 560, 560); g.quadraticCurveTo(700, 590, W, 550); g.lineTo(W, H); g.lineTo(0, H); g.fill();
+    line("#6b4226", 9, [720, 560, 708, 450]); for (const [dx, dy] of [[-54, 0], [-36, -30], [0, -44], [36, -30], [54, 0]]) { g.strokeStyle = "#3f9b57"; g.lineWidth = 9; g.beginPath(); g.moveTo(708, 450); g.quadraticCurveTo(708 + dx * 0.5, 436 + dy, 708 + dx, 458 + dy); g.stroke(); }
   } else return false;
   return true;
 }
