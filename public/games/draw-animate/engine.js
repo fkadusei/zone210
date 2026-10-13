@@ -147,6 +147,22 @@ export function clusters(strokes, slack = 4) {
   strokes.forEach((s, i) => { const r = find(i); if (!groups.has(r)) groups.set(r, []); groups.get(r).push(s); });
   return [...groups.values()];
 }
+/**
+ * The separate objects in a drawing, for splitting it apart. Every picture (a sticker, a hand-drawn figure or a piece
+ * of text) is an object of its own, however close it stands to another: a snake in front of a castle is not part of
+ * the castle. Pen lines are grouped where their boxes touch (clusters, above), and anything sharing a joint stays
+ * together. Each object keeps its strokes in drawing order; objects come in the order they were first drawn.
+ */
+export function objects(strokes) {
+  if (strokes.some((s) => s.e)) return [strokes];
+  const key = new Map(); let next = 0;
+  const pens = strokes.filter((s) => !solid(s) && !s.jg);
+  clusters(pens).forEach((g) => { const k = `pen${next += 1}`; g.forEach((s) => key.set(s, k)); });
+  strokes.forEach((s) => { if (s.jg) key.set(s, `joint${s.jg}`); else if (solid(s)) key.set(s, `pic${next += 1}`); });
+  const groups = new Map();
+  strokes.forEach((s) => { const k = key.get(s); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(s); });
+  return [...groups.values()];
+}
 /** Strokes drawn on the stage become a thing: its strokes are re-measured from the middle of its box. */
 export function makeThing(strokes, old = {}) {
   const b = bbox(strokes);

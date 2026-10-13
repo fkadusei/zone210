@@ -200,6 +200,13 @@ check(PP.THINGS.length >= 70 && PP.THINGS.every((d) => typeof d.draw === "functi
   for (const s of kinds) for (const live of [null, { t: 0.4, go: true }, { t: 0.9, go: false, still: true }]) { try { R.strokeLive(stub, s, live); } catch (err) { threw = `stroke ${JSON.stringify(s).slice(0, 40)}: ${err.message}`; } }
   check(!threw && BG.BGS.length === 32 && BG.BGS.every(([id]) => typeof id === "string") && [...BG.DARK].every((id) => BG.BGS.some(([b]) => b === id)) && R.FONTS.length === 8 && R.fontOf({ f: "poster", w: 30 }).includes("30px"), `backgrounds and stroke drawing work on their own ${threw}`);
 }
+{ // every picture is its own object, even standing in front of a much bigger one
+  const castle = { fig: "thing-castle", w: 400, p: [400, 300] }, snake = { fig: "snake", w: 80, p: [560, 460] }, bat = { fig: "bat", w: 80, p: [400, 250] }, words = { tx: "Hi", f: "round", c: "#000", w: 40, p: [400, 300], tw: 40 };
+  const eye1 = { c: "#000", w: 6, p: [30, 30] }, face = { c: "#000", w: 6, p: [0, 0, 100, 0, 100, 100, 0, 100, 0, 0] }, far = { c: "#000", w: 6, p: [700, 500, 720, 520] };
+  const arm = { c: "#000", w: 6, p: [0, 0, 10, 0], j: [0, 0], jg: 2 }, held = { ch: "🎈", w: 40, p: [300, 0], j: [0, 0], jg: 2 };
+  const o = E.objects([castle, face, snake, eye1, bat, far, words, arm, held]);
+  check(o.length === 7 && o[0][0] === castle && o[0].length === 1 && o[1].length === 2 && o[1][0] === face && o[1][1] === eye1 && o.some((g) => g.length === 2 && g[0] === arm && g[1] === held) && o.filter((g) => g.length === 1).length === 5 && E.objects([castle, snake, { c: "#000", w: 20, e: 1, p: [0, 0, 5, 5] }]).length === 1 && E.objects([face, eye1]).length === 1, "objects: a snake in front of a castle is its own object; a face keeps its eyes; a jointed part keeps what it holds");
+}
 const ST = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public/games/draw-animate/stickers.js")).href);
 { // stickers that move by themselves: small, finite movements, and nothing for a still picture
   const all = ST.STICKERS.flatMap((k) => k.list), moving = all.filter((ch) => ST.stickerMoves(ch));

@@ -9,7 +9,7 @@ import { BGS, DARK, drawBg } from "./backgrounds.js";
 import { pageTurn, pageLift } from "../../assets/paper.js";
 import { FONTS, TEXT_SIZE, fitText, strokeOn, strokeLive } from "./render.js";
 import { PEOPLE, CHARACTERS, ANIMALS, THINGS, SKINS, HAIRS, drawPerson } from "./people.js";
-import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, poseTogether, between, tweenMoves, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointReach, strokeNear, hingeOf, nearestOn, oldJoints, cutByLoop, inside, clusters, exampleScene, exampleFlip } from "./engine.js";
+import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, poseTogether, between, tweenMoves, pathLength, shapePoints, fillTarget, stickersUnder, scaled, turned, itemAt, JOINTS, jointReach, strokeNear, hingeOf, nearestOn, oldJoints, cutByLoop, inside, objects, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -314,7 +314,7 @@ function paint() {
   $("hint").textContent = hint;
   $("drawTools").hidden = !drawing();
   $("thingPanel").hidden = !(scene() && ui.state === "idle" && th);
-  $("splitThing").hidden = !(th && scene() && ui.state === "idle" && (th.g || clusters(th.s).length > 1));
+  $("splitThing").hidden = !(th && scene() && ui.state === "idle" && (th.g || objects(th.s).length > 1));
   if (!(th && scene() && ui.state === "idle" && things.length > 1)) ui.joining = false;
   $("joinThing").hidden = !(th && things.some((q) => q !== th && !(th.g && q.g === th.g))); $("joinThing").setAttribute("aria-pressed", String(!!ui.joining));
   $("scenePanel").hidden = !(scene() && ui.state === "idle");
@@ -527,7 +527,8 @@ function endDraw(keep) {
     } else if (ui.edit >= 0) { for (const key of ["g", "gt", "lead"]) if (old[key]) thing[key] = old[key]; things[ui.edit] = thing; note(""); save(); }
     else {
       // stickers stamped apart from each other are separate objects, so each can be moved and resized on its own
-      const parts = clusters(ui.draft), apart = parts.length > 1 && parts.every((g) => g.some((q) => q.ch || q.fig)) && things.length + parts.length <= MAX_THINGS;
+      // every picture stamped in one go is a drawing of its own, so each can be moved, resized and given its own path
+      const parts = objects(ui.draft), apart = parts.length > 1 && ui.draft.some((q) => q.ch || q.fig || q.tx) && things.length + parts.length <= MAX_THINGS;
       if (apart) { parts.forEach((g) => things.push(build(g, {}))); note(`${parts.length} separate drawings, so you can move each one by itself. Tap one to choose how it moves.`); }
       else { things.push(thing); note("Now choose how it moves."); }
       ui.sel = things.length - 1;
@@ -554,7 +555,7 @@ function splitThing() {
   const th = sel(), things = data.scene.things;
   if (!th) return;
   if (th.g) { const n = mates(th).length; mates(th).forEach((t) => { delete t.g; delete t.gt; delete t.lead; }); note(`${n} separate drawings again. Each has kept its own way of moving.`); save(); paint(); render(); return; } // drawings that were joined come apart first
-  const parts = clusters(stageStrokes(th));
+  const parts = objects(stageStrokes(th));
   if (parts.length < 2) return;
   if (things.length - 1 + parts.length > MAX_THINGS) { note(`A scene can hold ${MAX_THINGS} drawings, and that would be too many. Delete one first.`); return; }
   // each one keeps how the drawing moved; a traced path stays with the first only, or they would all walk on top of each other
