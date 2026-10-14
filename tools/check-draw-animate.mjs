@@ -4,6 +4,7 @@
  *  - every move and action gives sensible numbers at all times, and never jumps suddenly from one moment to the next
  *  - a thing following a path stays on the path; an open path goes there and back, a closed one goes round
  *  - turning strokes into a thing re-centres them, and thinning a line keeps its two ends
+ *  - a thing near the edge that goes to and fro stays on the page
  *  - every way of going (walking, jogging, running, jumping, flying) moves smoothly, at its own pace and height
  *  - the two built-in examples are well formed and fit on the stage
  *  - the flipbook tunes (music.js): every bar has the right number of steps and every note can be read
@@ -48,6 +49,14 @@ for (const [gait] of E.GAITS) for (const move of ["stay", "side", "circle"]) {
   for (let f = 0; f <= 60 * 20; f += 1) { const q = E.pose(thing, f / 60, 0); if (last) far = Math.max(far, Math.hypot(q.x - last.x, q.y - last.y)); last = q; if (move === "stay") { low = Math.min(low, q.y); high = Math.max(high, q.y); } }
   check(far < 25, `${gait}/${move}: jumps ${far.toFixed(1)} between frames`);
   if (move === "stay") check(gait === "jump" ? high === 300 && low < 260 : gait === "fly" ? high < 300 : high === 300 && low === 300, `${gait}: goes up and down as it should (${low.toFixed(0)} to ${high.toFixed(0)})`);
+}
+// a thing near the edge that goes to and fro stays on the page (in the direction it goes), swinging further the other way instead
+for (const move of ["side", "updown", "circle"]) for (const [x, y] of [[30, 300], [770, 300], [400, 20], [400, 590], [20, 20]]) {
+  const thing = { s: [{ c: "#000", w: 8, p: [-30, -20, 30, 20] }], x, y, move, act: "none", speed: 1, face: true, path: null };
+  let off = 0, gone = 0;
+  for (let f = 0; f <= 60 * 12; f += 1) { const q = E.pose(thing, f / 60, 0); off = Math.max(off, move !== "updown" ? Math.max(-(q.x - 34), q.x + 34 - E.W) : 0, move !== "side" ? Math.max(-(q.y - 24), q.y + 24 - E.H) : 0); if (f) gone = Math.max(gone, Math.hypot(q.x - x, q.y - y)); }
+  check(off <= 0.01, `${move} from (${x}, ${y}) goes ${off.toFixed(0)} off the page`);
+  check(gone > 30, `${move} from (${x}, ${y}) still moves`);
 }
 check(E.hop(0) === 0 && E.hop(0.1) === 0 && E.hop(0.6) > 0.9, "a jump starts with a crouch on the ground, then goes up");
 { const at = (gait) => E.pose({ s: [], x: 400, y: 300, move: "side", act: "none", speed: 1, face: true, gait }, 0.3, 0).x; // early on, before the fastest turns back

@@ -10,7 +10,7 @@ import { pageTurn, pageLift } from "../../assets/paper.js";
 import { FONTS, TEXT_SIZE, fitText, strokeOn, strokeLive, trace } from "./render.js";
 import { flood, grow, outline } from "./fill.js";
 import { PEOPLE, CHARACTERS, ANIMALS, THINGS, SKINS, HAIRS, drawPerson, personById } from "./people.js";
-import { W, H, MOVES, ACTS, SPEEDS, GAITS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, poseTogether, between, tweenMoves, pathLength, shapePoints, fillTarget, areaOf, stickersUnder, scaled, turned, itemAt, JOINTS, jointReach, strokeNear, hingeOf, nearestOn, oldJoints, cutByLoop, inside, objects, exampleScene, exampleFlip } from "./engine.js";
+import { W, H, MOVES, ACTS, SPEEDS, GAITS, setFigBox, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, poseTogether, between, tweenMoves, pathLength, shapePoints, fillTarget, areaOf, stickersUnder, scaled, turned, itemAt, JOINTS, jointReach, strokeNear, hingeOf, nearestOn, oldJoints, cutByLoop, inside, objects, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -81,7 +81,7 @@ function layer(thing, live = null) {
   if (!L) {
     const figs = thing.s.filter((s) => s.fig || s.j || (s.ch && stickerMoves(s.ch))); // room for a swinging arm or leg, or for a jointed part of a pen drawing
     const pad = 4 + Math.round(Math.max(figs.reduce((m, s) => Math.max(m, s.fig || s.ch ? s.w : 0), 0) * 0.16, thing.s.reduce((m, s) => Math.max(m, jointReach(s)), 0)));
-    const b = bbox(thing.s) || { x0: -1, y0: -1, x1: 1, y1: 1, w: 2, h: 2 }, c = document.createElement("canvas");
+    const b = bbox(thing.s, true) || { x0: -1, y0: -1, x1: 1, y1: 1, w: 2, h: 2 }, c = document.createElement("canvas"); // a figure's whole square: room for arms and legs as they move
     c.width = Math.max(2, Math.ceil((b.w + pad * 2) * 2)); c.height = Math.max(2, Math.ceil((b.h + pad * 2) * 2));
     L = { cv: c, g: c.getContext("2d"), b, pad, alive: figs.length > 0, at: undefined };
     layers.set(thing, L);
@@ -169,7 +169,7 @@ function render(t = null) {
       ctx.save(); ctx.lineWidth = 2.5; ctx.setLineDash([8, 6]); ctx.strokeStyle = light ? "#ffd15a" : "#cf9410";
       if (th.move === "path" && th.path && ui.state !== "path") { ctx.beginPath(); ctx.moveTo(th.path[0], th.path[1]); for (let i = 2; i < th.path.length; i += 2) ctx.lineTo(th.path[i], th.path[i + 1]); ctx.stroke(); }
       ctx.restore();
-      const { b } = layer(th);
+      const b = bbox(th.s) || layer(th).b; // the box fits what is drawn, not the room left for it to move
       if (ui.state === "idle") {
         const set = mates(th);
         chosenBox(set.length > 1 ? boxOf(set) : { x0: th.x + b.x0, y0: th.y + b.y0, x1: th.x + b.x1, y1: th.y + b.y1, w: b.w, h: b.h }, light);
@@ -375,6 +375,37 @@ function paint() {
   $("moves").parentElement.hidden = follows; // where a follower goes is up to its leader
 }
 
+// ---------- what is really drawn where ----------
+// A person, animal or thing fills only part of its square, so taps and the chosen box go by where it is really drawn.
+const figKept = new Map();
+setFigBox((s) => {
+  let e = figKept.get(s.fig);
+  if (!e) {
+    const N = 240, U = 110, c = document.createElement("canvas"); c.width = c.height = N;
+    const g = c.getContext("2d", { willReadFrequently: true }); g.translate(N / 2, N / 2); drawPerson(g, { fig: s.fig, sk: 2, hc: -1 }, U);
+    const d = g.getImageData(0, 0, N, N).data; let x0 = N, y0 = N, x1 = -1, y1 = -1;
+    for (let y = 0; y < N; y += 1) for (let x = 0; x < N; x += 1) if (d[(y * N + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    e = x1 < 0 ? [-0.5, -0.5, 0.5, 0.5] : [(x0 - N / 2) / U, (y0 - N / 2) / U, (x1 + 1 - N / 2) / U, (y1 + 1 - N / 2) / U];
+    figKept.set(s.fig, e);
+  }
+  return e;
+});
+const probe = document.createElement("canvas"); probe.width = probe.height = 40;
+const pg = probe.getContext("2d", { willReadFrequently: true });
+/** The top-most stroke in `list` with something drawn within r of (x, y), or -1. */
+function inkAt(list, x, y, r) {
+  for (let i = list.length - 1; i >= 0; i -= 1) {
+    const s = list[i]; if (s.e) continue;
+    const b = bbox([s]); if (!b || x < b.x0 - r || x > b.x1 + r || y < b.y0 - r || y > b.y1 + r) continue;
+    pg.setTransform(1, 0, 0, 1, 0, 0); pg.clearRect(0, 0, 40, 40); pg.setTransform(1, 0, 0, 1, 20 - x, 20 - y); strokeOn(pg, s);
+    const d = pg.getImageData(20 - r, 20 - r, r * 2, r * 2).data;
+    for (let k = 3; k < d.length; k += 4) if (d[k] > 30) return i;
+  }
+  return -1;
+}
+/** What the Select tool picks up at (x, y): what is drawn right there, then close by, then (for an outline tapped inside) the box it is in. */
+function pickAt(list, x, y) { for (const r of [3, 16]) { const i = inkAt(list, x, y, r); if (i >= 0) return i; } return itemAt(list, x, y); }
+
 // ---------- pointer: draw, trace a path, or pick up and drag a thing ----------
 function at(e) { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) * W) / r.width, ((e.clientY - r.top) * H) / r.height]; }
 // ---------- joined drawings ----------
@@ -383,7 +414,7 @@ function at(e) { const r = cv.getBoundingClientRect(); return [((e.clientX - r.l
 const mates = (th) => (th ? (th.g ? data.scene.things.filter((q) => q.g === th.g) : [th]) : []);
 function boxOf(set) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-  set.forEach((t) => { const { b } = layer(t); x0 = Math.min(x0, t.x + b.x0); y0 = Math.min(y0, t.y + b.y0); x1 = Math.max(x1, t.x + b.x1); y1 = Math.max(y1, t.y + b.y1); });
+  set.forEach((t) => { const b = bbox(t.s) || layer(t).b; x0 = Math.min(x0, t.x + b.x0); y0 = Math.min(y0, t.y + b.y0); x1 = Math.max(x1, t.x + b.x1); y1 = Math.max(y1, t.y + b.y1); });
   return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
 }
 const snap = (set) => set.map((t) => ({ t, s: t.s, x: t.x, y: t.y, path: t.path }));
@@ -407,8 +438,10 @@ function turnSet(was, a, cx, cy) {
  *  wins over a tap that is only inside the box of a wide drawing lying over it. */
 function hit(x, y, skip = () => false) {
   const things = data.scene.things;
+  // first, what is really drawn under the finger: right there, then close by (so a tap between two camels picks the nearer one)
+  for (const r of [3, 16]) for (let i = things.length - 1; i >= 0; i -= 1) { const th = things[i]; if (!skip(th, i) && inkAt(th.s, x - th.x, y - th.y, r) >= 0) return i; }
   for (let i = things.length - 1; i >= 0; i -= 1) { const th = things[i]; if (!skip(th, i) && th.s.some((q) => { if (q.e) return false; const b = bbox([q]); return x >= th.x + b.x0 - 10 && x <= th.x + b.x1 + 10 && y >= th.y + b.y0 - 10 && y <= th.y + b.y1 + 10; })) return i; }
-  for (let i = things.length - 1; i >= 0; i -= 1) { const th = things[i], { b } = layer(th); if (!skip(th, i) && x >= th.x + b.x0 - 10 && x <= th.x + b.x1 + 10 && y >= th.y + b.y0 - 10 && y <= th.y + b.y1 + 10) return i; }
+  for (let i = things.length - 1; i >= 0; i -= 1) { const th = things[i], b = bbox(th.s) || layer(th).b; if (!skip(th, i) && x >= th.x + b.x0 - 10 && x <= th.x + b.x1 + 10 && y >= th.y + b.y0 - 10 && y <= th.y + b.y1 + 10) return i; }
   return -1;
 }
 cv.addEventListener("pointerdown", (e) => {
@@ -882,8 +915,9 @@ function grabAt(x, y) {
   const list = strokes(), box = pickBox();
   if (box && onTurn(box, x, y)) { ui.grab = { turn: true, cx: box.cx, cy: box.cy, a0: Math.atan2(y - box.cy, x - box.cx), was: keep(picked()), moved: false }; return; }
   if (box && onHandle(box, x, y)) { ui.grab = { size: true, ax: box.x0, ay: box.y0, from: Math.max(20, Math.hypot(x - box.x0, y - box.y0)), was: keep(picked()), moved: false }; return; }
-  const i = itemAt(list, x, y);
+  const i = pickAt(list, x, y);
   if (!ui.all) { ui.pick = i >= 0 ? [i] : []; paint(); }
+  if (i < 0 && !ui.all && hit(x, y) >= 0) note("That one is already on the page, not part of this drawing. Tap Done, then tap it to move it.");
   if (i >= 0 || (ui.all && list.length)) ui.grab = { x, y, was: keep(picked()), moved: false };
   render();
 }

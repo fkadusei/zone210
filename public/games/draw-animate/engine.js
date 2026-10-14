@@ -22,10 +22,21 @@ export function hop(u) { const q = u * HOP - Math.floor(u * HOP); return q < 0.1
 /** How wide and tall a piece of text is: tw is its measured width (the page measures it when it is written); each line is 1.2 times the letter size. */
 export const textBox = (s) => [s.tw || Math.max(...s.tx.split("\n").map((l) => l.length)) * s.w * 0.56, s.tx.split("\n").length * s.w * 1.2];
 const solid = (s) => !!(s.ch || s.fig || s.tx); // a sticker, a person or a piece of text: one picture at one point, not a line
-/** The box around some strokes, allowing for how thick the lines are (a turned sticker or person needs more room). */
-export function bbox(strokes) {
+let figBox = null;
+/** The page tells the engine how much of its square each drawn person, animal or thing really fills:
+ *  fn(stroke) gives [x0, y0, x1, y1] for one unit tall, facing right. Without it, a figure's box is the whole square. */
+export const setFigBox = (fn) => { figBox = fn; };
+/** The box around some strokes, allowing for how thick the lines are (a turned sticker or person needs more room).
+ *  `loose` gives a drawn figure its whole square, room for its arms and legs to swing (for painting it while it moves). */
+export function bbox(strokes, loose = false) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-  for (const s of strokes) { if (s.e) continue; const h = s.ch ? s.w * (s.r ? 0.72 : 0.62) : s.fig ? s.w * (s.r ? 0.6 : 0.56) : s.w / 2; let hx = h, hy = h; if (s.tx) { const [tw, th] = textBox(s); hx = s.r ? Math.hypot(tw, th) / 2 : tw / 2; hy = s.r ? hx : th / 2; } for (let i = 0; i < s.p.length; i += 2) { x0 = Math.min(x0, s.p[i] - hx); x1 = Math.max(x1, s.p[i] + hx); y0 = Math.min(y0, s.p[i + 1] - hy); y1 = Math.max(y1, s.p[i + 1] + hy); } }
+  for (const s of strokes) { if (s.e) continue;
+    if (s.fig && figBox && !loose) { // just the part of the square the figure fills, turned and mirrored as it is drawn
+      const [a0, b0, a1, b1] = figBox(s), c = Math.cos(s.r || 0), n = Math.sin(s.r || 0);
+      for (const [u, v] of [[a0, b0], [a1, b0], [a1, b1], [a0, b1]]) { const px = (u * c - v * n) * s.w * (s.m ? -1 : 1), py = (u * n + v * c) * s.w; x0 = Math.min(x0, s.p[0] + px); x1 = Math.max(x1, s.p[0] + px); y0 = Math.min(y0, s.p[1] + py); y1 = Math.max(y1, s.p[1] + py); }
+      continue;
+    }
+    const h = s.ch ? s.w * (s.r ? 0.72 : 0.62) : s.fig ? s.w * (s.r ? 0.6 : 0.56) : s.w / 2; let hx = h, hy = h; if (s.tx) { const [tw, th] = textBox(s); hx = s.r ? Math.hypot(tw, th) / 2 : tw / 2; hy = s.r ? hx : th / 2; } for (let i = 0; i < s.p.length; i += 2) { x0 = Math.min(x0, s.p[i] - hx); x1 = Math.max(x1, s.p[i] + hx); y0 = Math.min(y0, s.p[i + 1] - hy); y1 = Math.max(y1, s.p[i + 1] + hy); } }
   return x0 === Infinity ? null : { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
 }
 const r1 = (v) => Math.round(v * 10) / 10;
@@ -270,6 +281,18 @@ export function pointAt(p, d) {
 /** A path whose end is near its start goes round and round; any other path goes there and back. */
 export const isLoop = (p) => p.length >= 8 && Math.hypot(p[0] - p[p.length - 2], p[1] - p[p.length - 1]) < 45;
 
+// Things that go to and fro stay on the page: one put near an edge swings further the other way instead.
+const sizes = new WeakMap();
+function sizeOf(strokes) { let b = sizes.get(strokes); if (!b) { b = bbox(strokes) || { x0: 0, y0: 0, x1: 0, y1: 0 }; sizes.set(strokes, b); } return b; }
+/** The middle and reach of a swing of `reach` either side of `at`, kept between lo and hi (where the middle may go). */
+function within(at, reach, lo, hi) {
+  if (hi <= lo) return [at, 0]; // bigger than the page: it stays where it is
+  let a = at - reach, b = at + reach;
+  if (b > hi) { a -= b - hi; b = hi; }
+  if (a < lo) { b = Math.min(hi, b + (lo - a)); a = lo; }
+  return [(a + b) / 2, (b - a) / 2];
+}
+
 /**
  * Where a thing is at time t (seconds): { x, y, rot, sx, sy, flip }. `i` is its place in the list, used to start each
  * thing at a slightly different moment so they don't all move in step. At t = null it is at rest.
@@ -279,9 +302,12 @@ export function pose(thing, t, i = 0) {
   if (t === null) return out;
   const k = thing.speed || 1, u = t * k + i * 0.37, f = FASTER[thing.gait] || 1, v = u * f; // v: how far along its way it is
   let heading = 0;
-  if (thing.move === "side") { out.x += Math.sin((v * TAU) / 3) * 110; heading = Math.cos((v * TAU) / 3); }
-  else if (thing.move === "updown") out.y += Math.sin((u * TAU) / 3) * 80;
-  else if (thing.move === "circle") { out.x += Math.cos((v * TAU) / 4) * 70; out.y += Math.sin((v * TAU) / 4) * 70; heading = -Math.sin((v * TAU) / 4); }
+  if (thing.move === "side") { const [c, a] = within(thing.x, 110, -sizeOf(thing.s).x0, W - sizeOf(thing.s).x1); out.x = c + Math.sin((v * TAU) / 3) * a; heading = Math.cos((v * TAU) / 3); }
+  else if (thing.move === "updown") { const [c, a] = within(thing.y, 80, -sizeOf(thing.s).y0, H - sizeOf(thing.s).y1); out.y = c + Math.sin((u * TAU) / 3) * a; }
+  else if (thing.move === "circle") {
+    const b = sizeOf(thing.s), [cx, ax] = within(thing.x, 70, -b.x0, W - b.x1), [cy, ay] = within(thing.y, 70, -b.y0, H - b.y1), r = Math.min(ax, ay);
+    out.x = cx + Math.cos((v * TAU) / 4) * r; out.y = cy + Math.sin((v * TAU) / 4) * r; heading = -Math.sin((v * TAU) / 4);
+  }
   else if (thing.move === "path" && thing.path && thing.path.length >= 4) {
     const len = pathLength(thing.path), gone = t * k * f * 140;
     if (len > 0) {
