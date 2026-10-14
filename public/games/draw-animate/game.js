@@ -325,12 +325,32 @@ function play() {
 }
 function stop() {
   if (ui.state !== "play") return;
-  cancelAnimationFrame(ui.raf); ui.state = "idle"; ui.turn = null; ui.scrub = null;
+  cancelAnimationFrame(ui.raf); ui.state = "idle"; ui.turn = null; ui.scrub = null; setFull(false);
   stopTune();
   if (!scene()) syncFlip();
   paint(); render();
 }
 document.addEventListener("visibilitychange", () => { if (document.hidden && !recording) stop(); });
+// ---------- full screen while it plays ----------
+// The picture fills the screen on black. Where the browser allows it (Android, iPad, computers) the browser's own bars
+// go too; an iPhone keeps Safari's bars, and the picture fills the page between them.
+let full = false;
+function setFull(on) {
+  if (on === full) return;
+  full = on;
+  $("stage").classList.toggle("full", on); document.body.classList.toggle("fullview", on); $("fullBar").hidden = !on;
+  const de = document.documentElement, ask = de.requestFullscreen || de.webkitRequestFullscreen, inFull = document.fullscreenElement || document.webkitFullscreenElement;
+  try {
+    if (on && ask && !inFull) { const r = ask.call(de); if (r && r.catch) r.catch(() => {}); }
+    else if (!on && inFull) { const r = (document.exitFullscreen || document.webkitExitFullscreen).call(document); if (r && r.catch) r.catch(() => {}); }
+  } catch (err) { /* the picture still fills the page */ }
+  if (on) $("fullExit").focus();
+  render();
+}
+for (const ev of ["fullscreenchange", "webkitfullscreenchange"]) document.addEventListener(ev, () => { if (full && !(document.fullscreenElement || document.webkitFullscreenElement)) setFull(false); }); // the browser's own way out (Esc, the back gesture)
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && full) setFull(false); });
+$("fullExit").addEventListener("click", () => setFull(false));
+$("fullStop").addEventListener("click", () => stop());
 
 // ---------- the buttons and words around the picture ----------
 const chips = (id, items, attr) => { $(id).innerHTML = items.map(([v, label]) => `<button class="g-chip" data-${attr}="${v}">${label}</button>`).join(""); };
@@ -342,8 +362,8 @@ function paint() {
   $("stage").classList.toggle("playing", playing);
   const btn = (act, label, cls = "", off = false) => `<button class="g-btn ${cls}" data-act="${act}" ${off ? "disabled" : ""}>${label}</button>`;
   let row, hint;
-  if (playing && !scene()) { row = btn("stop", "⏹ Stop") + btn("auto", ui.auto ? "⏸ Pause" : "▶ Flip by itself", "ghost"); hint = "Drag a page across to turn it yourself: left to go on, right to go back. Or use the thumb slider."; }
-  else if (playing) { row = btn("stop", "⏹ Stop"); hint = "Playing. Press Stop to change things."; }
+  if (playing && !scene()) { row = btn("stop", "⏹ Stop") + btn("auto", ui.auto ? "⏸ Pause" : "▶ Flip by itself", "ghost") + btn("full", "⛶ Full screen", "ghost"); hint = "Drag a page across to turn it yourself: left to go on, right to go back. Or use the thumb slider."; }
+  else if (playing) { row = btn("stop", "⏹ Stop") + btn("full", "⛶ Full screen", "ghost"); hint = "Playing. Press Stop to change things."; }
   else if (!scene()) { row = btn("addFrame", "＋ New page", "ghost") + btn("copyFrame", "⧉ Copy page", "ghost") + btn("delFrame", "🗑 Delete page", "ghost") + btn("play", "▶ Play", "", data.flip.frames.length < 2); hint = data.flip.frames.length < 2 ? "Draw the first page, then tap New page and draw it again, a little different." : `Page ${ui.frame + 1} of ${data.flip.frames.length}. Change each page a little, then press Play.`; }
   else if (ui.state === "draw") { row = btn("done", "✓ Done") + btn("cancel", "✕ Cancel", "ghost"); hint = ui.edit >= 0 ? "Add to your drawing, then tap Done." : "Draw one thing, like a fish, a ball or a cloud. Then tap Done."; }
   else if (ui.state === "path") { row = btn("cancel", "✕ Cancel", "ghost"); hint = "Trace a line with your finger to show where it should go."; }
@@ -643,6 +663,7 @@ $("mainRow").addEventListener("click", (e) => {
   else if (act === "done") endDraw(true);
   else if (act === "cancel") { if (ui.state === "path") { ui.state = "idle"; ui.pathPts = null; paint(); render(); } else endDraw(false); }
   else if (act === "play") play();
+  else if (act === "full") setFull(true);
   else if (act === "auto") { ui.auto = !ui.auto; ui.want = null; ui.lastTurn = performance.now(); paint(); }
   else if (act === "stop") stop();
   else if (act === "addFrame") addFrame(false);

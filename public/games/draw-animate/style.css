@@ -17,6 +17,16 @@
 .thumbrow input { flex: 1; height: 34px; accent-color: var(--gold-deep); }
 .stage.pick canvas { cursor: grab; }
 .stage.playing canvas { cursor: default; }
+/* full screen while it plays: the picture as big as the screen allows, on black, with Stop and Exit in the corner */
+body.fullview { overflow: hidden; }
+.stage.full, .stage.full.book { position: fixed; inset: 0; z-index: 1000; width: auto; margin: 0; background: #000; display: flex; align-items: center; justify-content: center; }
+.stage.full canvas { width: min(100vw, calc(100dvh * 4 / 3)); border: 0; border-radius: 0; box-shadow: none; }
+.stage.full::before, .stage.full::after { display: none; }
+.fullbar { position: absolute; z-index: 3; top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); left: max(10px, env(safe-area-inset-left)); display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; line-height: normal; pointer-events: none; }
+.fullbar[hidden] { display: none; }
+.fullbar .g-btn { pointer-events: auto; background: rgba(20, 20, 30, 0.72); color: #fff; border-color: rgba(255, 255, 255, 0.35); }
+.fullbar .turnhint { display: none; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-right: auto; }
+@media (orientation: portrait) and (max-width: 700px) { .fullbar .turnhint { display: inline; } }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; }
 .row.left { justify-content: flex-start; }
 .row.main { margin: 12px 0; }
