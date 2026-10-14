@@ -967,7 +967,15 @@ function grabAt(x, y) {
   if (box && onHandle(box, x, y)) { ui.grab = { size: true, ax: box.x0, ay: box.y0, from: Math.max(20, Math.hypot(x - box.x0, y - box.y0)), was: keep(picked()), moved: false }; return; }
   const i = pickAt(list, x, y);
   if (!ui.all) { ui.pick = i >= 0 ? [i] : []; paint(); }
-  if (i < 0 && !ui.all && hit(x, y) >= 0) note("That one is already on the page, not part of this drawing. Tap Done, then tap it to move it.");
+  if (i < 0 && !ui.all && scene()) { // a drawing already on the page: finish this one (keeping what was added) and pick that one up instead
+    const j = hit(x, y, (q, n) => n === ui.edit), th = data.scene.things[j];
+    if (th) {
+      endDraw(true);
+      ui.sel = data.scene.things.indexOf(th); ui.drag = { x, y };
+      note("Picked up. Drag it to move it, use its handles to resize or turn it, or choose how it moves below.");
+      paint(); render(); return;
+    }
+  }
   if (i >= 0 || (ui.all && list.length)) ui.grab = { x, y, was: keep(picked()), moved: false };
   render();
 }
