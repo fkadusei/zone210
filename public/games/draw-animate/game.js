@@ -18,7 +18,26 @@ const store = {
   set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (err) { return false; } },
 };
 const KEY = "zone210_drawanim";
-const data = { mode: "scene", color: "#1f2430", size: 10, scene: { bg: "paper", things: [] }, flip: { frames: [[]], fps: 6, onion: true }, ...store.get(KEY, {}) };
+const MAX_THINGS = 24, MAX_FRAMES = 60;
+/**
+ * What was saved, made safe to use: a save from an older version, or one damaged some other way, must never stop the
+ * page from opening. Anything that cannot be drawn is left out; anything missing gets its usual value.
+ */
+function tidy(d) {
+  d = d && typeof d === "object" && !Array.isArray(d) ? d : {};
+  const fin = (v) => typeof v === "number" && Number.isFinite(v);
+  const drawable = (s) => !!s && typeof s === "object" && Array.isArray(s.p) && s.p.length >= 2 && s.p.length % 2 === 0 && s.p.every(fin) && fin(s.w) && s.w > 0;
+  const scene = d.scene && typeof d.scene === "object" ? d.scene : {};
+  const things = (Array.isArray(scene.things) ? scene.things : []).filter((t) => t && typeof t === "object")
+    .map((t) => ({ ...t, s: Array.isArray(t.s) ? t.s.filter(drawable) : [], x: fin(t.x) ? t.x : W / 2, y: fin(t.y) ? t.y : H / 2, path: Array.isArray(t.path) && t.path.length >= 4 && t.path.length % 2 === 0 && t.path.every(fin) ? t.path : null }))
+    .filter((t) => t.s.length).slice(0, MAX_THINGS);
+  const flip = d.flip && typeof d.flip === "object" ? d.flip : {};
+  const frames = (Array.isArray(flip.frames) ? flip.frames : []).slice(0, MAX_FRAMES).map((f) => (Array.isArray(f) ? f.filter(drawable) : []));
+  return { mode: "scene", color: "#1f2430", size: 10, ...d, mode: d.mode === "flip" ? "flip" : "scene",
+    scene: { ...scene, bg: typeof scene.bg === "string" ? scene.bg : "paper", things },
+    flip: { fps: 6, onion: true, ...flip, frames: frames.length ? frames : [[]], bgs: Array.isArray(flip.bgs) ? flip.bgs.map((b) => (typeof b === "string" ? b : "paper")) : flip.bgs } };
+}
+const data = tidy(store.get(KEY, {}));
 (data.scene.things || []).forEach((th) => oldJoints(th.s || [])); // a part used to have one elbow at most
 if (!Array.isArray(data.flip.frames) || !data.flip.frames.length) data.flip.frames = [[]];
 // each flipbook page has its own background: data.flip.bgs runs alongside data.flip.frames (older saves had one for the whole book)
@@ -37,7 +56,7 @@ const PERSON_SIZE = { 4: 80, 10: 130, 22: 200, 44: 300 }; // and a hand-drawn pe
 const TOOLS = [["pen", "✏️ Pen"], ["shape", "🔷 Shapes"], ["fill", "🪣 Fill"], ["stamp", "🧩 Pictures"], ["text", "🔤 Text"], ["move", "✋ Select"], ["joint", "🦴 Joints"], ["erase", "🧽 Eraser"]];
 const SHAPE_ICON = { line: "╱", rect: "▭", oval: "◯", tri: "△", diamond: "◇", star: "☆", heart: "♡" };
 const FPS = [[0.75, "Slow"], [6, "Medium"], [10, "Fast"]]; // pages a second: Slow holds each page for well over a second, long enough to read it
-const MAX_THINGS = 24, MAX_FRAMES = 60;
+if (!FPS.some(([v]) => v === data.flip.fps)) data.flip.fps = 6; // a speed this version does not have
 
 const cv = $("cv"), ctx = cv.getContext("2d");
 const saverOn = () => !!(window.z210Saver && window.z210Saver.on);
@@ -493,9 +512,15 @@ function hit(x, y, skip = () => false) {
   for (let i = things.length - 1; i >= 0; i -= 1) { const th = things[i], b = bbox(th.s) || layer(th).b; if (!skip(th, i) && x >= th.x + b.x0 - 10 && x <= th.x + b.x1 + 10 && y >= th.y + b.y0 - 10 && y <= th.y + b.y1 + 10) return i; }
   return -1;
 }
+// One finger at a time: a second finger or a resting palm is ignored while the first is down, so it can't take over
+// a line or a drag. A first finger that has stayed still for a second (a palm) gives way to the next one.
+let finger = null, fingerT = 0;
+const mine = (e) => finger === null || e.pointerId === finger;
 cv.addEventListener("pointerdown", (e) => {
   if ((ui.state === "play" && scene()) || (e.pointerType === "mouse" && e.button !== 0)) return;
   e.preventDefault();
+  if (finger !== null && e.pointerId !== finger) { if (performance.now() - fingerT < 1000) return; lift(); } // still busy with the first finger
+  finger = e.pointerId; fingerT = performance.now();
   try { cv.setPointerCapture(e.pointerId); } catch (err) { /* older browsers */ }
   const [x, y] = at(e);
   if (ui.state === "play") { endTurn(); ui.scrub = { x, lastX: x, lastT: performance.now(), v: 0 }; ui.want = null; if (ui.auto) { ui.auto = false; paint(); } return; } // take hold of the book
@@ -526,6 +551,8 @@ cv.addEventListener("pointerdown", (e) => {
   }
 });
 cv.addEventListener("pointermove", (e) => {
+  if (!mine(e)) return;
+  if (finger !== null) fingerT = performance.now();
   if (!ui.live && !ui.pathPts && !ui.drag && !ui.scrub && !ui.from && !ui.grab && !ui.jdrag && !ui.lasso) return;
   const [x, y] = at(e);
   if (ui.grab) { grabMove(x, y); return; }
@@ -596,8 +623,7 @@ function lift() {
   } else if (ui.drag) { ui.drag = null; save(); }
   render();
 }
-cv.addEventListener("pointerup", lift);
-cv.addEventListener("pointercancel", lift);
+for (const type of ["pointerup", "pointercancel"]) cv.addEventListener(type, (e) => { if (!mine(e)) return; finger = null; lift(); });
 
 // ---------- bring it to life ----------
 function startDraw(edit = -1) {
@@ -619,8 +645,12 @@ function endDraw(keep) {
     else {
       // stickers stamped apart from each other are separate objects, so each can be moved and resized on its own
       // every picture stamped in one go is a drawing of its own, so each can be moved, resized and given its own path
-      const parts = objects(ui.draft), apart = parts.length > 1 && ui.draft.some((q) => q.ch || q.fig || q.tx) && things.length + parts.length <= MAX_THINGS;
-      if (apart) { parts.forEach((g) => things.push(build(g, {}))); note(`${parts.length} separate drawings, so you can move each one by itself. Tap one to choose how it moves.`); }
+      const parts = objects(ui.draft), room = MAX_THINGS - things.length, apart = parts.length > 1 && ui.draft.some((q) => q.ch || q.fig || q.tx) && room >= 2;
+      if (apart) { // as many separate drawings as the scene has room for; any more are kept together as the last one
+        const own = parts.length <= room ? parts : [...parts.slice(0, room - 1), parts.slice(room - 1).flat()];
+        own.forEach((g) => things.push(build(g, {})));
+        note(parts.length <= room ? `${parts.length} separate drawings, so you can move each one by itself. Tap one to choose how it moves.` : `A scene can hold ${MAX_THINGS} drawings, so the last ${parts.length - room + 1} of these are kept together as one. Tap a drawing to choose how it moves.`);
+      }
       else { things.push(thing); note("Now choose how it moves."); }
       ui.sel = things.length - 1;
       save();
@@ -890,6 +920,7 @@ function jointTap(x, y) {
   const i = strokeNear(list, x, y);
   if (i < 0) { ui.joint = null; note(list.length ? "Tap an arm, a leg, a tail or a wing of your drawing." : "Draw something with the pen first, then come back to pin its arms and legs."); jointShow(); return; }
   const s = list[i];
+  if (s.fig || s.ch || s.tx) { note(s.tx ? "Joints are for pen drawings. Words can't bend." : "Joints are for pen drawings. Pictures already move their arms, legs and wings by themselves when they travel."); return; }
   if (s.j) { ui.joint = jkey(s); note("Joint chosen. Drag the pin to move it, change how far it swings, add more lines to it, or remove it."); jointShow(false); return; }
   const long = (q) => (q.e || q.ch || q.fig || q.tx ? 0 : pathLength(q.p)); // a line that is most of the drawing is the body, not an arm
   if (list.filter((q) => !q.e).length < 2 || long(s) > 0.6 * list.reduce((m, q) => m + long(q), 0)) { note("That line is most of your drawing. Draw a ring round the part of it that should move, an arm or a leg, and it will be cut free and pinned."); return; }
