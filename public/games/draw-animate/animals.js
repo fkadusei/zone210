@@ -413,12 +413,101 @@ const SIDE = {
   monkey: { o: { len: 0.17, fat: 0.1, leg: 0.17, lw: 0.04, neck: 0.06, up: 0.9, nw: 0.08, head: 0.085, snout: 0.04, ears: "round", tail: "up", face: "b", belly: true } },
   gorilla: { o: { len: 0.2, fat: 0.15, leg: 0.17, lw: 0.07, neck: 0.04, up: 0.6, nw: 0.13, head: 0.095, snout: 0.045, bx: -0.04, ears: "round", face: "b" } },
   reindeer: { like: "deer", o: { nosec: "#e5484d" } },
+  penguin: { own: true }, frog: { own: true }, owl: { own: true }, chick: { own: true }, // drawn side-on below
 };
+
+// ---------- birds and a frog, side-on ----------
+// How their legs go: `step` is where each foot is ([x offset, lift]) through a stride; walking, jogging and running
+// step faster and further; jumping tucks the feet up; flying trails them behind.
+function going(live) {
+  const gait = live && live.go ? live.gait || "walk" : live && (live.gait === "jump" || live.gait === "fly") ? live.gait : null;
+  const pace = { walk: [1.4, 0.04], jog: [1.9, 0.06], run: [2.4, 0.08] }[gait] || [0, 0], ph = live ? live.t * TAU * pace[0] : 0;
+  const air = gait === "jump" ? hop(live.t) : 0, fly = gait === "fly";
+  const step = (off) => (fly ? [-0.05, 0.05] : air ? [0, 0.06 * air] : pace[0] ? [pace[1] * Math.sin(ph + off), Math.max(0, Math.cos(ph + off)) * 0.04] : [0, 0]);
+  return { gait, ph, air, fly, step, run: gait === "run" ? 1 : gait === "jog" ? 0.5 : 0 };
+}
+const ORANGE = "#f59e0b";
+/** A bird's leg from the body (x, top) down to the ground, with three toes pointing forward. */
+function birdLeg(g, x, top, [dx, up], far, c = ORANGE) {
+  const { line } = kit(g), fx = x + dx, fy = 0.44 - up, col = far ? "#c27c0e" : c;
+  line(col, 0.022, [[x, top], [fx, fy]]); line(col, 0.016, [[fx - 0.02, fy], [fx + 0.06, fy]]); line(col, 0.014, [[fx, fy], [fx + 0.045, fy + 0.012]]);
+}
+Object.assign(OWN, {
+  "side-penguin"(g, a, b, live) { // a waddle: short shuffling steps, the body rocking from foot to foot, flippers out
+    const { oval, tri } = kit(g), m = going(live), rock = m.gait && !m.fly && !m.air ? Math.sin(m.ph) * 0.08 : 0;
+    const flap = m.fly ? beat(live, 3) * 0.9 : m.air ? 0.9 * m.air : m.gait ? Math.sin(m.ph) * 0.25 + 0.15 : 0;
+    const foot = ([dx, up], far) => oval(far ? "#c27c0e" : ORANGE, 0.06 + dx, 0.43 - up, 0.085, 0.032);
+    g.save(); g.translate(0, 0.44); g.rotate(rock + m.run * 0.12); g.translate(0, -0.44);
+    foot(m.step(Math.PI), true);
+    oval(a, 0, 0.0, 0.21, 0.42); oval(b, 0.075, 0.07, 0.13, 0.33);
+    oval("#ffffff", 0.1, -0.27, 0.035, 0.035); oval(DARK, 0.11, -0.27, 0.018, 0.018);
+    tri(ORANGE, [0.18, -0.27], [0.3, -0.22], [0.18, -0.19]);
+    oval("rgba(250,204,21,0.55)", 0.07, -0.18, 0.05, 0.025, -0.3); // a splash of yellow at the neck
+    foot(m.step(0), false);
+    g.save(); g.translate(-0.02, -0.12); g.rotate(-0.1 + flap); oval(a, 0, 0.14, 0.055, 0.17); g.restore(); // the flipper swings from the shoulder
+    g.restore();
+  },
+  "side-frog"(g, a, b, live) { // hops: crouch, push off with the long back legs, stretch out in the air, land
+    const { oval, line, curve } = kit(g), m = going(live);
+    let up = 0, out = 0; // up: how high this hop is; out: how stretched the legs are
+    if (m.air) out = m.air; else if (m.fly) out = 0.7 + beat(live, 1.5) * 0.15;
+    else if (m.gait) { const rate = { walk: 1.1, jog: 1.5, run: 1.9 }[m.gait], q = live.t * rate - Math.floor(live.t * rate); const h = q < 0.3 ? 0 : Math.sin((Math.PI * (q - 0.3)) / 0.7); up = h * (0.1 + m.run * 0.06); out = h; }
+    g.save(); g.translate(0, -up); g.rotate(-out * 0.25); // in the air the frog points up and forward
+    const backLeg = (far) => { const c = far ? "rgba(0,0,0,0.18)" : null, knee = [-0.08 - out * 0.12, 0.22 + out * 0.08], foot = [-0.04 - out * 0.32, 0.42 - out * 0.08];
+      oval(a, -0.13 - out * 0.04, 0.28 - out * 0.03, 0.13, 0.08, -0.3 + out * 0.5); if (c) oval(c, -0.13 - out * 0.04, 0.28 - out * 0.03, 0.13, 0.08, -0.3 + out * 0.5);
+      line(a, 0.045, [[-0.17, 0.3], knee, foot]); if (c) line(c, 0.045, [[-0.17, 0.3], knee, foot]);
+      oval(far ? "#2fa85e" : a, foot[0] + 0.03, foot[1], 0.065, 0.025, -out * 0.4); };
+    backLeg(true);
+    line("#2fa85e", 0.035, [[0.1, 0.22], [0.15 + out * 0.08, 0.42 - out * 0.06]]); // far front leg
+    oval(a, -0.02, 0.18, 0.24, 0.15, -0.35); oval(b, 0.03, 0.26, 0.17, 0.07, -0.3);
+    oval(a, 0.16, 0.06, 0.14, 0.1);
+    oval(a, 0.14, -0.035, 0.068, 0.068); oval("#ffffff", 0.148, -0.04, 0.048, 0.048); oval(DARK, 0.165, -0.04, 0.024, 0.024);
+    curve("#14532d", 0.012, [0.13, 0.11], [0.22, 0.12], [0.29, 0.06]);
+    oval("rgba(244,114,182,0.4)", 0.2, 0.085, 0.025, 0.016);
+    backLeg(false);
+    line(a, 0.04, [[0.12, 0.23], [0.17 + out * 0.1, 0.42 - out * 0.06]]); oval(a, 0.2 + out * 0.1, 0.425 - out * 0.06, 0.045, 0.02);
+    g.restore();
+  },
+  "side-owl"(g, a, b, live) { // steps along on short legs; flies with big slow flaps
+    const { oval, tri } = kit(g), m = going(live), bob = m.gait && !m.fly && !m.air ? Math.abs(Math.sin(m.ph)) * 0.012 : 0;
+    const wing = m.fly ? beat(live, 1.6) * 1.2 + 0.4 : m.air ? 1.2 * m.air : 0;
+    birdLeg(g, -0.02, 0.34, m.step(Math.PI), true);
+    g.save(); g.translate(0, -bob); g.rotate(m.fly ? 0.35 : m.run * 0.1);
+    tri(a, [-0.14, 0.26], [-0.3, 0.4], [-0.06, 0.36]); // tail
+    oval(a, -0.02, 0.08, 0.2, 0.3); oval(b, 0.07, 0.13, 0.11, 0.22);
+    for (const [y, x] of [[0.04, 0.07], [0.12, 0.09], [0.2, 0.07]]) { g.strokeStyle = "rgba(0,0,0,0.18)"; g.lineWidth = 0.01; g.beginPath(); g.arc(x, y, 0.025, 0.3, Math.PI - 0.3); g.stroke(); } // breast feathers
+    tri(a, [-0.07, -0.33], [-0.11, -0.47], [0.02, -0.37]); // ear tuft
+    oval(a, 0.03, -0.24, 0.17, 0.15); oval(b, 0.12, -0.24, 0.085, 0.105);
+    oval("#ffffff", 0.14, -0.26, 0.05, 0.05); oval(DARK, 0.16, -0.26, 0.027, 0.027); oval("#ffffff", 0.153, -0.268, 0.009, 0.009);
+    tri(ORANGE, [0.19, -0.24], [0.24, -0.2], [0.19, -0.17]);
+    g.save(); g.translate(-0.04, -0.08); g.rotate(0.12 + wing); oval(a, -0.02, 0.15, 0.1, 0.22); oval("rgba(0,0,0,0.12)", -0.02, 0.15, 0.1, 0.22); g.restore(); // the wing
+    g.restore();
+    birdLeg(g, 0.06, 0.34, m.step(0), false);
+  },
+  "side-chick"(g, a, b, live) { // little quick steps, head bobbing; flutters its stubby wings to fly
+    const { oval, tri } = kit(g), m = going(live), nod = m.gait && !m.fly && !m.air ? Math.sin(m.ph * 2) * 0.015 : 0;
+    const wing = m.fly ? beat(live, 4) * 1.0 + 0.5 : m.air ? 1.0 * m.air : m.gait ? 0.15 : 0;
+    birdLeg(g, -0.03, 0.28, m.step(Math.PI), true);
+    g.save(); g.rotate(m.fly ? 0.25 : m.run * 0.1);
+    tri(a, [-0.18, 0.06], [-0.3, 0.0], [-0.2, 0.14]); // tail
+    oval(a, -0.02, 0.12, 0.22, 0.2);
+    g.save(); g.translate(nod * 2, nod);
+    oval(a, 0.12, -0.14, 0.14, 0.13);
+    tri(ORANGE, [0.24, -0.17], [0.33, -0.13], [0.24, -0.1]);
+    oval(DARK, 0.17, -0.17, 0.02, 0.02); oval("#ffffff", 0.165, -0.176, 0.006, 0.006); oval("rgba(244,114,182,0.45)", 0.18, -0.105, 0.025, 0.016);
+    tri(a, [0.06, -0.26], [0.1, -0.33], [0.12, -0.26]); // a tuft on top
+    g.restore();
+    g.save(); g.translate(-0.06, 0.06); g.rotate(0.3 + wing); oval(a, -0.02, 0.06, 0.11, 0.075); oval("rgba(180,120,0,0.28)", -0.02, 0.06, 0.11, 0.075); g.restore();
+    g.restore();
+    birdLeg(g, 0.06, 0.28, m.step(0), false);
+  },
+});
 /** The side-on walking animal for a sitting one (`id`), or null if it has none (it then hops along facing us). */
 export function sideOf(id) {
   const same = ANIMALS.find((x) => x.id === `walk-${id}`), own = ANIMALS.find((x) => x.id === id), more = SIDE[id];
   if (same) return same;
   if (!more || !own) return null;
+  if (more.own) return { id: `side-${id}`, name: own.name, custom: "animal", top: own.top, bot: own.bot };
   const like = more.like && ANIMALS.find((x) => x.id === `walk-${more.like}`);
   return { id: `side-${id}`, custom: "animal", walk: true, top: own.top, bot: own.bot, o: { ...(like ? like.o : {}), ...more.o } };
 }
