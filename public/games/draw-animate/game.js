@@ -9,8 +9,8 @@ import { BGS, BG_TABS, bgTab, DARK, drawBg } from "./backgrounds.js";
 import { pageTurn, pageLift } from "../../assets/paper.js";
 import { FONTS, TEXT_SIZE, fitText, strokeOn, strokeLive, trace } from "./render.js";
 import { flood, grow, outline } from "./fill.js";
-import { PEOPLE, CHARACTERS, ANIMALS, THINGS, SKINS, HAIRS, drawPerson } from "./people.js";
-import { W, H, MOVES, ACTS, SPEEDS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, poseTogether, between, tweenMoves, pathLength, shapePoints, fillTarget, areaOf, stickersUnder, scaled, turned, itemAt, JOINTS, jointReach, strokeNear, hingeOf, nearestOn, oldJoints, cutByLoop, inside, objects, exampleScene, exampleFlip } from "./engine.js";
+import { PEOPLE, CHARACTERS, ANIMALS, THINGS, SKINS, HAIRS, drawPerson, personById } from "./people.js";
+import { W, H, MOVES, ACTS, SPEEDS, GAITS, SHAPES, bbox, makeThing, stageStrokes, shift, thin, pose, poseTogether, between, tweenMoves, pathLength, shapePoints, fillTarget, areaOf, stickersUnder, scaled, turned, itemAt, JOINTS, jointReach, strokeNear, hingeOf, nearestOn, oldJoints, cutByLoop, inside, objects, exampleScene, exampleFlip } from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -104,7 +104,15 @@ function drawThing(thing, p, live = null) {
   ctx.restore();
 }
 /** What the limbs of the hand-drawn figures in a thing are doing at time t: stepping if the thing travels sideways. */
-const limbs = (th, t, i) => ({ t: t * (th.speed || 1) + i * 0.37, go: th.move === "side" || th.move === "circle" || (th.move === "path" && !!th.path && th.path.length >= 4) });
+const limbs = (th, t, i) => ({ t: t * (th.speed || 1) + i * 0.37, gait: gaitOf(th), go: th.move === "side" || th.move === "circle" || (th.move === "path" && !!th.path && th.path.length >= 4) });
+/** Does this thing have someone in it who walks: a drawn person, character or animal, or a sticker that moves by itself? */
+const walks = (th) => th.s.some((s) => (s.fig && personById(s.fig).custom !== "thing") || (s.ch && stickerMoves(s.ch)));
+/** How a thing gets about (Goes by): what the child chose, or else what its first person is doing in the picture. */
+function gaitOf(th) {
+  if (th.gait) return th.gait;
+  const f = th.s.find((s) => s.fig), p = f && personById(f.fig).pose;
+  return p === "run" ? "run" : p === "fly" ? "fly" : "walk";
+}
 
 // ---------- backgrounds ----------
 
@@ -151,7 +159,7 @@ function render(t = null) {
     data.scene.things.forEach((th, i) => {
       if (ui.state === "draw" && i === ui.edit) return;
       const il = th.gt && !th.lead ? data.scene.things.findIndex((q) => q.g === th.g && q.lead) : -1, lead = data.scene.things[il]; // a group that travels together follows its leader
-      const now = playing ? t : null, at = lead ? poseTogether(th, lead, now, i, il) : pose(th, now, i);
+      const now = playing ? t : null, me = { ...th, gait: gaitOf(th) }, at = lead ? poseTogether(me, { ...lead, gait: gaitOf(lead) }, now, i, il) : pose(me, now, i);
       drawThing(th, at, playing && t !== null ? (lead ? { ...limbs(th, t, i), go: limbs(lead, t, il).go } : limbs(th, t, i)) : null);
     });
     if (ui.state === "draw") { ctx.drawImage(A.cv, 0, 0, W, H); if (ui.from && ui.live) strokeOn(ctx, ui.live); if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(data.scene.bg)); } if (ui.tool === "joint" && !ui.clean) jointOverlay(); if (ui.tool === "text" && !ui.clean) textOverlay(); }
@@ -358,7 +366,8 @@ function paint() {
   $("mute").textContent = data.muted ? "🔇 Sound off" : "🔊 Sound on"; $("mute").setAttribute("aria-pressed", String(!data.muted));
   press("tweenN", "n", String(ui.tweenN || 2)); $("tween").disabled = ui.frame >= data.flip.frames.length - 1;
   $("onion").checked = !!data.flip.onion; $("flipStep").checked = data.flip.step !== false;
-  if (th) { press("moves", "move", th.move); press("acts", "act", th.act); press("speeds", "speed", th.speed); $("face").checked = !!th.face; }
+  if (th) { press("moves", "move", th.move); press("acts", "act", th.act); press("speeds", "speed", th.speed); press("gaits", "gait", gaitOf(th)); $("face").checked = !!th.face; }
+  $("gaitRow").hidden = !(th && walks(th)); // walking, jogging… is for people and animals
   // a joined group can travel together, following one of its members
   const follows = !!(th && th.g && th.gt && !th.lead);
   $("togetherRow").hidden = !(th && th.g); $("together").checked = !!(th && th.g && th.gt && th.lead);
@@ -519,8 +528,8 @@ function startDraw(edit = -1) {
 }
 function endDraw(keep) {
   if (keep) {
-    const things = data.scene.things, old = ui.edit >= 0 ? things[ui.edit] : {}, how = { move: old.move, act: old.act, speed: old.speed, face: old.face, path: old.path };
-    const build = (strokes, more) => { const made = makeThing(strokes, more); if (!made) return null; ["move", "act", "speed", "face", "path"].forEach((k) => { if (made[k] === undefined) delete made[k]; }); return { move: "stay", act: "none", speed: 1, face: true, path: null, ...made }; };
+    const things = data.scene.things, old = ui.edit >= 0 ? things[ui.edit] : {}, how = { move: old.move, act: old.act, speed: old.speed, face: old.face, path: old.path, gait: old.gait };
+    const build = (strokes, more) => { const made = makeThing(strokes, more); if (!made) return null; ["move", "act", "speed", "face", "path", "gait"].forEach((k) => { if (made[k] === undefined) delete made[k]; }); return { move: "stay", act: "none", speed: 1, face: true, path: null, ...made }; };
     const thing = build(ui.draft, how);
     if (!thing) { // nothing there: Done never leaves the child stuck. A drawing that was rubbed out or cleared is taken away.
       if (ui.edit >= 0) { things.splice(ui.edit, 1); ui.sel = -1; save(); note("That drawing is empty now, so it has been taken away."); } else note("Nothing was drawn, so nothing was added.");
@@ -559,7 +568,7 @@ function splitThing() {
   if (parts.length < 2) return;
   if (things.length - 1 + parts.length > MAX_THINGS) { note(`A scene can hold ${MAX_THINGS} drawings, and that would be too many. Delete one first.`); return; }
   // each one keeps how the drawing moved; a traced path stays with the first only, or they would all walk on top of each other
-  const made = parts.map((g, n) => ({ move: "stay", act: "none", speed: 1, face: true, path: null, ...makeThing(g, { move: th.move === "path" && n ? "stay" : th.move, act: th.act, speed: th.speed, face: th.face, path: n ? null : th.path }) }));
+  const made = parts.map((g, n) => ({ move: "stay", act: "none", speed: 1, face: true, path: null, ...makeThing(g, { move: th.move === "path" && n ? "stay" : th.move, act: th.act, speed: th.speed, face: th.face, path: n ? null : th.path, ...(th.gait ? { gait: th.gait } : {}) }) }));
   things.splice(ui.sel, 1, ...made);
   note(`Now ${parts.length} separate drawings. Tap one to move it, resize it or choose how it moves.`);
   save(); paint(); render();
@@ -586,6 +595,7 @@ $("moves").addEventListener("click", (e) => {
   th.move = b.dataset.move; save(); paint(); render();
 });
 $("acts").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"), th = sel(); if (b && th) { th.act = b.dataset.act; save(); paint(); } });
+$("gaits").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"), th = sel(); if (b && th) { th.gait = b.dataset.gait; save(); paint(); } });
 $("speeds").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"), th = sel(); if (b && th) { th.speed = Number(b.dataset.speed); save(); paint(); } });
 $("together").addEventListener("change", () => {
   const th = sel(); if (!th || !th.g) return;
@@ -1142,7 +1152,7 @@ $("saveVid").addEventListener("click", () => {
 });
 
 // ---------- start ----------
-chips("moves", MOVES, "move"); chips("acts", ACTS, "act"); chips("speeds", SPEEDS, "speed"); // backgrounds are chosen from little pictures of themselves
+chips("moves", MOVES, "move"); chips("acts", ACTS, "act"); chips("speeds", SPEEDS, "speed"); chips("gaits", GAITS, "gait"); // backgrounds are chosen from little pictures of themselves
 // The background pickers: tabs along the top, and the picture tiles of the tab that is open. A tab's tiles are only
 // drawn when it is opened, so the page does not paint over a hundred little pictures as it loads.
 const bgOpen = { bgs: null, fbgs: null }, bgWas = { bgs: null, fbgs: null }; // the open tab of each picker, and the background it last showed as chosen

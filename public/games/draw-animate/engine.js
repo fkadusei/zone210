@@ -12,6 +12,12 @@ export const W = 800, H = 600;
 export const MOVES = [["stay", "Stay put"], ["side", "Side to side"], ["updown", "Up and down"], ["circle", "Round in a circle"], ["path", "Follow my path"]];
 export const ACTS = [["none", "Nothing else"], ["bounce", "Bounce"], ["spin", "Spin"], ["wiggle", "Wiggle"], ["pulse", "Grow and shrink"]];
 export const SPEEDS = [[0.5, "Slow"], [1, "Medium"], [2, "Fast"]];
+// how a figure gets about: drawn people and animals walk, jog and run side-on; anything can jump along or fly
+export const GAITS = [["walk", "Walking"], ["jog", "Jogging"], ["run", "Running"], ["jump", "Jumping"], ["fly", "Flying"]];
+const FASTER = { walk: 1, jog: 1.35, run: 1.75, jump: 1.2, fly: 1.5 }; // jogging covers more ground than walking, and so on
+/** How high a jumper is at time u (0 on the ground, 1 at the top): a short crouch on landing, then up and down again. */
+export const HOP = 1.1;
+export function hop(u) { const q = u * HOP - Math.floor(u * HOP); return q < 0.15 ? 0 : Math.sin((Math.PI * (q - 0.15)) / 0.85); }
 
 /** How wide and tall a piece of text is: tw is its measured width (the page measures it when it is written); each line is 1.2 times the letter size. */
 export const textBox = (s) => [s.tw || Math.max(...s.tx.split("\n").map((l) => l.length)) * s.w * 0.56, s.tx.split("\n").length * s.w * 1.2];
@@ -271,13 +277,13 @@ export const isLoop = (p) => p.length >= 8 && Math.hypot(p[0] - p[p.length - 2],
 export function pose(thing, t, i = 0) {
   const out = { x: thing.x, y: thing.y, rot: 0, sx: 1, sy: 1, flip: 1 };
   if (t === null) return out;
-  const k = thing.speed || 1, u = t * k + i * 0.37;
+  const k = thing.speed || 1, u = t * k + i * 0.37, f = FASTER[thing.gait] || 1, v = u * f; // v: how far along its way it is
   let heading = 0;
-  if (thing.move === "side") { out.x += Math.sin((u * TAU) / 3) * 110; heading = Math.cos((u * TAU) / 3); }
+  if (thing.move === "side") { out.x += Math.sin((v * TAU) / 3) * 110; heading = Math.cos((v * TAU) / 3); }
   else if (thing.move === "updown") out.y += Math.sin((u * TAU) / 3) * 80;
-  else if (thing.move === "circle") { out.x += Math.cos((u * TAU) / 4) * 70; out.y += Math.sin((u * TAU) / 4) * 70; heading = -Math.sin((u * TAU) / 4); }
+  else if (thing.move === "circle") { out.x += Math.cos((v * TAU) / 4) * 70; out.y += Math.sin((v * TAU) / 4) * 70; heading = -Math.sin((v * TAU) / 4); }
   else if (thing.move === "path" && thing.path && thing.path.length >= 4) {
-    const len = pathLength(thing.path), gone = t * k * 140;
+    const len = pathLength(thing.path), gone = t * k * f * 140;
     if (len > 0) {
       let d, back = false;
       if (isLoop(thing.path)) d = gone % len; else { const m = gone % (2 * len); back = m > len; d = back ? 2 * len - m : m; }
@@ -286,6 +292,10 @@ export function pose(thing, t, i = 0) {
     }
   }
   if (thing.face && heading < -0.001) out.flip = -1;
+  if (thing.lift !== false) { // up off the ground: a jumper hops along, a flyer floats above where it would walk
+    if (thing.gait === "jump") out.y -= hop(u) * 55;
+    else if (thing.gait === "fly") out.y -= 40 + Math.sin(u * TAU * 0.6) * 7;
+  }
   if (thing.act === "bounce") { const b = Math.abs(Math.sin((u * TAU) / 1.6)); out.y -= b * 55; const squash = Math.max(0, 0.18 - b) * 0.9; out.sy = 1 - squash; out.sx = 1 + squash; }
   else if (thing.act === "spin") out.rot = (u * TAU) / 3;
   else if (thing.act === "wiggle") out.rot = Math.sin((u * TAU) / 0.9) * 0.24;
@@ -300,7 +310,7 @@ export function pose(thing, t, i = 0) {
 export function poseTogether(thing, lead, t, i, il) {
   const own = pose({ ...thing, move: "stay" }, t, i);
   if (t === null) return own;
-  const at = pose({ ...lead, act: "none", face: true }, t, il);
+  const at = pose({ ...lead, act: "none", face: true, lift: false }, t, il); // where it goes, not its own hops
   own.x += at.x - lead.x; own.y += at.y - lead.y;
   if (thing.face) own.flip = at.flip;
   return own;

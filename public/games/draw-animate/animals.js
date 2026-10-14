@@ -5,6 +5,8 @@
 //  - a few with their own drawing, facing right (fish, duck, turtle, butterfly, bee, bird).
 // `a` is the main colour and `b` the second colour: the child can change both (the Colour and Second rows).
 
+import { hop } from "./engine.js";
+
 const DARK = "#1f2937", TAU = Math.PI * 2;
 // `live` is null for a still picture. While an animation plays it is { t: seconds, go: is it travelling }, and the
 // animal moves its legs, tail or wings to suit.
@@ -78,10 +80,15 @@ function walker(g, o, a, b, live) {
   const up = o.up ?? 0.9, nl = o.neck ?? 0.1, nw = o.nw ?? fat * 1.1, nx = bx + len * 0.72, ny = by - fat * 0.15;
   const nod = live && live.go ? beat(live, 2.8) * 0.008 : 0, hx = nx + Math.cos(up) * nl, hy = ny - Math.sin(up) * nl + nod, tx = bx - len * 0.93, ty = by - fat * 0.25, topY = by + fat * 0.3;
   const face = o.face === "b" ? b : o.face || a, headc = o.headc === "b" ? b : a;
-  const st0 = o.stride ?? 0.06, walking = !!(live && live.go), st = walking ? Math.max(st0 * 1.5, Math.min(0.09, leg * 0.45)) : st0;
-  const ph = walking ? live.t * TAU * 1.4 : 0, sway = beat(live, 0.9) * 0.22;
+  // how it goes: a trot and a gallop step faster and further; a leap stretches the legs out front and back; a flyer tucks them up
+  const gait = live && live.gait, quick = gait === "run" ? 1.8 : gait === "jog" ? 1.4 : 1, far2 = gait === "run" ? 1.3 : gait === "jog" ? 1.12 : 1;
+  const air = gait === "jump" && live ? hop(live.t) : 0, flying = gait === "fly" && !!live;
+  const st0 = o.stride ?? 0.06, walking = !!(live && live.go) && gait !== "jump" && !flying, st = walking ? Math.max(st0 * 1.5, Math.min(0.09, leg * 0.45)) * far2 : st0;
+  const ph = walking ? live.t * TAU * 1.4 * quick : 0, sway = beat(live, 0.9 * quick) * 0.22;
   const stand = (x, way, far) => { // one leg, from the body down to the ground; `way` is +1 or -1: which half of the stride it is in
-    const sw = st * way * Math.cos(ph), up = walking ? Math.max(0, -way * Math.sin(ph)) * Math.min(0.045, leg * 0.3) : 0, fy = G - up;
+    let sw = st * way * Math.cos(ph), up = walking ? Math.max(0, -way * Math.sin(ph)) * Math.min(0.045, leg * 0.3) * far2 : 0;
+    if (air > 0 || flying) { const front = x > bx ? 1 : -1, k = flying ? 1 : air; sw = front * st0 * (flying ? 1.6 : 2.2) * k + (flying ? beat(live, 1.6, way) * 0.012 : 0); up = Math.min(0.06, leg * 0.35) * k; } // legs out in a leap, tucked in flight
+    const fy = G - up;
     const leg1 = [[x, topY], [x + sw * 0.35 + up * 0.5, (topY + fy) / 2 - up * 0.3], [x + sw, fy - lw * 0.5]];
     if (o.edge && limb === a) { g.save(); g.beginPath(); g.rect(-1, by + fat * 0.85, 2, 1); g.clip(); line("#b6c2d1", lw + 0.014, leg1); g.restore(); } // white legs need an edge to show on white paper
     line(limb, lw, leg1); if (far) line("rgba(0,0,0,0.22)", lw, leg1);
@@ -148,7 +155,7 @@ function walker(g, o, a, b, live) {
   if (o.woolTop) { oval(a, hx - hr * 0.2, hy - hr * 0.8, hr * 0.7, hr * 0.45); edge(hx - hr * 0.2, hy - hr * 0.8, hr * 0.7, hr * 0.45); }
   const eyeX = hx + hr * (o.eyeX ?? 0.3), eyeY = hy - hr * 0.25;
   if (o.headStripes) { line(b, 0.016, [[hx - hr * 0.2, hy - hr * 0.95], [hx - hr * 0.1, hy - hr * 0.45]]); line(b, 0.016, [[hx - hr * 0.75, hy - hr * 0.5], [hx - hr * 0.4, hy - hr * 0.25]]); line(b, 0.016, [[hx - hr * 0.8, hy + hr * 0.2], [hx - hr * 0.4, hy + hr * 0.25]]); }
-  if (o.eyePatch) oval(b, eyeX, eyeY + 0.005, 0.036, 0.042, 0.4);
+  if (o.eyePatch) oval(o.eyePatch === true ? b : o.eyePatch, eyeX, eyeY + 0.005, 0.036, 0.042, 0.4);
   oval(o.eyePatch ? "#ffffff" : o.eye || DARK, eyeX, eyeY, 0.02, 0.02); if (o.eyePatch) oval(DARK, eyeX, eyeY, 0.011, 0.011); oval("#ffffff", eyeX - 0.006, eyeY - 0.007, 0.007, 0.007);
   if (o.whiskers) { line("rgba(0,0,0,0.45)", 0.007, [[sx + sl * 0.2, sy], [sx + sl * 0.2 + 0.1, sy - 0.03]]); line("rgba(0,0,0,0.45)", 0.007, [[sx + sl * 0.2, sy + 0.015], [sx + sl * 0.2 + 0.1, sy + 0.03]]); }
 }
@@ -395,4 +402,25 @@ export const ANIMALS = [
 
 /** Draws an animal one unit tall at the origin (the caller has already scaled). a and b are its two colours;
  *  `live` (see the top of this file) makes it move its limbs. */
+// sitting animals that get up and walk side-on when they travel: the walking animal of the same name, or one of these
+const SIDE = {
+  rabbit: { o: { len: 0.17, fat: 0.11, leg: 0.09, lw: 0.04, neck: 0.04, up: 0.9, nw: 0.08, head: 0.085, snout: 0.04, ears: "long", tail: "puff", puff: "#ffffff", nosec: "#f48fb1", whiskers: true, belly: true } },
+  mouse: { o: { len: 0.15, fat: 0.085, leg: 0.06, lw: 0.03, neck: 0.03, up: 0.5, nw: 0.07, head: 0.075, snout: 0.06, ears: "round", tail: "long", whiskers: true, nosec: "#f48fb1", belly: true } },
+  hamster: { o: { len: 0.16, fat: 0.12, leg: 0.05, lw: 0.035, neck: 0.02, up: 0.5, nw: 0.1, head: 0.09, snout: 0.04, ears: "round", tail: "puff", belly: true, nosec: "#f48fb1", whiskers: true } },
+  raccoon: { o: { len: 0.2, fat: 0.1, leg: 0.12, lw: 0.04, neck: 0.06, up: 0.7, nw: 0.09, head: 0.08, snout: 0.07, jaw: 0.5, bx: 0, ears: "pointy", tail: "bushy", eyePatch: "#1f2937", belly: true, face: "b" } },
+  squirrel: { o: { len: 0.15, fat: 0.09, leg: 0.08, lw: 0.035, neck: 0.04, up: 0.8, nw: 0.07, head: 0.075, snout: 0.05, ears: "pointy", tail: "bushy", belly: true } },
+  koala: { o: { len: 0.19, fat: 0.13, leg: 0.1, lw: 0.05, neck: 0.04, up: 0.6, nw: 0.12, head: 0.1, snout: 0.03, ears: "round", tail: "puff", puff: "#9ca3af", nosec: "#1f2937" } },
+  monkey: { o: { len: 0.17, fat: 0.1, leg: 0.17, lw: 0.04, neck: 0.06, up: 0.9, nw: 0.08, head: 0.085, snout: 0.04, ears: "round", tail: "up", face: "b", belly: true } },
+  gorilla: { o: { len: 0.2, fat: 0.15, leg: 0.17, lw: 0.07, neck: 0.04, up: 0.6, nw: 0.13, head: 0.095, snout: 0.045, bx: -0.04, ears: "round", face: "b" } },
+  reindeer: { like: "deer", o: { nosec: "#e5484d" } },
+};
+/** The side-on walking animal for a sitting one (`id`), or null if it has none (it then hops along facing us). */
+export function sideOf(id) {
+  const same = ANIMALS.find((x) => x.id === `walk-${id}`), own = ANIMALS.find((x) => x.id === id), more = SIDE[id];
+  if (same) return same;
+  if (!more || !own) return null;
+  const like = more.like && ANIMALS.find((x) => x.id === `walk-${more.like}`);
+  return { id: `side-${id}`, custom: "animal", walk: true, top: own.top, bot: own.bot, o: { ...(like ? like.o : {}), ...more.o } };
+}
+
 export function drawAnimal(g, d, a, b, live = null) { if (OWN[d.id]) OWN[d.id](g, a, b, live); else if (d.walk) walker(g, d.o || {}, a, b, live); else critter(g, d.o || {}, a, b, live); }

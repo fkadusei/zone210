@@ -4,6 +4,7 @@
  *  - every move and action gives sensible numbers at all times, and never jumps suddenly from one moment to the next
  *  - a thing following a path stays on the path; an open path goes there and back, a closed one goes round
  *  - turning strokes into a thing re-centres them, and thinning a line keeps its two ends
+ *  - every way of going (walking, jogging, running, jumping, flying) moves smoothly, at its own pace and height
  *  - the two built-in examples are well formed and fit on the stage
  *  - the flipbook tunes (music.js): every bar has the right number of steps and every note can be read
  */
@@ -40,6 +41,17 @@ const rest = E.pose({ x: 5, y: 6, move: "circle", act: "spin", speed: 2 }, null)
 
 const made = E.makeThing([{ c: "#000", w: 10, p: [100, 100, 200, 180] }]), b = E.bbox(made.s);
 check(made.x === 150 && made.y === 140 && Math.abs(b.cx) < 0.01 && Math.abs(b.cy) < 0.01, "a new thing is measured from its middle");
+// how a figure goes (Goes by): every gait moves smoothly; a jumper starts on the ground and comes back down; a flyer is up off it
+for (const [gait] of E.GAITS) for (const move of ["stay", "side", "circle"]) {
+  const thing = { s: [{ c: "#000", w: 8, p: [-20, -10, 20, 10] }], x: 400, y: 300, move, act: "none", speed: 1, face: true, path: null, gait };
+  let last = null, far = 0, low = Infinity, high = -Infinity;
+  for (let f = 0; f <= 60 * 20; f += 1) { const q = E.pose(thing, f / 60, 0); if (last) far = Math.max(far, Math.hypot(q.x - last.x, q.y - last.y)); last = q; if (move === "stay") { low = Math.min(low, q.y); high = Math.max(high, q.y); } }
+  check(far < 25, `${gait}/${move}: jumps ${far.toFixed(1)} between frames`);
+  if (move === "stay") check(gait === "jump" ? high === 300 && low < 260 : gait === "fly" ? high < 300 : high === 300 && low === 300, `${gait}: goes up and down as it should (${low.toFixed(0)} to ${high.toFixed(0)})`);
+}
+check(E.hop(0) === 0 && E.hop(0.1) === 0 && E.hop(0.6) > 0.9, "a jump starts with a crouch on the ground, then goes up");
+{ const at = (gait) => E.pose({ s: [], x: 400, y: 300, move: "side", act: "none", speed: 1, face: true, gait }, 0.3, 0).x; // early on, before the fastest turns back
+  check(at("run") > at("jog") && at("jog") > at("walk"), "running gets further than jogging, and jogging further than walking"); }
 check(E.makeThing([]) === null && E.makeThing([{ c: "#000", w: 10, e: 1, p: [1, 1, 5, 5] }]) === null, "nothing drawn (or only rubbing out) makes no thing");
 const back = E.stageStrokes(made)[0].p; check(back.join() === "100,100,200,180", "a thing's strokes go back to where they were drawn");
 const t = E.thin([0, 0, 1, 0, 2, 0, 10, 0, 11, 0, 30, 0, 31, 0]); check(t[0] === 0 && t[t.length - 2] === 31 && t.length < 14, "thinning a line keeps both ends and drops crowded points");

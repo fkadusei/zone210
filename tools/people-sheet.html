@@ -1,7 +1,7 @@
 <!doctype html>
 <!-- Contact sheet of the hand-drawn figures in Draw & Animate, for checking the drawings.
      Serve the repo root (python3 -m http.server 8124) and open http://localhost:8124/tools/people-sheet.html
-     Add ?characters, ?animals, ?walkers or ?things for the other sets. Add &live to see four moments of each figure's
+     Add ?characters, ?animals, ?walkers or ?things for the other sets. Add &live (and &gait=jog, run, jump or fly) to see four moments of each figure's
      animation (travelling), or &live=stay for the same when it stays in one place. -->
 <meta charset="utf-8" />
 <title>Drawn people</title>
@@ -18,7 +18,7 @@
     const from = Number(q.get("from") || 0);
     list.slice(from, from + 16).forEach((d, i) => {
       const col = i % 2, row = Math.floor(i / 2);
-      for (let k = 0; k < 4; k += 1) { g.save(); g.translate(95 + col * 750 + k * 180, 120 + row * 232); drawPerson(g, { fig: d.id, sk: i % 6, hc: -1 }, 200, { t: k * 0.18, go: q.get("live") !== "stay" }); g.restore(); }
+      for (let k = 0; k < 4; k += 1) { g.save(); g.translate(95 + col * 750 + k * 180, 120 + row * 232); drawPerson(g, { fig: d.id, sk: i % 6, hc: -1 }, 200, { t: k * 0.18, go: q.get("live") !== "stay", gait: q.get("gait") || undefined }); g.restore(); }
     });
   } else {
     list.forEach((d, i) => {
