@@ -294,7 +294,8 @@ function within(at, reach, lo, hi) {
 }
 
 /**
- * Where a thing is at time t (seconds): { x, y, rot, sx, sy, flip }. `i` is its place in the list, used to start each
+ * Where a thing is at time t (seconds): { x, y, rot, sx, sy, flip }. `thing.span`, if given, is the box (from the
+ * thing's middle) to keep on the page in its place: for drawings that walk in step, the box round all of them. `i` is its place in the list, used to start each
  * thing at a slightly different moment so they don't all move in step. At t = null it is at rest.
  */
 export function pose(thing, t, i = 0) {
@@ -302,10 +303,11 @@ export function pose(thing, t, i = 0) {
   if (t === null) return out;
   const k = thing.speed || 1, u = t * k + i * 0.37, f = FASTER[thing.gait] || 1, v = u * f; // v: how far along its way it is
   let heading = 0;
-  if (thing.move === "side") { const [c, a] = within(thing.x, 110, -sizeOf(thing.s).x0, W - sizeOf(thing.s).x1); out.x = c + Math.sin((v * TAU) / 3) * a; heading = Math.cos((v * TAU) / 3); }
-  else if (thing.move === "updown") { const [c, a] = within(thing.y, 80, -sizeOf(thing.s).y0, H - sizeOf(thing.s).y1); out.y = c + Math.sin((u * TAU) / 3) * a; }
+  const sb = () => thing.span || sizeOf(thing.s); // what must stay on the page: the drawing, or the whole line of drawings it walks with
+  if (thing.move === "side") { const [c, a] = within(thing.x, 110, -sb().x0, W - sb().x1); out.x = c + Math.sin((v * TAU) / 3) * a; heading = Math.cos((v * TAU) / 3); }
+  else if (thing.move === "updown") { const [c, a] = within(thing.y, 80, -sb().y0, H - sb().y1); out.y = c + Math.sin((u * TAU) / 3) * a; }
   else if (thing.move === "circle") {
-    const b = sizeOf(thing.s), [cx, ax] = within(thing.x, 70, -b.x0, W - b.x1), [cy, ay] = within(thing.y, 70, -b.y0, H - b.y1), r = Math.min(ax, ay);
+    const b = sb(), [cx, ax] = within(thing.x, 70, -b.x0, W - b.x1), [cy, ay] = within(thing.y, 70, -b.y0, H - b.y1), r = Math.min(ax, ay);
     out.x = cx + Math.cos((v * TAU) / 4) * r; out.y = cy + Math.sin((v * TAU) / 4) * r; heading = -Math.sin((v * TAU) / 4);
   }
   else if (thing.move === "path" && thing.path && thing.path.length >= 4) {

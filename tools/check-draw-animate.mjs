@@ -58,6 +58,11 @@ for (const move of ["side", "updown", "circle"]) for (const [x, y] of [[30, 300]
   check(off <= 0.01, `${move} from (${x}, ${y}) goes ${off.toFixed(0)} off the page`);
   check(gone > 30, `${move} from (${x}, ${y}) still moves`);
 }
+// drawings walking in step along one line keep their gap, and the whole line turns back together at the edge
+{ const s1 = [{ c: "#000", w: 8, p: [-30, -20, 30, 20] }], span = { x0: -34, y0: -24, x1: 640 + 34 - 600, y1: 24 };
+  const a = { s: s1, x: 600, y: 300, move: "side", act: "none", speed: 1, face: true, path: null, span }, b = { ...a, x: 640, span: { ...span, x0: span.x0 - 40, x1: span.x1 - 40 } };
+  let worst = 0, off = 0; for (let f = 0; f <= 600; f += 1) { const p = E.pose(a, f / 60, 3), q = E.pose(b, f / 60, 3); worst = Math.max(worst, Math.abs(q.x - p.x - 40)); off = Math.max(off, q.x + 34 - E.W); }
+  check(worst < 0.01 && off <= 0.01, `drawings in step keep their gap (${worst.toFixed(1)}) and stay on the page (${off.toFixed(1)})`); }
 check(E.hop(0) === 0 && E.hop(0.1) === 0 && E.hop(0.6) > 0.9, "a jump starts with a crouch on the ground, then goes up");
 { const at = (gait) => E.pose({ s: [], x: 400, y: 300, move: "side", act: "none", speed: 1, face: true, gait }, 0.3, 0).x; // early on, before the fastest turns back
   check(at("run") > at("jog") && at("jog") > at("walk"), "running gets further than jogging, and jogging further than walking"); }

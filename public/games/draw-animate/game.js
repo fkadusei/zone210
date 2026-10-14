@@ -105,6 +105,27 @@ function drawThing(thing, p, live = null) {
 }
 /** What the limbs of the hand-drawn figures in a thing are doing at time t: stepping if the thing travels sideways. */
 const limbs = (th, t, i) => ({ t: t * (th.speed || 1) + i * 0.37, gait: gaitOf(th), go: th.move === "side" || th.move === "circle" || (th.move === "path" && !!th.path && th.path.length >= 4) });
+/**
+ * Drawings that go the same way, at the same speed and pace, along the same line (side to side at about the same
+ * height, up and down at about the same place, round in circles close together) walk in step, like a parade: each
+ * keeps the gap it was put down with, so they never bunch up into one. For each drawing: k, the moment it keeps time
+ * with, and span, the box round its whole line (from its own middle), so the line turns back together at the edges.
+ */
+function inStep(things) {
+  const box = things.map((th) => { const b = bbox(th.s); return b && { x0: th.x + b.x0, y0: th.y + b.y0, x1: th.x + b.x1, y1: th.y + b.y1 }; });
+  const head = things.map((_, i) => i), top = (i) => (head[i] === i ? i : (head[i] = top(head[i])));
+  const lined = (a, b) => {
+    const p = things[a], q = things[b], A = box[a], B = box[b];
+    if (!A || !B || p.move !== q.move || (p.speed || 1) !== (q.speed || 1) || gaitOf(p) !== gaitOf(q) || p.gt || q.gt) return false;
+    if (p.move === "side") return Math.min(A.y1, B.y1) - Math.max(A.y0, B.y0) > 0.3 * Math.min(A.y1 - A.y0, B.y1 - B.y0);
+    if (p.move === "updown") return Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0) > 0.3 * Math.min(A.x1 - A.x0, B.x1 - B.x0);
+    if (p.move === "circle") return Math.hypot(p.x - q.x, p.y - q.y) < 200;
+    return false;
+  };
+  for (let a = 0; a < things.length; a += 1) for (let b = a + 1; b < things.length; b += 1) if (lined(a, b)) { const ra = top(a), rb = top(b); if (ra !== rb) head[Math.max(ra, rb)] = Math.min(ra, rb); }
+  const all = new Map(); things.forEach((_, i) => { const r = top(i); if (box[i]) { const u = all.get(r); all.set(r, u ? { x0: Math.min(u.x0, box[i].x0), y0: Math.min(u.y0, box[i].y0), x1: Math.max(u.x1, box[i].x1), y1: Math.max(u.y1, box[i].y1), n: u.n + 1 } : { ...box[i], n: 1 }); } });
+  return things.map((th, i) => { const r = top(i), u = all.get(r); return { k: r, span: u && u.n > 1 ? { x0: u.x0 - th.x, y0: u.y0 - th.y, x1: u.x1 - th.x, y1: u.y1 - th.y } : null }; });
+}
 /** Does this thing have someone in it who walks: a drawn person, character or animal, or a sticker that moves by itself? */
 const walks = (th) => th.s.some((s) => (s.fig && personById(s.fig).custom !== "thing") || (s.ch && stickerMoves(s.ch)));
 /** How a thing gets about (Goes by): what the child chose, or else what its first person is doing in the picture. */
@@ -156,12 +177,20 @@ function render(t = null) {
   if (scene()) {
     const playing = ui.state === "play";
     putBg(ctx, data.scene.bg);
-    data.scene.things.forEach((th, i) => {
+    const things = data.scene.things, now = playing ? t : null, step = now !== null ? inStep(things) : null, shown = [];
+    things.forEach((th, i) => {
       if (ui.state === "draw" && i === ui.edit) return;
-      const il = th.gt && !th.lead ? data.scene.things.findIndex((q) => q.g === th.g && q.lead) : -1, lead = data.scene.things[il]; // a group that travels together follows its leader
-      const now = playing ? t : null, me = { ...th, gait: gaitOf(th) }, at = lead ? poseTogether(me, { ...lead, gait: gaitOf(lead) }, now, i, il) : pose(me, now, i);
-      drawThing(th, at, playing && t !== null ? (lead ? { ...limbs(th, t, i), go: limbs(lead, t, il).go } : limbs(th, t, i)) : null);
+      const il = th.gt && !th.lead ? things.findIndex((q) => q.g === th.g && q.lead) : -1, lead = things[il]; // a group that travels together follows its leader
+      const me = { ...th, gait: gaitOf(th), ...(step && step[i].span ? { span: step[i].span } : {}) }, k = step ? step[i].k : i;
+      const at = lead ? poseTogether(me, { ...lead, gait: gaitOf(lead) }, now, i, il) : pose(me, now, k);
+      shown.push({ th, at, live: playing && t !== null ? (lead ? { ...limbs(th, t, i), go: limbs(lead, t, il).go } : limbs(th, t, i)) : null, goes: !!lead || th.move !== "stay" });
     });
+    if (now !== null) { // while it plays, drawings that move pass in front of one another by where they are: the one lower on the page is nearer, so in front. Drawings that stay keep their place.
+      const slots = shown.map((o, n) => (o.goes ? n : -1)).filter((n) => n >= 0), bottom = (o) => o.at.y + ((bbox(o.th.s) || { y1: 0 }).y1 * o.at.sy);
+      const moving = slots.map((n) => shown[n]).sort((a, b) => bottom(a) - bottom(b));
+      slots.forEach((n, m) => { shown[n] = moving[m]; });
+    }
+    shown.forEach((o) => drawThing(o.th, o.at, o.live));
     if (ui.state === "draw") { ctx.drawImage(A.cv, 0, 0, W, H); if (ui.from && ui.live) strokeOn(ctx, ui.live); if (ui.tool === "move" && !ui.clean) { const pb = pickBox(); if (pb) chosenBox(pb, DARK.has(data.scene.bg)); } if (ui.tool === "joint" && !ui.clean) jointOverlay(); if (ui.tool === "text" && !ui.clean) textOverlay(); }
     const th = data.scene.things[ui.sel];
     if (th && !playing && ui.state !== "draw" && !ui.clean) {
