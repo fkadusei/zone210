@@ -5,7 +5,7 @@
 import { canSharePhotos, onTouchDevice, toPhotos, download } from "../../assets/save-image.js";
 import { TUNES, playTune, stopTune, playingTune } from "./music.js";
 import { STICKERS, stickerMoves } from "./stickers.js";
-import { BGS, DARK, drawBg } from "./backgrounds.js";
+import { BGS, BG_TABS, bgTab, DARK, drawBg } from "./backgrounds.js";
 import { pageTurn, pageLift } from "../../assets/paper.js";
 import { FONTS, TEXT_SIZE, fitText, strokeOn, strokeLive, trace } from "./render.js";
 import { flood, grow, outline } from "./fill.js";
@@ -350,8 +350,7 @@ function paint() {
   document.querySelectorAll("#bots .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === (lk.bc || ""))));
   $("stickFlip").checked = ui.flip;
   press("sizes", "size", data.size);
-  press("bgs", "bg", data.scene.bg);
-  press("fbgs", "bg", bgOf(ui.frame));
+  syncBgPicker("bgs", data.scene.bg); syncBgPicker("fbgs", bgOf(ui.frame));
   press("fps", "fps", data.flip.fps);
   const tuneId = TUNES.some((t) => t.id === work().music) ? work().music : "none";
   document.querySelectorAll(".tunepick").forEach((el) => { el.value = tuneId; });
@@ -1144,10 +1143,24 @@ $("saveVid").addEventListener("click", () => {
 
 // ---------- start ----------
 chips("moves", MOVES, "move"); chips("acts", ACTS, "act"); chips("speeds", SPEEDS, "speed"); // backgrounds are chosen from little pictures of themselves
+// The background pickers: tabs along the top, and the picture tiles of the tab that is open. A tab's tiles are only
+// drawn when it is opened, so the page does not paint over a hundred little pictures as it loads.
+const bgOpen = { bgs: null, fbgs: null }, bgWas = { bgs: null, fbgs: null }; // the open tab of each picker, and the background it last showed as chosen
+function bgTiles(id) {
+  $(id).innerHTML = BGS.filter(([v]) => bgTab(v) === bgOpen[id]).map(([v, label]) => `<button class="g-chip bgsw" data-bg="${v}" aria-label="${label}"><canvas width="96" height="72" aria-hidden="true"></canvas><span>${label}</span></button>`).join("");
+  $(id).querySelectorAll(".bgsw").forEach((b) => { const g = b.querySelector("canvas").getContext("2d"); g.setTransform(96 / W, 0, 0, 96 / W, 0, 0); drawBg(g, b.dataset.bg); });
+}
+/** Keeps a picker in step: when the chosen background changes from elsewhere (another page of the flipbook, an example), its tab opens. */
+function syncBgPicker(id, chosen) {
+  if (bgOpen[id] === null || chosen !== bgWas[id]) { const tab = bgTab(chosen); if (tab !== bgOpen[id]) { bgOpen[id] = tab; bgTiles(id); } }
+  bgWas[id] = chosen;
+  press(`${id}Tabs`, "tab", bgOpen[id]); press(id, "bg", chosen);
+  $(`${id}Tabs`).querySelectorAll(".g-chip").forEach((b) => b.classList.toggle("has", b.dataset.tab === bgTab(chosen))); // a dot on the tab that holds the chosen one
+}
 for (const id of ["bgs", "fbgs"]) {
   $(id).classList.add("bggrid");
-  $(id).innerHTML = BGS.map(([v, label]) => `<button class="g-chip bgsw" data-bg="${v}" aria-label="${label}"><canvas width="96" height="72" aria-hidden="true"></canvas><span>${label}</span></button>`).join("");
-  $(id).querySelectorAll(".bgsw").forEach((b) => { const g = b.querySelector("canvas").getContext("2d"); g.setTransform(96 / W, 0, 0, 96 / W, 0, 0); drawBg(g, b.dataset.bg); });
+  chips(`${id}Tabs`, BG_TABS, "tab");
+  $(`${id}Tabs`).addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; bgOpen[id] = b.dataset.tab; bgTiles(id); paint(); });
 } chips("fps", FPS, "fps");
 if (!scene()) syncFlip();
 fit();

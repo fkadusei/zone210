@@ -88,3 +88,7 @@
 #textRow { display: grid; gap: 10px; }
 #textIn { flex: 1 1 260px; min-width: 0; max-width: 520px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--line, #3a3f5c); background: #fffdf6; color: #1f2430; font: 700 18px var(--font, sans-serif); resize: vertical; }
 #textIn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+/* the background picker: tabs, then the tiles of the open tab */
+.bgpick { flex: 1 1 100%; min-width: 0; display: grid; gap: 8px; }
+.bgtabs .g-chip { position: relative; }
+.bgtabs .g-chip.has::after { content: ""; position: absolute; top: 5px; right: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }

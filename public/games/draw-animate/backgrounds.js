@@ -20,6 +20,23 @@ export const BGS = [["paper", "Paper"], ["grid", "Squared paper"], ["lined", "Li
   ["bedroom", "Bedroom"], ["candy", "Candy land"], ["sunset", "Sunset"], ["night", "Night"], ["moon", "Moon"], ["space", "Space"]];
 export const DARK = new Set(["space", "night", "chalk", "sunset", "cave", "moon", "stage", "volcano", "jungle", "citynight", "haunted", "circus", "angkor", "aurora", "marinabay"]); // backgrounds where the outline round a chosen drawing needs to be light
 
+// The picker shows the backgrounds a tab at a time. Famous places are grouped by part of the world.
+export const BG_TABS = [["plain", "Paper"], ["nature", "Nature"], ["town", "Town and play"], ["indoors", "Indoors and make-believe"], ["europe", "Europe"], ["africa", "Africa and the Middle East"], ["asia", "Asia"], ["oceania", "Oceania and Antarctica"], ["americas", "The Americas"]];
+const IN_TAB = {
+  plain: "paper grid lined chalk",
+  nature: "sky meadow rainbow rainy park farm forest jungle mountains volcano desert snow arctic beach island sea cave lake river waterfall canyon savanna autumn blossom garden clouds ocean sunset night",
+  town: "road city castle pitch harbor railway street citynight playground",
+  indoors: "stage classroom kitchen livingroom bedroom circus haunted candy moon space",
+  europe: "eiffel london colosseum pisa parthenon stonehenge windmills towerbridge neuschwanstein matterhorn venice santorini aurora brandenburg montsaintmichel sagrada fjord cliffs",
+  africa: "pyramids kilimanjaro tablemountain dubai victoriafalls baobabs petra sahara nile zanzibar",
+  asia: "tajmahal greatwall fuji angkor everest templeheaven halong petronas marinabay cappadocia himeji bali borobudur maldives steppe",
+  oceania: "sydney moai uluru antarctica apostles",
+  americas: "liberty goldengate chichenitza machupicchu rio niagara cntower spaceneedle monumentvalley gatewayarch oldfaithful redwoods hawaii morainelake tikal amazon patagonia",
+};
+const TAB_OF = new Map(Object.entries(IN_TAB).flatMap(([tab, ids]) => ids.split(" ").map((id) => [id, tab])));
+/** Which tab a background is on (anything unlisted goes with Nature, so a new background is never lost). */
+export const bgTab = (id) => TAB_OF.get(id) || "nature";
+
 function stars(g, n, seed) { let a = seed; const r = () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; }; g.fillStyle = "#fff"; for (let i = 0; i < n; i += 1) { g.globalAlpha = 0.4 + r() * 0.6; g.beginPath(); g.arc(r() * W, r() * H * 0.85, 0.8 + r() * 1.8, 0, 7); g.fill(); } g.globalAlpha = 1; }
 export function drawBg(g, bg) {
   const grad = (stops) => { const q = g.createLinearGradient(0, 0, 0, H); stops.forEach(([o, c]) => q.addColorStop(o, c)); return q; };
