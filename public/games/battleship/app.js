@@ -1,4 +1,9 @@
 import { createOnline } from "../../assets/online.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; $("end").classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) $("end").classList.add("show"); }, ms); }
 
 // ---------- fleet and rules ----------
 const SHIPS = [
@@ -213,7 +218,7 @@ const net = createOnline({
     phase = g.phase; placed = g.placed; selectedShip = g.selectedShip; horizontal = g.horizontal; mine = g.mine; enemy = g.enemy;
     pShots = g.pShots; aShots = g.aShots; resolved = new Set(g.resolved); myReady = g.myReady; theirReady = g.theirReady;
     turnMine = g.turnMine; awaiting = g.awaiting; lastShot = g.lastShot; pendingShots = g.pendingShots; lastWon = g.won; busy = false;
-    $("end").classList.remove("show");
+    hideEnd();
     if (phase === "placing") {
       $("placing").hidden = false; $("battle").hidden = true;
       renderPlacing();
@@ -540,7 +545,7 @@ function finish(won) {
   $("endTitle").textContent = won ? "Victory!" : "Your fleet was sunk";
   $("endText").textContent = won ? `You sank the whole enemy fleet in ${shots} shots.` : "The enemy found all your ships. Hide them better next time!";
   setStatus(won ? "You win!" : "You lose.", won ? "good" : "bad");
-  setTimeout(() => $("end").classList.add("show"), 700);
+  showEndLater(700);
 }
 
 function newGame() {
@@ -550,7 +555,7 @@ function newGame() {
   horizontal = true;
   hoverAt = -1;
   busy = false;
-  $("end").classList.remove("show");
+  hideEnd();
   myReady = false; theirReady = false; turnMine = false; awaiting = false; pendingShots = [];
   net.setOver(false);
   $("again").textContent = "Play again";
@@ -607,8 +612,8 @@ $("clearShips").addEventListener("click", () => {
 });
 $("start").addEventListener("click", startBattle);
 $("newGame").addEventListener("click", newGame);
-$("again").addEventListener("click", () => { if (online()) { net.rematch(); $("end").classList.remove("show"); } else newGame(); });
-$("endView").addEventListener("click", () => $("end").classList.remove("show"));
+$("again").addEventListener("click", () => { if (online()) { net.rematch(); hideEnd(); } else newGame(); });
+$("endView").addEventListener("click", () => hideEnd());
 document.addEventListener("keydown", (e) => {
   if ((e.key === "r" || e.key === "R") && phase === "placing") rotate();
 });

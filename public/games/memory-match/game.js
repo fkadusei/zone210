@@ -1,4 +1,9 @@
 import { createOnline } from "../../assets/online.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; winEl.classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) winEl.classList.add("show"); }, ms); }
 
 const THEMES = {
   Animals: ["🐶", "🐱", "🐭", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷"],
@@ -44,7 +49,7 @@ const net = createOnline({
       if (g.open.includes(i)) { t.el.classList.add("open"); t.el.setAttribute("aria-label", `Card ${i + 1}, ${t.symbol}`); }
     });
     open = [...g.open]; moves = g.moves; matched = g.matched; turn = g.turn; scores = g.scores; busy = false;
-    winEl.classList.remove("show");
+    hideEnd();
     inbox.length = 0; inbox.push(...g.inbox);
     if (moves > 0 && !startedAt) startedAt = Date.now();
     renderStats();
@@ -145,7 +150,7 @@ function newGame(seed) {
   clearInterval(timer);
   net.setOver(false);
   $("again").textContent = online() ? "Rematch" : "Play again";
-  winEl.classList.remove("show");
+  hideEnd();
   const { pairs, cols } = SIZES[opts.size];
   const symbols = shuffle([...THEMES[opts.theme]]).slice(0, pairs);
   tiles = shuffle([...symbols, ...symbols].map((symbol, i) => ({ symbol, id: i })));
@@ -272,11 +277,11 @@ function win() {
     $("winTitle").textContent = s1 === s2 ? "It's a tie!" : online() ? ((s1 > s2 ? 0 : 1) === myIdx ? "You win!" : "Your friend wins.") : `Player ${s1 > s2 ? 1 : 2} wins!`;
     $("winText").textContent = `Final score: ${s1} to ${s2}.`;
   }
-  setTimeout(() => winEl.classList.add("show"), 600);
+  showEndLater(600);
 }
 
 $("restart").addEventListener("click", () => newGame());
-$("again").addEventListener("click", () => { if (online()) { net.rematch(); winEl.classList.remove("show"); } else newGame(); });
+$("again").addEventListener("click", () => { if (online()) { net.rematch(); hideEnd(); } else newGame(); });
 $("mute").addEventListener("click", (e) => {
   muted = !muted;
   e.currentTarget.textContent = muted ? "Sound Off" : "Sound On";

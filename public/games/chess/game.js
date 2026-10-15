@@ -4,6 +4,11 @@
  */
 import { newGame, legalMoves, play, status, toSAN, toFEN, findMove, inCheck, isWhite } from "./logic.js";
 import * as p2p from "../../assets/p2p.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; $("end").classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) $("end").classList.add("show"); }, ms); }
 
 const $ = (id) => document.getElementById(id);
 const SAVE_KEY = "zone210_chess_save";
@@ -540,7 +545,7 @@ function finishGame() {
   $("again").textContent = opts.mode === "online" ? "Rematch" : "New game";
   $("again").disabled = false;
   rematch.me = false;
-  setTimeout(() => $("end").classList.add("show"), 900);
+  showEndLater(900);
 }
 
 function saveLocal() {
@@ -575,7 +580,7 @@ function resetBoardState() {
   targets = [];
   hintSquares = [];
   inbox = [];
-  $("end").classList.remove("show");
+  hideEnd();
   $("promo").classList.remove("show");
   $("offer").classList.remove("show");
   st = newGame();
@@ -637,7 +642,7 @@ function undo() {
   selected = -1;
   targets = [];
   hintSquares = [];
-  $("end").classList.remove("show");
+  hideEnd();
   saveLocal();
   render({ instant: true });
   if (isCpuTurn()) computerMove();
@@ -1104,11 +1109,11 @@ $("newgame").addEventListener("click", () => {
 $("again").addEventListener("click", () => {
   if (opts.mode === "online" && net.role) requestRematch();
   else {
-    $("end").classList.remove("show");
+    hideEnd();
     start();
   }
 });
-$("review").addEventListener("click", () => $("end").classList.remove("show"));
+$("review").addEventListener("click", () => hideEnd());
 $("undo").addEventListener("click", undo);
 $("hint").addEventListener("click", showHint);
 $("resign").addEventListener("click", resign);

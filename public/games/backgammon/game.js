@@ -1,5 +1,10 @@
 import { createOnline } from "../../assets/online.js";
 import { BAR, OFF, initialState, stepsFor, applyStep, legalSteps, sequences, pips, hasWon, winValue, chooseSequence, dirOf } from "./logic.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; $("end").classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) $("end").classList.add("show"); }, ms); }
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -73,7 +78,7 @@ const net = createOnline({
     st = g.st; turn = g.turn; dice = g.dice; left = g.left; phase = g.phase; last = g.last;
     wins[0] = g.wins[0]; wins[1] = g.wins[1];
     sel = null; busy = false; undoStack = []; hintStep = null;
-    $("end").classList.remove("show");
+    hideEnd();
     inbox.length = 0; inbox.push(...g.inbox);
     if (phase === "over") { wins[turn] -= winValue(st, turn); finish(turn); return; }
     if (phase === "roll") { startTurn(); return; }
@@ -281,7 +286,7 @@ function newGame() {
   busy = false;
   undoStack = [];
   hintStep = null;
-  $("end").classList.remove("show");
+  hideEnd();
   net.setOver(false);
   $("again").textContent = online() ? "Rematch" : "Play again";
   startTurn();
@@ -418,7 +423,7 @@ function finish(p) {
   you === false ? sfx.lose() : sfx.win();
   net.setOver(true);
   $("roll").disabled = true;
-  setTimeout(() => $("end").classList.add("show"), 700);
+  showEndLater(700);
 }
 
 function undo() {
@@ -460,8 +465,8 @@ function syncChips() {
 );
 $("roll").addEventListener("click", () => roll());
 $("newGame").addEventListener("click", newGame);
-$("again").addEventListener("click", () => { if (online()) { net.rematch(); $("end").classList.remove("show"); } else newGame(); });
-$("endView").addEventListener("click", () => $("end").classList.remove("show"));
+$("again").addEventListener("click", () => { if (online()) { net.rematch(); hideEnd(); } else newGame(); });
+$("endView").addEventListener("click", () => hideEnd());
 $("undo").addEventListener("click", undo);
 $("hint").addEventListener("click", showHint);
 document.addEventListener("keydown", (e) => { if ((e.key === " " || e.key === "Enter") && !$("roll").disabled && !(e.target instanceof HTMLButtonElement) && phase === "roll") { e.preventDefault(); roll(); } });

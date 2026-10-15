@@ -1,5 +1,10 @@
 import { parseMap, run, countBlocks, DX, DY } from "./engine.js";
 import { WORLDS, LEVELS, cloneProgram } from "./levels.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; $("win").classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) $("win").classList.add("show"); }, ms); }
 
 const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -94,7 +99,7 @@ function loadLevel(i) {
   usedSolution = false; failures = 0; hintStage = 0;
   $("menu").hidden = true;
   $("play").hidden = false;
-  $("win").classList.remove("show");
+  hideEnd();
   $("title").textContent = `Level ${i + 1}: ${level.name}`;
   $("concept").textContent = level.concept;
   $("solution").hidden = true;
@@ -345,7 +350,7 @@ function win(r) {
   $("winText").textContent = tips.join(" ");
   $("winNext").textContent = lvIdx + 1 < LEVELS.length ? "Next level" : "All levels";
   setStatus("You did it!", "good");
-  setTimeout(() => $("win").classList.add("show"), 450);
+  showEndLater(450);
 }
 $("run").addEventListener("click", () => { if (trace && tpos >= trace.events.length) { resetRobot(); } playAll(); });
 $("step").addEventListener("click", stepOnce);
@@ -355,8 +360,8 @@ function syncSpeed() { document.querySelectorAll("#speed .g-chip").forEach((c) =
 $("hint").addEventListener("click", () => { hintStage += 1; setStatus(`💡 ${level.hint}`); if (hintStage >= 2) $("solution").hidden = false; });
 $("solution").addEventListener("click", () => { program = reid(cloneProgram(level.solution)); usedSolution = true; active = { owner: "main", slot: "main" }; stopPlayback(); renderProg(); setStatus("Here is one way to do it. Press Run to watch Zippy, then try the level again on your own."); });
 $("back").addEventListener("click", showMenu);
-$("winAgain").addEventListener("click", () => { $("win").classList.remove("show"); resetRobot(); $("run").disabled = false; });
-$("winNext").addEventListener("click", () => { $("win").classList.remove("show"); if (lvIdx + 1 < LEVELS.length) loadLevel(lvIdx + 1); else showMenu(); });
+$("winAgain").addEventListener("click", () => { hideEnd(); resetRobot(); $("run").disabled = false; });
+$("winNext").addEventListener("click", () => { hideEnd(); if (lvIdx + 1 < LEVELS.length) loadLevel(lvIdx + 1); else showMenu(); });
 
 const mute = $("mute");
 const syncMute = () => { mute.textContent = data.muted ? "Sound Off" : "Sound On"; mute.setAttribute("aria-pressed", String(data.muted)); };

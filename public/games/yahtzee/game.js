@@ -1,6 +1,11 @@
 import { createOnline } from "../../assets/online.js";
 import * as rules from "./logic.js";
 import { CATS, HINTS, totals } from "./logic.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; $("end").classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) $("end").classList.add("show"); }, ms); }
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -66,7 +71,7 @@ const net = createOnline({
   setState: (g) => {
     epoch += 1;
     S = g.S; held = g.held; lastNote = g.lastNote; busy = false; anim = new Set();
-    $("end").classList.remove("show");
+    hideEnd();
     inbox.length = 0; inbox.push(...g.inbox);
     if (S.over) { render(); finish(); drain(); return; }
     afterMove();
@@ -140,7 +145,7 @@ function newGame(seed) {
   S = rules.initial(count(), typeof seed === "number" ? seed : (Math.random() * 4294967296) >>> 0);
   held = [false, false, false, false, false];
   busy = false; anim = new Set(); lastNote = "";
-  $("end").classList.remove("show");
+  hideEnd();
   net.setOver(false);
   $("again").textContent = online() ? "Rematch" : "Play again";
   if (online() && !net.active) { render(); setStatus("Create or join a room to start."); return; }
@@ -261,7 +266,7 @@ function finish() {
   $("endText").textContent = text;
   setStatus(title, "good");
   net.setOver(true);
-  setTimeout(() => $("end").classList.add("show"), 800 / SPEED);
+  showEndLater(800 / SPEED);
 }
 
 // ---------- controls ----------
@@ -280,8 +285,8 @@ function syncChips() {
   newGame();
 }));
 $("newGame").addEventListener("click", () => newGame());
-$("again").addEventListener("click", () => { if (online()) { net.rematch(); $("end").classList.remove("show"); } else newGame(); });
-$("endView").addEventListener("click", () => $("end").classList.remove("show"));
+$("again").addEventListener("click", () => { if (online()) { net.rematch(); hideEnd(); } else newGame(); });
+$("endView").addEventListener("click", () => hideEnd());
 const mute = $("mute");
 const syncMute = () => { mute.textContent = settings.muted ? "Sound Off" : "Sound On"; mute.setAttribute("aria-pressed", String(settings.muted)); };
 mute.addEventListener("click", () => { settings.muted = !settings.muted; store.set(KEY, settings); syncMute(); });

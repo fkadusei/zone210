@@ -1,5 +1,10 @@
 import { createOnline } from "../../assets/online.js";
 import { newState, legalMoves, applyMove, status, chooseMove, owner, seedsOn } from "./logic.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; winEl.classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) winEl.classList.add("show"); }, ms); }
 
 const $ = (id) => document.getElementById(id);
 const rowN = $("rowN");
@@ -23,7 +28,7 @@ const net = createOnline({
   getState: () => ({ state, pendI, inbox: [...inbox] }),
   setState: (g) => {
     state = g.state; shown = state.pits.slice(); shownStore = state.store.slice(); busy = false; pendI = null;
-    winEl.classList.remove("show");
+    hideEnd();
     inbox.length = 0; inbox.push(...g.inbox);
     paint();
     if (g.pendI !== null && g.pendI !== undefined && legalMoves(state).includes(g.pendI)) { play(g.pendI); return; }
@@ -151,7 +156,7 @@ function say(text) {
 
 /* ---------- flow ---------- */
 function newGame() {
-  winEl.classList.remove("show");
+  hideEnd();
   state = newState();
   state.turn = opts.mode === "cpu" && opts.first === "cpu" ? 1 : 0;
   net.setOver(false);
@@ -266,7 +271,7 @@ function finish(st) {
   say(`Game over: ${a} to ${b}.`);
   net.setOver(true);
   $("again").textContent = online() ? "Rematch" : "Play again";
-  setTimeout(() => winEl.classList.add("show"), 700);
+  showEndLater(700);
 }
 
 /* ---------- controls ---------- */

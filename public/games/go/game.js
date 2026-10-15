@@ -1,6 +1,11 @@
 import { createOnline } from "../../assets/online.js";
 import { boardKeys } from "../../assets/board-keys.js";
 import { KOMI, newGame as freshGame, isLegal, legalMoves, play, groupAt, score, estimateDead, chooseMove, other } from "./logic.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; $("end").classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) $("end").classList.add("show"); }, ms); }
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -65,7 +70,7 @@ const net = createOnline({
     s = { ...st.s, b: Int8Array.from(st.s.b), seen: new Set(st.s.seen) };
     phase = st.phase; dead = new Set(st.dead); acc = st.acc; lastCaps = st.lastCaps; endArgs = st.endArgs;
     busy = false; hist = []; hintMove = -2; hover = -1; over = false;
-    $("end").classList.remove("show");
+    hideEnd();
     inbox.length = 0; inbox.push(...st.inbox);
     draw(); announce(); drain();
     if (st.over && endArgs) { over = true; endGame(...endArgs); }
@@ -159,7 +164,7 @@ function draw() {
 function newGame() {
   s = freshGame(Number(settings.size));
   phase = "play"; over = false; busy = false; hist = []; dead = new Set(); acc = [false, false, false]; hintMove = -2; hover = -1;
-  $("end").classList.remove("show");
+  hideEnd();
   net.setOver(false);
   $("again").textContent = online() ? "Rematch" : "Play again";
   draw(); announce();
@@ -261,7 +266,7 @@ function endGame(w, text) {
   setStatus(title, "good");
   you ? sfx.win() : sfx.lose();
   net.setOver(true);
-  setTimeout(() => $("end").classList.add("show"), 700);
+  showEndLater(700);
 }
 function resumePlay(c, remote) {
   if (!remote && online()) net.send({ t: "resume", c });
@@ -321,8 +326,8 @@ $("accept").addEventListener("click", () => {
 });
 $("resume").addEventListener("click", () => { if (phase === "score") resumePlay(online() ? myC : cpu() ? humanC() : s.turn, false); });
 $("newGame").addEventListener("click", newGame);
-$("again").addEventListener("click", () => { if (online()) { net.rematch(); $("end").classList.remove("show"); } else newGame(); });
-$("endView").addEventListener("click", () => $("end").classList.remove("show"));
+$("again").addEventListener("click", () => { if (online()) { net.rematch(); hideEnd(); } else newGame(); });
+$("endView").addEventListener("click", () => hideEnd());
 $("undo").addEventListener("click", undo);
 $("hint").addEventListener("click", showHint);
 svg.addEventListener("pointerleave", () => { if (hover !== -1) { hover = -1; if (s) draw(); } });

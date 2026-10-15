@@ -1,6 +1,11 @@
 import { createOnline } from "../../assets/online.js";
 import { boardKeys } from "../../assets/board-keys.js";
 import { HOLES, ZONES_FOR, zoneOf, zoneHoles, opposite, initial, reachable, legalMoves, apply, won, inTarget, chooseMove } from "./logic.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; $("end").classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) $("end").classList.add("show"); }, ms); }
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -58,7 +63,7 @@ const net = createOnline({
   setState: (st) => {
     s = st.s; last = st.last; winner = st.winner; over = false;
     sel = null; busy = false; hist = []; moving = null; hintMove = null; pendM = null;
-    $("end").classList.remove("show");
+    hideEnd();
     inbox.length = 0; inbox.push(...st.inbox);
     if (st.over) { draw(); finish(winner); return; }
     const r = st.pendM ? reachable(s, st.pendM.from) : null;
@@ -160,7 +165,7 @@ function newGame() {
   const players = online() ? 2 : Number(settings.players);
   s = initial(players);
   sel = null; over = false; busy = false; last = null; hist = []; moving = null; hintMove = null; winner = -1;
-  $("end").classList.remove("show");
+  hideEnd();
   net.setOver(false);
   $("again").textContent = online() ? "Rematch" : "Play again";
   draw(); announce();
@@ -224,7 +229,7 @@ function finish(seat) {
   setStatus(title, "good");
   you ? sfx.win() : sfx.lose();
   net.setOver(true);
-  setTimeout(() => $("end").classList.add("show"), 800);
+  showEndLater(800);
 }
 function undo() {
   if (busy || !hist.length || online() || over) return;
@@ -260,8 +265,8 @@ function syncChips() {
   newGame();
 }));
 $("newGame").addEventListener("click", newGame);
-$("again").addEventListener("click", () => { if (online()) { net.rematch(); $("end").classList.remove("show"); } else newGame(); });
-$("endView").addEventListener("click", () => $("end").classList.remove("show"));
+$("again").addEventListener("click", () => { if (online()) { net.rematch(); hideEnd(); } else newGame(); });
+$("endView").addEventListener("click", () => hideEnd());
 $("undo").addEventListener("click", undo);
 $("hint").addEventListener("click", showHint);
 const mute = $("mute");

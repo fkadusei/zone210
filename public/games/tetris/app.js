@@ -1,4 +1,9 @@
 // ---------- pieces and rotation (Super Rotation System) ----------
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; $("end").classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) $("end").classList.add("show"); }, ms); }
 const COLS = 10;
 const ROWS = 22; // the top two rows are hidden
 const HIDDEN = 2;
@@ -348,7 +353,7 @@ function newGame() {
   softDrop = false;
   hDir = 0;
   state = "ready";
-  $("end").classList.remove("show");
+  hideEnd();
   $("toast").classList.remove("show");
   showVeil("Ready?", modeBlurb(), "Play");
   renderPanels();
@@ -413,7 +418,7 @@ function gameOver(reason, won = false) {
   $("endTitle").textContent = mode === "blitz" ? "Time's up!" : won ? "Finished!" : "Game over";
   $("endText").textContent = `${lead} · ${lines} lines · level ${level}${record ? " · New best!" : ""}`;
   renderPanels();
-  setTimeout(() => $("end").classList.add("show"), 450);
+  showEndLater(450);
 }
 
 const fmtTime = (ms) => {
@@ -822,7 +827,7 @@ document.querySelectorAll("#level .g-chip").forEach((b) =>
 );
 $("newGame").addEventListener("click", newGame);
 $("again").addEventListener("click", newGame);
-$("endView").addEventListener("click", () => $("end").classList.remove("show"));
+$("endView").addEventListener("click", () => hideEnd());
 $("veilBtn").addEventListener("click", () => (state === "paused" ? resume() : start()));
 $("pause").addEventListener("click", () => act("pause"));
 const mute = $("mute");

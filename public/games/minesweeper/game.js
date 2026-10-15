@@ -1,4 +1,9 @@
 import { LEVELS, newGame, reveal, toggleFlag, chord, flagsLeft } from "./logic.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; $("end").classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) $("end").classList.add("show"); }, ms); }
 
 const $ = (id) => document.getElementById(id);
 const fieldEl = $("field");
@@ -61,7 +66,7 @@ function newRound(nextLevel = level) {
   seconds = 0;
   finished = false;
   g = newGame(level);
-  $("end").classList.remove("show");
+  hideEnd();
   statusEl.textContent = "";
   build();
   paint();
@@ -149,7 +154,7 @@ function endGame() {
     $("endText").textContent = "You hit a mine. Give it another go.";
     statusEl.textContent = "Game over.";
   }
-  setTimeout(() => $("end").classList.add("show"), g.status === "won" ? 400 : 700);
+  showEndLater(g.status === "won" ? 400 : 700);
 }
 
 $("level").addEventListener("click", (e) => {
@@ -160,7 +165,7 @@ $("level").addEventListener("click", (e) => {
 });
 $("restart").addEventListener("click", () => newRound());
 $("again").addEventListener("click", () => newRound());
-$("look").addEventListener("click", () => $("end").classList.remove("show"));
+$("look").addEventListener("click", () => hideEnd());
 $("mode").addEventListener("click", (e) => {
   flagMode = !flagMode;
   e.currentTarget.setAttribute("aria-pressed", String(flagMode));

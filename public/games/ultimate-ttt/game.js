@@ -1,5 +1,10 @@
 import { createOnline } from "../../assets/online.js";
 import { initial, legalMoves, apply, outcome, chooseMove, other } from "./logic.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; $("end").classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) $("end").classList.add("show"); }, ms); }
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -133,7 +138,7 @@ function render() {
 // ---------- flow ----------
 function newGame() {
   s = initial(); over = false; busy = false; hist = []; hintMove = -1; result = null;
-  $("end").classList.remove("show");
+  hideEnd();
   net.setOver(false);
   $("again").textContent = online() ? "Rematch" : "Play again";
   render();
@@ -196,7 +201,7 @@ function finish(out) {
   setStatus(title, "good");
   you === false ? sfx.lose() : sfx.win();
   net.setOver(true);
-  setTimeout(() => $("end").classList.add("show"), 900);
+  showEndLater(900);
 }
 function undo() {
   if (busy || !hist.length || online()) return;
@@ -206,7 +211,7 @@ function undo() {
   for (let k = 0; k < steps && hist.length; k += 1) prev = hist.pop();
   if (!prev) return;
   s = prev.s; over = false; result = null; hintMove = -1;
-  $("end").classList.remove("show");
+  hideEnd();
   render(); announce();
 }
 function showHint() {
@@ -233,8 +238,8 @@ function syncChips() {
   newGame();
 }));
 $("newGame").addEventListener("click", newGame);
-$("again").addEventListener("click", () => { if (online()) { net.rematch(); $("end").classList.remove("show"); } else newGame(); });
-$("endView").addEventListener("click", () => $("end").classList.remove("show"));
+$("again").addEventListener("click", () => { if (online()) { net.rematch(); hideEnd(); } else newGame(); });
+$("endView").addEventListener("click", () => hideEnd());
 $("undo").addEventListener("click", undo);
 $("hint").addEventListener("click", showHint);
 const mute = $("mute");

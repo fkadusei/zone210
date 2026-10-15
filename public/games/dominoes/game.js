@@ -1,5 +1,10 @@
 import { createOnline } from "../../assets/online.js";
 import { deal, opener, ends, sidesFor, place, playable, same, indexOfTile, total, chooseMove } from "./logic.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; $("end").classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) $("end").classList.add("show"); }, ms); }
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -93,7 +98,7 @@ const net = createOnline({
     scores = g.scores; roundNo = g.roundNo; roomSeed = g.roomSeed; nextMe = g.nextMe; nextThem = g.nextThem;
     lastMover = g.lastMover; roundStart = g.roundStart; endWinner = g.endWinner;
     pending = null; busy = false; covered = false;
-    $("end").classList.remove("show");
+    hideEnd();
     $("cover").classList.remove("show");
     inbox.length = 0; inbox.push(...g.inbox);
     if (!S) { render(); return; }
@@ -260,7 +265,7 @@ function newRound() {
   pending = null;
   busy = false;
   nextMe = false;
-  $("end").classList.remove("show");
+  hideEnd();
   net.setOver(false);
   const o = opener(S.hands);
   S.hands[o.p].splice(indexOfTile(S.hands[o.p], o.tile), 1);
@@ -420,7 +425,7 @@ function endRound(winner) {
   $("endText").textContent = `${text} Score: ${nameOf(0)} ${scores[0]} · ${nameOf(1)} ${scores[1]}.`;
   $("again").dataset.done = done ? "1" : "";
   setStatus(title, "good");
-  setTimeout(() => $("end").classList.add("show"), 700 / SPEED);
+  showEndLater(700 / SPEED);
 }
 
 function maybeNext() {
@@ -461,7 +466,7 @@ $("newGame").addEventListener("click", startMatch);
 $("draw").addEventListener("click", () => { if (humanTurn() && !covered) drawTile(viewP(), false); });
 $("coverGo").addEventListener("click", () => { covered = false; $("cover").classList.remove("show"); render(); });
 $("again").addEventListener("click", () => {
-  $("end").classList.remove("show");
+  hideEnd();
   const done = $("again").dataset.done === "1";
   if (online()) {
     if (done) net.rematch();
@@ -469,7 +474,7 @@ $("again").addEventListener("click", () => {
   } else if (done) startMatch();
   else newRound();
 });
-$("endView").addEventListener("click", () => $("end").classList.remove("show"));
+$("endView").addEventListener("click", () => hideEnd());
 const mute = $("mute");
 function syncMute() {
   mute.textContent = settings.muted ? "Sound Off" : "Sound On";

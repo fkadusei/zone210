@@ -1,5 +1,10 @@
 import { createOnline } from "../../assets/online.js";
 import { LEVELS, feedback, randomCode, allCodes, consistent, nextGuess } from "./logic.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; $("end").classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) $("end").classList.add("show"); }, ms); }
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -68,7 +73,7 @@ const net = createOnline({
   setState: (g) => {
     iMaker = g.iMaker; secret = g.secret; rows = g.rows; cur = g.cur; cands = []; runId += 1; lastSolved = g.solved;
     cfg = LEVELS[settings.level];
-    $("end").classList.remove("show");
+    hideEnd();
     phase = g.phase === "over" ? "guess" : g.phase;
     drawBoard(); drawPalette(); refresh();
     if (g.phase === "over") { finish(!!g.solved); return; }
@@ -181,7 +186,7 @@ function newGame() {
   runId += 1;
   cfg = LEVELS[settings.level];
   rows = []; cur = []; secret = null; cands = [];
-  $("end").classList.remove("show"); $("cover").classList.remove("show");
+  hideEnd(); $("cover").classList.remove("show");
   net.setOver(false);
   $("again").textContent = online() ? "Rematch" : "Play again";
   if (settings.mode === "cpu") { secret = randomCode(cfg.len, cfg.colors); phase = "guess"; }
@@ -290,7 +295,7 @@ function finish(solved) {
   setStatus(title, good ? "good" : "bad");
   good ? sfx.win() : sfx.lose();
   net.setOver(true);
-  setTimeout(() => $("end").classList.add("show"), 900 / SPEED);
+  showEndLater(900 / SPEED);
 }
 
 // ---------- controls ----------
@@ -313,8 +318,8 @@ function syncChips() {
 $("del").addEventListener("click", del);
 $("submit").addEventListener("click", submit);
 $("newGame").addEventListener("click", newGame);
-$("again").addEventListener("click", () => { if (online()) { net.rematch(); $("end").classList.remove("show"); } else newGame(); });
-$("endView").addEventListener("click", () => $("end").classList.remove("show"));
+$("again").addEventListener("click", () => { if (online()) { net.rematch(); hideEnd(); } else newGame(); });
+$("endView").addEventListener("click", () => hideEnd());
 $("coverGo").addEventListener("click", () => { $("cover").classList.remove("show"); });
 document.addEventListener("keydown", (e) => {
   if (e.target instanceof HTMLInputElement) return;

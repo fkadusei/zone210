@@ -1,4 +1,9 @@
 import { generate, conflicts, CLUES } from "./logic.js";
+// The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
+// game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
+let endSeq = 0;
+function hideEnd() { endSeq += 1; $("win").classList.remove("show"); }
+function showEndLater(ms) { const r = endSeq; setTimeout(() => { if (r === endSeq) $("win").classList.add("show"); }, ms); }
 
 const $ = (id) => document.getElementById(id);
 const gridEl = $("grid");
@@ -121,7 +126,7 @@ function startTimer() {
 function newPuzzle(fresh = true) {
   clearInterval(timer);
   timer = null;
-  $("win").classList.remove("show");
+  hideEnd();
   solved = false;
   hintCells.clear();
   history = [];
@@ -250,7 +255,7 @@ function checkWin() {
   } catch (err) {
     // ignore
   }
-  setTimeout(() => $("win").classList.add("show"), 500);
+  showEndLater(500);
 }
 
 // keyboard
