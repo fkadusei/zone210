@@ -8,7 +8,17 @@ const store = {
   set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (err) { /* private mode */ } },
 };
 const KEY = "zone210_abc123";
-const data = { tab: "abc", stars: 0, muted: false, seenL: [], seenN: [], small: false, max: 10, traceSet: "ABC", traceI: 0, ...store.get(KEY, {}) };
+// what was saved, made safe: a damaged or older save must never stop the game opening, so anything of the wrong kind
+// gets its usual value
+const data = (() => {
+  const d = { tab: "abc", stars: 0, muted: false, seenL: [], seenN: [], small: false, max: 10, traceSet: "ABC", traceI: 0 }, got = store.get(KEY, {});
+  if (!got || typeof got !== "object" || Array.isArray(got)) return d;
+  for (const k of Object.keys(d)) if (typeof got[k] === typeof d[k] && Array.isArray(got[k]) === Array.isArray(d[k])) d[k] = got[k];
+  for (const k of Object.keys(got)) if (!(k in d)) d[k] = got[k]; // anything newer versions keep
+  const whole = (v, lo, hi, def) => (Number.isInteger(v) && v >= lo && v <= hi ? v : def);
+  d.stars = whole(d.stars, 0, 1e9, 0); d.traceI = whole(d.traceI, 0, 1e4, 0); d.max = d.max === 20 ? 20 : 10;
+  return d;
+})();
 const save = () => store.set(KEY, data);
 const view = $("view");
 const rand = (n) => Math.floor(Math.random() * n);
@@ -330,11 +340,13 @@ function viewTrace() {
   const rc = reach.getContext("2d"); rc.lineCap = "round"; rc.lineJoin = "round"; rc.lineWidth = brush * 2.4;
   let drawing = false, lastPt = null, done = false;
   const pt = (e) => { const r = ink.getBoundingClientRect(); return { x: (e.clientX - r.left) * (px / r.width), y: (e.clientY - r.top) * (px / r.height) }; };
-  ink.addEventListener("pointerdown", (e) => { if (done) return; drawing = true; ink.setPointerCapture(e.pointerId); lastPt = pt(e); c.beginPath(); c.arc(lastPt.x, lastPt.y, brush / 2, 0, Math.PI * 2); c.fillStyle = c.strokeStyle; c.fill(); rc.beginPath(); rc.arc(lastPt.x, lastPt.y, brush * 1.2, 0, Math.PI * 2); rc.fill(); });
-  ink.addEventListener("pointermove", (e) => { if (!drawing) return; const p = pt(e); for (const k of [c, rc]) { k.beginPath(); k.moveTo(lastPt.x, lastPt.y); k.lineTo(p.x, p.y); k.stroke(); } lastPt = p; });
-  const end = () => { if (!drawing) return; drawing = false; check(); };
-  ink.addEventListener("pointerup", end);
-  ink.addEventListener("pointercancel", end);
+  // one finger at a time: a resting palm or a second finger neither draws a line across the letter nor stops the trace.
+  // A first finger that has not moved for a second (a palm) gives way to the next.
+  let finger = null, fingerT = 0;
+  ink.addEventListener("pointerdown", (e) => { if (done) return; if (drawing && e.pointerId !== finger) { if (performance.now() - fingerT < 1000) return; end(); } finger = e.pointerId; fingerT = performance.now(); drawing = true; try { ink.setPointerCapture(e.pointerId); } catch (err) { /* the finger has already gone */ } lastPt = pt(e); c.beginPath(); c.arc(lastPt.x, lastPt.y, brush / 2, 0, Math.PI * 2); c.fillStyle = c.strokeStyle; c.fill(); rc.beginPath(); rc.arc(lastPt.x, lastPt.y, brush * 1.2, 0, Math.PI * 2); rc.fill(); });
+  ink.addEventListener("pointermove", (e) => { if (!drawing || e.pointerId !== finger) return; fingerT = performance.now(); const p = pt(e); for (const k of [c, rc]) { k.beginPath(); k.moveTo(lastPt.x, lastPt.y); k.lineTo(p.x, p.y); k.stroke(); } lastPt = p; });
+  function end() { finger = null; if (!drawing) return; drawing = false; check(); }
+  for (const type of ["pointerup", "pointercancel"]) ink.addEventListener(type, (e) => { if (finger === null || e.pointerId === finger) end(); });
   function check() {
     const iData = c.getImageData(0, 0, px, px).data;
     const rData = rc.getImageData(0, 0, px, px).data;

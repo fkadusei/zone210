@@ -144,6 +144,9 @@ headless Chrome). They play through things a child does and check the results (c
 open the page with damaged saved drawings, check every main screen fits a phone, and let a monkey loose: random taps,
 drags, buttons and stray fingers, failing on any page error or a saved drawing gone bad. `--long` runs far more of the
 monkey; `--only name,name` runs just those tests. Run it, with `node tools/check-draw-animate.mjs`, after changing that game.
+The other drawing games (Doodle & Color, Draw & Guess, Sprouts and the tracing in ABC & 123) have the same kind of tests:
+`node tools/test-drawing-games.mjs` (cases in `tools/drawing-games-tests/`; online play is left out, as it needs a second
+device). Both use `tools/browser-tests.mjs`, which starts the server and Chrome and gives each test a fresh browser.
 
 ## Deploy to Cloudflare (Workers with static assets)
 

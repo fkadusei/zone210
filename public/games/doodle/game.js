@@ -158,14 +158,26 @@ function loadPage(id) {
   pctx.fillStyle = "#ffffff";
   pctx.fillRect(0, 0, W, H);
   // keep the undo history so an accidental page switch can be undone
-  if (undoStack.length === 0) undoStack.push(pctx.getImageData(0, 0, W, H));
+  if (undoStack.length === 0) undoStack.push(step());
   else snapshot();
   refreshButtons();
 }
 
 /* ---------- history ---------- */
+// each step keeps the colours and which page they were on, so undoing a page switch brings back that page's outlines too
+let photoLines = null; // the outlines made from the child's own picture, if they made some
+const step = () => ({ img: pctx.getImageData(0, 0, W, H), page: state.page, photo: state.page === "photo" ? photoLines : null });
+function showStep(st) {
+  pctx.putImageData(st.img, 0, 0);
+  if (st.page !== state.page || (st.page === "photo" && st.photo !== photoLines)) {
+    state.page = st.page;
+    lctx.clearRect(0, 0, W, H);
+    if (st.page === "photo" && st.photo) { photoLines = st.photo; lctx.putImageData(st.photo, 0, 0); } else if (PAGES[st.page]) PAGES[st.page].draw();
+    document.querySelectorAll("#pages [data-page]").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.page === st.page)));
+  }
+}
 function snapshot() {
-  undoStack.push(pctx.getImageData(0, 0, W, H));
+  undoStack.push(step());
   if (undoStack.length > 25) undoStack.shift();
   redoStack = [];
   refreshButtons();
@@ -173,14 +185,14 @@ function snapshot() {
 function undo() {
   if (undoStack.length < 2) return;
   redoStack.push(undoStack.pop());
-  pctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
+  showStep(undoStack[undoStack.length - 1]);
   refreshButtons();
 }
 function redo() {
   const img = redoStack.pop();
   if (!img) return;
   undoStack.push(img);
-  pctx.putImageData(img, 0, 0);
+  showStep(img);
   refreshButtons();
 }
 function refreshButtons() {
@@ -209,10 +221,16 @@ function dab(x, y, x0, y0) {
   pctx.stroke();
 }
 
+// one finger at a time: a second finger or a resting palm can't scribble a line across to the first one. A first
+// finger that has not moved for a second (a palm) gives way to the next.
+let finger = null, fingerT = 0;
 paint.addEventListener("pointerdown", (e) => {
   e.preventDefault();
+  if (finger !== null && e.pointerId !== finger) { if (performance.now() - fingerT < 1000) return; end(); }
+  finger = e.pointerId; fingerT = performance.now();
   const [x, y] = pos(e);
   if (state.tool === "fill") {
+    finger = null;
     floodFill(Math.round(x), Math.round(y), state.color);
     snapshot();
     return;
@@ -222,16 +240,18 @@ paint.addEventListener("pointerdown", (e) => {
     pctx.textAlign = "center";
     pctx.textBaseline = "middle";
     pctx.fillText(state.stamp, x, y);
+    finger = null;
     snapshot();
     return;
   }
-  paint.setPointerCapture(e.pointerId);
+  try { paint.setPointerCapture(e.pointerId); } catch (err) { /* the finger has already gone */ }
   drawing = true;
   last = [x, y];
   dab(x, y, x, y);
 });
 paint.addEventListener("pointermove", (e) => {
-  if (!drawing) return;
+  if (!drawing || e.pointerId !== finger) return;
+  fingerT = performance.now();
   const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
   (events.length ? events : [e]).forEach((ev) => {
     const [x, y] = pos(ev);
@@ -239,13 +259,13 @@ paint.addEventListener("pointermove", (e) => {
     last = [x, y];
   });
 });
-const end = () => {
+function end() {
+  finger = null;
   if (!drawing) return;
   drawing = false;
   snapshot();
-};
-paint.addEventListener("pointerup", end);
-paint.addEventListener("pointercancel", end);
+}
+for (const type of ["pointerup", "pointercancel"]) paint.addEventListener(type, (e) => { if (finger === null || e.pointerId === finger) end(); });
 
 /* ---------- paint bucket: fills the region under the tap, stopping at outlines ---------- */
 function floodFill(sx, sy, hex) {
@@ -466,6 +486,7 @@ $("photo").addEventListener("change", async (e) => {
     if (edge[i] || edge[i - 1] || edge[i + 1] || edge[i - W] || edge[i + W]) { const k4 = i * 4; out.data[k4] = ink[0]; out.data[k4 + 1] = ink[1]; out.data[k4 + 2] = ink[2]; out.data[k4 + 3] = 255; }
   }
   state.page = "photo";
+  photoLines = out;
   lctx.clearRect(0, 0, W, H);
   lctx.putImageData(out, 0, 0);
   pctx.fillStyle = "#ffffff";

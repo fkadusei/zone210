@@ -385,18 +385,25 @@ function flush() {
   net.send({ t: "p", k: G.strokes.length - 1, c: drawing.c, w: drawing.w, e: drawing.e, pts: unsent });
   unsent = [];
 }
+// one finger at a time: a second finger or a resting palm can't draw a line across to the first one. A first finger
+// that has not moved for a second (a palm) gives way to the next.
+let finger = null, fingerT = 0;
 cv.addEventListener("pointerdown", (e) => {
   if (!canDraw()) return;
   e.preventDefault();
+  if (drawing && e.pointerId !== finger) { if (performance.now() - fingerT < 1000) return; up(); }
+  finger = e.pointerId; fingerT = performance.now();
   try { cv.setPointerCapture(e.pointerId); } catch (err) { /* synthetic or already released */ }
   const p = pos(e);
   drawing = { c: brush.color, w: brush.size, e: brush.erase, pts: [p] };
   G.strokes.push(drawing);
   unsent = [p];
   drawStroke(drawing);
+  if (G.strokes.length === 1) render(); // Skip goes once there is a drawing
 });
 cv.addEventListener("pointermove", (e) => {
-  if (!drawing) return;
+  if (!drawing || e.pointerId !== finger) return;
+  fingerT = performance.now();
   const p = pos(e);
   const last = drawing.pts[drawing.pts.length - 1];
   if (Math.abs(p[0] - last[0]) + Math.abs(p[1] - last[1]) < 2) return;
@@ -405,12 +412,11 @@ cv.addEventListener("pointermove", (e) => {
   drawStroke(drawing, drawing.pts.length - 2);
   if (!sendT) sendT = setTimeout(() => { sendT = 0; flush(); }, 60);
 });
-const up = () => { if (!drawing) return; clearTimeout(sendT); sendT = 0; flush(); drawing = null; };
-cv.addEventListener("pointerup", up);
-cv.addEventListener("pointercancel", up);
+function up() { if (!drawing) return; clearTimeout(sendT); sendT = 0; flush(); drawing = null; finger = null; }
+for (const type of ["pointerup", "pointercancel"]) cv.addEventListener(type, (e) => { if (e.pointerId === finger) up(); });
 
-$("undo").addEventListener("click", () => { if (!canDraw()) return; G.strokes.pop(); redraw(); net.send({ t: "u" }); });
-$("clear").addEventListener("click", () => { if (!canDraw()) return; G.strokes = []; redraw(); net.send({ t: "c" }); });
+$("undo").addEventListener("click", () => { if (!canDraw()) return; G.strokes.pop(); redraw(); render(); net.send({ t: "u" }); });
+$("clear").addEventListener("click", () => { if (!canDraw()) return; G.strokes = []; redraw(); render(); net.send({ t: "c" }); });
 $("eraser").addEventListener("click", () => { brush.erase = !brush.erase; paintTools(); });
 $("skip").addEventListener("click", () => { if (!canDraw() || G.skipped || G.strokes.length) return; G.skipped = true; G.phase = "pick"; stopTimers(); showChoices(); render(); });
 $("sizes").addEventListener("click", (e) => {
