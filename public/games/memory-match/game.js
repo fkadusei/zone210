@@ -211,9 +211,10 @@ function flip(i, remote = false) {
 // two cards are face up: score a match, or turn them back and pass the turn
 function resolvePair() {
   busy = true;
-  const [a, b] = open;
+  const [a, b] = open, game = tiles; // a new game started meanwhile has its own cards: these timers leave it alone
   if (tiles[a].symbol === tiles[b].symbol) {
     setTimeout(() => {
+      if (tiles !== game) return;
       [a, b].forEach((k) => {
         tiles[k].el.classList.remove("open");
         tiles[k].el.classList.add("done");
@@ -230,10 +231,12 @@ function resolvePair() {
     }, 450);
   } else {
     setTimeout(() => {
+      if (tiles !== game) return;
       [a, b].forEach((k) => tiles[k].el.classList.add("miss"));
       sMiss();
     }, 350);
     setTimeout(() => {
+      if (tiles !== game) return;
       [a, b].forEach((k) => {
         tiles[k].el.classList.remove("open", "miss");
         tiles[k].el.setAttribute("aria-label", `Card ${k + 1}, face down`);

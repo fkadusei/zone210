@@ -22,7 +22,9 @@ const store = {
   get(key, fallback) {
     try {
       const raw = localStorage.getItem(key);
-      return raw === null ? fallback : JSON.parse(raw);
+      if (raw === null) return fallback;
+      const v = JSON.parse(raw); // a damaged save of the wrong kind (a word where a list should be) counts as nothing saved
+      return v !== null && typeof v === typeof fallback && Array.isArray(v) === Array.isArray(fallback) ? v : fallback;
     } catch (err) {
       return fallback;
     }

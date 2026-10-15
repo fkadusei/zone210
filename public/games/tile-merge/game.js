@@ -11,6 +11,7 @@ let history = [];
 let els = new Map(); // tile id -> element
 let best = Number(localStorage.getItem(KEY_BEST) || 0);
 let animating = false;
+let round = 0; // which game this is: a slide that ends after a new game has started must not touch it
 let keepPlaying = false;
 
 // background cells
@@ -84,6 +85,7 @@ function start(fresh = true) {
     state = newGame();
   }
   animating = false;
+  round += 1; // a slide still finishing belongs to the old game
   renderAll();
   save();
 }
@@ -108,7 +110,9 @@ function doMove(dir) {
     el.style.setProperty("--c", a.c);
   });
 
+  const mine = round;
   setTimeout(() => {
+    if (round !== mine) return;
     res.absorbed.forEach((a) => {
       els.get(a.id)?.remove();
       els.delete(a.id);

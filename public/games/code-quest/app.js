@@ -289,8 +289,7 @@ async function playAll() {
   const my = (token += 1);
   $("run").disabled = true;
   setStatus("Running…");
-  while (tpos < trace.events.length) {
-    if (my !== token) return;
+  while (my === token && trace && tpos < trace.events.length) { // Reset, Clear or a change to the program stops it
     const ev = trace.events[tpos++];
     await apply(ev);
     if (ev.k === "move" || ev.k === "turn" || ev.k === "bump") await wait(Number(data.speed));
@@ -300,10 +299,11 @@ async function playAll() {
 }
 async function stepOnce() {
   if (!ensureTrace()) return;
-  token += 1;
+  const my = (token += 1);
   while (tpos < trace.events.length) {
     const ev = trace.events[tpos++];
     await apply(ev);
+    if (my !== token || !trace) return; // reset or changed while the step was showing
     if (ev.k === "move" || ev.k === "turn" || ev.k === "bump") break;
   }
   if (tpos >= trace.events.length) finish();

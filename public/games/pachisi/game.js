@@ -85,7 +85,7 @@ const net = createOnline({
   // a throw or a move that is still animating is saved as "about to happen", so a reload replays it
   getState: () => ({ s, phase: pendMv !== null ? "move" : rollK !== null ? "throw" : phase, cur, over, rollK, pendMv, inbox: [...inbox] }),
   setState: (st) => {
-    s = st.s; cur = st.cur; phase = st.phase; over = false;
+    gameNo += 1; s = st.s; cur = st.cur; phase = st.phase; over = false;
     busy = false; rolling = false; anim = null; sel = null; rollK = null; pendMv = null; moves = [];
     $("end").classList.remove("show");
     inbox.length = 0; inbox.push(...st.inbox);
@@ -113,6 +113,7 @@ let pendMv = null; // the move being animated
 let s = null;
 let phase = "idle"; // idle | throw | move | over
 let cur = null; // the current throw
+let gameNo = 0; // which game this is: a throw, move or computer turn still waiting from an older game stops when it wakes
 let moves = [];
 let sel = null;
 let busy = false;
@@ -232,6 +233,7 @@ function info(text, grace = false) { $("tinfo").innerHTML = grace ? `${text} <sp
 
 // ---------- flow ----------
 function newGame() {
+  gameNo += 1;
   s = initial(online() ? 2 : Number(settings.players));
   phase = "idle"; cur = null; moves = []; sel = null; busy = false; over = false; anim = null; rolling = false; shellsNow = [false, false, false, false, false, false];
   $("end").classList.remove("show");
@@ -246,7 +248,7 @@ function startTurn(extra = false) {
   phase = "throw"; cur = null; moves = []; sel = null;
   info(extra ? "Another throw!" : "Throw the cowrie shells.");
   draw();
-  if (isCpu(s.turn)) { setStatus(`${nameOf(s.turn)} ${extra ? "throws again" : "is throwing"}…`); busy = true; setTimeout(() => { busy = false; doThrow(); }, 800 / SPEED); }
+  if (isCpu(s.turn)) { setStatus(`${nameOf(s.turn)} ${extra ? "throws again" : "is throwing"}…`); busy = true; const g = gameNo; setTimeout(() => { if (g !== gameNo) return; busy = false; doThrow(); }, 800 / SPEED); }
   else if (online() && s.turn !== myIdx) setStatus("Your friend is throwing…");
   else setStatus(`${cpu() || online() ? "Your" : `${CNAME[seatOf(s)]}'s`} turn: ${extra ? "you earned another throw! " : ""}throw the shells.`);
   drain();
@@ -258,8 +260,8 @@ async function doThrow(forcedK, remote = false) {
   if (online() && !remote) net.send({ t: "throw", k });
   rolling = true; busy = true; rollK = k;
   sfx.shells();
-  const t0 = Date.now();
-  while (Date.now() - t0 < 700 / SPEED) { shellsNow = shellsNow.map(() => Math.random() < 0.5); draw(); await sleep(110); }
+  const t0 = Date.now(), g = gameNo, gone = () => g !== gameNo;
+  while (Date.now() - t0 < 700 / SPEED) { shellsNow = shellsNow.map(() => Math.random() < 0.5); draw(); await sleep(110); if (gone()) return undefined; }
   const up = Array.from({ length: 6 }, (_, i) => i < k);
   for (let i = up.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [up[i], up[j]] = [up[j], up[i]]; }
   shellsNow = up; rolling = false; busy = false; rollK = null;
@@ -274,12 +276,13 @@ async function doThrow(forcedK, remote = false) {
     setStatus(`${nameOf(s.turn)} threw ${cur.v} but ${nameOf(s.turn) === "You" ? "have" : "has"} no legal move.`, "bad");
     busy = true;
     await sleep(1500);
+    if (gone()) return undefined;
     busy = false;
     return cur.grace ? startTurn(true) : endTurn();
   }
-  if (isCpu(s.turn)) { busy = true; setStatus(`${nameOf(s.turn)} threw ${cur.v}…`); await sleep(900); busy = false; const m = chooseMove(s, seat, cur, settings.level); return doMove(m, true); }
+  if (isCpu(s.turn)) { busy = true; setStatus(`${nameOf(s.turn)} threw ${cur.v}…`); await sleep(900); if (gone()) return undefined; busy = false; const m = chooseMove(s, seat, cur, settings.level); return doMove(m, true); }
   if (myTurn() || !online()) {
-    if (moves.length === 1) { setStatus(`You threw ${cur.v}. Only one move is possible…`); busy = true; await sleep(900); busy = false; return doMove(moves[0], false); }
+    if (moves.length === 1) { setStatus(`You threw ${cur.v}. Only one move is possible…`); busy = true; await sleep(900); if (gone()) return undefined; busy = false; return doMove(moves[0], false); }
     setStatus(`${cpu() || online() ? "You" : CNAME[seat]} threw ${cur.v}${cur.grace ? " (a grace!)" : ""}. Tap a piece to choose it, then tap again to move it.`, cur.grace ? "good" : "");
   } else setStatus(`Your friend threw ${cur.v}…`);
   drain();
@@ -301,7 +304,7 @@ async function doMove(mv, remote, local) {
   void local;
   if (!remote && online()) net.send({ t: "mv", piece: mv.piece });
   busy = true; sel = null; pendMv = mv.piece;
-  const seat = seatOf(s);
+  const seat = seatOf(s), g = gameNo;
   const t = cur;
   phase = "idle";
   // walk the piece square by square
@@ -313,6 +316,7 @@ async function doMove(mv, remote, local) {
       sfx.step();
       draw();
       await sleep(mv.to - mv.from > 12 ? 45 : 90);
+      if (g !== gameNo) return undefined;
       if (rel >= mv.to) break;
     }
     anim = null;
@@ -342,7 +346,7 @@ function finish(idx) {
   draw();
   you ? sfx.win() : sfx.lose();
   net.setOver(true);
-  setTimeout(() => $("end").classList.add("show"), 800);
+  const g = gameNo; setTimeout(() => { if (g === gameNo) $("end").classList.add("show"); }, 800); // not over a new game started meanwhile
 }
 
 // ---------- controls ----------

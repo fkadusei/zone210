@@ -12,7 +12,8 @@ const TOPIC_ICON = { Africa: "🌍", World: "🌐", Science: "🔬", Nature: "�
 const SEEN_KEY = "zone210_quiz_seen";
 const readSeen = () => {
   try {
-    return JSON.parse(localStorage.getItem(SEEN_KEY) || "{}");
+    const v = JSON.parse(localStorage.getItem(SEEN_KEY) || "{}");
+    return v && typeof v === "object" && !Array.isArray(v) ? v : {}; // a damaged save counts as nothing seen yet
   } catch (err) {
     return {};
   }
@@ -68,7 +69,7 @@ function pick() {
   const all = pool();
   const seenAll = readSeen();
   const key = `${opts.aud}|${opts.topic}`;
-  const seen = new Set(seenAll[key] || []);
+  const seen = new Set(Array.isArray(seenAll[key]) ? seenAll[key] : []);
   let fresh = all.filter((q) => !seen.has(q.q));
   if (fresh.length < ROUND) {
     seen.clear(); // everything has been played: start a new cycle
