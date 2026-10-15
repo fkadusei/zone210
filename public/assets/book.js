@@ -338,6 +338,7 @@ export function createBook(host, api) {
 
   /* ---- building ---- */
   function build() {
+    timers.forEach(clearTimeout); timers = []; // page turns still queued belong to the old book
     mode = mq.matches ? "single" : "spread";
     L = mode === "single" ? n() + 3 : n() + 2;
     last = n() + 2;
@@ -404,6 +405,7 @@ export function createBook(host, api) {
     lf.classList.add("turning");
     lf.classList.toggle("flipped", flipped);
     setTimeout(() => {
+      if (leaves[k] !== lf) return; // the book was rebuilt (a filter changed) while this page was turning
       lf.classList.remove("turning");
       lf.style.zIndex = String(zFinal(k));
     }, FLIP_MS + 40);
@@ -532,7 +534,7 @@ export function createBook(host, api) {
       goTo(cur + dir);
     } else {
       leaf.classList.add("turning");
-      setTimeout(() => { leaf.classList.remove("turning"); leaf.style.zIndex = String(zFinal(k)); }, FLIP_MS + 40);
+      setTimeout(() => { if (leaves[k] !== leaf) return; leaf.classList.remove("turning"); leaf.style.zIndex = String(zFinal(k)); }, FLIP_MS + 40); // unless the book has been rebuilt since
     }
   }
 
