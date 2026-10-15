@@ -1,6 +1,6 @@
 // Helpers every drawing-game test script starts with (see tools/test-drawing-games.mjs).
 // ok(name, condition, info) records a result; R holds them all; errs collects page errors.
-const errs = []; addEventListener("error", (e) => errs.push(e.message)); addEventListener("unhandledrejection", (e) => errs.push("rejection " + (e.reason && e.reason.message || e.reason)));
+const errs = []; addEventListener("error", (e) => errs.push(e.message + (e.filename ? " @" + e.filename.split("/").slice(-2).join("/") + ":" + e.lineno : ""))); addEventListener("unhandledrejection", (e) => errs.push("rejection " + (e.reason && e.reason.message || e.reason)));
 window.confirm = () => true; window.__alerts = []; window.alert = (m) => window.__alerts.push(String(m));
 const q = (s) => document.querySelector(s), qa = (s) => [...document.querySelectorAll(s)];
 const w = (ms) => new Promise((r) => setTimeout(r, ms));

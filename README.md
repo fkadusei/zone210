@@ -147,6 +147,9 @@ monkey; `--only name,name` runs just those tests. Run it, with `node tools/check
 The other drawing games (Doodle & Color, Draw & Guess, Sprouts and the tracing in ABC & 123) have the same kind of tests:
 `node tools/test-drawing-games.mjs` (cases in `tools/drawing-games-tests/`; online play is left out, as it needs a second
 device). Both use `tools/browser-tests.mjs`, which starts the server and Chrome and gives each test a fresh browser.
+Every game, and the home page, gets the same general check from `node tools/test-games.mjs` (about an hour; name games
+to test just those, e.g. `node tools/test-games.mjs chess sudoku`): it opens at phone size without errors and fits,
+still opens and plays with its saved data damaged, and survives a monkey at phone and desktop size (`--long` for more).
 
 ## Deploy to Cloudflare (Workers with static assets)
 

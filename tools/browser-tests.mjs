@@ -44,12 +44,12 @@ export async function startBrowser() {
   if (!BASE) { console.log("Could not start Chrome at " + CHROME + ". Set CHROME to its path."); server.close(); process.exit(2); }
 
   /** Opens SITE + page at w x h with `storage` (key → raw string) saved first, runs `js`, and gives back its result. */
-  async function open(page, { js, w = 800, h = 1000, label = "test", limit = 120000, storage = {}, pre = "" }) {
+  async function open(page, { js, w = 800, h = 1000, label = "test", limit = 120000, storage = {}, pre = "", stay = false }) {
     const tab = await (await fetch(`${BASE}/json/new?about:blank`, { method: "PUT" })).json();
     const ws = new WebSocket(tab.webSocketDebuggerUrl);
     await new Promise((r) => { ws.onopen = r; });
     let id = 0; const pending = new Map(), thrown = []; let loaded = false;
-    ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.id && pending.has(d.id)) { pending.get(d.id)(d); pending.delete(d.id); } else if (d.method === "Page.loadEventFired") loaded = true; else if (d.method === "Runtime.exceptionThrown") thrown.push(d.params.exceptionDetails.exception?.description?.split("\n")[0] || d.params.exceptionDetails.text); };
+    ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.id && pending.has(d.id)) { pending.get(d.id)(d); pending.delete(d.id); } else if (d.method === "Page.loadEventFired") loaded = true; else if (d.method === "Fetch.requestPaused") send("Fetch.failRequest", { requestId: d.params.requestId, errorReason: "Aborted" }); else if (d.method === "Runtime.exceptionThrown") thrown.push(d.params.exceptionDetails.exception?.description?.split("\n")[0] || d.params.exceptionDetails.text); };
     const send = (method, params = {}) => new Promise((r) => { id += 1; pending.set(id, r); ws.send(JSON.stringify({ id, method, params })); });
     await send("Page.enable"); await send("Runtime.enable");
     await send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: 1, mobile: false });
@@ -58,11 +58,12 @@ export async function startBrowser() {
     await send("Page.navigate", { url: SITE + page + (page.includes("?") ? "&" : "?") + "t=" + encodeURIComponent(label) });
     for (let i = 0; i < 100 && !loaded; i += 1) await sleep(100);
     await sleep(1200);
+    if (stay) await send("Fetch.enable", { patterns: [{ urlPattern: "*", resourceType: "Document", requestStage: "Request" }] }); // the test stays on this page: links and other ways off it go nowhere
     const r = await Promise.race([send("Runtime.evaluate", { expression: `(async()=>{${js}})()`, awaitPromise: true, returnByValue: true }), sleep(limit).then(() => ({ timedOut: true }))]);
     let value = r.timedOut ? { CRASH: `no answer after ${limit / 1000} seconds` } : r.result?.exceptionDetails ? { CRASH: r.result.exceptionDetails.exception?.description || r.result.exceptionDetails.text } : r.result?.result?.value;
     if (thrown.length) value = { ...value, pageErrors: thrown.slice(0, 3) };
     let shot = null;
-    if (failed(value)) { const s = await send("Page.captureScreenshot", { format: "png" }); shot = path.join(os.tmpdir(), `zone210-test-${label.replace(/[^\w-]+/g, "-")}.png`); fs.writeFileSync(shot, Buffer.from(s.result.data, "base64")); }
+    if (failed(value)) { const s = await send("Page.captureScreenshot", { format: "png" }); if (s.result && s.result.data) { shot = path.join(os.tmpdir(), `zone210-test-${label.replace(/[^\w-]+/g, "-")}.png`); fs.writeFileSync(shot, Buffer.from(s.result.data, "base64")); } }
     ws.close(); await fetch(`${BASE}/json/close/${tab.id}`);
     return { value, shot };
   }
