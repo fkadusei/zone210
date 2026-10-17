@@ -834,6 +834,19 @@ export const GAMES = [
     emoji: "🎞️",
     colors: ["#f59e0b", "#ec4899"],
   },
+  {
+    id: "ribbon-sort",
+    online: true,
+    title: "Ribbon Sort",
+    tagline: "Stack the ribbon rolls so every pole holds just one color. Four sizes, endless puzzles, hints, and an online race against a friend.",
+    audience: "all",
+    cat: "puzzles",
+    added: "2026-10-17",
+    tags: ["Puzzle", "Logic", "Multiplayer", "Offline"],
+    players: "1–2 players",
+    emoji: "🎀",
+    colors: ["#2563eb", "#8b5cf6"],
+  },
 ];
 
 // ---- weekly featured game ----

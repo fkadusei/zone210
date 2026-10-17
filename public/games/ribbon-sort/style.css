@@ -1,0 +1,45 @@
+.setup { display: grid; gap: 10px; margin-bottom: 12px; }
+.opt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.lbl { width: 64px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.titlebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 12px 0 4px; }
+.titlebar b { font-family: var(--font-head); font-weight: 600; font-size: 1.15rem; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 14px; }
+
+/* the table: poles of ribbon rolls. --pw (pole width) and --rh (roll height) are set by game.js to fit the screen */
+.table { display: flex; justify-content: center; align-items: flex-end; gap: var(--gap, 10px); padding: 10px 0 0; user-select: none; -webkit-user-select: none; touch-action: none; }
+.pole { position: relative; width: var(--pw); height: calc((var(--cap) + 1.35) * var(--rh) + 14px); padding: 0; border: 0; background: none; cursor: pointer; border-radius: 12px; -webkit-tap-highlight-color: transparent; }
+.pole:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+/* the rod and the base it stands in */
+.pole::before { content: ""; position: absolute; left: 50%; bottom: 10px; width: max(5px, calc(var(--pw) * 0.1)); height: calc(var(--cap) * var(--rh) + var(--rh) * 0.45); transform: translateX(-50%); border-radius: 4px 4px 0 0; background: linear-gradient(90deg, #2b2f3a, #4b5262 45%, #1f232c); }
+.pole::after { content: ""; position: absolute; left: -3px; right: -3px; bottom: 0; height: 10px; border-radius: 4px; background: linear-gradient(#5b4636, #3b2c21); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25); }
+.pole.chosen { box-shadow: 0 0 0 3px var(--gold); }
+.pole.target { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 55%, transparent); }
+.pole.full { box-shadow: 0 0 0 2px var(--green); }
+.pole.nope { animation: nope 0.32s; }
+@keyframes nope { 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+
+/* one roll of ribbon, seen from the side: a satin band with a light rim at its edges */
+.roll {
+  position: absolute; left: 3%; width: 94%; height: calc(var(--rh) - 2px); bottom: calc(10px + var(--i) * var(--rh) + 1px);
+  border-radius: 7px; background-color: var(--c);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.08) 22%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.2) 100%),
+    linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.28) 42%, transparent 54%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), inset 0 -2px 0 rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.25);
+  display: grid; place-items: center; font-size: calc(var(--rh) * 0.5); line-height: 1; color: rgba(255, 255, 255, 0.92); text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+  transition: transform 0.16s ease-out, bottom 0.2s ease-out; pointer-events: none;
+}
+.roll.light { color: rgba(40, 30, 40, 0.7); text-shadow: none; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.16), inset 0 2px 0 rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(0, 0, 0, 0.14), 0 1px 2px rgba(0, 0, 0, 0.25); } /* yellow, gray and white show on white paper */
+.roll.up { transform: translateY(calc(-1 * var(--lift) * var(--rh))); }
+.roll.landed { animation: land 0.22s ease-out; }
+@keyframes land { 0% { transform: translateY(-6px); } 100% { transform: none; } }
+:root[data-saver="on"] .roll, :root[data-saver="on"] .pole { transition: none; animation: none; }
+@media (prefers-reduced-motion: reduce) { .roll, .pole { transition: none; animation: none; } }
+.table.solved .pole::before { background: linear-gradient(90deg, #8a6208, #ffd15a 45%, #8a6208); }
+
+.result { margin: 16px auto 0; max-width: 460px; text-align: center; padding: 16px; border-radius: 16px; background: color-mix(in srgb, var(--green) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--green) 40%, var(--line)); }
+.result[hidden] { display: none; }
+.result h2 { margin: 0 0 6px; }
+.result p { margin: 0 0 12px; color: var(--muted); }
+.rules { margin-top: 18px; }
+.rules ul { margin: 8px 0 0; padding-left: 20px; line-height: 1.55; color: var(--muted); }
+@media (max-width: 520px) { .lbl { width: 100%; } }

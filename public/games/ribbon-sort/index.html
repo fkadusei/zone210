@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Ribbon Sort · Zone 210</title>
+    <meta name="theme-color" content="#0a0e1a" />
+    <script src="../../assets/theme.js"></script>
+    <script src="../../assets/saver.js"></script>
+    <link rel="stylesheet" href="../../assets/shell.css" />
+    <link rel="stylesheet" href="style.css" />
+    <meta name="description" content="Stack the ribbon rolls so every pole holds just one color. Four sizes, endless puzzles, hints, and an online race against a friend." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Zone 210" />
+    <meta property="og:title" content="Ribbon Sort · Zone 210" />
+    <meta property="og:description" content="Stack the ribbon rolls so every pole holds just one color. Four sizes, endless puzzles, hints, and an online race against a friend." />
+    <meta property="og:url" content="https://zone210.com/games/ribbon-sort/" />
+    <meta property="og:image" content="https://zone210.com/assets/og/ribbon-sort.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Ribbon Sort on Zone 210" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Ribbon Sort · Zone 210" />
+    <meta name="twitter:description" content="Stack the ribbon rolls so every pole holds just one color. Four sizes, endless puzzles, hints, and an online race against a friend." />
+    <meta name="twitter:image" content="https://zone210.com/assets/og/ribbon-sort.jpg" />
+    <!-- seo:head -->
+    <link rel="canonical" href="https://zone210.com/games/ribbon-sort/" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Ribbon Sort","description":"Stack the ribbon rolls so every pole holds just one color. Four sizes, endless puzzles, hints, and an online race against a friend.","url":"https://zone210.com/games/ribbon-sort/","image":"https://zone210.com/assets/og/ribbon-sort.jpg","genre":["Puzzles","Puzzle","Logic","Multiplayer"],"applicationCategory":"Game","operatingSystem":"Any web browser","playMode":["SinglePlayer","MultiPlayer"],"audience":{"@type":"Audience","audienceType":"Everyone"},"isAccessibleForFree":true,"inLanguage":"en","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"Zone 210","url":"https://zone210.com/"}}</script>
+    <!-- /seo:head -->
+  </head>
+  <body>
+    <main class="g-page">
+      <div class="g-head">
+        <div>
+          <h1>Ribbon Sort</h1>
+          <p>Move the ribbon rolls until every pole holds just one color.</p>
+        </div>
+        <div class="g-bar">
+          <button class="g-btn ghost" id="mute">🔊 Sound on</button>
+        </div>
+      </div>
+      <section class="g-panel setup" aria-label="Puzzle options">
+        <div class="opt"><span class="lbl">Puzzle</span>
+          <div class="g-chips" id="mode" role="group" aria-label="Kind of puzzle">
+            <button class="g-chip" data-value="easy" aria-pressed="true">Easy</button>
+            <button class="g-chip" data-value="medium" aria-pressed="false">Medium</button>
+            <button class="g-chip" data-value="hard" aria-pressed="false">Hard</button>
+            <button class="g-chip" data-value="tall" aria-pressed="false">Tall stacks</button>
+          </div></div>
+        <div class="opt"><span class="lbl">Players</span>
+          <div class="g-chips" id="players" role="group" aria-label="Players">
+            <button class="g-chip" data-value="1" aria-pressed="true">1 player</button>
+            <button class="g-chip" data-value="online" aria-pressed="false">🌐 Online race</button>
+          </div></div>
+      </section>
+      <div class="g-stats" id="stats"></div>
+      <div class="titlebar"><b id="title"></b></div>
+      <div class="table" id="table" role="group" aria-label="Poles of ribbon rolls. Choose a pole, then the pole to move its top rolls to."></div>
+      <div class="row"><button class="g-btn ghost" id="undo">↶ Undo</button><button class="g-btn ghost" id="hint">💡 Hint</button><button class="g-btn ghost" id="restart">↻ Start again</button><button class="g-btn ghost" id="skip">🎲 New puzzle</button></div>
+      <p class="g-status" id="status" role="status" aria-live="polite"></p>
+      <div class="result" id="result" hidden><h2 id="resTitle"></h2><p id="resText"></p><button class="g-btn" id="next">Next puzzle ▶</button></div>
+      <details class="rules"><summary>How to play</summary><ul>
+        <li>Tap a pole to lift its top rolls, then tap the pole to put them on. You can also drag from one pole to another.</li>
+        <li>Rolls can only go onto an empty pole, or onto a roll of the same color, and a pole holds only so many.</li>
+        <li>All the rolls of one color on top move together, as many as fit.</li>
+        <li>You win when every pole holds rolls of just one color (or nothing).</li>
+        <li>Stuck? Undo as many moves as you like, or tap Hint for a good next move. Every puzzle can be solved.</li>
+        <li>Each roll has a little shape as well as its color, so you can tell them apart by either.</li>
+        <li>Keyboard: number keys choose a pole (1 to 9), Esc lets go, Z undoes.</li>
+        <li><b>Online race:</b> you and a friend get the same puzzle. Whoever sorts it first wins.</li>
+      </ul></details>
+    </main>
+    <script src="../../assets/sound.js"></script>
+    <script src="../../assets/back-link.js"></script>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
