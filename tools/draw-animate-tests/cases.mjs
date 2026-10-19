@@ -133,6 +133,24 @@ await pic('walkers','walk-dog'); await tap(650,450); await act('done');
 const t = await things(); const person = t.find(x => x.s[0].fig === 'stand1');
 ok('placeOnce_result', t.length === 2 && person && Math.abs(person.x - 380) < 6 && Math.abs(person.y - 340) < 10, t.map(x => [x.s[0].fig, Math.round(x.x), Math.round(x.y)]));
 ` },
+  // shapes and words, like pictures, go down once and are then picked up with Select; another is chosen afresh
+  { name: "shapeTextOnce", save: scene([]), js: String.raw`
+await act('new'); await tool('shape'); await drag([[100,100],[160,140],[220,180]]);
+ok('shape_needsChoosing', /Choose a shape/.test(note()), note());
+q('#shapes .g-chip').click(); await w(30); await drag([[100,100],[160,140],[220,180]]);
+ok('shape_drawnThenSelect', q('#tools [data-tool="move"]').getAttribute('aria-pressed') === 'true' && /Drawn!/.test(note()), note());
+await drag([[500,100],[560,140],[620,180]]); // a drag on empty paper now draws nothing
+await drag([[160,140],[200,170],[240,200]]); // and the shape can be dragged
+await tool('text'); ok('text_boxEmpty', q('#textIn').value === '', q('#textIn').value);
+q('#textIn').value = 'Hi'; q('#textIn').dispatchEvent(new Event('input')); await tap(500,450);
+ok('text_placedThenSelect', q('#tools [data-tool="move"]').getAttribute('aria-pressed') === 'true' && /Added!/.test(note()), note());
+await tap(650,300); await tool('text'); await tap(650,300);
+ok('text_needsTyping', /Type your words/.test(note()), note());
+await tap(500,450); ok('text_tapToEdit', q('#textIn').value === 'Hi', q('#textIn').value);
+await act('done'); const t = await things();
+ok('shapeText_result', t.length === 2 && t.filter(x => x.s[0].tx).length === 1, t.map(x => [x.s[0].tx || 'shape', Math.round(x.x), Math.round(x.y)]));
+const shape = t.find(x => !x.s[0].tx); ok('shape_moved', shape && shape.x > 170, shape && [shape.x, shape.y]);
+` },
   // a second finger or a resting palm must not take over a line being drawn or a drawing being dragged
   { name: "twoFingers", save: scene([]), js: String.raw`
 const evp=(type,x,y,id)=>{const r=cv.getBoundingClientRect(); cv.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',isPrimary:id===1,button:0,clientX:r.left+x*r.width/800,clientY:r.top+y*r.height/600}))};

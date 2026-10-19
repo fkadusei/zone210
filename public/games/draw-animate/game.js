@@ -403,7 +403,7 @@ function paint() {
   const thick = scene() ? 0 : Math.min(7, 1 + Math.floor(data.flip.frames.length / 3));
   cv.style.boxShadow = scene() ? "" : Array.from({ length: thick }, (_, i) => `${(i + 1) * 3}px ${(i + 1) * 3}px 0 ${i % 2 ? "#cfc8b6" : "#ebe5d5"}`).join(", ") + `, ${thick * 3 + 6}px ${thick * 3 + 10}px 22px rgba(0,0,0,0.35)`;
   document.querySelectorAll("#palette .sw").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === data.color)));
-  press("tools", "tool", ui.tool); press("shapes", "shape", ui.shape); press("stickSets", "set", ui.set);
+  press("tools", "tool", ui.tool); press("shapes", "shape", ui.shapeArmed ? ui.shape : null); press("stickSets", "set", ui.set);
   $("shapeRow").hidden = ui.tool !== "shape"; $("stickRow").hidden = ui.tool !== "stamp"; $("moveRow").hidden = ui.tool !== "move"; $("jointRow").hidden = ui.tool !== "joint"; $("textRow").hidden = ui.tool !== "text";
   if (ui.tool !== "text" || !strokes().includes(ui.textPick)) ui.textPick = null;
   press("fonts", "font", ui.textPick ? ui.textPick.f : ui.font || "round"); $("textNew").disabled = !ui.textPick;
@@ -529,7 +529,13 @@ cv.addEventListener("pointerdown", (e) => {
     if (ui.tool === "move") { grabAt(x, y); return; }
     if (ui.tool === "joint") { jointAt(x, y); return; }
     if (ui.tool === "text") { textAt(x, y); return; }
-    if (ui.tool === "shape") { ui.from = [x, y]; ui.live = null; ui.reach = 0; return; }
+    if (ui.tool === "shape") {
+      if (!ui.shapeArmed) { // nothing chosen: a press on something already there picks it up, as Select does
+        if (pickAt(strokes(), x, y) >= 0) { ui.tool = "move"; paint(); grabAt(x, y); return; }
+        note("Choose a shape below, then press and drag to draw it."); return;
+      }
+      ui.from = [x, y]; ui.live = null; ui.reach = 0; return;
+    }
     if (ui.tool === "stamp") {
       if (!ui.armed) { // nothing chosen: a tap on a picture already there picks it up, as Select does; anywhere else says what to do
         const i = pickAt(strokes(), x, y), on = strokes()[i];
@@ -602,16 +608,19 @@ function lift() {
   if (ui.lasso) { const la = ui.lasso; ui.lasso = null; if (la.moved && la.pts.length >= 12) jointRing(la.pts); else jointTap(la.x, la.y); render(); return; }
   if (ui.scrub) { const tn = ui.turn; letGo(!!tn && tn.hand && (tn.forward ? ui.scrub.v : -ui.scrub.v) > 0.5 && performance.now() - ui.scrub.lastT < 120); ui.scrub = null; return; } // a quick flick finishes the turn too
   if (ui.from) { // a shape or a sticker is put down
-    const s2 = ui.live, big = s2 && (s2.ch || s2.fig || s2.tx || ui.reach > 8);
+    const s2 = ui.live, big = s2 && (s2.ch || s2.fig || s2.tx || ui.reach > 8), kind = s2 && s2.tx ? "text" : s2 && (s2.ch || s2.fig) ? "picture" : "shape";
     ui.from = null; ui.live = null; ui.reach = 0;
-    if (s2 && s2.tx) { ui.textPick = s2; note("Written! Keep typing to change it, pick another font, colour or size, or tap New text to write something else."); }
-    if (big) { strokes().push(s2); did({ k: "add" }); paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } if (s2.tx) paint(); }
-    if (big && (s2.ch || s2.fig)) { // a picture goes down once: then it is picked up with Select, so more taps move it rather than add copies
-      ui.armed = false; ui.tool = "move"; ui.pick = [strokes().length - 1];
-      note("Added! Drag it to move it, or use its corner to resize it. To add another, tap 🧩 Pictures and choose one.");
+    if (big) {
+      strokes().push(s2); did({ k: "add" }); paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); }
+      // a picture, a shape or words go down once: then they are picked up with Select, so they can be moved straight
+      // away and more taps don't add copies. Another one is chosen afresh.
+      ui.armed = false; ui.shapeArmed = false; ui.textPick = null;
+      ui.tool = "move"; ui.pick = [strokes().length - 1];
+      note(kind === "text" ? "Added! Drag the words to move them, or use the corner to resize them. To change them, tap 🔤 Text and tap the words; to add more, tap 🔤 Text and type."
+        : kind === "shape" ? "Drawn! Drag it to move it, or use its corner to resize it. To draw another, tap 🔷 Shapes and choose one."
+          : "Added! Drag it to move it, or use its corner to resize it. To add another, tap 🧩 Pictures and choose one.");
       paint();
-    }
-    else if (s2 || ui.tool === "shape") note("Press and drag to draw the shape.");
+    } else if (s2 || ui.tool === "shape") note("Press and drag to draw the shape.");
   } else if (ui.live && ui.live.e) {
     // the eraser: a sticker or person it passes over the middle of is taken away whole (rubbing leaves no scraps)
     const list = strokes(), rub = ui.live, gone = stickersUnder(list, rub.p, rub.w).map((i) => ({ i, s: list[i] }));
@@ -762,10 +771,13 @@ $("palette").addEventListener("click", (e) => { const b = e.target.closest(".sw"
 $("sizes").innerHTML = SIZES.map(([v, label]) => `<button class="g-chip sz" data-size="${v}" aria-label="${label}"><i style="width:${Math.min(26, v + 2)}px;height:${Math.min(26, v + 2)}px"></i></button>`).join("");
 $("sizes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.size = Number(b.dataset.size); save(); paint(); if (ui.tool === "text") textApply((s) => { s.w = TEXT_SIZE[data.size] || 42; }); } });
 chips("tools", TOOLS, "tool");
-$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; if (ui.tool === "stamp") ui.armed = false; // a picture is chosen afresh each time note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a picture, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a picture or a person to take it away." : ui.tool === "move" ? "Tap something to pick it up, then drag it. The corner handle makes it bigger or smaller; the top handle turns it." : ui.tool === "text" ? "Type your words, pick a font, then tap where they should go. Tap words already on the page to change them." : ui.tool === "joint" ? "Tap an arm, leg, tail or wing: a pin appears where it joins the body. Or draw a ring round a part to cut it free and pin it." : "");
+$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; // a picture, a shape or words are chosen afresh each time
+  if (ui.tool === "stamp") ui.armed = false;
+  if (ui.tool === "shape") ui.shapeArmed = false;
+  if (ui.tool === "text") { ui.textPick = null; $("textIn").value = ""; } note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Choose a shape, then press and drag to draw it." : ui.tool === "stamp" ? "Pick a picture, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a picture or a person to take it away." : ui.tool === "move" ? "Tap something to pick it up, then drag it. The corner handle makes it bigger or smaller; the top handle turns it." : ui.tool === "text" ? "Type your words, pick a font, then tap where they should go. Tap words already on the page to change them." : ui.tool === "joint" ? "Tap an arm, leg, tail or wing: a pin appears where it joins the body. Or draw a ring round a part to cut it free and pin it." : "");
   ui.pick = []; ui.joint = null; ui.jadd = false; ui.jbend = false; ui.jshow = performance.now() + 2600; paint(); if (drawing()) { paintLayer(A, strokes()); render(); } });
 $("shapes").innerHTML = SHAPES.map(([v, label]) => `<button class="g-chip shp" data-shape="${v}" aria-label="${label}"><span aria-hidden="true">${SHAPE_ICON[v]}</span></button>`).join("");
-$("shapes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.shape = b.dataset.shape; paint(); } });
+$("shapes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.shape = b.dataset.shape; ui.shapeArmed = true; note("Now press and drag to draw it."); paint(); } }); // chosen: the next press draws it, once
 // stickers: pick a set, then a sticker; sets that usually face left are mirrored so they face right
 const sticker = (x, y) => {
   const set = STICKERS.find((k) => k.id === ui.set) || STICKERS[0], mirror = !!set.turn !== ui.flip, at2 = [Math.round(x), Math.round(y)];
