@@ -414,7 +414,7 @@ function paint() {
   const none = ui.tool !== "move" || !picked().length;
   ["mSmaller", "mBigger", "mLeft", "mRight", "mCopy", "mRemove"].forEach((id) => { $(id).disabled = none; });
   const drawnSet = !!(STICKERS.find((k) => k.id === ui.set) || {}).drawn;
-  document.querySelectorAll("#stickGrid .stk").forEach((b) => b.setAttribute("aria-pressed", String(drawnSet ? b.dataset.fig === ui.person : b.dataset.ch === ui.sticker)));
+  document.querySelectorAll("#stickGrid .stk").forEach((b) => b.setAttribute("aria-pressed", String(!!ui.armed && (drawnSet ? b.dataset.fig === ui.person : b.dataset.ch === ui.sticker))));
   $("toneRows").hidden = !drawnSet;
   const beasts = ["animals", "things"].includes((STICKERS.find((k) => k.id === ui.set) || {}).drawn); // two colours, no skin or hair
   $("skinRow").hidden = beasts; $("hairRow").hidden = beasts;
@@ -530,7 +530,14 @@ cv.addEventListener("pointerdown", (e) => {
     if (ui.tool === "joint") { jointAt(x, y); return; }
     if (ui.tool === "text") { textAt(x, y); return; }
     if (ui.tool === "shape") { ui.from = [x, y]; ui.live = null; ui.reach = 0; return; }
-    if (ui.tool === "stamp") { ui.from = [x, y]; ui.live = sticker(x, y); render(); return; }
+    if (ui.tool === "stamp") {
+      if (!ui.armed) { // nothing chosen: a tap on a picture already there picks it up, as Select does; anywhere else says what to do
+        const i = pickAt(strokes(), x, y), on = strokes()[i];
+        if (on && (on.ch || on.fig)) { ui.tool = "move"; paint(); grabAt(x, y); return; }
+        note("Choose a picture below, then tap where it should go."); return;
+      }
+      ui.from = [x, y]; ui.live = sticker(x, y); render(); return;
+    }
     const erase = ui.tool === "erase";
     ui.live = { c: data.color, w: erase ? Math.max(18, data.size * 1.8) : data.size, e: erase ? 1 : 0, p: [x, y] }; strokeOn(A.g, ui.live); render();
   }
@@ -599,6 +606,11 @@ function lift() {
     ui.from = null; ui.live = null; ui.reach = 0;
     if (s2 && s2.tx) { ui.textPick = s2; note("Written! Keep typing to change it, pick another font, colour or size, or tap New text to write something else."); }
     if (big) { strokes().push(s2); did({ k: "add" }); paintLayer(A, strokes()); if (!scene()) { thumb(ui.frame); save(); } if (s2.tx) paint(); }
+    if (big && (s2.ch || s2.fig)) { // a picture goes down once: then it is picked up with Select, so more taps move it rather than add copies
+      ui.armed = false; ui.tool = "move"; ui.pick = [strokes().length - 1];
+      note("Added! Drag it to move it, or use its corner to resize it. To add another, tap 🧩 Pictures and choose one.");
+      paint();
+    }
     else if (s2 || ui.tool === "shape") note("Press and drag to draw the shape.");
   } else if (ui.live && ui.live.e) {
     // the eraser: a sticker or person it passes over the middle of is taken away whole (rubbing leaves no scraps)
@@ -750,7 +762,7 @@ $("palette").addEventListener("click", (e) => { const b = e.target.closest(".sw"
 $("sizes").innerHTML = SIZES.map(([v, label]) => `<button class="g-chip sz" data-size="${v}" aria-label="${label}"><i style="width:${Math.min(26, v + 2)}px;height:${Math.min(26, v + 2)}px"></i></button>`).join("");
 $("sizes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { data.size = Number(b.dataset.size); save(); paint(); if (ui.tool === "text") textApply((s) => { s.w = TEXT_SIZE[data.size] || 42; }); } });
 chips("tools", TOOLS, "tool");
-$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a picture, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a picture or a person to take it away." : ui.tool === "move" ? "Tap something to pick it up, then drag it. The corner handle makes it bigger or smaller; the top handle turns it." : ui.tool === "text" ? "Type your words, pick a font, then tap where they should go. Tap words already on the page to change them." : ui.tool === "joint" ? "Tap an arm, leg, tail or wing: a pin appears where it joins the body. Or draw a ring round a part to cut it free and pin it." : "");
+$("tools").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (!b) return; ui.tool = b.dataset.tool; if (ui.tool === "stamp") ui.armed = false; // a picture is chosen afresh each time note(ui.tool === "fill" ? "Pick a colour, then tap inside something you have drawn." : ui.tool === "shape" ? "Press and drag to draw the shape." : ui.tool === "stamp" ? "Pick a picture, then tap where it should go." : ui.tool === "erase" ? "Rub to erase. Tap a picture or a person to take it away." : ui.tool === "move" ? "Tap something to pick it up, then drag it. The corner handle makes it bigger or smaller; the top handle turns it." : ui.tool === "text" ? "Type your words, pick a font, then tap where they should go. Tap words already on the page to change them." : ui.tool === "joint" ? "Tap an arm, leg, tail or wing: a pin appears where it joins the body. Or draw a ring round a part to cut it free and pin it." : "");
   ui.pick = []; ui.joint = null; ui.jadd = false; ui.jbend = false; ui.jshow = performance.now() + 2600; paint(); if (drawing()) { paintLayer(A, strokes()); render(); } });
 $("shapes").innerHTML = SHAPES.map(([v, label]) => `<button class="g-chip shp" data-shape="${v}" aria-label="${label}"><span aria-hidden="true">${SHAPE_ICON[v]}</span></button>`).join("");
 $("shapes").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.shape = b.dataset.shape; paint(); } });
@@ -797,7 +809,7 @@ $("skins").addEventListener("click", (e) => { const b = e.target.closest(".sw");
 $("hairs").addEventListener("click", (e) => { const b = e.target.closest(".sw"); if (b) { const v = Number(b.dataset.hc); setLook("hc", v < 0 ? null : v); } });
 $("stickSets").innerHTML = STICKERS.map((k) => `<button class="g-chip" data-set="${k.id}"><span aria-hidden="true">${k.icon}</span> ${k.name}</button>`).join("");
 $("stickSets").addEventListener("click", (e) => { const b = e.target.closest(".g-chip"); if (b) { ui.set = b.dataset.set; ui.flip = false; stickerGrid(); paint(); const row = $("stickSets"); row.scrollLeft = Math.max(0, b.offsetLeft - row.clientWidth / 2 + b.offsetWidth / 2); } }); // keep the chosen kind in view on a narrow screen
-$("stickGrid").addEventListener("click", (e) => { const b = e.target.closest(".stk"); if (!b) return; if (b.dataset.fig) ui.person = b.dataset.fig; else ui.sticker = b.dataset.ch; paint(); });
+$("stickGrid").addEventListener("click", (e) => { const b = e.target.closest(".stk"); if (!b) return; if (b.dataset.fig) ui.person = b.dataset.fig; else ui.sticker = b.dataset.ch; ui.armed = true; note("Now tap where it should go."); paint(); }); // chosen: the next tap on the page puts it there, once
 $("stickFlip").addEventListener("change", () => { ui.flip = $("stickFlip").checked; });
 stickerGrid();
 // ---------- the Text tool ----------

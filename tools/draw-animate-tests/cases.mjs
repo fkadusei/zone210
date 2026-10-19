@@ -13,8 +13,8 @@ export const flipbook = (frames) => ({ mode: "flip", scene: { bg: "paper", thing
 // ---------- things a child does, with what should happen ----------
 export const CASES = [
   { name: "limit30", save: scene([]), js: String.raw`
-await act('new'); await pic('walkers','walk-camel');
-for (let i=0;i<30;i++) await tap(60+(i%6)*130, 60+Math.floor(i/6)*110);
+await act('new');
+for (let i=0;i<30;i++) { await pic('walkers','walk-camel'); await tap(60+(i%6)*130, 60+Math.floor(i/6)*110); } // each picture is chosen, then placed
 await act('done'); const t=await things(); ok('limit30', t.length===24 && t[23].s.length===7, {n:t.length, note:note()}); R.limit30_note=note()+' | things='+t.length;
 ` },
   { name: "limitDraw", save: scene(Array.from({ length: 24 }, (_, i) => thing(null, 30 * i + 20, 300))), js: String.raw`
@@ -39,7 +39,7 @@ q('#undo').click(); await w(60); await act('done'); const t=await things();
 ok('undoMove', t.length===1 && Math.abs(t[0].x-300)<4 && Math.abs(t[0].y-300)<8, t.map(x=>[x.x,x.y]));
 ` },
   { name: "undoAll", save: scene([]), js: String.raw`
-await act('new'); await pic('drawn','stand1'); await tap(300,300); await tap(500,300); q('#undo').click(); q('#undo').click(); q('#undo').click(); await w(60); await act('done');
+await act('new'); await pic('drawn','stand1'); await tap(300,300); await pic('drawn','stand1'); await tap(500,300); q('#undo').click(); q('#undo').click(); q('#undo').click(); await w(60); await act('done');
 const t=await things(); ok('undoAll', t.length===0, t.length);
 ` },
   { name: "sizeExtremes", save: scene([thing("stand1", 400, 300)]), js: String.raw`
@@ -121,6 +121,17 @@ await act('play'); await w(700); await act('full'); await w(300); q('#fullStop')
 ` },
   { name: "savePic", save: scene([thing("stand1", 300, 300, "side")]), js: String.raw`
 q('#savePic').click(); await w(400); await act('play'); await w(300); q('#savePic').click(); await w(400); ok('savePic', !errs.length, {errs, note:note()});
+` },
+  // a picture goes down once: more taps don't add copies; it is picked up with Select to move; another must be chosen again
+  { name: "placeOnce", save: scene([]), js: String.raw`
+await act('new'); await pic('drawn','stand1'); await tap(300,300); await tap(500,300); await tap(600,400);
+ok('placeOnce_noCopies', q('#tools [data-tool="move"]').getAttribute('aria-pressed') === 'true', q('#tools [aria-pressed="true"]') && q('#tools [aria-pressed="true"]').dataset.tool);
+await tap(300,300); await drag([[300,300],[340,320],[380,340]]);
+await tool('stamp'); await tap(150,150); const msg = note();
+ok('placeOnce_needsChoosing', /Choose a picture/.test(msg), msg);
+await pic('walkers','walk-dog'); await tap(650,450); await act('done');
+const t = await things(); const person = t.find(x => x.s[0].fig === 'stand1');
+ok('placeOnce_result', t.length === 2 && person && Math.abs(person.x - 380) < 6 && Math.abs(person.y - 340) < 10, t.map(x => [x.s[0].fig, Math.round(x.x), Math.round(x.y)]));
 ` },
   // a second finger or a resting palm must not take over a line being drawn or a drawing being dragged
   { name: "twoFingers", save: scene([]), js: String.raw`
