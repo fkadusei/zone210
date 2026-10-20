@@ -40,9 +40,9 @@ GAMES.forEach((g, i) => {
   if (!fs.existsSync(path.join(root, "assets/og", `${g.id}.jpg`))) bad(`${at}: no share card (assets/og/${g.id}.jpg)`);
   const og = (html.match(/<meta property="og:image" content="([^"]+)"/) || [])[1];
   if (!og) bad(`${at}: page has no og:image share tag`);
-  else if (og !== `https://zone210.com/assets/og/${g.id}.jpg`) bad(`${at}: og:image points at ${og}`);
+  else if (og !== `https://www.zone210.com/assets/og/${g.id}.jpg`) bad(`${at}: og:image points at ${og}`);
   const ou = (html.match(/<meta property="og:url" content="([^"]+)"/) || [])[1];
-  if (ou && ou !== `https://zone210.com/games/${g.id}/`) bad(`${at}: og:url points at ${ou}`);
+  if (ou && ou !== `https://www.zone210.com/games/${g.id}/`) bad(`${at}: og:url points at ${ou}`);
   if (g.title && !html.includes(`<title>${g.title.replace(/&/g, "&amp;")} · Zone 210</title>`) && !html.includes(`<title>${g.title} · Zone 210</title>`)) warns.push(`${at}: page <title> does not match "${g.title} · Zone 210"`);
 });
 

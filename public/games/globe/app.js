@@ -1234,7 +1234,7 @@ function dailyStreaks() {
   }
   return { cur, best, played: keys.length };
 }
-const dailyShare = (key, r) => `🌍 Zone 210 World Globe · Daily ${key}\n${r.c}/10 · ${r.s} points\n${r.m.map((x) => ({ g: "🟩", y: "🟨", r: "🟥" })[x]).join("")}\nhttps://zone210.com/games/globe/`;
+const dailyShare = (key, r) => `🌍 Zone 210 World Globe · Daily ${key}\n${r.c}/10 · ${r.s} points\n${r.m.map((x) => ({ g: "🟩", y: "🟨", r: "🟥" })[x]).join("")}\nhttps://www.zone210.com/games/globe/`;
 async function shareDaily(key, r) {
   const text = dailyShare(key, r);
   try {

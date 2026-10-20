@@ -17,7 +17,7 @@ import path from "path";
 import { execFileSync } from "child_process";
 import { fileURLToPath, pathToFileURL } from "url";
 
-const SITE = "https://zone210.com";
+const SITE = "https://www.zone210.com";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
 const { GAMES } = await import(pathToFileURL(path.join(root, "assets/games.js")).href);
 const games = GAMES.filter((g) => g.id && fs.existsSync(path.join(root, "games", g.id, "index.html"))).sort((a, b) => a.title.localeCompare(b.title));

@@ -1,6 +1,6 @@
 # Zone 210
 
-**Play now: https://zone210.com**
+**Play now: https://www.zone210.com**
 
 A free, no-sign-up games and activities site for kids and adults. It is a plain static site (HTML, CSS and
 ES modules; no build step) with a landing page and one folder per game. Everything runs in the browser and scores /
@@ -166,7 +166,7 @@ still opens and plays with its saved data damaged, and survives a monkey at phon
 4. **Relay for Ludo online play (optional but recommended):** Cloudflare dashboard → *Realtime* → *TURN Server* → create a key.
    Then the Worker → *Settings* → *Variables and Secrets* → add **both** `TURN_KEY_ID` and `TURN_KEY_API_TOKEN` as type
    **Secret** (secrets survive redeploys; plain variables set in the dashboard can be overwritten by a deploy). Check
-   `https://zone210.com/api/turn`: it should return JSON containing `turn:` URLs (response header `X-Relay: ok`). Without the
+   `https://www.zone210.com/api/turn`: it should return JSON containing `turn:` URLs (response header `X-Relay: ok`). Without the
    secrets it returns `[]` and the game simply uses direct peer-to-peer connections.
 
 Every push to `main` redeploys automatically. HTTPS is required for sound, copying invite links and WebRTC.

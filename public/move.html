@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="robots" content="noindex" />
+<title>Zone 210</title>
+<!-- Opened hidden by assets/www.js on zone210.com: takes the saved drawings, progress and settings from there and
+     keeps any that this address (www.zone210.com) does not have yet. Nothing to see; on its own it goes home. -->
+<script>
+(function () {
+  var FROM = "https://zone210.com";
+  if (window.parent === window) { location.replace("/"); return; }
+  window.addEventListener("message", function (e) {
+    if (e.origin !== FROM || !e.data || e.data.zone210 !== "move") return;
+    var d = e.data.data || {};
+    try {
+      Object.keys(d).forEach(function (k) { if (typeof d[k] === "string" && localStorage.getItem(k) === null) localStorage.setItem(k, d[k]); });
+    } catch (err) { /* full or blocked: what fitted is kept */ }
+    e.source.postMessage({ zone210: "moved" }, FROM);
+  });
+  window.parent.postMessage({ zone210: "ready" }, FROM);
+})();
+</script>
+</head>
+<body></body>
+</html>
