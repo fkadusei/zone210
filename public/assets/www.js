@@ -4,7 +4,7 @@
  *
  * A browser keeps what a site saves (drawings, progress, settings) separately for zone210.com and www.zone210.com.
  * So the first time someone who has played at zone210.com is sent on, their saved things go with them: this page
- * hands them to www.zone210.com/move.html in a hidden frame, which keeps whatever www does not have yet, and then
+ * hands them to www.zone210.com/move in a hidden frame, which keeps whatever www does not have yet, and then
  * the visit goes on. It is done once per device; if it cannot finish within a few seconds the visit goes on anyway
  * and it is tried again next time.
  */
@@ -32,7 +32,7 @@
     go();
   };
   var frame = document.createElement("iframe");
-  frame.src = WWW + "/move.html";
+  frame.src = WWW + "/move"; // (Cloudflare serves move.html at /move)
   frame.setAttribute("aria-hidden", "true");
   frame.setAttribute("tabindex", "-1");
   frame.style.cssText = "position:absolute;width:0;height:0;border:0;visibility:hidden";
