@@ -20,7 +20,7 @@ const CACHE = `zone210-${VERSION}`;
 const SHELL = [
   "/", "/offline", "/manifest.webmanifest", "/favicon.svg", "/apple-touch-icon.png",
   "/assets/www.js", "/assets/theme.js", "/assets/saver.js", "/assets/sky.js", "/assets/sound.js", "/assets/back-link.js",
-  "/assets/shell.css", "/assets/portal.css", "/assets/portal.js", "/assets/book.css", "/assets/book.js", "/assets/games.js", "/assets/paper.js", "/assets/save-offline.js",
+  "/assets/shell.css", "/assets/portal.css", "/assets/portal.js", "/assets/book.css", "/assets/book.js", "/assets/games.js", "/assets/paper.js", "/assets/save-offline.js", "/assets/install.js",
   "/assets/fonts/fredoka-latin.woff2", "/assets/fonts/nunito-latin.woff2", "/assets/icons/icon-192.png", "/assets/icons/icon-512.png",
 ];
 const FRESH = /\.(html|js|mjs|css|json|webmanifest|txt|xml)$|\/$|^[^.]*$/; // pages, code and data: newest first
