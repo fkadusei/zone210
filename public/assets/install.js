@@ -53,7 +53,12 @@
     dialog.querySelector(".ins-body").innerHTML = list ? now + "<ol>" + list.map(function (s) { return "<li>" + s + "</li>"; }).join("") + "</ol>"
       : "<p>" + browser + " can't add sites as apps. Open <b>www.zone210.com</b> in " + (/Mac/.test(device) ? "Safari, Chrome or Edge" : "Chrome or Edge") + " and choose Install there, or bookmark it with <b>" + (/Mac/.test(device) ? "⌘" : "Ctrl") + " + D</b>.</p>";
     var nb = dialog.querySelector(".ins-now");
-    if (nb) nb.addEventListener("click", function () { prompt.prompt(); prompt.userChoice.then(function () { prompt = null; paint(); }); });
+    if (nb) nb.addEventListener("click", function () {
+      var p = prompt;
+      // the browser may say no (an offer can be used once, and only from a real tap): then the steps below still work
+      var asked; try { asked = p.prompt(); } catch (err) { asked = Promise.reject(err); } // asked at once, while it is still the tap
+      Promise.resolve(asked).then(function () { return p.userChoice; }).catch(function () {}).then(function () { prompt = null; paint(); });
+    });
   }
   function open() {
     if (!dialog) {
