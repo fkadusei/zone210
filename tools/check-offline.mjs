@@ -45,7 +45,8 @@ await send("Page.enable"); await send("Runtime.enable"); await send("Network.ena
 
 let bad = 0;
 const check = (ok, msg, info = "") => { console.log(`${ok ? "✓" : "✗"} ${msg}${ok ? "" : "  " + JSON.stringify(info).slice(0, 300)}`); if (!ok) bad += 1; };
-// online: the home page, then three games
+// online: a game first (on a brand-new device, before the service worker has started), then the home page and two more
+await go("/games/nonograms/", 4000);
 await go("/");
 check(await run("await navigator.serviceWorker.ready; return !!navigator.serviceWorker.controller || (await new Promise(r => setTimeout(r, 1500)), !!navigator.serviceWorker.controller)"), "the service worker starts on the home page");
 await go("/", 2000); // now controlled
@@ -63,7 +64,9 @@ check(await run("return document.title.startsWith('Chess') && !!document.querySe
 await go("/games/sudoku/");
 check(await run("return /offline/i.test(document.title) && [...document.querySelectorAll('#ready a')].map(a => a.textContent).join('|')"), "a game never opened shows the offline page", await run("return document.title"));
 const ready = await run("return [...document.querySelectorAll('#ready a')].map(a => a.getAttribute('href')).join(' ')");
-check(/ribbon-sort/.test(ready) && /draw-animate/.test(ready) && /chess/.test(ready), "the offline page lists the games saved on this device", ready);
+check(/ribbon-sort/.test(ready) && /draw-animate/.test(ready) && /chess/.test(ready) && /nonograms/.test(ready), "the offline page lists the games saved on this device", ready);
+await go("/games/nonograms/");
+check(await run("return document.title.startsWith('Nonograms') && document.querySelectorAll('.cell').length > 10"), "the very first game opened on the device also works offline", await run("return document.title"));
 await go("/");
 check(await run("return document.querySelectorAll('a[href*=\"games/\"]').length > 20"), "the home page opens offline", await run("return document.title"));
 check(!errors.length, "no page errors offline", errors);

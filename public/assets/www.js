@@ -11,7 +11,14 @@
 (function () {
   if (location.hostname !== "zone210.com") {
     // here to stay: the service worker (sw.js) saves what is played, so the site keeps working offline
-    if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js").catch(function () { /* the site still works online */ }); });
+    if ("serviceWorker" in navigator) window.addEventListener("load", function () {
+      navigator.serviceWorker.register("/sw.js").catch(function () { /* the site still works online */ });
+      // on a first visit this page loaded before the service worker was there: tell it what the page used, to save too
+      if (!navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(function (reg) {
+        var urls = [location.href].concat(performance.getEntriesByType("resource").map(function (r) { return r.name; }));
+        if (reg.active) reg.active.postMessage({ zone210: "save", urls: urls });
+      });
+    });
     return;
   }
   var WWW = "https://www.zone210.com";

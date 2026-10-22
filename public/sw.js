@@ -8,6 +8,7 @@
  *  - Pages, code and data are fetched fresh whenever the internet is there (the saved copy is used only if it
  *    is not, or takes more than a few seconds), so a new version of the site shows up straight away.
  *    Pictures, sounds and fonts come from the saved copy at once and are refreshed in the background.
+ *  - A page opened before the service worker started (a first visit) tells it what it loaded, and that is saved too.
  *  - Opening something offline that was never saved shows /offline, which lists the games ready to play.
  * Never saved: /api/* (online play needs the internet anyway), partial audio downloads, and other websites.
  * Registered from assets/www.js. Change VERSION to throw away everything saved and start again.
@@ -40,6 +41,22 @@ self.addEventListener("activate", (e) => {
   e.waitUntil((async () => {
     for (const k of await caches.keys()) if (k.startsWith("zone210-") && k !== CACHE) await caches.delete(k); // an older version's copies
     await self.clients.claim();
+  })());
+});
+
+// a page opened before the service worker started sends what it loaded, so that page is saved as well
+self.addEventListener("message", (e) => {
+  if (!e.data || e.data.zone210 !== "save" || !Array.isArray(e.data.urls)) return;
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    for (const u of e.data.urls.slice(0, 400)) {
+      let url; try { url = new URL(u); } catch (err) { continue; }
+      const ours = url.origin === self.location.origin && !url.pathname.startsWith("/api/"), cdn = url.hostname === "cdn.jsdelivr.net" && /@\d/.test(url.pathname);
+      if (!ours && !cdn) continue;
+      url.hash = "";
+      if (await c.match(url.href)) continue;
+      try { const r = await fetch(url.href, ours ? { cache: "no-cache" } : { mode: "cors" }); if (r.ok) await c.put(url.href, await plain(r)); } catch (err) { /* saved next time it is used */ }
+    }
   })());
 });
 
