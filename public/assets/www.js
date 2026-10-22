@@ -10,6 +10,17 @@
  */
 (function () {
   if (location.hostname !== "zone210.com") {
+    // opened as an installed app: it starts on the home page, whichever page it was added from (an iPhone remembers that
+    // page). Only when the app has just been opened, not while it is in use, and not for an invite link to a game.
+    var app = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+    var fresh = false;
+    try { fresh = !sessionStorage.getItem("zone210_open"); sessionStorage.setItem("zone210_open", "1"); } catch (err) { fresh = false; }
+    if (app && fresh && location.pathname !== "/" && !document.referrer && !/[?&]room=/.test(location.search)) { location.replace("/"); return; }
+    // the Install button and its steps, on every page
+    var ins = document.createElement("script");
+    ins.src = "/assets/install.js";
+    ins.defer = true;
+    document.head.appendChild(ins);
     // here to stay: the service worker (sw.js) saves what is played, so the site keeps working offline
     if ("serviceWorker" in navigator) window.addEventListener("load", function () {
       navigator.serviceWorker.register("/sw.js").catch(function () { /* the site still works online */ });
