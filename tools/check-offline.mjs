@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /**
- * Checks that the site works offline (public/sw.js):   node tools/check-offline.mjs
+ * Checks that the site works offline (public/sw.js):   node tools/check-offline.mjs  [--save-all]
+ * With --save-all it also presses the home page's "Save all games for offline" button (with the story narration),
+ * then checks a game never opened works offline and story narration plays offline.
  * Serves public/ itself, opens the home page and a few games in headless Chrome (one of them a 3D game that loads
  * three.js from cdn.jsdelivr.net), then turns the server off and the browser offline and checks: those pages
  * still open and run, a game never opened shows the offline page listing the saved ones, and the home page works.
@@ -51,6 +53,16 @@ await go("/");
 check(await run("await navigator.serviceWorker.ready; return !!navigator.serviceWorker.controller || (await new Promise(r => setTimeout(r, 1500)), !!navigator.serviceWorker.controller)"), "the service worker starts on the home page");
 await go("/", 2000); // now controlled
 for (const g of ["ribbon-sort", "draw-animate", "chess"]) await go(`/games/${g}/`, g === "chess" ? 6000 : 2500);
+const SAVE_ALL = process.argv.includes("--save-all");
+if (SAVE_ALL) {
+  await go("/", 2500);
+  check(await run("return !document.getElementById('offline').hidden"), "the home page offers to save all games");
+  await run("document.getElementById('saveStories').click(); await new Promise(r => setTimeout(r, 400)); document.getElementById('saveAll').click(); return 1");
+  let note = "";
+  for (let i = 0; i < 240 && !/Done|could not/.test(note); i += 1) { await sleep(500); note = await run("return document.getElementById('saveNote').textContent"); }
+  check(/^Done!/.test(note), "Save all games finishes", note);
+  check(await run("return document.getElementById('saveAll').disabled && /All games saved/.test(document.getElementById('saveAll').textContent)"), "the button then says everything is saved", await run("return document.getElementById('saveAll').textContent"));
+}
 // offline
 server.close(); sockets.forEach((s) => s.destroy());
 await send("Network.emulateNetworkConditions", { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
@@ -61,7 +73,14 @@ await go("/games/draw-animate/");
 check(await run("return !!document.getElementById('cv') && document.querySelectorAll('#mainRow button').length > 0"), "Draw & Animate opens offline", await run("return document.title"));
 await go("/games/chess/", 5000);
 check(await run("return document.title.startsWith('Chess') && !!document.querySelector('canvas')"), "Chess opens offline, with its 3D board (three.js saved from the CDN)", await run("return [document.title, !!document.querySelector('canvas')]"));
-await go("/games/sudoku/");
+if (SAVE_ALL) {
+  await go("/games/sudoku/");
+  check(await run("return document.title.startsWith('Sudoku') && document.querySelectorAll('button').length > 20"), "a game never opened works offline after Save all", await run("return document.title"));
+  const clip = await run("const d = await (await caches.open('zone210-v1')).keys(); const a = d.map(r => r.url).find(u => /ananse\\/audio\\/.*\\.m4a$/.test(u)); return a");
+  check(!!clip, "story narration was saved", clip);
+  check(await run(`const a = new Audio(${JSON.stringify(clip)}); return await new Promise(r => { a.oncanplaythrough = () => r(a.duration > 0.2); a.onerror = () => r(false); a.load(); setTimeout(() => r(false), 8000); })`), "story narration plays offline (a piece at a time, from the saved copy)", clip);
+}
+await go(SAVE_ALL ? "/games/no-such-game/" : "/games/sudoku/");
 check(await run("return /offline/i.test(document.title) && [...document.querySelectorAll('#ready a')].map(a => a.textContent).join('|')"), "a game never opened shows the offline page", await run("return document.title"));
 const ready = await run("return [...document.querySelectorAll('#ready a')].map(a => a.getAttribute('href')).join(' ')");
 check(/ribbon-sort/.test(ready) && /draw-animate/.test(ready) && /chess/.test(ready) && /nonograms/.test(ready), "the offline page lists the games saved on this device", ready);

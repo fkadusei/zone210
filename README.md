@@ -152,7 +152,11 @@ device). Both use `tools/browser-tests.mjs`, which starts the server and Chrome 
 the home page and shared files are saved on the first visit, and every game is saved the first time it is opened
 (including the three.js the 3D games load from jsDelivr). Pages and code come fresh from the internet whenever it is
 there; pictures and sounds come from the saved copy and refresh in the background. A page never saved shows
-`/offline`, listing the games ready to play. `node tools/check-offline.mjs` checks it all with the server switched off.
+`/offline`, listing the games ready to play. The home page's **Save all games for offline** button
+(`assets/save-offline.js`) saves every game at once, and the story narration too if its box is ticked; the list is
+`public/offline-files.json`, which `node tools/seo.mjs` remakes (or `node tools/offline-files.mjs`). Saved sounds play
+offline too. `node tools/check-offline.mjs` checks it all with the server switched off (`--save-all` also presses the
+button and plays narration offline).
 Change `VERSION` in `sw.js` to throw away everything saved.
 
 Every game, and the home page, gets the same general check from `node tools/test-games.mjs` (about an hour; name games

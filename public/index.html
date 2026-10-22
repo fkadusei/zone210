@@ -89,6 +89,12 @@
 
     <footer class="foot">
       <p><strong>Zone 210</strong> · Your scores and saved games stay on your own device.</p>
+      <div class="offline" id="offline" hidden>
+        <p><strong>Play without the internet</strong> · Every game you open is saved on this device. Save them all now, ready for a trip:</p>
+        <button class="g-btn" id="saveAll">📥 Save all games for offline</button>
+        <label class="tick"><input type="checkbox" id="saveStories" /> <span>Include the story narration</span></label>
+        <p id="saveNote" role="status" aria-live="polite"></p>
+      </div>
     <!-- seo:links -->
       <details class="allgames"><summary>All 69 games, A to Z</summary>
         <h2>Strategy games</h2><ul><li><a href="games/abalone/">Abalone</a></li><li><a href="games/achi/">Achi</a></li><li><a href="games/checkers/">Checkers</a></li><li><a href="games/chess/">Chess</a></li><li><a href="games/connect-four/">Connect Four</a></li><li><a href="games/dame/">Dame</a></li><li><a href="games/dots-boxes/">Dots &amp; Boxes</a></li><li><a href="games/fox-geese/">Fox &amp; Geese</a></li><li><a href="games/go/">Go</a></li><li><a href="games/hex/">Hex</a></li><li><a href="games/morabaraba/">Morabaraba</a></li><li><a href="games/nine-mens-morris/">Nine Men's Morris</a></li><li><a href="games/oware/">Oware</a></li><li><a href="games/pente/">Pente</a></li><li><a href="games/quoridor/">Quoridor</a></li><li><a href="games/reversi/">Reversi</a></li><li><a href="games/sprouts/">Sprouts</a></li><li><a href="games/ultimate-ttt/">Ultimate Tic-Tac-Toe</a></li><li><a href="games/yote/">Yote</a></li></ul>
@@ -102,5 +108,6 @@
 
     <script src="assets/sky.js"></script>
     <script type="module" src="assets/portal.js"></script>
+    <script type="module" src="assets/save-offline.js"></script>
   </body>
 </html>

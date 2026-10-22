@@ -74,3 +74,6 @@ const links = `      <details class="allgames"><summary>All ${n} games, A to Z</
 home = setBlock(home, "links", links, "    </footer>");
 fs.writeFileSync(homeFile, home);
 console.log(`sitemap.xml: ${urls.length} pages · robots.txt · ${changed} game pages updated · home page: ${n} games`);
+
+// the list the home page's "Save all games for offline" button saves (public/offline-files.json)
+await import("./offline-files.mjs");

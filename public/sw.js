@@ -10,7 +10,9 @@
  *    Pictures, sounds and fonts come from the saved copy at once and are refreshed in the background.
  *  - A page opened before the service worker started (a first visit) tells it what it loaded, and that is saved too.
  *  - Opening something offline that was never saved shows /offline, which lists the games ready to play.
- * Never saved: /api/* (online play needs the internet anyway), partial audio downloads, and other websites.
+ *  - Sounds played a piece at a time come from the saved copy when there is one (the home page's "Save all games
+ *    for offline" button saves every file, including story narration if asked: assets/save-offline.js).
+ * Never saved: /api/* (online play needs the internet anyway), and other websites (except that 3D engine).
  * Registered from assets/www.js. Change VERSION to throw away everything saved and start again.
  */
 const VERSION = "v1";
@@ -18,7 +20,7 @@ const CACHE = `zone210-${VERSION}`;
 const SHELL = [
   "/", "/offline", "/manifest.webmanifest", "/favicon.svg", "/apple-touch-icon.png",
   "/assets/www.js", "/assets/theme.js", "/assets/saver.js", "/assets/sky.js", "/assets/sound.js", "/assets/back-link.js",
-  "/assets/shell.css", "/assets/portal.css", "/assets/portal.js", "/assets/book.css", "/assets/book.js", "/assets/games.js", "/assets/paper.js",
+  "/assets/shell.css", "/assets/portal.css", "/assets/portal.js", "/assets/book.css", "/assets/book.js", "/assets/games.js", "/assets/paper.js", "/assets/save-offline.js",
   "/assets/fonts/fredoka-latin.woff2", "/assets/fonts/nunito-latin.woff2", "/assets/icons/icon-192.png", "/assets/icons/icon-512.png",
 ];
 const FRESH = /\.(html|js|mjs|css|json|webmanifest|txt|xml)$|\/$|^[^.]*$/; // pages, code and data: newest first
@@ -77,10 +79,22 @@ async function fresh(e) {
 }
 /** The saved copy at once (refreshed in the background); the internet if there is none. */
 async function saved(e) {
-  const req = e.request, c = await caches.open(CACHE), have = await c.match(req);
+  const req = e.request, c = await caches.open(CACHE), have = (await c.match(req)) || (await c.match(req, { ignoreSearch: true })); // a sound asked for with ?v=… is the same sound
   const net = fetch(req).then((res) => { e.waitUntil(put(req, res.clone())); return res; });
   if (have) { e.waitUntil(net.catch(() => {})); return have; }
   try { return await net; } catch (err) { return new Response("", { status: 504 }); }
+}
+
+/** Sounds are played a piece at a time ("bytes=0-" and so on): from the saved copy if there is one, else the internet. */
+async function piece(req) {
+  const c = await caches.open(CACHE), have = (await c.match(req.url)) || (await c.match(req.url, { ignoreSearch: true }));
+  if (!have) return fetch(req);
+  const blob = await have.blob(), size = blob.size, m = /bytes=(\d*)-(\d*)/.exec(req.headers.get("range") || "");
+  let start = m && m[1] ? Number(m[1]) : 0, end = m && m[2] ? Number(m[2]) : size - 1;
+  if (m && !m[1] && m[2]) { start = Math.max(0, size - Number(m[2])); end = size - 1; } // the last n bytes
+  end = Math.min(end, size - 1);
+  if (start > end || start >= size) return new Response("", { status: 416, headers: { "Content-Range": `bytes */${size}` } });
+  return new Response(blob.slice(start, end + 1), { status: 206, headers: { "Content-Type": have.headers.get("Content-Type") || "audio/mp4", "Content-Range": `bytes ${start}-${end}/${size}`, "Content-Length": String(end - start + 1), "Accept-Ranges": "bytes" } });
 }
 
 self.addEventListener("fetch", (e) => {
@@ -88,7 +102,8 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin === self.location.origin) {
-    if (url.pathname.startsWith("/api/") || req.headers.has("range")) return; // online play and partly-downloaded audio go straight to the internet
+    if (url.pathname.startsWith("/api/")) return; // online play needs the internet anyway
+    if (req.headers.has("range")) { e.respondWith(piece(req)); return; } // sound played a piece at a time
     e.respondWith(req.mode === "navigate" || FRESH.test(url.pathname) ? fresh(e) : saved(e));
   } else if (url.hostname === "cdn.jsdelivr.net" && /@\d/.test(url.pathname)) {
     e.respondWith(saved(e)); // an exact version: it never changes
