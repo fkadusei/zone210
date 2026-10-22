@@ -148,6 +148,13 @@ monkey; `--only name,name` runs just those tests. Run it, with `node tools/check
 The other drawing games (Doodle & Color, Draw & Guess, Sprouts and the tracing in ABC & 123) have the same kind of tests:
 `node tools/test-drawing-games.mjs` (cases in `tools/drawing-games-tests/`; online play is left out, as it needs a second
 device). Both use `tools/browser-tests.mjs`, which starts the server and Chrome and gives each test a fresh browser.
+**Offline:** `public/sw.js` (a service worker, started by `assets/www.js`) keeps the site working without the internet:
+the home page and shared files are saved on the first visit, and every game is saved the first time it is opened
+(including the three.js the 3D games load from jsDelivr). Pages and code come fresh from the internet whenever it is
+there; pictures and sounds come from the saved copy and refresh in the background. A page never saved shows
+`/offline`, listing the games ready to play. `node tools/check-offline.mjs` checks it all with the server switched off.
+Change `VERSION` in `sw.js` to throw away everything saved.
+
 Every game, and the home page, gets the same general check from `node tools/test-games.mjs` (about an hour; name games
 to test just those, e.g. `node tools/test-games.mjs chess sudoku`): it opens at phone size without errors and fits,
 still opens and plays with its saved data damaged, and survives a monkey at phone and desktop size (`--long` for more).

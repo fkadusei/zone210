@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <script src="/assets/www.js"></script>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>You're offline · Zone 210</title>
+    <meta name="robots" content="noindex" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0a0e1a" />
+    <!-- Shown by the service worker (sw.js) when a page that was never saved is opened without the internet. -->
+    <script src="/assets/theme.js"></script>
+    <link rel="stylesheet" href="/assets/shell.css" />
+    <style>
+      .off { min-height: 60vh; display: grid; align-content: center; justify-items: center; gap: 14px; text-align: center; }
+      .off .big { font-size: clamp(56px, 16vw, 100px); line-height: 1; }
+      .off p { max-width: 38ch; margin: 0; color: var(--muted); font-size: 1.05rem; }
+      .ready { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 720px; margin-top: 8px; }
+      .ready a { text-decoration: none; }
+      .off a.g-btn { display: inline-flex; align-items: center; gap: 6px; }
+    </style>
+  </head>
+  <body>
+    <main class="g-page off">
+      <div class="big" aria-hidden="true">📴</div>
+      <h1>You're offline</h1>
+      <p id="why">That page hasn't been saved on this device yet. Games you have played before still work without the internet:</p>
+      <div class="ready" id="ready" aria-label="Games ready to play offline"></div>
+      <a class="g-btn ghost" href="/">← Home</a>
+    </main>
+    <script type="module">
+      import { GAMES } from "/assets/games.js";
+      // the games whose page this device has saved (sw.js saves each one the first time it is opened)
+      const saved = new Set();
+      try { for (const k of await caches.keys()) for (const r of await (await caches.open(k)).keys()) { const m = new URL(r.url).pathname.match(/^\/games\/([^/]+)\/(index\.html)?$/); if (m) saved.add(m[1]); } } catch (err) { /* no saved copies */ }
+      const list = GAMES.filter((g) => saved.has(g.id)).sort((a, b) => a.title.localeCompare(b.title));
+      document.getElementById("ready").innerHTML = list.map((g) => `<a class="g-btn" href="/games/${g.id}/">${g.emoji} ${g.title}</a>`).join("");
+      if (!list.length) document.getElementById("why").textContent = "That page hasn't been saved on this device yet. Once you're back online, every game you open is saved, so you can play it here without the internet next time.";
+    </script>
+  </body>
+</html>

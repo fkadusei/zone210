@@ -1,6 +1,6 @@
 /**
  * Zone 210 lives at www.zone210.com. A visit to zone210.com (no www) goes there, to the same page.
- * Load this first in <head>, before anything else, on every page.
+ * Load this first in <head>, before anything else, on every page. On www.zone210.com it starts the service worker.
  *
  * A browser keeps what a site saves (drawings, progress, settings) separately for zone210.com and www.zone210.com.
  * So the first time someone who has played at zone210.com is sent on, their saved things go with them: this page
@@ -9,7 +9,11 @@
  * and it is tried again next time.
  */
 (function () {
-  if (location.hostname !== "zone210.com") return;
+  if (location.hostname !== "zone210.com") {
+    // here to stay: the service worker (sw.js) saves what is played, so the site keeps working offline
+    if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js").catch(function () { /* the site still works online */ }); });
+    return;
+  }
   var WWW = "https://www.zone210.com";
   var to = WWW + location.pathname + location.search + location.hash;
   var go = function () { location.replace(to); };

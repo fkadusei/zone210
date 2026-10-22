@@ -31,6 +31,9 @@
   Cache-Control: public, max-age=604800
 /assets/icons/*
   Cache-Control: public, max-age=604800
+# the service worker: browsers must always check for a new one, so updates reach everyone
+/sw.js
+  Cache-Control: no-cache
 /manifest.webmanifest
   Content-Type: application/manifest+json
   Cache-Control: public, max-age=86400
