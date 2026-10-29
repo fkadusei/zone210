@@ -1,0 +1,96 @@
+# Zone 210
+
+> Zone 210 is a free website of 69 games, puzzles and learning games for kids and grown-ups, played in the web browser. No sign-up and no ads; scores and saved games stay on the player's own device. 43 of the games can also be played online with a friend.
+
+Everything runs in the browser at https://www.zone210.com/ on phones, tablets and computers. Each game has its own page, linked below; nothing needs to be downloaded or installed, though the site can be added to a home screen like an app and keeps working offline for games that have been saved.
+
+Online play is peer to peer between two browsers: one player chooses the game's online option, creates a room and shares its short room code, or an invite link of the form https://www.zone210.com/games/<game>/?room=CODE.
+
+## Strategy games
+
+- [Abalone](https://www.zone210.com/games/abalone/): Push your opponent's marbles off the hexagonal board. Group your marbles, push in lines, and be first to push six off. Play the computer, a friend, or online. (1–2 players, for everyone, online play)
+- [Achi](https://www.zone210.com/games/achi/): A classic game of skill: place three pieces, then slide them to make three in a row. Play the computer, a friend, or a friend online. (1–2 players, for everyone, online play)
+- [Checkers](https://www.zone210.com/games/checkers/): Jump, capture and crown kings. Compulsory captures, three computer levels, hints and undo, or play a friend online. (1–2 players, for everyone, online play)
+- [Chess](https://www.zone210.com/games/chess/): Play the computer at three levels, a friend on one device, or a friend online. (1–2 players, for everyone, online play)
+- [Connect Four](https://www.zone210.com/games/connect-four/): Drop discs and line up four in a row. Play a friend online or on one device, or a computer that gets smarter on Hard. (1–2 players, for everyone, online play)
+- [Dame](https://www.zone210.com/games/dame/): Draughts with flying kings on a wooden board. Play the computer, a friend on one device, or a friend online. (1–2 players, for everyone, online play)
+- [Dots & Boxes](https://www.zone210.com/games/dots-boxes/): Draw lines, close boxes and go again. A pencil-and-paper classic: play the computer or a friend online. (1–2 players, for everyone, online play)
+- [Fox & Geese](https://www.zone210.com/games/fox-geese/): One cunning fox against a flock of geese: trap the fox, or capture the flock. Play either side against the computer, a friend, or online. (1–2 players, for everyone, online play)
+- [Go](https://www.zone210.com/games/go/): The ancient game of territory. Surround space, capture stones, and score the board. 9×9, 13×13 or 19×19, against the computer, a friend, or online. (1–2 players, for everyone, online play)
+- [Hex](https://www.zone210.com/games/hex/): Link your two sides with an unbroken chain of stones. Simple rules, no draws, with a fair swap rule. Play the computer, a friend, or online. (1–2 players, for everyone, online play)
+- [Morabaraba](https://www.zone210.com/games/morabaraba/): The mills game of southern Africa. Twelve pieces each and diagonal lines. Play the computer at three levels, a friend, or online. (1–2 players, for everyone, online play)
+- [Nine Men's Morris](https://www.zone210.com/games/nine-mens-morris/): An ancient game of mills: line up three to capture, fly when you're down to three. Play the computer, a friend, or online. (1–2 players, for everyone, online play)
+- [Oware](https://www.zone210.com/games/oware/): The classic seed-sowing mancala game. Out-plan the computer, or a friend online. (1–2 players, for everyone, online play)
+- [Pente](https://www.zone210.com/games/pente/): Five in a row, or capture five pairs. A sharper cousin of Gomoku with the tournament rule. Play the computer, a friend, or online. (1–2 players, for everyone, online play)
+- [Quoridor](https://www.zone210.com/games/quoridor/): Race your pawn across the board and place walls to slow your opponent. Play the computer at three levels, a friend on one device, or a friend online. (1–2 players, for everyone, online play)
+- [Reversi](https://www.zone210.com/games/reversi/): Trap your opponent's discs to flip them. Play the computer at three levels, a friend on one device, or a friend online. (1–2 players, for everyone, online play)
+- [Sprouts](https://www.zone210.com/games/sprouts/): A pencil-and-paper game for sharp minds: draw a line, add a spot, and be the last player who can move. Play the computer, a friend, or online. (1–2 players, for everyone, online play)
+- [Ultimate Tic-Tac-Toe](https://www.zone210.com/games/ultimate-ttt/): Nine boards in one. Where you play decides where your opponent must play next. Play the computer, a friend, or online. (1–2 players, for everyone, online play)
+- [Yote](https://www.zone210.com/games/yote/): A traditional capture game: jump to capture and take a bonus piece every time. Play the computer, a friend, or a friend online. (1–2 players, for everyone, online play)
+
+## Family games
+
+- [Backgammon](https://www.zone210.com/games/backgammon/): Roll, hit and race your checkers home. Play the computer at three levels, a friend on one device, or a friend online. (1–2 players, for everyone, online play)
+- [Battleship](https://www.zone210.com/games/battleship/): Hide your fleet and hunt the enemy's. Place ships your way, then fire away against the computer or a friend online. (1 player, for everyone, online play)
+- [Chinese Checkers](https://www.zone210.com/games/chinese-checkers/): Hop your ten marbles across the star to the opposite corner. Play 2, 3, 4 or 6, against the computer, friends, or a friend online. (1–6 players, for everyone, online play)
+- [Crazy Eights](https://www.zone210.com/games/crazy-eights/): Match the suit or the number and be first to empty your hand. Eights are wild. Play the computer, friends on one device, or a friend online. (1–4 players, for everyone, online play)
+- [Dominoes](https://www.zone210.com/games/dominoes/): Match the ends and empty your hand first. Play the computer, a friend on one device, or a friend online, in a round or a match to 100. (1–2 players, for everyone, online play)
+- [Ludo](https://www.zone210.com/games/ludo/): Race your pawns home on a beautiful board. Play friends online, or take on the computer. (1–4 players, for everyone, online play)
+- [Memory Match](https://www.zone210.com/games/memory-match/): Flip cards and find the pairs. Pick a theme and a size, or take turns with a friend, even online. (1–2 players, for kids, online play)
+- [Pachisi](https://www.zone210.com/games/pachisi/): The royal game of India. Throw the cowrie shells, race four pieces round the cross and bring them home. Play 2 to 4, or a friend online. (1–4 players, for everyone, online play)
+- [Snakes & Ladders](https://www.zone210.com/games/snakes-ladders/): Race to square 100. Climb ladders, slide down snakes. Play the computer, up to four friends, or a friend online. (1–4 players, for kids, online play)
+- [Whot](https://www.zone210.com/games/whot/): A fast, fun card game. Match the shape or number, and use Pick Two, Suspension and General Market to catch your rivals out. Play the computer, friends on one device, or a friend online. (1–4 players, for everyone, online play)
+- [Yahtzee](https://www.zone210.com/games/yahtzee/): Roll five dice up to three times a turn and fill your scorecard. Play solo for a high score, against the computer, a friend on one device, or a friend online. (1–2 players, for everyone, online play)
+
+## Puzzles
+
+- [24 Game](https://www.zone210.com/games/twenty-four/): Combine four numbers with + − × ÷ to make exactly 24. Quick rounds, hints, and a 90-second sprint. (1 player, for everyone)
+- [Jigsaw Puzzles](https://www.zone210.com/games/jigsaw/): Real jigsaw puzzles from 12 to 96 pieces, made from the pictures of the Zone 210 games. A ghost picture and edges-first to help, best times, or race a friend online on the same puzzle. (1–2 players, for everyone, online play)
+- [Mastermind](https://www.zone210.com/games/mastermind/): Crack the hidden colour code, or make one that stumps the computer or a friend. Three sizes, with symbols on the pegs. (1–2 players, for everyone, online play)
+- [Math Cross](https://www.zone210.com/games/math-cross/): A crossword made of sums. Four levels, hints, undo, a timer and best times. (1 player, for everyone)
+- [Minesweeper](https://www.zone210.com/games/minesweeper/): Clear the field without hitting a mine. Three sizes, flags, chording and best times. (1 player, for adults)
+- [Nonograms](https://www.zone210.com/games/nonograms/): Picture logic puzzles: use the number clues to fill in squares and reveal a hidden picture. Three sizes, endless puzzles, hints, and an online race against a friend. (1–2 players, for everyone, online play)
+- [Ribbon Sort](https://www.zone210.com/games/ribbon-sort/): Stack the ribbon rolls so every pole holds just one color. Four sizes, endless puzzles, hints, and an online race against a friend. (1–2 players, for everyone, online play)
+- [Spot the Difference](https://www.zone210.com/games/spot-the-difference/): Two pictures, a few sneaky differences. Endless puzzles in twelve scenes, three levels, hints and stars, or race a friend online to spot them first. (1–2 players, for everyone, online play)
+- [Sudoku](https://www.zone210.com/games/sudoku/): Fresh puzzles at three levels, each with exactly one solution. Notes, hints and auto-save. (1 player, for adults)
+- [Tile Merge](https://www.zone210.com/games/tile-merge/): Slide and merge matching numbers to reach 2048. Swipe on a phone, arrow keys on a computer. (1 player, for adults)
+- [Word Craft](https://www.zone210.com/games/word-craft/): Build crossing words on a 15 by 15 board and hit the bright squares for big scores. Play the computer, friends on one device, or a friend online. (1–4 players, for everyone, online play)
+- [Word Guess](https://www.zone210.com/games/word-guess/): Find the hidden five-letter word in six tries. A new daily word every day, plus practice mode. (1 player, for adults)
+
+## Learning
+
+- [ABC & 123](https://www.zone210.com/games/abc-123/): Learn the A B C and count 1 2 3 with a friendly voice: tap letters and numbers to hear them, find them, match big and small letters, count fun things and trace with your finger. (1 player, for kids)
+- [Algebra Lab](https://www.zone210.com/games/algebra/): Solve equations on a balance scale, spot number patterns, swap letters for numbers, tidy up expressions and read straight-line graphs. Six topics, three levels each, or race a friend online. (1–2 players, for everyone, online play)
+- [Ananse Stories](https://www.zone210.com/games/ananse/): Twelve interactive tales of Kwaku Ananse the spider, from Ghana. You choose what happens next, learn maths, science, patterns and the Akan day names along the way, and hunt for all 44 endings. (1 player, for everyone)
+- [Calculus Lab](https://www.zone210.com/games/calculus/): A gentle first look at calculus. Drag a point along a curve to see its slope, fill the area under it with rectangles, then practise rates of change, limits, derivatives and integrals, or race a friend online. (1–2 players, for adults, online play)
+- [Calm Corner](https://www.zone210.com/games/calm-corner/): A quiet place to take a break: breathing with a growing circle, a feelings check-in with kind ideas, the 5-4-3-2-1 senses game, and calming rain, waves, wind and chimes. (1 player, for everyone)
+- [Code Quest](https://www.zone210.com/games/code-quest/): Drag blocks to program Zippy the robot through 16 puzzles. Learn sequences, loops and if-decisions, and earn stars for short programs. (1 player, for kids)
+- [Fractions Lab](https://www.zone210.com/games/fractions/): See fractions as pizzas and bars, compare them, make them equal, add and subtract them, and place them on the number line. (1 player, for kids)
+- [Grammar & Words](https://www.zone210.com/games/grammar/): Find the nouns and verbs, fix the punctuation, choose the right word, build sentences from jumbled words and answer questions about short stories. Five topics, three levels each, or race a friend online. (1–2 players, for kids, online play)
+- [Hello World](https://www.zone210.com/games/hello-world/): Say hello around the world, then learn everyday words in Spanish, French, German, Portuguese, Arabic, Swahili, Hindi, Mandarin, Japanese and Korean, with their own writing, a say-it guide and a quiz. (1 player, for everyone)
+- [Lab 210](https://www.zone210.com/games/lab210/): Physics, chemistry and biology in one lab: periodic table, equation balancer, projectiles, circuits, cells, the human body, genetics, food chains, a quiz and a daily experiment. (1 player, for everyone)
+- [Money & Shopping](https://www.zone210.com/games/money/): Count coins and notes, pay the exact price, give the right change and go shopping on a budget, in dollars, euros, pounds, rupees, naira, cedis, shillings or rand. (1 player, for kids)
+- [Once Upon a Time](https://www.zone210.com/games/once-upon/): Eighteen classic tales from around the world as living picture books: Cinderella, the Three Little Pigs, Momotaro, Ali Baba and more. Make choices, help with little activities and find all 40 endings. (1 player, for kids)
+- [Quizzz Time](https://www.zone210.com/games/quiz/): Ten questions a round from 700+ across 15 topics, plus fresh maths every time, from world geography and history to science, space, sports and more. (1 player, for everyone)
+- [Shapes & Geometry](https://www.zone210.com/games/shapes/): Spot shapes, make angles with your finger, finish mirror pictures and build shapes with the right area and perimeter. Earn stars as you go. (1 player, for kids)
+- [Space Explorer](https://www.zone210.com/games/space/): Fly around a 3D solar system. Visit every planet and its moons, weigh yourself on other worlds, switch to true scale, and test what you know. (1 player, for everyone)
+- [Spell Sprout](https://www.zone210.com/games/spell-sprout/): Hear a word, spell it, and grow a garden. 800 picture words in 12 themes and three levels, for ages 5–10. (1 player, for kids)
+- [Tell the Time](https://www.zone210.com/games/tell-the-time/): Learn to read a clock: drag the hands and hear the time in words, then read the clock and set the clock, from o'clock to any minute. (1 player, for kids)
+- [Times Tables Trainer](https://www.zone210.com/games/times-tables/): Learn the 1 to 12 tables with pictures and tips, practise the facts you find tricky, race a 60 second clock, and watch your progress map turn green. (1 player, for kids)
+- [World Globe](https://www.zone210.com/games/globe/): Spin a 3D globe of all 195 countries: learn facts, play Find it, Name it, a Speed run and a new Daily Challenge, and fill in your Passport. (1 player, for everyone)
+
+## Arcade and creative
+
+- [Doodle & Color](https://www.zone210.com/games/doodle/): Draw with a rainbow brush, stamp stickers, and colour in 20 pages of animals, vehicles, scenes and patterns. Or turn your own picture into a colouring page. Save your art. (1 player, for kids)
+- [Draw & Animate](https://www.zone210.com/games/draw-animate/): Draw anything, or pick from hundreds of hand-drawn people, animals and things, then make it move. Walkers walk, wheels turn, and your own drawings bend at joints. Or make a flipbook. Save it as a video. (1 player, for everyone)
+- [Draw & Guess](https://www.zone210.com/games/draw-guess/): Draw a secret word and see who can guess it before the clock runs out. Pass the device around a group, or play a friend online and watch the picture appear live. (2–6 players, for everyone, online play)
+- [Home Life](https://www.zone210.com/games/home-life/): Create a family and move them into a suburban house or a modern city apartment. Cook, work, study, play and decorate, and visit a friend's home online. (1–2 players, for everyone, online play)
+- [Mango Mayhem](https://www.zone210.com/games/mango-mayhem/): The greedy monkeys stole the mangoes! Pull the slingshot and knock down their towers across 18 levels, alone or together with a friend online, or duel fort against fort. (1–2 players, for everyone, online play)
+- [Memory Garden](https://www.zone210.com/games/garden/): Plant seeds, water them and watch your garden grow. Win memory games to earn water and coins, and collect every plant. (1 player, for kids)
+- [Music Lab](https://www.zone210.com/games/music-lab/): Build beats with drums and percussion, play the piano, drum on hand-drum pads and test your ear. Jam live with a friend online. (1–2 players, for everyone, online play)
+- [Tetris](https://www.zone210.com/games/tetris/): Stack falling blocks and clear lines. Hold, ghost piece, three modes, and touch controls for phones. (1 player, for everyone)
+
+## Optional
+
+- [Home page](https://www.zone210.com/): all the games, with a featured game each week
+- [Sitemap](https://www.zone210.com/sitemap.xml): every page

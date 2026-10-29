@@ -17,7 +17,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "p
 const version = (fs.readFileSync(path.join(root, "sw.js"), "utf8").match(/const VERSION = "([^"]+)"/) || [])[1];
 if (!version) throw new Error("no VERSION in public/sw.js");
 const STORIES = /^games\/(ananse|once-upon)\/audio\//;
-const SKIP = /^(assets\/og\/|assets\/thumbs\/.*\.jpg$|sitemap\.xml$|robots\.txt$|_headers$|move\.html$|sw\.js$|offline-files\.json$|.*\.DS_Store$|.*LICENSE.*|.*\.md$)/;
+const SKIP = /^(assets\/og\/|assets\/thumbs\/.*\.jpg$|sitemap\.xml$|robots\.txt$|llms\.txt$|_headers$|move\.html$|sw\.js$|offline-files\.json$|.*\.DS_Store$|.*LICENSE.*|.*\.md$)/;
 const THREE = "https://cdn.jsdelivr.net/npm/three@0.160.0/";
 const CDN = ["build/three.module.js", "examples/jsm/controls/OrbitControls.js", "examples/jsm/environments/RoomEnvironment.js", "examples/jsm/geometries/RoundedBoxGeometry.js", "examples/jsm/utils/BufferGeometryUtils.js"].map((p) => THREE + p);
 

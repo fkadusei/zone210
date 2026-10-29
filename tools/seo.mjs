@@ -5,6 +5,7 @@
  * It writes or updates:
  *  - public/sitemap.xml   every page, so search engines know all the games exist
  *  - public/robots.txt    allow everything, and point at the sitemap
+ *  - public/llms.txt      what the site is and every game, in plain Markdown, for AI assistants and agents
  *  - every game page      a canonical link (the one true address), a link to the app manifest
  *                         (public/manifest.webmanifest) and structured data (schema.org) about the game
  *  - the home page        a canonical link, structured data listing the games, the up-to-date game count in its
@@ -74,6 +75,26 @@ const links = `      <details class="allgames"><summary>All ${n} games, A to Z</
 home = setBlock(home, "links", links, "    </footer>");
 fs.writeFileSync(homeFile, home);
 console.log(`sitemap.xml: ${urls.length} pages · robots.txt · ${changed} game pages updated · home page: ${n} games`);
+
+// ---------- llms.txt: what the site is, for AI assistants and agents (https://llmstxt.org) ----------
+const online = games.filter((g) => g.online).length;
+const llms = `# Zone 210
+
+> Zone 210 is a free website of ${n} games, puzzles and learning games for kids and grown-ups, played in the web browser. No sign-up and no ads; scores and saved games stay on the player's own device. ${online} of the games can also be played online with a friend.
+
+Everything runs in the browser at ${SITE}/ on phones, tablets and computers. Each game has its own page, linked below; nothing needs to be downloaded or installed, though the site can be added to a home screen like an app and keeps working offline for games that have been saved.
+
+Online play is peer to peer between two browsers: one player chooses the game's online option, creates a room and shares its short room code, or an invite link of the form ${SITE}/games/<game>/?room=CODE.
+
+${groups.map(([label, gs]) => `## ${label}\n\n${gs.map((g) => `- [${g.title}](${SITE}/games/${g.id}/): ${g.tagline} (${g.players}, for ${AUD[g.audience].toLowerCase()}${g.online ? ", online play" : ""})`).join("\n")}`).join("\n\n")}
+
+## Optional
+
+- [Home page](${SITE}/): all the games, with a featured game each week
+- [Sitemap](${SITE}/sitemap.xml): every page
+`;
+fs.writeFileSync(path.join(root, "llms.txt"), llms);
+console.log(`llms.txt: ${n} games, ${online} with online play`);
 
 // the list the home page's "Save all games for offline" button saves (public/offline-files.json)
 await import("./offline-files.mjs");
