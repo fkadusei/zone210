@@ -1,3 +1,4 @@
+z210Sfx.init("twenty_four"); // the Sound on/off button, and short sound effects (assets/sfx.js)
 // ---------- exact arithmetic (fractions) ----------
 const gcd = (a, b) => (b ? gcd(b, a % b) : Math.abs(a));
 const frac = (n, d = 1) => {
@@ -217,6 +218,7 @@ function newPuzzle(keepClock = false) {
 function onCard(i) {
   if (solved || sprintOver) return;
   startClock();
+  if (op === null || sel === null || sel === i) z210Sfx.play("tap");
   if (sel === null) {
     sel = i;
     render();
@@ -240,12 +242,14 @@ function onOp(o) {
   }
   startClock();
   op = op === o ? null : o;
+  z210Sfx.play("tick");
   render();
 }
 
 function combine(a, o, b) {
   const result = apply(cards[a].v, o, cards[b].v);
   if (!result) {
+    z210Sfx.play("bad");
     setStatus("You can't divide by zero.", "bad");
     const el = cardsEl.children[b];
     el.classList.add("shake");
@@ -261,11 +265,13 @@ function combine(a, o, b) {
   op = null;
   if (cards.length === 1) {
     if (isTarget(cards[0].v)) return win();
+    z210Sfx.play("bad");
     render(popped);
     setStatus(`That makes ${label(cards[0].v)}, not 24. Undo and try another route.`, "bad");
     return;
   }
   render(popped);
+  z210Sfx.play("merge");
   setStatus("");
 }
 
@@ -304,6 +310,7 @@ function hint() {
   const a = cards.findIndex((c) => same(c.v, s.a));
   const b = cards.findIndex((c, i) => i !== a && same(c.v, s.b));
   assisted = true;
+  z210Sfx.play("pop");
   render(-1, { a, b, op: s.op });
   setStatus(`Hint: try ${label(s.a)} ${SYMBOL[s.op]} ${label(s.b)}.`);
 }
@@ -323,6 +330,7 @@ function workingHTML(html) {
 
 // ---------- winning ----------
 function win() {
+  z210Sfx.play("win");
   solved = true;
   if (settings.mode !== "sprint") stopClock(); // the sprint clock keeps running between puzzles
   solvedCount += 1;
@@ -358,6 +366,7 @@ function endSprint() {
   if (sprintOver) return;
   sprintOver = true;
   stopClock();
+  z210Sfx.play("good");
   const bests = store.get(BEST_KEY, {});
   const score = solvedCount;
   const record = score > 0 && score > (bests.sprint || 0);

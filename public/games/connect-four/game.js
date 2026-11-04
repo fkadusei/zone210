@@ -1,5 +1,6 @@
 import { createOnline } from "../../assets/online.js";
 import { ROWS, COLS, emptyBoard, dropRow, winLine, legalCols, isFull, chooseMove } from "./logic.js";
+z210Sfx.init("connect_four"); // the Sound on/off button, and short sound effects (assets/sfx.js)
 
 const $ = (id) => document.getElementById(id);
 const discsEl = $("discs");
@@ -151,6 +152,7 @@ function place(c) {
   if (r < 0) return;
   board[r][c] = turn;
   addDisc(r, c, turn);
+  z210Sfx.play("drop");
 
   const line = winLine(board, r, c);
   if (line) return finish(line);
@@ -164,6 +166,8 @@ function finish(line) {
   over = true;
   setColumnsEnabled(false);
   const n = names();
+  const lost = (opts.mode === "cpu" && turn === 2) || (online() && turn !== myP);
+  z210Sfx.play(line ? (lost ? "lose" : "win") : "bad");
   if (line) {
     line.forEach(([r, c]) => discsEl.querySelector(`[data-rc="${r},${c}"]`)?.classList.add("win"));
     wins[turn] += 1;

@@ -1,4 +1,5 @@
 import { newGame, move, isOver, highest, GOAL } from "./logic.js";
+z210Sfx.init("tile_merge"); // the Sound on/off button, and short sound effects (assets/sfx.js)
 
 const $ = (id) => document.getElementById(id);
 const boardEl = $("board");
@@ -94,6 +95,7 @@ function doMove(dir) {
   if (animating || $("end").classList.contains("show")) return;
   const res = move(state, dir);
   if (!res.moved) return;
+  z210Sfx.play("slide");
   animating = true;
   history.push(state);
   if (history.length > 30) history.shift();
@@ -117,6 +119,7 @@ function doMove(dir) {
       els.get(a.id)?.remove();
       els.delete(a.id);
     });
+    if (res.slides.some((s) => s.merged)) z210Sfx.play("merge");
     res.slides.filter((s) => s.merged).forEach((s) => {
       const el = els.get(s.id);
       setValue(el, s.value);
@@ -140,12 +143,14 @@ function checkEnd() {
     $("endText").textContent = `Score ${state.score}. You can keep going for a higher tile.`;
     $("keepGoing").hidden = false;
     $("end").classList.add("show");
+    z210Sfx.play("win");
   } else if (isOver(state)) {
     $("endEmoji").textContent = "🧩";
     $("endTitle").textContent = "No more moves";
     $("endText").textContent = `Final score ${state.score}. Top tile ${highest(state)}.`;
     $("keepGoing").hidden = true;
     $("end").classList.add("show");
+    z210Sfx.play("lose");
   }
 }
 

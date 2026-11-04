@@ -1,6 +1,7 @@
 import { QUESTIONS as CORE } from "./questions.js";
 import { MORE_QUESTIONS, TOPICS } from "./more-questions.js";
 import { countryQuestions, mathQuestions } from "./generated.js";
+z210Sfx.init("quiz"); // the Sound on/off button, and short sound effects (assets/sfx.js)
 
 // hand-written questions plus generated ones (capitals, flags, continents, fresh arithmetic each round)
 const dedupe = (list) => {
@@ -148,9 +149,12 @@ function startClock() {
   fill.style.transform = "scaleX(1)";
   if (opts.timer === "off") return;
   deadline = Date.now() + SECONDS * 1000;
+  startClock.last = 0;
   tick = setInterval(() => {
     const left = Math.max(0, deadline - Date.now());
     fill.style.transform = `scaleX(${left / (SECONDS * 1000)})`;
+    const s = Math.ceil(left / 1000);
+    if (s <= 3 && s > 0 && s !== startClock.last) { startClock.last = s; z210Sfx.play("tick"); } // the last three seconds
     if (left <= 0) {
       clearInterval(tick);
       timeUp();
@@ -183,9 +187,11 @@ function answer(btn, q) {
     const gained = 100 + timeBonus + streakBonus;
     score += gained;
     correctCount += 1;
+    z210Sfx.play("good");
     reveal(btn, q, `✅ Correct! +${gained}${streakBonus ? ` (streak bonus +${streakBonus})` : ""}.`);
   } else {
     streak = 0;
+    z210Sfx.play("bad");
     reveal(btn, q, "❌ Not quite.");
   }
   $("score").textContent = score;
@@ -196,6 +202,7 @@ function timeUp() {
   if (locked) return;
   streak = 0;
   $("streak").textContent = 0;
+  z210Sfx.play("bad");
   reveal(null, round[idx], "⏰ Time's up!");
 }
 
@@ -222,6 +229,7 @@ function finish() {
   $("endTitle").textContent = pct === 1 ? "Perfect score!" : pct >= 0.7 ? "Great job!" : pct >= 0.4 ? "Nice try!" : "Keep learning!";
   $("endText").textContent = `${correctCount} of ${round.length} correct · ${score} points${record ? " · New best!" : ""}`;
   $("end").classList.add("show");
+  z210Sfx.play(pct >= 0.7 ? "win" : "good"); // a cheerful sound either way
 }
 
 $("go").addEventListener("click", start);

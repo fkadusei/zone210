@@ -1,3 +1,4 @@
+z210Sfx.init("math_cross"); // the Sound on/off button, and short sound effects (assets/sfx.js)
 // ---- puzzle engine: layout generation, solving and validation ----
 let generationToken = 0;
 let solveToken = 0;
@@ -919,12 +920,14 @@ function changed(popCell = null, message = "") {
 }
 
 function placeValue(cell, bankId, message = "") {
+  const before = equationMarks().okCount;
   snapshot();
   placements.delete(cell);
   placements.set(cell, bankId);
   hinted.delete(cell);
   selectedBankId = null;
   activeCell = nextEmptyAfter(cell) || cell;
+  if (!solved) z210Sfx.play(equationMarks().okCount > before ? "good" : "place"); // a sum that now works sounds happier
   changed(cell, message);
 }
 
@@ -934,6 +937,7 @@ function removeValue(cell) {
   placements.delete(cell);
   hinted.delete(cell);
   activeCell = cell;
+  z210Sfx.play("flip");
   changed(null, "");
 }
 
@@ -960,6 +964,7 @@ function onBankTile(bankId) {
     return;
   }
   selectedBankId = selectedBankId === bankId ? null : bankId;
+  z210Sfx.play("tap");
   renderBank();
   if (selectedBankId) setStatus("Now tap an empty square.");
 }
@@ -997,6 +1002,7 @@ function checkBoard() {
   const { okCount } = equationMarks();
   let wrong = 0;
   puzzle.equations.forEach((eq) => evaluateEquation(eq).status === "invalid" && (wrong += 1));
+  z210Sfx.play(wrong ? "bad" : "good");
   if (wrong) setStatus(`${wrong} equation${wrong === 1 ? " doesn't" : "s don't"} add up yet (shown in red).`);
   else if (okCount === puzzle.equations.length) setStatus("All correct!");
   else setStatus(`${okCount} of ${puzzle.equations.length} equations done, no mistakes so far.`);
@@ -1049,6 +1055,7 @@ async function hint() {
   hinted.add(target);
   hintCount += 1;
   assisted = true;
+  z210Sfx.play("pop");
   activeCell = nextEmptyAfter(target) || target;
   changed(target, `Hint: that square is ${value}.`);
 }
@@ -1086,6 +1093,7 @@ async function solveCurrent() {
 // ---------- winning ----------
 function win() {
   solved = true;
+  z210Sfx.play("win");
   stopTimer();
   const times = store.get(BEST_KEY, {});
   const key = bestKey();

@@ -121,9 +121,10 @@ function say(text, rate = 0.9) {
     return;
   }
   const token = (speakToken += 1);
+  const busy = synth.speaking || synth.pending; // only then is a cancel needed (and a moment's wait after it)
   try {
     synth.resume();
-    synth.cancel();
+    if (busy) synth.cancel();
   } catch (err) {
     /* ignore */
   }
@@ -158,7 +159,9 @@ function say(text, rate = 0.9) {
       }
     }, 1800);
   };
-  setTimeout(() => attempt(true, false), 90);
+  // straight away when nothing was playing: an iPhone only speaks a word started by a tap, not a moment after one
+  if (busy) setTimeout(() => attempt(true, false), 90);
+  else attempt(true, false);
 }
 
 // ---------- helpers ----------
@@ -275,8 +278,10 @@ function startRound() {
   el.hint.disabled = false;
   el.check.disabled = false;
   renderAll();
-  setMessage("Listen, then spell the word.");
-  if (!game.muted) setTimeout(() => game.round?.entry === entry && say(entry.word), 450);
+  // a phone won't speak before the first tap on the page: then ask for one instead of failing to speak
+  const tapped = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+  setMessage(tapped || game.muted ? "Listen, then spell the word." : "Tap 🔊 Hear word to listen, then spell the word.");
+  if (!game.muted && tapped) setTimeout(() => game.round?.entry === entry && say(entry.word), 450);
 }
 
 function newGame() {

@@ -1,4 +1,5 @@
 import { generate, conflicts, CLUES } from "./logic.js";
+z210Sfx.init("sudoku"); // the Sound on/off button, and short sound effects (assets/sfx.js)
 // The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
 // game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
 let endSeq = 0;
@@ -159,6 +160,7 @@ function newPuzzle(fresh = true) {
 }
 
 function select(i) {
+  if (i !== selected) z210Sfx.play("tick");
   selected = i;
   startTimer();
   render();
@@ -178,12 +180,14 @@ function enter(d) {
     pushHistory(i);
     if (notes[i].has(d)) notes[i].delete(d);
     else notes[i].add(d);
+    z210Sfx.play("tick");
   } else {
     pushHistory(i);
     if (grid[i] === d) {
       grid[i] = 0; // tapping the same digit again erases it
     } else {
       grid[i] = d;
+      z210Sfx.play("place");
       notes[i].clear();
       peers(i).forEach((p) => notes[p].delete(d)); // tidy notes in the row, column and box
     }
@@ -197,6 +201,7 @@ function erase() {
   if (selected < 0 || puzzle[selected] || solved) return;
   pushHistory(selected);
   grid[selected] = 0;
+  z210Sfx.play("flip");
   notes[selected].clear();
   render();
   save();
@@ -220,6 +225,7 @@ function hint() {
     if (!open.length) return;
     i = open[Math.floor(Math.random() * open.length)];
   }
+  z210Sfx.play("pop");
   pushHistory(i);
   grid[i] = solution[i];
   notes[i].clear();
@@ -238,6 +244,7 @@ function check() {
     if (v && v !== solution[i]) wrong.add(i);
   });
   render(wrong);
+  z210Sfx.play(wrong.size ? "bad" : "good");
   statusEl.textContent = wrong.size ? `${wrong.size} cell${wrong.size === 1 ? " is" : "s are"} wrong.` : "So far, so good. No mistakes!";
   if (wrong.size) setTimeout(() => render(), 1600);
 }
@@ -255,6 +262,7 @@ function checkWin() {
   } catch (err) {
     // ignore
   }
+  z210Sfx.play("win");
   showEndLater(500);
 }
 

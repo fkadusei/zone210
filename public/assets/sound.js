@@ -3,6 +3,8 @@
  *  - creates one AudioContext and resumes it whenever it is suspended or "interrupted" (calls, app switches)
  *  - unlocks audio on the first touch / key press
  *  - plays a silent clip so iPhones keep Web Audio audible even with the ringer switch on silent
+ *  - on iPhones and iPads, also unlocks the speech voice on the first touch: Safari only lets a page speak when the
+ *    first word is started by a tap, so games that speak a moment later (after an animation) would stay silent
  *  - when you come back to a page that was left in the background (an iPhone tab left overnight), checks the context
  *    still works; iOS can leave it stuck and silent, so a stuck one is replaced on the next tap, and the page gets a
  *    "z210:audio-reset" event so anything long-running (music, loops) can stop and be started again
@@ -32,7 +34,16 @@
     return ctx;
   }
 
+  var spoke = false;
+  var ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  function unlockSpeech() {
+    if (spoke || !ios || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    spoke = true;
+    try { var u = new SpeechSynthesisUtterance(" "); u.volume = 0; window.speechSynthesis.speak(u); } catch (err) { /* no voice */ }
+  }
+
   function unlock() {
+    unlockSpeech();
     if (!stale && ctx && ctx.state === "running" && silentEl && !silentEl.paused) return;
     try {
       if (navigator.audioSession) navigator.audioSession.type = "playback"; // Safari 16.4+: play even on silent

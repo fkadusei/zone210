@@ -1,6 +1,7 @@
 import { canSharePhotos, toPhotos, download } from "../../assets/save-image.js";
 import { makePages } from "./pages2.js";
 import { makePeoplePages } from "./pages3.js";
+z210Sfx.init("doodle"); // the Sound on/off button, and short sound effects (assets/sfx.js)
 
 const $ = (id) => document.getElementById(id);
 const paint = $("paint");
@@ -150,6 +151,7 @@ Object.assign(PAGES, makePages({ stroke, solid, circle, poly, ell, clipped }));
 Object.assign(PAGES, makePeoplePages({ stroke, solid, circle, poly, ell, clipped }));
 
 function loadPage(id) {
+  if (state.page !== id || undoStack.length) z210Sfx.play("flip");
   state.page = id;
   const tip = document.getElementById("photoTip");
   if (tip) tip.hidden = true;
@@ -184,6 +186,7 @@ function snapshot() {
 }
 function undo() {
   if (undoStack.length < 2) return;
+  z210Sfx.play("tick");
   redoStack.push(undoStack.pop());
   showStep(undoStack[undoStack.length - 1]);
   refreshButtons();
@@ -191,6 +194,7 @@ function undo() {
 function redo() {
   const img = redoStack.pop();
   if (!img) return;
+  z210Sfx.play("tick");
   undoStack.push(img);
   showStep(img);
   refreshButtons();
@@ -232,6 +236,7 @@ paint.addEventListener("pointerdown", (e) => {
   if (state.tool === "fill") {
     finger = null;
     floodFill(Math.round(x), Math.round(y), state.color);
+    z210Sfx.play("pop");
     snapshot();
     return;
   }
@@ -240,6 +245,7 @@ paint.addEventListener("pointerdown", (e) => {
     pctx.textAlign = "center";
     pctx.textBaseline = "middle";
     pctx.fillText(state.stamp, x, y);
+    z210Sfx.play("pop");
     finger = null;
     snapshot();
     return;
@@ -340,6 +346,7 @@ TOOLS.forEach((t) => {
   b.dataset.id = t.id;
   b.setAttribute("aria-pressed", String(t.id === state.tool));
   b.addEventListener("click", () => {
+    z210Sfx.play("tap");
     state.tool = t.id;
     pressed($("tools"), b);
     $("stamps").hidden = t.id !== "stamp";
@@ -355,6 +362,7 @@ COLORS.forEach((c, i) => {
   b.setAttribute("aria-label", `Colour ${i + 1}`);
   b.setAttribute("aria-pressed", String(i === 0));
   b.addEventListener("click", () => {
+    z210Sfx.play("tap");
     state.color = c;
     pressed($("palette"), b);
     if (state.tool === "eraser" || state.tool === "rainbow") selectTool("brush");
@@ -501,6 +509,7 @@ $("photo").addEventListener("change", async (e) => {
 $("undo").addEventListener("click", undo);
 $("redo").addEventListener("click", redo);
 $("clear").addEventListener("click", () => {
+  z210Sfx.play("slide");
   pctx.fillStyle = "#ffffff";
   pctx.fillRect(0, 0, W, H);
   snapshot();
@@ -517,6 +526,7 @@ function pictureCanvas() {
 const pictureName = () => `my-picture-${state.page}.png`;
 $("save").addEventListener("click", async () => {
   await download(pictureCanvas(), pictureName());
+  z210Sfx.play("good");
   $("saveNote").textContent = "Saved to your Downloads.";
 });
 // phones and tablets: hand the picture to the share sheet so it can go straight into the photo library

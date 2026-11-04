@@ -1,5 +1,6 @@
 import { ANSWERS, ALLOWED } from "./words.js";
 import { score, dailyWord, dayNumber, shareGrid, keyStates } from "./logic.js";
+z210Sfx.init("word_guess"); // the Sound on/off button, and short sound effects (assets/sfx.js)
 
 const $ = (id) => document.getElementById(id);
 const boardEl = $("board");
@@ -150,9 +151,11 @@ function press(key) {
   if (over || revealing) return;
   if (key === "Enter") return submit();
   if (key === "Backspace") {
+    if (current) z210Sfx.play("tick");
     current = current.slice(0, -1);
   } else if (/^[a-z]$/.test(key) && current.length < COLS) {
     current += key;
+    z210Sfx.play("type");
   } else {
     return undefined;
   }
@@ -161,6 +164,7 @@ function press(key) {
 }
 
 function invalid(msg) {
+  z210Sfx.play("bad");
   toast(msg);
   const row = rowEl(guesses.length);
   row.classList.remove("shake");
@@ -178,6 +182,7 @@ function submit() {
   scores.push(result);
   paintRow(r, current, result, true);
   revealing = true;
+  for (let k = 0; k < COLS; k += 1) setTimeout(() => z210Sfx.play("flip"), k * 250 + 120); // each tile as it turns
   const word = current;
   current = "";
 
@@ -188,9 +193,11 @@ function submit() {
       won = true;
       over = true;
       [...rowEl(r).children].forEach((t) => t.classList.add("win"));
+      z210Sfx.play("win");
       toast(["Genius!", "Magnificent!", "Impressive!", "Splendid!", "Great!", "Phew!"][r]);
     } else if (guesses.length === ROWS) {
       over = true;
+      z210Sfx.play("lose");
       toast(answer.toUpperCase());
     }
     if (mode === "daily") write(DAILY_KEY, { day: dayNumber(), guesses, over, won });

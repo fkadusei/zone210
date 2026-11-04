@@ -1,4 +1,5 @@
 import { LEVELS, newGame, reveal, toggleFlag, chord, flagsLeft } from "./logic.js";
+z210Sfx.init("minesweeper"); // the Sound on/off button, and short sound effects (assets/sfx.js)
 // The end-of-game screen appears a moment after the last move. A new game started in that moment must not get the old
 // game's screen over it: hiding the screen starts a new round, and a screen that is still on its way only shows in its own.
 let endSeq = 0;
@@ -84,8 +85,10 @@ function startTimer() {
 
 function dig(i) {
   if (finished) return;
+  const was = g.open.filter(Boolean).length;
   if (g.open[i]) chord(g, i);
   else reveal(g, i);
+  z210Sfx.play(g.status === "lost" ? "boom" : g.status === "won" ? "win" : g.open.filter(Boolean).length - was > 8 ? "pop" : g.open.filter(Boolean).length > was ? "tap" : "flip");
   if (g.status === "playing" || g.status === "won" || g.status === "lost") startTimer();
   afterMove();
 }
@@ -93,6 +96,7 @@ function dig(i) {
 function flag(i) {
   if (finished) return;
   toggleFlag(g, i);
+  z210Sfx.play("flip");
   afterMove();
 }
 
